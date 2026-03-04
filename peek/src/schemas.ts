@@ -5,9 +5,9 @@ import {
   PARAMETER_TYPES,
   PARAMETER_SOURCE_MODES,
 } from "./contracts/dashboard/literals";
-import { VISUALIZATION_TYPES } from "./components/visualizations/vizRegistry";
+import { PERSES_PANEL_TYPES } from "./components/perses/panelRegistry";
 
-export { VISUALIZATION_TYPES };
+export const VISUALIZATION_TYPES = PERSES_PANEL_TYPES;
 
 const thresholdColor = z.enum(THRESHOLD_COLORS);
 

@@ -12,7 +12,6 @@ import ClearIcon from "@mui/icons-material/Clear";
 import SearchIcon from "@mui/icons-material/Search";
 import ZoomOutMapIcon from "@mui/icons-material/ZoomOutMap";
 import { EChart } from "@perses-dev/components";
-import type { ECharts } from "echarts/core";
 
 import type { FlamegraphNode, FrameType } from "../profiling/profilingUtils";
 import { findSubtreeByPath } from "../profiling/profilingUtils";
@@ -21,6 +20,7 @@ import { STATUS_COLORS } from "../../types/tokens";
 
 import { useEChartTheme } from "./useEChartTheme";
 import { escapeHtml } from "./htmlUtils";
+import type { EChartInstance } from "./chartExport";
 
 interface Props {
   tree: FlamegraphNode;
@@ -123,7 +123,7 @@ const TEXT_PADDING = 6;
 export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
   const muiTheme = useTheme();
   const theme = useEChartTheme();
-  const instanceRef = useRef<ECharts | undefined>(undefined);
+  const instanceRef = useRef<EChartInstance | undefined>(undefined);
   const [zoomPath, setZoomPath] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [prevTree, setPrevTree] = useState(tree);

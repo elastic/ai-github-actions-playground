@@ -47,6 +47,7 @@ export default function ServiceDashboardPage() {
     handleReset,
     handleSearch,
     loading,
+    routeSparklineData,
     routesResult,
     tracesResult,
   } = useServiceDashboardQueries({
@@ -180,6 +181,7 @@ export default function ServiceDashboardPage() {
           sortField={routeSortField}
           sortDirection={routeSortDirection}
           onSort={handleRouteSort}
+          sparklineData={routeSparklineData}
         />
       )}
 

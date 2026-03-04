@@ -372,7 +372,7 @@ def phase_kick_ci(prs: list[PRInfo], runs: list[dict], ctx: Ctx) -> int:
         finally:
             shutil.rmtree(tmpdir, ignore_errors=True)
     if not kicked:
-        print("  No bot PRs needed CI kicked.")
+        print("  No bot PRs needed a CI kick.")
     else:
         print(f"  Kicked CI for {kicked} PR(s).")
     print()

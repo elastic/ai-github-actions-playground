@@ -13,9 +13,10 @@
  *     --screenshot screenshot-metrics.png
  *
  * Supported --page values:
- *   cluster-overview | data-streams | indices | ingest-pipelines |
- *   query-lab | logs | metrics | traces | console | users | roles |
- *   dashboards | fleet | add-data | api-keys
+ *   add-data | api-keys | cluster-overview | console | dashboards |
+ *   data-streams | docs | fleet | health | indices | ingest-pipelines |
+ *   investigate | kubernetes | logs | metrics | profiling | query-lab |
+ *   roles | services | traces | users
  *
  * The script mocks all required Elasticsearch endpoints so no live cluster
  * is needed.

@@ -1,11 +1,10 @@
 import { useMemo, useRef, useEffect } from "react";
 import { EChart } from "@perses-dev/components";
-import type { ECharts } from "echarts/core";
 
 import type { EsqlResponse } from "../../types";
 
 import { useEChartTheme } from "./useEChartTheme";
-import { createPngExporter } from "./chartExport";
+import { createPngExporter, type EChartInstance } from "./chartExport";
 import { findNumericColumnIndices, findStringColumnIndices, getColumnValues } from "./chartUtils";
 
 interface Props {
@@ -15,7 +14,7 @@ interface Props {
 
 export default function PieChart({ data, onExportReady }: Props) {
   const theme = useEChartTheme();
-  const instanceRef = useRef<ECharts | undefined>(undefined);
+  const instanceRef = useRef<EChartInstance | undefined>(undefined);
 
   useEffect(() => {
     if (!onExportReady) return;

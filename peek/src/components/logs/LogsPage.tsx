@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useShallow } from "zustand/react/shallow";
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
@@ -34,16 +33,20 @@ import { ElasticsearchClient, getFieldValues } from "../../services/es";
 import { useConnectionStore } from "../../store/useConnectionStore";
 import { useUIStore } from "../../store/useUIStore";
 import { useLogsStore } from "../../store/useLogsStore";
-import { useQueryStore } from "../../store/useQueryStore";
 import { useEsqlQuery } from "../../hooks/useEsqlQuery";
+import { useOpenInDiscover } from "../../hooks/useOpenInDiscover";
+import { INSIGHT_GUARDRAIL } from "../../hooks/insightPromptUtils";
+import { usePageSlotInsights } from "../../hooks/usePageSlotInsights";
 import { createEsqlQueryEditorExtensions } from "../queryEditorExtensions";
+import { InsightSlotProvider } from "../InsightSlotContext";
+import InsightSlot from "../InsightSlot";
 import DataTable from "../visualizations/DataTable";
 import EmptyState from "../EmptyState";
-import { PAGE_MANIFEST } from "../../routes/manifest";
 import { escapeEsqlString } from "../../services/es/esqlUtils";
 
 import LogsSearchPanel from "./LogsSearchPanel";
 import { appendPipeClause, buildLogsQuery } from "./logsQueryBuilder";
+import { LOGS_INSIGHT_SLOT_IDS, LOGS_INSIGHT_SLOTS } from "./logsInsightSlots";
 
 const SIDEBAR_FIELDS = ["service.name", "log.level", "host.name", "event.dataset"];
 const TRACE_ID_FIELD = "trace.id";
@@ -81,13 +84,17 @@ function extractFieldNames(method: ExtractMethod, pattern: string): string[] {
   ).filter(Boolean);
 }
 
+const LOGS_SYSTEM_PROMPT =
+  "You are a log analysis assistant for Elasticsearch." +
+  " Analyse the current log exploration context and produce per-slot insights." +
+  INSIGHT_GUARDRAIL;
+
 export default function LogsPage() {
-  const navigate = useNavigate();
+  const openInDiscover = useOpenInDiscover();
   const connection = useConnectionStore((s) => s.connection);
   const themeMode = useUIStore((s) => s.themeMode);
   const logsSearchCollapsed = useUIStore((s) => s.logsSearchCollapsed);
   const setLogsSearchCollapsed = useUIStore((s) => s.setLogsSearchCollapsed);
-  const setDiscoverQueryDraft = useQueryStore((s) => s.setDiscoverQueryDraft);
   const {
     indexPattern,
     searchText,
@@ -335,12 +342,11 @@ export default function LogsPage() {
       const trimmed = traceId.trim();
       if (!trimmed) return;
       const safeTraceId = escapeEsqlString(trimmed);
-      setDiscoverQueryDraft(
+      openInDiscover(
         `FROM traces-* | WHERE trace.id == "${safeTraceId}" | SORT @timestamp DESC | LIMIT 200`,
       );
-      navigate(PAGE_MANIFEST.discover.path);
     },
-    [navigate, setDiscoverQueryDraft],
+    [openInDiscover],
   );
 
   const handleAnomalyDrillIn = useCallback(
@@ -382,312 +388,374 @@ export default function LogsPage() {
     setViewMode("patterns");
   }, [effectiveQuery, runQuery, setRawQuery]);
 
+  const slotContext = useMemo(
+    () =>
+      JSON.stringify({
+        indexPattern,
+        searchText,
+        filterCount: filters.length,
+        effectiveQuery,
+        rowCount: result?.values.length ?? 0,
+        columns: result?.columns.map((c) => c.name) ?? [],
+        viewMode,
+        patternGroupCount: patternGroups.length,
+        anomalyBucketCount: histogramBuckets.filter((b) => b.anomaly).length,
+      }),
+    [
+      indexPattern,
+      searchText,
+      filters.length,
+      effectiveQuery,
+      result,
+      viewMode,
+      patternGroups.length,
+      histogramBuckets,
+    ],
+  );
+
+  const slotInsights = usePageSlotInsights({
+    context: slotContext,
+    systemPrompt: LOGS_SYSTEM_PROMPT,
+    cacheKey: `logs-slots::${slotContext}`,
+    slots: LOGS_INSIGHT_SLOTS,
+    enabled: Boolean(result && !loading && !error),
+  });
+
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: "100%" }}>
-      <LogsSearchPanel
-        searchText={searchText}
-        onSearchTextChange={setSearchText}
-        filters={filters}
-        onRemoveFilter={removeFilter}
-        onClearFilters={clearFilters}
-        effectiveQuery={effectiveQuery}
-        onRawQueryChange={setRawQuery}
-        onCreateEditor={setQueryContextView}
-        queryEditorExtensions={queryEditorExtensions}
-        themeMode={themeMode}
-        searchLoading={loading}
-        onSearch={runLogsQuery}
-        searchResultCount={result ? result.values.length : null}
-        collapsed={logsSearchCollapsed}
-        onToggleCollapsed={() => setLogsSearchCollapsed(!logsSearchCollapsed)}
-      />
-
-      {/* View mode toggle */}
-      <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-        <ToggleButtonGroup
-          size="small"
-          color="primary"
-          value={viewMode}
-          exclusive
-          onChange={(_, next: LogsViewMode | null) => {
-            if (next) setViewMode(next);
-          }}
-          aria-label="Logs view mode"
-        >
-          <ToggleButton value="lines">Lines</ToggleButton>
-          <ToggleButton value="chart">Chart</ToggleButton>
-          <ToggleButton value="patterns">Patterns</ToggleButton>
-        </ToggleButtonGroup>
-      </Stack>
-
-      {error && <Alert severity="error">{error}</Alert>}
-
-      <Box sx={{ display: "flex", flex: 1, gap: 1, minHeight: 0 }}>
-        <Paper
-          variant="outlined"
-          sx={{
-            display: { lg: "block", xs: "none" },
-            flexShrink: 0,
-            width: 280,
-            overflow: "hidden",
-          }}
-        >
-          <Box sx={{ p: 1 }}>
-            <Typography variant="subtitle1">Field Filters</Typography>
-            <Typography variant="caption" color="text.secondary">
-              Click + to include or - to exclude
-            </Typography>
-          </Box>
-          <Divider />
-          {fieldValuesLoading && <LinearProgress />}
-          {fieldValuesError && (
-            <Typography variant="caption" color="error" sx={{ display: "block", p: 1.5 }}>
-              Failed to load field values.
-            </Typography>
-          )}
-          {!fieldValuesLoading && !fieldValuesError && (
-            <List dense disablePadding>
-              {sidebarFields.map((field) => [
-                <ListSubheader
-                  key={`${field}-header`}
-                  disableSticky
-                  sx={{ py: 0.5, lineHeight: "normal" }}
-                >
-                  <Typography variant="caption">{field}</Typography>
-                </ListSubheader>,
-                ...(fieldValues[field] ?? extractedFieldValues[field] ?? []).map((entry) => (
-                  <ListItem key={`${field}-${entry.value}`} disablePadding>
-                    <Stack
-                      direction="row"
-                      spacing={0.5}
-                      sx={{ alignItems: "center", width: "100%", pl: 2, py: 0.5 }}
-                    >
-                      <ListItemText
-                        primary={
-                          <Typography variant="caption" noWrap title={entry.value}>
-                            {entry.value}
-                          </Typography>
-                        }
-                        secondary={`${entry.count.toLocaleString()} docs`}
-                      />
-                      <Stack direction="row" spacing={0.5}>
-                        <Button
-                          size="small"
-                          variant="text"
-                          aria-label={`Include ${field} ${entry.value}`}
-                          onClick={() => handleCellFilter(field, entry.value, false)}
-                        >
-                          <AddIcon fontSize="inherit" />
-                        </Button>
-                        <Button
-                          size="small"
-                          variant="text"
-                          aria-label={`Exclude ${field} ${entry.value}`}
-                          onClick={() => handleCellFilter(field, entry.value, true)}
-                        >
-                          <RemoveIcon fontSize="inherit" />
-                        </Button>
-                      </Stack>
-                    </Stack>
-                  </ListItem>
-                )),
-                <Divider key={`${field}-divider`} component="li" aria-hidden />,
-              ])}
-            </List>
-          )}
-        </Paper>
-
-        <Paper
-          variant="outlined"
-          tabIndex={0}
-          role="region"
-          aria-label="Log results"
-          sx={{ flex: 1, minWidth: 0, overflow: "auto" }}
-        >
-          <Box sx={{ p: 1, borderBottom: 1, borderColor: "divider" }}>
-            <Typography variant="caption" color="text.secondary">
-              {result
-                ? `${result.values.length.toLocaleString()} rows returned`
-                : "Run a query to populate results"}{" "}
-              — timeline and views share the visible ES|QL query above.
-            </Typography>
-            <Box
-              sx={{
-                display: "flex",
-                gap: 0.5,
-                alignItems: "end",
-                minHeight: 64,
-                overflowX: "auto",
-                mt: 1,
-              }}
-            >
-              {histogramBuckets.length === 0 && (
-                <Typography variant="caption" color="text.secondary">
-                  No histogram buckets yet.
-                </Typography>
-              )}
-              {histogramBuckets.map((bucket) => (
-                <Button
-                  key={bucket.start}
-                  size="small"
-                  variant={bucket.anomaly ? "contained" : "outlined"}
-                  color={bucket.anomaly ? "warning" : "inherit"}
-                  disabled={!bucket.anomaly}
-                  aria-label={`${bucket.anomaly ? "Drill into anomaly" : "Bucket"}: ${new Date(bucket.start).toLocaleTimeString()} – ${bucket.count.toLocaleString()} events`}
-                  onClick={() => handleAnomalyDrillIn(bucket.start, bucket.end)}
-                  sx={{
-                    minWidth: 12,
-                    height: Math.max(12, Math.min(52, bucket.count * 2)),
-                    py: 0,
-                    px: 0.5,
-                  }}
-                  title={`${new Date(bucket.start).toLocaleTimeString()} • ${bucket.count.toLocaleString()} events${bucket.anomaly ? " • anomaly" : ""}`}
-                />
-              ))}
-            </Box>
-            <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
-              <Button size="small" variant="text" onClick={runCategorizeQuery}>
-                Run CATEGORIZE patterns
-              </Button>
-            </Stack>
-          </Box>
-
-          {!result && !loading && (
-            <EmptyState
-              heading="No logs loaded"
-              description="Run the current query to explore logs and click values to add filters."
-            />
-          )}
-
-          {result && viewMode === "lines" && (
-            <>
-              <DataTable
-                data={result}
-                onCellClick={({ columnName, value }) => {
-                  if (columnName === TRACE_ID_FIELD) {
-                    handleTracePivot(value);
-                    return;
-                  }
-                  if (columnName === MESSAGE_FIELD) {
-                    setExtractSource(value);
-                    setExtractMethod("DISSECT");
-                    setExtractPattern("%{extracted.value}");
-                    setExtractDialogOpen(true);
-                    return;
-                  }
-                  handleCellFilter(columnName, value, false);
-                }}
+    <InsightSlotProvider
+      summary={slotInsights.summary}
+      insights={slotInsights.insights}
+      loading={slotInsights.loading}
+      error={slotInsights.error}
+      refresh={slotInsights.refresh}
+    >
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: "100%" }}>
+        <Box sx={{ width: "100%" }}>
+          <InsightSlot slotId={LOGS_INSIGHT_SLOT_IDS.logsSearch}>
+            <Box sx={{ width: "100%" }}>
+              <LogsSearchPanel
+                searchText={searchText}
+                onSearchTextChange={setSearchText}
+                filters={filters}
+                onRemoveFilter={removeFilter}
+                onClearFilters={clearFilters}
+                effectiveQuery={effectiveQuery}
+                onRawQueryChange={setRawQuery}
+                onCreateEditor={setQueryContextView}
+                queryEditorExtensions={queryEditorExtensions}
+                themeMode={themeMode}
+                searchLoading={loading}
+                onSearch={runLogsQuery}
+                searchResultCount={result ? result.values.length : null}
+                collapsed={logsSearchCollapsed}
+                onToggleCollapsed={() => setLogsSearchCollapsed(!logsSearchCollapsed)}
               />
-              {result.columns.some((col) => col.name === TRACE_ID_FIELD) &&
-                result.values.length > 0 && (
-                  <Box sx={{ display: "flex", gap: 1, p: 1, borderTop: 1, borderColor: "divider" }}>
-                    <Button
-                      size="small"
-                      variant="text"
-                      startIcon={<OpenInNewIcon />}
-                      onClick={() => {
-                        const traceColIdx = result.columns.findIndex(
-                          (c) => c.name === TRACE_ID_FIELD,
-                        );
-                        const traceValue =
-                          traceColIdx >= 0 ? result.values[0]?.[traceColIdx] : null;
-                        if (traceValue != null) {
-                          handleTracePivot(String(traceValue));
-                        }
-                      }}
-                    >
-                      Open first trace in Query Lab
-                    </Button>
-                  </Box>
-                )}
-            </>
-          )}
-
-          {result && viewMode === "chart" && (
-            <Box sx={{ p: 2 }}>
-              <Typography variant="body2" sx={{ mb: 1 }}>
-                Chart view uses the shared query and highlights anomaly buckets from the timeline.
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                Click a timeline anomaly marker to append a `CHANGE_POINT` drill-in query.
-              </Typography>
             </Box>
-          )}
+          </InsightSlot>
+        </Box>
 
-          {result && viewMode === "patterns" && (
-            <List dense disablePadding>
-              {patternGroups.slice(0, 50).map((group) => (
-                <ListItem key={group.pattern} disablePadding>
-                  <ListItemButton
-                    onClick={() => {
-                      setSearchText(`"${group.sample}"`);
-                      setViewMode("lines");
-                    }}
-                  >
-                    <ListItemText
-                      primary={
-                        <Typography variant="caption" noWrap title={group.pattern}>
-                          {group.pattern}
-                        </Typography>
-                      }
-                      secondary={`${group.count.toLocaleString()} matching rows`}
-                    />
-                  </ListItemButton>
-                </ListItem>
-              ))}
-              {patternGroups.length === 0 && (
-                <Box sx={{ p: 2 }}>
+        {/* View mode toggle */}
+        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+          <ToggleButtonGroup
+            size="small"
+            color="primary"
+            value={viewMode}
+            exclusive
+            onChange={(_, next: LogsViewMode | null) => {
+              if (next) setViewMode(next);
+            }}
+            aria-label="Logs view mode"
+          >
+            <ToggleButton value="lines">Lines</ToggleButton>
+            <ToggleButton value="chart">Chart</ToggleButton>
+            <ToggleButton value="patterns">Patterns</ToggleButton>
+          </ToggleButtonGroup>
+        </Stack>
+
+        {error && <Alert severity="error">{error}</Alert>}
+
+        <Box sx={{ flex: 1, width: "100%", minHeight: 0 }}>
+          <InsightSlot slotId={LOGS_INSIGHT_SLOT_IDS.logsResults}>
+            <Box
+              sx={{ display: "flex", flex: 1, gap: 1, width: "100%", height: "100%", minHeight: 0 }}
+            >
+              <Paper
+                variant="outlined"
+                sx={{
+                  display: { lg: "block", xs: "none" },
+                  flexShrink: 0,
+                  width: 280,
+                  overflow: "hidden",
+                }}
+              >
+                <Box sx={{ p: 1 }}>
+                  <Typography variant="subtitle1">Field Filters</Typography>
                   <Typography variant="caption" color="text.secondary">
-                    No message patterns available for clustering.
+                    Click + to include or - to exclude
                   </Typography>
                 </Box>
-              )}
-            </List>
-          )}
-        </Paper>
+                <Divider />
+                {fieldValuesLoading && <LinearProgress />}
+                {fieldValuesError && (
+                  <Typography variant="caption" color="error" sx={{ display: "block", p: 1.5 }}>
+                    Failed to load field values.
+                  </Typography>
+                )}
+                {!fieldValuesLoading && !fieldValuesError && (
+                  <List dense disablePadding>
+                    {sidebarFields.map((field) => [
+                      <ListSubheader
+                        key={`${field}-header`}
+                        disableSticky
+                        sx={{ py: 0.5, lineHeight: "normal" }}
+                      >
+                        <Typography variant="caption">{field}</Typography>
+                      </ListSubheader>,
+                      ...(fieldValues[field] ?? extractedFieldValues[field] ?? []).map((entry) => (
+                        <ListItem key={`${field}-${entry.value}`} disablePadding>
+                          <Stack
+                            direction="row"
+                            spacing={0.5}
+                            sx={{ alignItems: "center", width: "100%", pl: 2, py: 0.5 }}
+                          >
+                            <ListItemText
+                              primary={
+                                <Typography variant="caption" noWrap title={entry.value}>
+                                  {entry.value}
+                                </Typography>
+                              }
+                              secondary={`${entry.count.toLocaleString()} docs`}
+                            />
+                            <Stack direction="row" spacing={0.5}>
+                              <Button
+                                size="small"
+                                variant="text"
+                                aria-label={`Include ${field} ${entry.value}`}
+                                onClick={() => handleCellFilter(field, entry.value, false)}
+                              >
+                                <AddIcon fontSize="inherit" />
+                              </Button>
+                              <Button
+                                size="small"
+                                variant="text"
+                                aria-label={`Exclude ${field} ${entry.value}`}
+                                onClick={() => handleCellFilter(field, entry.value, true)}
+                              >
+                                <RemoveIcon fontSize="inherit" />
+                              </Button>
+                            </Stack>
+                          </Stack>
+                        </ListItem>
+                      )),
+                      <Divider key={`${field}-divider`} component="li" aria-hidden />,
+                    ])}
+                  </List>
+                )}
+              </Paper>
+
+              <Paper
+                variant="outlined"
+                tabIndex={0}
+                role="region"
+                aria-label="Log results"
+                sx={{ flex: 1, minWidth: 0, overflow: "auto" }}
+              >
+                <Box sx={{ p: 1, borderBottom: 1, borderColor: "divider" }}>
+                  <Typography variant="caption" color="text.secondary">
+                    {result
+                      ? `${result.values.length.toLocaleString()} rows returned`
+                      : "Run a query to populate results"}{" "}
+                    — timeline and views share the visible ES|QL query above.
+                  </Typography>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      gap: 0.5,
+                      alignItems: "end",
+                      minHeight: 64,
+                      overflowX: "auto",
+                      mt: 1,
+                    }}
+                  >
+                    {histogramBuckets.length === 0 && (
+                      <Typography variant="caption" color="text.secondary">
+                        No histogram buckets yet.
+                      </Typography>
+                    )}
+                    {histogramBuckets.map((bucket) => (
+                      <Button
+                        key={bucket.start}
+                        size="small"
+                        variant={bucket.anomaly ? "contained" : "outlined"}
+                        color={bucket.anomaly ? "warning" : "inherit"}
+                        disabled={!bucket.anomaly}
+                        aria-label={`${bucket.anomaly ? "Drill into anomaly" : "Bucket"}: ${new Date(bucket.start).toLocaleTimeString()} – ${bucket.count.toLocaleString()} events`}
+                        onClick={() => handleAnomalyDrillIn(bucket.start, bucket.end)}
+                        sx={{
+                          minWidth: 12,
+                          height: Math.max(12, Math.min(52, bucket.count * 2)),
+                          py: 0,
+                          px: 0.5,
+                        }}
+                        title={`${new Date(bucket.start).toLocaleTimeString()} • ${bucket.count.toLocaleString()} events${bucket.anomaly ? " • anomaly" : ""}`}
+                      />
+                    ))}
+                  </Box>
+                  <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
+                    <Button size="small" variant="text" onClick={runCategorizeQuery}>
+                      Run CATEGORIZE patterns
+                    </Button>
+                  </Stack>
+                </Box>
+
+                {!result && !loading && (
+                  <EmptyState
+                    heading="No logs loaded"
+                    description="Run the current query to explore logs and click values to add filters."
+                  />
+                )}
+
+                {result && viewMode === "lines" && (
+                  <>
+                    <DataTable
+                      data={result}
+                      onCellClick={({ columnName, value }) => {
+                        if (columnName === TRACE_ID_FIELD) {
+                          handleTracePivot(value);
+                          return;
+                        }
+                        if (columnName === MESSAGE_FIELD) {
+                          setExtractSource(value);
+                          setExtractMethod("DISSECT");
+                          setExtractPattern("%{extracted.value}");
+                          setExtractDialogOpen(true);
+                          return;
+                        }
+                        handleCellFilter(columnName, value, false);
+                      }}
+                    />
+                    {result.columns.some((col) => col.name === TRACE_ID_FIELD) &&
+                      result.values.length > 0 && (
+                        <Box
+                          sx={{
+                            display: "flex",
+                            gap: 1,
+                            p: 1,
+                            borderTop: 1,
+                            borderColor: "divider",
+                          }}
+                        >
+                          <Button
+                            size="small"
+                            variant="text"
+                            startIcon={<OpenInNewIcon />}
+                            onClick={() => {
+                              const traceColIdx = result.columns.findIndex(
+                                (c) => c.name === TRACE_ID_FIELD,
+                              );
+                              const traceValue =
+                                traceColIdx >= 0 ? result.values[0]?.[traceColIdx] : null;
+                              if (traceValue != null) {
+                                handleTracePivot(String(traceValue));
+                              }
+                            }}
+                          >
+                            Open first trace in Query Lab
+                          </Button>
+                        </Box>
+                      )}
+                  </>
+                )}
+
+                {result && viewMode === "chart" && (
+                  <Box sx={{ p: 2 }}>
+                    <Typography variant="body2" sx={{ mb: 1 }}>
+                      Chart view uses the shared query and highlights anomaly buckets from the
+                      timeline.
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Click a timeline anomaly marker to append a `CHANGE_POINT` drill-in query.
+                    </Typography>
+                  </Box>
+                )}
+
+                {result && viewMode === "patterns" && (
+                  <List dense disablePadding>
+                    {patternGroups.slice(0, 50).map((group) => (
+                      <ListItem key={group.pattern} disablePadding>
+                        <ListItemButton
+                          onClick={() => {
+                            setSearchText(`"${group.sample}"`);
+                            setViewMode("lines");
+                          }}
+                        >
+                          <ListItemText
+                            primary={
+                              <Typography variant="caption" noWrap title={group.pattern}>
+                                {group.pattern}
+                              </Typography>
+                            }
+                            secondary={`${group.count.toLocaleString()} matching rows`}
+                          />
+                        </ListItemButton>
+                      </ListItem>
+                    ))}
+                    {patternGroups.length === 0 && (
+                      <Box sx={{ p: 2 }}>
+                        <Typography variant="caption" color="text.secondary">
+                          No message patterns available for clustering.
+                        </Typography>
+                      </Box>
+                    )}
+                  </List>
+                )}
+              </Paper>
+            </Box>
+          </InsightSlot>
+        </Box>
+        <Dialog open={extractDialogOpen} onClose={() => setExtractDialogOpen(false)} fullWidth>
+          <DialogTitle>Extract fields from message</DialogTitle>
+          <DialogContent>
+            <Typography variant="caption" color="text.secondary">
+              Selected message: {extractSource.slice(0, 240)}
+            </Typography>
+            <FormControl fullWidth size="small" sx={{ mt: 1 }}>
+              <InputLabel id="logs-extract-method-label">Method</InputLabel>
+              <Select
+                labelId="logs-extract-method-label"
+                label="Method"
+                value={extractMethod}
+                onChange={(event) => {
+                  const method = event.target.value as ExtractMethod;
+                  setExtractMethod(method);
+                  setExtractPattern(
+                    method === "DISSECT" ? "%{extracted.value}" : "%{GREEDYDATA:extracted.value}",
+                  );
+                }}
+              >
+                <MenuItem value="DISSECT">DISSECT</MenuItem>
+                <MenuItem value="GROK">GROK</MenuItem>
+              </Select>
+            </FormControl>
+            <TextField
+              size="small"
+              fullWidth
+              label="Extraction pattern"
+              sx={{ mt: 1 }}
+              value={extractPattern}
+              onChange={(event) => setExtractPattern(event.target.value)}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button size="small" onClick={() => setExtractDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button size="small" variant="contained" onClick={handleApplyExtraction}>
+              Apply {extractMethod}
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Box>
-      <Dialog open={extractDialogOpen} onClose={() => setExtractDialogOpen(false)} fullWidth>
-        <DialogTitle>Extract fields from message</DialogTitle>
-        <DialogContent>
-          <Typography variant="caption" color="text.secondary">
-            Selected message: {extractSource.slice(0, 240)}
-          </Typography>
-          <FormControl fullWidth size="small" sx={{ mt: 1 }}>
-            <InputLabel id="logs-extract-method-label">Method</InputLabel>
-            <Select
-              labelId="logs-extract-method-label"
-              label="Method"
-              value={extractMethod}
-              onChange={(event) => {
-                const method = event.target.value as ExtractMethod;
-                setExtractMethod(method);
-                setExtractPattern(
-                  method === "DISSECT" ? "%{extracted.value}" : "%{GREEDYDATA:extracted.value}",
-                );
-              }}
-            >
-              <MenuItem value="DISSECT">DISSECT</MenuItem>
-              <MenuItem value="GROK">GROK</MenuItem>
-            </Select>
-          </FormControl>
-          <TextField
-            size="small"
-            fullWidth
-            label="Extraction pattern"
-            sx={{ mt: 1 }}
-            value={extractPattern}
-            onChange={(event) => setExtractPattern(event.target.value)}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button size="small" onClick={() => setExtractDialogOpen(false)}>
-            Cancel
-          </Button>
-          <Button size="small" variant="contained" onClick={handleApplyExtraction}>
-            Apply {extractMethod}
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+    </InsightSlotProvider>
   );
 }

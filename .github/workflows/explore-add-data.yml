@@ -20,254 +20,276 @@ jobs:
         make serve-explore
       additional-instructions: |
         You are the **Add Data Wizard Explorer** — a creative QA tester who
-        owns the 5-step EDOT Collector onboarding wizard. Your job is to
-        exercise the wizard UI thoroughly: technology selection, platform
-        switching, endpoint type toggling, command generation, API key flow,
-        ingestion verification UI, and step 5 CTAs.
+        owns the Add Data onboarding wizard. Your job is to exercise the
+        wizard UI thoroughly: experience tile navigation, technology selection,
+        environment configuration, command generation, API key flow, ingestion
+        verification UI, and success-step CTAs.
 
         **You are NOT installing any collector.** The collector commands are
         shell scripts — do not run them. Your job is to verify the wizard
         generates correct, readable, well-formatted commands and that all
         wizard UI states work correctly.
 
-        The wizard has **19 technologies** across four guide types:
+        ## Wizard structure
 
-        - **EDOT Collector** (5 techs — these use the 5-platform-tab flow):
-          VPC Flow Logs, Kubernetes, Docker, Linux Host, Windows Host
+        The wizard is a **3-step flow**:
+
+        1. **What are you monitoring?** — Experience tile selection → technology
+           selection
+        2. **Set up and verify** — Collapsible accordion sections for
+           environment configuration, install commands, credentials, and
+           ingestion verification
+        3. **Explore your data + next steps** — Success CTAs
+
+        There is **no step progress bar**. Navigation between steps uses
+        "Continue" and "Back" buttons at the bottom of each step.
+
+        The page header shows "Add Data" with the subtitle "Set up a new
+        telemetry source". There is no EDOT Collector version chip in the
+        header — the cluster version is pre-filled into install commands
+        instead.
+
+        ## Technologies
+
+        The wizard has **20 technologies** across five guided experiences:
+
+        - **Cloud Providers** (2 techs): AWS, VPC Flow Logs
+        - **Kubernetes** (2 techs): Kubernetes, Docker
+        - **Servers, Desktops & Laptops** (3 techs): Linux Host, Windows
+          Host, macOS Host
+        - **SaaS & Databases** (5 techs): Nginx, PostgreSQL, Redis, MySQL,
+          MongoDB
+        - **Advanced** (8 techs — collapsed accordion): Java, Python, Node.js,
+          Go, .NET, Ruby, PHP (APM agents), Fluent Bit
+
+        Each technology maps to one of five guide types:
+
+        - **EDOT Collector** (7 techs — platform-tab flow with endpoint type):
+          VPC Flow Logs, Kubernetes, Docker, Linux Host, Windows Host, macOS
+          Host
         - **OTel Receiver** (5 techs — receiver-configuration flow):
           Nginx, PostgreSQL, Redis, MySQL, MongoDB
-        - **APM SDK** (7 techs — instrumentation flow):
+        - **APM** (7 techs — instrumentation flow):
           Java, Python, Node.js, Go, .NET, Ruby, PHP
-        - **AWS** (1 tech — cloud-deploy flow): AWS
+        - **AWS Cloud Deploy** (1 tech): AWS
+        - **Fluent Bit** (1 tech): Fluent Bit
 
-        For EDOT Collector technologies the wizard also has:
+        For EDOT Collector technologies the wizard has:
         - **5 platform tabs**: Kubernetes, Docker, Linux, macOS, Windows
         - **2 endpoint types**: Elasticsearch (direct), Managed OTLP
-
-        All guide types share the same **5 steps**: What are you monitoring →
-        Select environment → Install and configure → Validate data receipt →
-        Explore your data
 
         Each run, pick a **different technology** as your primary path and
         explore **different interactions** along the way. Do NOT always pick
         Kubernetes. Rotate through Docker, Linux Host, Windows Host, VPC Flow
-        Logs, Nginx, PostgreSQL, Redis, Java APM, Python APM, and others
-        across runs.
+        Logs, Nginx, PostgreSQL, Redis, Java APM, Python APM, macOS Host,
+        Fluent Bit, and others across runs.
 
         ---
 
         ## Step 1: What are you monitoring?
 
         Navigate to Add Data. You should see:
-        - A page header with "Add Data" title and an EDOT Collector version chip
-        - A step progress bar showing 5 steps (Step 1 active, others outlined)
-        - Possibly an info banner if the cluster already has telemetry data streams
+        - A page header with "Add Data" title and "Set up a new telemetry
+          source" subtitle (no version chip, no step progress bar)
+        - A section titled "What are you monitoring?" with a subtitle:
+          "Pick a technology to tailor environment choices, setup commands,
+          and verification checks."
+        - A search box ("Search integrations...")
+        - Four large **experience tiles** in a 2×2 grid:
+          "Cloud Providers", "Kubernetes", "Servers, Desktops & Laptops",
+          "SaaS & Databases"
+        - An **Advanced** collapsible accordion below the tiles
+        - A "Continue" button (disabled until a technology is selected)
 
         Interactions to try on any given run:
 
         - **Search filtering**: Type a partial technology name (e.g., "dock",
-          "linux", "post", "ngin") into the search field. Does the card list
-          filter in real time? Clear the search — does the full list return?
-        - **Category filter tabs**: Click each category tab — "Cloud",
-          "Containers", "Databases", "Applications", "Operating Systems",
-          "Network". Does the technology list update? Does "All" restore the
-          full list?
-        - **Recommended technologies section**: Kubernetes, Docker, and
-          Linux Host appear in a "Recommended for you" section with button
-          cards. Click one — does the button change from "Choose" to
-          "Selected"? Does the main list also show it as selected?
-        - **Selecting from the full list**: Click "Choose" on a non-recommended
-          technology (e.g., Windows Host, PostgreSQL, Nginx). Does it become
-          selected? Does selecting a new tech deselect the previous one?
-        - **Continue button disabled**: Without selecting anything, is the
-          "Continue to step 2" button disabled? Select a tech and verify it
+          "linux", "post", "ngin") into the search box. The experience tiles
+          should disappear and a filtered list of technology cards should
+          appear. Clear the search — the tiles should return.
+        - **Experience tile navigation**: Click an experience tile (e.g.,
+          "SaaS & Databases"). The tiles disappear, replaced by the
+          technologies in that experience. A back button with the experience
+          name appears at the top left. Click it to return to the tiles.
+        - **Advanced accordion**: Click the "Advanced" section to expand it.
+          APM languages (Java, Python, Node.js, etc.) and Fluent Bit should
+          appear. Collapse it again.
+        - **Selecting a technology**: Click a technology card. It should
+          become visually selected. Selecting a different technology should
+          deselect the previous one.
+        - **Continue button disabled**: Without selecting anything, the
+          "Continue" button should be disabled. Select a tech and verify it
           becomes enabled.
-        - **Existing signals banner**: If the cluster already has logs, metrics,
-          or traces data streams, an info alert should appear at the top
-          (e.g., "You already have metrics and traces data."). Is it readable?
-          Does it name the correct signal types?
-        - **Step progress chips**: Verify Step 1 chip is filled/primary,
-          Steps 2-5 are outlined/default.
 
-        Pick a technology and click "Continue to step 2".
+        Pick a technology and click "Continue".
 
         ---
 
-        ## Step 2: Select your environment
+        ## Step 2: Set up and verify
+
+        This is the richest step. It consolidates environment selection,
+        install commands, credentials, and ingestion verification into a
+        single page with collapsible accordion sections.
 
         You should see:
-        - A description line that mentions the expected signals for the chosen
+        - A title "Set up and verify"
+        - A description mentioning the expected signals for the chosen
           technology (e.g., "Kubernetes can emit metrics, logs and traces.")
-        - An "Endpoint type" toggle: Elasticsearch | Managed OTLP
-        - 5 platform tabs: Kubernetes, Docker, Linux, macOS, Windows
-        - Back and "Continue to step 3" buttons
+        - **Collapsible section 1** — guide-specific configuration
+          (label varies by guide type, e.g., "Select your environment" for
+          EDOT Collector, "Configure receiver" for OTel Receiver, "Select
+          language" for APM, "Select AWS services" for AWS, "Configure
+          output" for Fluent Bit)
+        - **Collapsible section 2** — install commands + collector credentials
+          (label varies, e.g., "Install and configure" for EDOT Collector,
+          "Instrument your app" for APM, "Deploy stack" for AWS, "Install
+          Fluent Bit" for Fluent Bit)
+        - **Verification panel** — inline "Check now" verification (not
+          collapsible)
+        - "Back" and "Continue" buttons
+
+        ### Section 1: Environment configuration (EDOT Collector guide type)
+
+        For EDOT Collector technologies, the configure section contains:
+        - **Endpoint type toggle**: Elasticsearch | Managed OTLP
+        - **Platform tabs**: Kubernetes, Docker, Linux, macOS, Windows
 
         Interactions to try:
 
-        - **Endpoint type toggle**: Click "Managed OTLP". Does an alert appear
-          showing the OTLP endpoint probe status ("Checking OTLP endpoint
-          availability at…" or "OTLP endpoint verified at…")? Switch back to
-          "Elasticsearch". Does the alert disappear?
-        - **Kubernetes + Managed OTLP notice**: If you selected Kubernetes as
-          technology and switch to Managed OTLP endpoint, does a notice appear
-          saying the Kubernetes quickstart only supports Elasticsearch output?
-          (This notice appears in the Step 3 command block, not Step 2.)
-        - **Platform tab switching**: Click through all 5 platform tabs —
-          Kubernetes, Docker, Linux, macOS, Windows. The tab selection should
-          update visually. The active tab should be visually distinct.
-        - **Step progress chips**: Step 1 should now show green/success
-          (completed). Step 2 should be filled/primary.
-        - **Back button**: Click Back. Does it return to Step 1 with the
-          technology still selected?
+        - **Endpoint type toggle**: Click "Managed OTLP". An alert should
+          show the OTLP endpoint probe status. Switch back to
+          "Elasticsearch". The alert should disappear.
+        - **Platform tab switching**: Click through the platform tabs. The
+          active tab should be visually distinct.
 
-        Re-select your technology if needed and proceed to Step 3.
+        For other guide types, the configure section shows guide-specific
+        controls (receiver fields, AWS target selection, APM language
+        selection, Fluent Bit output mode).
 
-        ---
+        ### Section 2: Install commands + credentials
 
-        ## Step 3: Install and configure
+        For EDOT Collector technologies, the install section contains:
+        - Numbered command step blocks with per-step "Copy" buttons
+        - A "Copy all" button and "Open official docs" link
+        - A "Collector credentials" sub-section
 
-        This is the richest step. You should see:
-        - A title and description mentioning the platform and technology
-        - A header row with "Copy all" button and "Open official docs" link
-        - Numbered command step blocks, each with a title chip, step title,
-          per-step "Copy" button, and a code block
-        - An info alert describing what has been pre-filled
-        - A "Collector credentials" section with "Generate API key" button
-        - Back and "Continue to step 4" buttons
+        **Command content verification** — try these combinations:
 
-        **Command content verification** — try these combinations and check
-        that the command content actually changes:
-
-        - Switch between **Elasticsearch** and **Managed OTLP** endpoint type.
-          For Docker/Linux/macOS/Windows, the command should switch between
+        - Switch between **Elasticsearch** and **Managed OTLP** endpoint type
+          (collapse/expand or use the configure section). For
+          Docker/Linux/macOS/Windows, the command should switch between
           `ELASTIC_ENDPOINT` / `ELASTIC_API_KEY` env vars (Elasticsearch) and
           `OTEL_EXPORTER_OTLP_ENDPOINT` / `OTEL_EXPORTER_OTLP_HEADERS` env
-          vars (Managed OTLP). For Kubernetes, a notice should appear saying
-          Managed OTLP is not supported and the command stays Elasticsearch.
-        - Switch between **platform tabs** while on Step 3 (go Back to Step 2,
-          change platform, return to Step 3). The command should change
-          completely — Kubernetes shows a `helm` command, Docker shows
-          `docker compose up`, Linux shows `curl` + `tar` + `sudo ./otelcol`,
-          macOS shows a similar `curl` command with `darwin-aarch64` in the
-          filename, Windows shows PowerShell `Invoke-WebRequest`.
-        - The **EDOT Collector version** should be pre-filled in the command
-          (e.g., `elastic-agent-8.17.0-linux-x86_64.tar.gz`). Verify the
-          version chip in the page header matches the version in the command.
+          vars (Managed OTLP).
+        - Switch between **platform tabs**. The command should change
+          completely — Kubernetes shows `helm`, Docker shows
+          `docker compose up`, Linux shows `curl` + `tar`, macOS shows a
+          similar `curl` with `darwin-aarch64`, Windows shows PowerShell
+          `Invoke-WebRequest`.
+        - The **cluster version** should be pre-filled in the commands.
 
         **Copy button interactions**:
-        - Click "Copy all" — the button text should briefly change to "Copied!"
-          then revert.
-        - Click the "Copy" button on each individual step block — each should
-          show "Copied!" feedback independently.
+        - Click "Copy all" — the button text should briefly change to
+          "Copied!" then revert.
+        - Click per-step "Copy" buttons — each should show "Copied!" feedback
+          independently.
 
-        **API key generation**:
-        - Click "Generate API key". A loading spinner should appear briefly,
-          then a Base64 API key value should appear in a read-only text field.
-        - A warning alert should appear: "Copy this API key now. You will not
-          be able to read it again after leaving this page."
-        - The copy button next to the API key field should work — click it and
-          verify "Copied" feedback.
-        - After generating a key, take a `browser_snapshot` of the command
-          block. The `<YOUR_API_KEY>` placeholder should now be replaced with
-          the actual encoded key value.
-        - The info alert should update to say something like "Your generated
-          API key and Elasticsearch endpoint have been pre-filled in the
-          command above."
+        **API key generation** (capabilities-gated):
+        - If the connected user **has** API key creation privileges:
+          A "Generate API key" button appears. Click it — a loading spinner
+          should appear briefly, then a Base64 API key value should appear in
+          a read-only text field. A warning alert should appear: "Copy this
+          API key now. You will not be able to read it again after leaving
+          this page." The copy button should work. The `<YOUR_API_KEY>`
+          placeholder in the command should be replaced with the actual key.
+        - If the connected user **does not** have API key creation privileges:
+          A warning alert appears: "Your credentials do not include API key
+          creation privileges. Generate a key manually via Create API key
+          endpoint or ask an administrator to provision one for collector
+          onboarding." This is expected — do NOT report it as a bug.
 
-        **"Open official docs" link**:
-        - Verify the link exists and has an external icon. Note the href — it
-          should point to elastic.co docs for the current platform's quickstart.
-          (Do not follow the link in the browser; just verify it exists and
-          has the correct domain.)
+        ### Verification panel
 
-        ---
-
-        ## Step 4: Validate data receipt
-
-        You should see:
-        - A description mentioning the expected signals for the chosen technology
-          (e.g., "For Kubernetes, we expect to receive metrics, logs and traces.")
+        Below the collapsible sections, the verification panel shows:
+        - A description: "For {technology}, we expect to receive
+          {signalExpectation}."
         - A "Check now" button with a checkmark icon
-        - Back and "Continue to step 5" buttons
 
         Interactions to try:
 
         - **Click "Check now"**: The button should show a spinner and change
-          to "Checking…". A pulsing info icon and "Listening for data…" text
-          should appear. Since the collector is not actually running, the
-          check will eventually show "No telemetry data streams found yet."
-          with a troubleshooting link. Verify this is displayed clearly.
-        - **Auto-polling**: If you generated an API key in Step 3, polling
-          may have started automatically. You should see the "Listening for
-          data…" indicator without clicking "Check now". This is expected
-          behavior — verify the UI shows it cleanly.
-        - **"Check now" disabled while polling**: While the pulsing indicator
-          is visible, verify the "Check now" button is disabled (you cannot
-          trigger a second check).
-        - **Troubleshooting link**: In the "no data found" alert, there should
-          be a link to elastic.co observability docs. Verify it exists.
-        - **Continue without data**: You do NOT need data to proceed. Click
-          "Continue to step 5" even without found signals — the wizard should
-          advance.
-        - **Step progress chips**: Steps 1-3 should be green/success.
-          Step 4 should be filled/primary.
+          to "Checking...". A pulsing info icon and "Listening for data..."
+          text should appear. Since the collector is not actually running, an
+          info alert should appear: "No new data detected yet. Make sure the
+          collector is running — we'll keep checking automatically." with a
+          troubleshooting docs link.
+        - **Auto-polling**: If you generated an API key, polling may have
+          started automatically. The "Listening for data..." indicator should
+          appear without clicking "Check now".
+        - **"Check now" disabled while capturing baseline**: During baseline
+          capture, the button is disabled.
+        - **Troubleshooting link**: The "no data" alert should contain a link
+          to elastic.co observability docs. Verify it exists.
+
+        Click "Continue" to proceed to the success step.
 
         ---
 
-        ## Step 5: Explore your data + next steps
+        ## Step 3: Explore your data + next steps
 
         You should see:
-        - A success description for the chosen technology
-        - Possibly a green "Ready signals" alert if signals were found
-        - A row of CTA buttons whose content depends on which signals were
-          found (or which signals the technology expects)
-        - Expected CTAs: "Open Metrics", "Open Traces", or "Open Query Lab"
-          (depending on technology), "Open Dashboards", "Set up alerting",
-          "Add another source"
-        - A Back button
+        - A title "Explore your data + next steps"
+        - A description: "{technology} is configured. Choose a next action to
+          explore dashboards, set up alerting, or onboard another source."
+        - A green "Ready signals" alert if signals were found (or expected
+          signals if none were found)
+        - A row of CTA buttons. Signal-specific CTAs (e.g., "Open traces",
+          "Explore metrics", "Open Query Lab") use contained/primary style.
+          Utility CTAs ("Open Dashboards", "Set up alerting", "Add another
+          source") use outlined style.
+        - A "Back" button
 
         Interactions to try:
 
         - **CTA buttons presence**: Count the CTA buttons. A technology that
           emits metrics + logs + traces should have signal CTAs for each.
         - **"Add another source"**: Click this button. It should reset the
-          wizard back to Step 1. The step progress chips should all revert to
-          outlined/default except Step 1 which should be filled/primary.
-          The technology selection should be cleared.
-        - **Navigate via signal CTAs**: After going back to Step 5 (complete
-          the wizard again quickly), click "Open Traces" (if available). Does
-          it navigate to the Traces page? Use the Back button in the browser
+          wizard back to Step 1 with experience tiles visible and no
+          technology selected.
+        - **Navigate via signal CTAs**: Click "Open traces" (if available).
+          Does it navigate to the Traces page? Use the browser Back button
           to return. Try "Open Dashboards" — does it navigate to Dashboards?
-        - **Step progress chips**: All 5 steps should show as completed
-          (green/success) or Step 5 should be filled/primary.
 
         ---
 
         ## Cross-cutting scenarios (try on some runs)
 
-        - **Back navigation preserves state**: Go to Step 3, then Back to
-          Step 2. Is the platform still selected? Is the endpoint type still
-          the same? Go Back to Step 1 — is the technology still highlighted
-          as selected?
-        - **Full run with Docker**: Select Docker in Step 1 → Elasticsearch
-          endpoint in Step 2 → Linux platform tab → verify the docker-compose
-          command appears in Step 3 → generate API key → proceed to Step 4 →
-          proceed to Step 5.
-        - **Full run with Linux Host**: Select Linux Host → Linux platform →
-          Managed OTLP endpoint → verify the `curl` + `OTEL_EXPORTER_OTLP_*`
-          command appears → generate API key → proceed through.
-        - **Full run with PostgreSQL**: Select PostgreSQL (Databases category)
-          → Step 2 should mention "metrics and logs" as expected signals →
-          Step 3 shows a Linux-compatible command → verify signal expectation
-          text in Step 4 says "metrics and logs".
-        - **Full run with Windows Host**: Select Windows Host → Windows
-          platform tab → verify the PowerShell `Invoke-WebRequest` command
-          appears in Step 3.
-        - **Full run with Nginx**: Select Nginx (Applications category) →
-          check the signal expectation mentions "logs and metrics".
-        - **Category filter then select**: Filter by "Databases", click
-          PostgreSQL, then switch category to "All" — is PostgreSQL still
-          selected? Proceed through the wizard normally.
+        - **Back navigation preserves state**: From Step 2, click "Back" to
+          Step 1. Is the technology still selected? Click "Continue" again —
+          are the environment and endpoint type preserved?
+        - **Full run with Docker**: Click "Kubernetes" experience tile →
+          select Docker → Continue → verify docker-compose command in install
+          section → check verification panel → Continue → verify success CTAs.
+        - **Full run with Linux Host**: Click "Servers, Desktops & Laptops"
+          tile → select Linux Host → Continue → verify `curl` + `tar` command
+          → try Managed OTLP endpoint → verify env vars change → Continue →
+          success.
+        - **Full run with PostgreSQL**: Click "SaaS & Databases" tile →
+          select PostgreSQL → Continue → verify "Configure receiver" section
+          appears → check signal expectation mentions "logs and metrics" →
+          Continue → success.
+        - **Full run with Windows Host**: Click "Servers, Desktops & Laptops"
+          tile → select Windows Host → Continue → verify PowerShell
+          `Invoke-WebRequest` command → Continue → success.
+        - **Full run with Nginx**: Click "SaaS & Databases" tile → select
+          Nginx → Continue → check signal expectation mentions "logs and
+          metrics" → Continue → success.
+        - **Full run with Java APM**: Expand "Advanced" accordion → select
+          Java → Continue → verify "Select language" section → check
+          "Instrument your app" install section → Continue → success.
+        - **Search then select**: Search for "redis", select Redis from
+          results, clear search — verify Redis remains selected. Proceed
+          through the wizard.
 
         ---
 
@@ -289,28 +311,33 @@ jobs:
 
         On every run, check these visual quality dimensions:
 
-        1. **Step progress chip heights**: Use `browser_console_execute` to
-           measure the bounding rect heights of the 5 step progress chips.
-           They should all be the same height (within 4px).
+        1. **Experience tile layout**: In Step 1, take a screenshot. Are the
+           four experience tiles in a clean 2×2 grid? Is there sufficient
+           spacing? Are icons, titles, and descriptions readable?
 
-        2. **Technology card layout**: In Step 1, take a screenshot. Are the
-           technology cards in the full list laid out as clean rows? Is there
-           sufficient spacing between the technology name, category label, and
+        2. **Technology card layout**: After clicking an experience tile, take
+           a screenshot. Are the technology cards laid out as clean rows? Is
+           there sufficient spacing between name, experience label, and
            summary text?
 
-        3. **Code block readability in dark mode**: Switch to dark mode before
-           Step 3. Take a screenshot of the command block. Is the monospace
-           text readable? Does the code block background contrast with the
-           paper background? Are the step number chips visible?
+        3. **Collapsible section headers**: In Step 2, verify the accordion
+           section headers ("Select your environment", "Install and
+           configure", etc.) are clearly labeled and the expand/collapse
+           icons are visible.
 
-        4. **API key warning alert**: After generating an API key, is the
+        4. **Code block readability in dark mode**: Switch to dark mode
+           before viewing Step 2 install commands. Take a screenshot. Is
+           the monospace text readable? Does the code block background
+           contrast with the paper background?
+
+        5. **API key warning alert**: If you can generate an API key, is the
            orange/yellow warning alert ("Copy this API key now") visually
-           distinct and readable in both light and dark mode?
+           distinct and readable?
 
-        5. **CTA button row in Step 5**: Take a screenshot of the Step 5
-           CTA buttons. Are they consistently sized? Is the primary CTA
-           (e.g., "Open Traces") visually distinct from the outlined secondary
-           CTAs (e.g., "Open Dashboards", "Set up alerting")?
+        6. **CTA button row in Step 3**: Take a screenshot of the success
+           step CTA buttons. Are they consistently sized? Is the primary CTA
+           (e.g., "Open traces") visually distinct from outlined secondary
+           CTAs?
 
         ---
 

@@ -10,6 +10,7 @@ export const PAGE_NAV_BUTTONS = {
   logs: "Logs",
   metrics: "Metrics",
   services: "Services",
+  kubernetes: "Kubernetes",
   traces: "Traces",
   console: "Console",
   users: "Users",
@@ -17,4 +18,6 @@ export const PAGE_NAV_BUTTONS = {
   roles: "Roles",
   dashboards: "Dashboards",
   fleet: "Fleet",
+  health: "Health",
+  docs: "Docs",
 };

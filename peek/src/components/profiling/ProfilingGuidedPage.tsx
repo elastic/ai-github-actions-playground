@@ -4,15 +4,17 @@ import { useShallow } from "zustand/react/shallow";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import LinearProgress from "@mui/material/LinearProgress";
+import Paper from "@mui/material/Paper";
 import { parseAsString, useQueryState } from "nuqs";
 
 import { PAGE_MANIFEST } from "../../routes/manifest";
 import { useConnectionStore } from "../../store/useConnectionStore";
-import { useQueryStore } from "../../store/useQueryStore";
 import { usePageFiltersStore } from "../../store/usePageFiltersStore";
 import { EMPTY_PROFILING_FILTERS } from "../../types/pageFilters";
+import EmptyState from "../EmptyState";
 
 import { PROFILING_DIMENSION_LABELS, type ProfilingFocusDimension } from "./profilingQueryBuilder";
+import { isMissingProfilingIndex } from "./profilingUtils";
 import ProfilingFocusPicker from "./ProfilingFocusPicker";
 import ProfilingFocusHeader from "./ProfilingFocusHeader";
 import ProfilingValuePicker from "./ProfilingValuePicker";
@@ -27,7 +29,6 @@ function isProfilingFocusDimension(value: string | null): value is ProfilingFocu
 export default function ProfilingGuidedPage() {
   const navigate = useNavigate();
   const connection = useConnectionStore((state) => state.connection);
-  const setDiscoverQueryDraft = useQueryStore((state) => state.setDiscoverQueryDraft);
   const { expandedStacktraceIds, toggleExpandedStacktraceId } = usePageFiltersStore(
     useShallow((s) => ({
       expandedStacktraceIds: s.expandedStacktraceIds,
@@ -76,8 +77,6 @@ export default function ProfilingGuidedPage() {
     timeFrom,
     timeTo,
     showResults,
-    navigate,
-    setDiscoverQueryDraft,
   });
 
   const handleSelectDimension = useCallback(
@@ -150,22 +149,32 @@ export default function ProfilingGuidedPage() {
 
       {loading && <LinearProgress />}
 
-      {error && <Alert severity="error">{error}</Alert>}
+      {error && !isMissingProfilingIndex(error) && <Alert severity="error">{error}</Alert>}
+      {error && isMissingProfilingIndex(error) && (
+        <Paper variant="outlined" sx={{ flex: 1, minHeight: 320, overflow: "auto" }}>
+          <EmptyState
+            heading="No profiling data available"
+            description="The profiling-events data stream was not found. Enable Universal Profiling in your Elastic cluster to start collecting continuous profiling data."
+          />
+        </Paper>
+      )}
 
-      <ProfilingResults
-        loading={loading}
-        hasRun={hasRun}
-        error={error}
-        viewMode={viewMode}
-        topFunctionsRows={topFunctionsRows}
-        timelineResult={timelineResult}
-        stacktraces={stacktraces}
-        flamegraphTree={flamegraphTree}
-        onFlamescopeWindowChange={setFlamescopeWindow}
-        handleFrameClick={handleFrameClick}
-        expandedStacktraceIds={expandedStacktraceIds}
-        toggleExpandedStacktraceId={toggleExpandedStacktraceId}
-      />
+      {!(error && isMissingProfilingIndex(error)) && (
+        <ProfilingResults
+          loading={loading}
+          hasRun={hasRun}
+          error={error}
+          viewMode={viewMode}
+          topFunctionsRows={topFunctionsRows}
+          timelineResult={timelineResult}
+          stacktraces={stacktraces}
+          flamegraphTree={flamegraphTree}
+          onFlamescopeWindowChange={setFlamescopeWindow}
+          handleFrameClick={handleFrameClick}
+          expandedStacktraceIds={expandedStacktraceIds}
+          toggleExpandedStacktraceId={toggleExpandedStacktraceId}
+        />
+      )}
     </Box>
   );
 }

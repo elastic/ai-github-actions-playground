@@ -36,6 +36,7 @@ import { useConnectionStore } from "../store/useConnectionStore";
 import { useUIStore } from "../store/useUIStore";
 import { useQueryStore } from "../store/useQueryStore";
 import { useDashboardCatalogStore } from "../store/useDashboardCatalogStore";
+import { useOpenInDiscover } from "../hooks/useOpenInDiscover";
 import sections from "../docs/sections";
 
 interface Command {
@@ -88,12 +89,12 @@ function useCommands(): Command[] {
       setAiPanelOpen: s.setAiPanelOpen,
     })),
   );
-  const { queryHistory, setDiscoverQueryDraft } = useQueryStore(
+  const { queryHistory } = useQueryStore(
     useShallow((s) => ({
       queryHistory: s.queryHistory,
-      setDiscoverQueryDraft: s.setDiscoverQueryDraft,
     })),
   );
+  const openInDiscover = useOpenInDiscover();
   const dashboards = useDashboardCatalogStore((s) => s.dashboards);
   const switchingProfileRef = useRef(false);
 
@@ -260,8 +261,7 @@ function useCommands(): Command[] {
         keywords: "recent query history esql",
         onExecute: () => {
           setCommandPaletteOpen(false);
-          setDiscoverQueryDraft(query);
-          navigate(PAGE_MANIFEST.discover.path);
+          openInDiscover(query);
         },
       });
     }
@@ -297,7 +297,7 @@ function useCommands(): Command[] {
     setThemeMode,
     setCommandPaletteOpen,
     setAiPanelOpen,
-    setDiscoverQueryDraft,
+    openInDiscover,
     switchConnectionProfile,
     retestConnectionProfile,
   ]);

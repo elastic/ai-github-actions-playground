@@ -167,49 +167,49 @@ describe("IndicesPage", () => {
 
   it("lists indices alphabetically, hiding system indices by default", async () => {
     renderPage();
-    // Wait for list to load
-    const listEl = await screen.findByRole("list", { name: /index list/i });
-    await within(listEl).findByText("logs-app");
+    // Wait for table to load
+    const tableEl = await screen.findByRole("table", { name: /index list/i });
+    await within(tableEl).findByText("logs-app");
 
-    // Both visible non-system indices should appear in the list
-    expect(within(listEl).getAllByText("logs-app").length).toBeGreaterThan(0);
+    // Both visible non-system indices should appear in the table
+    expect(within(tableEl).getAllByText("logs-app").length).toBeGreaterThan(0);
     expect(
-      within(listEl).getByText("metrics-service_destination.1m.otel-default-2026.03.02-000001"),
+      within(tableEl).getByText("metrics-service_destination.1m.otel-default-2026.03.02-000001"),
     ).toBeInTheDocument();
-    expect(within(listEl).queryByText(".system-index")).not.toBeInTheDocument();
+    expect(within(tableEl).queryByText(".system-index")).not.toBeInTheDocument();
   });
 
   it("truncates long index names with a title tooltip", async () => {
     renderPage();
-    const listEl = await screen.findByRole("list", { name: /index list/i });
+    const tableEl = await screen.findByRole("table", { name: /index list/i });
     const longName = "metrics-service_destination.1m.otel-default-2026.03.02-000001";
 
-    const metricsLabel = await within(listEl).findByText(longName);
+    const metricsLabel = await within(tableEl).findByText(longName);
     expect(metricsLabel).toHaveAttribute("title", longName);
   });
 
   it("shows system indices when the toggle is enabled", async () => {
     const user = userEvent.setup();
     renderPage();
-    const listEl = await screen.findByRole("list", { name: /index list/i });
-    await within(listEl).findByText("logs-app");
+    const tableEl = await screen.findByRole("table", { name: /index list/i });
+    await within(tableEl).findByText("logs-app");
 
-    expect(within(listEl).queryByText(".system-index")).not.toBeInTheDocument();
+    expect(within(tableEl).queryByText(".system-index")).not.toBeInTheDocument();
     await user.click(screen.getByRole("checkbox", { name: /show system indices/i }));
-    expect(await within(listEl).findByText(".system-index")).toBeInTheDocument();
+    expect(await within(tableEl).findByText(".system-index")).toBeInTheDocument();
   });
 
   it("filters the list by search term", async () => {
     const user = userEvent.setup();
     renderPage();
-    const listEl = await screen.findByRole("list", { name: /index list/i });
-    await within(listEl).findByText("logs-app");
+    const tableEl = await screen.findByRole("table", { name: /index list/i });
+    await within(tableEl).findByText("logs-app");
 
     await user.type(screen.getByRole("textbox", { name: /search indices/i }), "metrics");
 
-    expect(within(listEl).queryByText("logs-app")).not.toBeInTheDocument();
+    expect(within(tableEl).queryByText("logs-app")).not.toBeInTheDocument();
     expect(
-      within(listEl).getByText("metrics-service_destination.1m.otel-default-2026.03.02-000001"),
+      within(tableEl).getByText("metrics-service_destination.1m.otel-default-2026.03.02-000001"),
     ).toBeInTheDocument();
   });
 
@@ -220,6 +220,48 @@ describe("IndicesPage", () => {
     expect(screen.getByRole("textbox", { name: /search indices/i })).toHaveValue("metrics");
     expect(await screen.findByRole("heading", { level: 2, name: indexName })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /settings/i })).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("sorts indices by size when the Size column header is clicked", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    const tableEl = await screen.findByRole("table", { name: /index list/i });
+    await within(tableEl).findByText("logs-app");
+
+    // Click "Size" column header to sort ascending
+    await user.click(screen.getByRole("button", { name: /size/i }));
+
+    const rows = within(tableEl).getAllByRole("row");
+    // First row is the header; data rows follow
+    const dataRows = rows.slice(1);
+    // With ascending sort: .system-index is hidden, logs-app (1 MB) < metrics (2 MB)
+    expect(within(dataRows[0]).getByText("logs-app")).toBeInTheDocument();
+    expect(
+      within(dataRows[1]).getByText(
+        "metrics-service_destination.1m.otel-default-2026.03.02-000001",
+      ),
+    ).toBeInTheDocument();
+
+    // Click again to sort descending
+    await user.click(screen.getByRole("button", { name: /size/i }));
+    const rowsDesc = within(tableEl).getAllByRole("row");
+    const dataRowsDesc = rowsDesc.slice(1);
+    expect(
+      within(dataRowsDesc[0]).getByText(
+        "metrics-service_destination.1m.otel-default-2026.03.02-000001",
+      ),
+    ).toBeInTheDocument();
+    expect(within(dataRowsDesc[1]).getByText("logs-app")).toBeInTheDocument();
+  });
+
+  it("displays table column headers for Name, Health, Docs, and Size", async () => {
+    renderPage();
+    const tableEl = await screen.findByRole("table", { name: /index list/i });
+
+    expect(within(tableEl).getByText("Name")).toBeInTheDocument();
+    expect(within(tableEl).getByText("Health")).toBeInTheDocument();
+    expect(within(tableEl).getByText("Docs")).toBeInTheDocument();
+    expect(within(tableEl).getByText("Size")).toBeInTheDocument();
   });
 
   it("clears the detail panel when search excludes the selected index", async () => {
@@ -250,11 +292,11 @@ describe("IndicesPage", () => {
   it("truncates the detail panel heading with a title tooltip for long names", async () => {
     const user = userEvent.setup();
     renderPage();
-    const listEl = await screen.findByRole("list", { name: /index list/i });
-    await within(listEl).findByText("logs-app");
+    const tableEl = await screen.findByRole("table", { name: /index list/i });
+    await within(tableEl).findByText("logs-app");
 
     const longName = "metrics-service_destination.1m.otel-default-2026.03.02-000001";
-    await user.click(within(listEl).getByText(longName));
+    await user.click(within(tableEl).getByText(longName));
 
     const heading = await screen.findByRole("heading", { level: 2, name: longName });
     expect(heading).toHaveAttribute("title", longName);

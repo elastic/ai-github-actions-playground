@@ -17,10 +17,6 @@ export default {
       ImportDeclaration(node) {
         const source = node.source.value;
         if (typeof source === "string" && source.startsWith("echarts")) {
-          // Allow type-only imports — they are erased at compile time and
-          // do not affect runtime theming or behavior.
-          if (node.importKind === "type") return;
-
           // Allow only explicit adapter escape hatch and tests.
           const filename = context.getFilename ? context.getFilename() : context.filename;
           const normalizedFilename = filename.replace(/\\/g, "/");

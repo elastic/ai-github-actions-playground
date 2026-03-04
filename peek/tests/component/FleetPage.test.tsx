@@ -677,4 +677,47 @@ describe("Fleet pages", () => {
     });
     expect(screen.queryByText("Has errors")).not.toBeInTheDocument();
   });
+
+  it("shows filter-empty state with clear action when agents exist but filters exclude all", async () => {
+    mockFleetResponses();
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={["/fleet"]}>
+        <Routes>
+          <Route path="/fleet" element={<FleetPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    // Switch to agents tab
+    await waitFor(() => {
+      expect(screen.getByRole("tab", { name: "Agents" })).toBeInTheDocument();
+    });
+    await user.click(screen.getByRole("tab", { name: "Agents" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("table", { name: "Elastic Agent inventory" })).toBeInTheDocument();
+    });
+
+    // Type a search term that matches no agents
+    await user.type(screen.getByLabelText("Search agents"), "nonexistent-host");
+
+    // Should show filter-empty state, not enrollment guidance
+    await waitFor(() => {
+      expect(screen.getByText("No agents match current filters")).toBeInTheDocument();
+    });
+    expect(screen.queryByText(/Enroll Elastic Agent/)).not.toBeInTheDocument();
+
+    // Should show a clear filters button
+    const clearButton = screen.getByRole("button", { name: "Clear filters" });
+    expect(clearButton).toBeInTheDocument();
+
+    // Clicking clear filters should restore all agents
+    await user.click(clearButton);
+    await waitFor(() => {
+      expect(screen.getByText("host-1")).toBeInTheDocument();
+      expect(screen.getByText("host-2")).toBeInTheDocument();
+    });
+    expect(screen.queryByText("No agents match current filters")).not.toBeInTheDocument();
+  });
 });

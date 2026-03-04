@@ -149,6 +149,21 @@ describe("ConnectionDialog", () => {
     expect(screen.getByText("Saved Profiles")).toBeInTheDocument();
   });
 
+  it("closes the dialog when Disconnect is clicked", async () => {
+    const user = userEvent.setup();
+    useConnectionStore.setState({
+      connection: { url: "https://dev.example.com", apiKey: "dev-key" },
+      connected: true,
+    });
+    render(<ConnectionDialog />);
+
+    const disconnectButton = screen.getByRole("button", { name: /disconnect/i });
+    await user.click(disconnectButton);
+
+    expect(useConnectionStore.getState().connected).toBe(false);
+    expect(useUIStore.getState().connectionDialogOpen).toBe(false);
+  });
+
   it("deletes a profile after confirmation", async () => {
     const user = userEvent.setup();
     useConnectionStore.setState({
