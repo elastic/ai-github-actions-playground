@@ -1,57 +1,65 @@
 # Add Data
 
-Use the Add Data wizard to onboard Elastic Distribution of OpenTelemetry (EDOT) in an explicit five-step flow.
+Use the Add Data wizard to onboard telemetry sources in a three-step flow with experience-tile navigation and collapsible accordion sections.
 
 ## Step 1 — What are you monitoring?
 
-Choose a technology from:
+Choose a technology using:
 
-- **Search** (find technologies quickly)
-- **Category filters** (Cloud, Containers, Databases, Applications, Operating Systems, Network)
-- **Recommended for you** shortcuts
+- **Experience tiles** — four primary tiles (Cloud Providers, Kubernetes, Servers/Desktops/Laptops, SaaS & Databases) plus an Advanced accordion
+- **Search** — filter across all experiences by typing a technology name
 
-Your selection drives the expected signals and contextual guidance for later steps.
+Clicking an experience tile drills into that experience's technology list. Clicking a technology selects it and enables the Continue button.
 
-## Step 2 — Select your environment
+Your selection drives the onboarding guide (EDOT Collector, OTel Receiver, APM, etc.), expected signals, and contextual guidance for later steps.
 
-Reuse the existing environment controls:
+## Step 2 — Set up and verify
 
-- **Endpoint type**: Elasticsearch or Managed OTLP
-- **Platform**: Kubernetes, Docker, Linux, macOS, Windows
+This step consolidates environment configuration, install commands, credentials, and ingestion verification into a single page. It consists of three sections: Configure and Install (collapsible accordions) and Verification (inline, not collapsible).
+
+### Configure section (guide-specific)
+
+The section label and content vary by guide type:
+
+- **EDOT Collector**: "Select your environment" — endpoint type toggle (Elasticsearch / Managed OTLP) and platform tabs (Kubernetes, Docker, Linux, macOS, Windows)
+- **OTel Receiver**: "Configure receiver" — receiver-specific fields
+- **APM**: "Select language" — APM language selection
+- **AWS Cloud Deploy**: "Select AWS services" — deployment target selection
+- **Fluent Bit**: "Configure output" — output mode selection
 
 When Managed OTLP is selected, the wizard probes derived ingest endpoints and surfaces endpoint health inline.
 
-## Step 3 — Install and configure
+### Install section (guide-specific)
 
-Generate tailored install commands with:
+The section label varies (e.g., "Install and configure", "Instrument your app", "Deploy stack", "Install Fluent Bit"). Contains:
 
 - Progressive command step cards with per-step copy
 - Copy-all support
 - Official quickstart docs link
-- API key generation and copy workflow (when permissions allow)
+- Collector credentials — API key generation when permissions allow; otherwise show a no-permission warning alert (expected behavior) and provide guidance for manual credential provisioning
 
 The command template pre-fills available endpoint/version/API key values.
 
-## Step 4 — Validate data receipt
+### Verification panel
 
-Verification keeps the existing ingestion primitives:
+Inline (not collapsible) ingestion verification:
 
-- `runVerifyOnce` for one-shot checks
-- `startPolling` for automatic polling
+- Automatic polling (auto-starts after valid credentials are available)
 - **Check now** for manual trigger
+- Per-signal verification cards showing data stream and host/agent detection
 
-Validation messaging is contextual to the selected technology’s expected signals and supports partial success guidance.
+Validation messaging is contextual to the selected technology's expected signals and supports partial success guidance.
 
-## Step 5 — Explore your data + next steps
+## Step 3 — Explore your data + next steps
 
-Success outcomes now include contextual CTAs beyond signal-only routes:
+Success outcomes include contextual CTAs:
 
 - Open signal page (Metrics, Traces, Query Lab)
 - Open Dashboards
 - Set up alerting
 - Add another source
 
-This provides a direct “aha moment” and clear follow-up actions after setup.
+"Add another source" resets the wizard back to Step 1 with experience tiles.
 
 ## References
 
