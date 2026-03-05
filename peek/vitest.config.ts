@@ -7,9 +7,9 @@ export default defineConfig({
       "tests/smoke/**/*.test.{ts,tsx}",
       "tests/component/**/*.test.{ts,tsx}",
     ],
-    environment: "jsdom",
+    environment: "happy-dom",
     // Pure .ts unit tests default to the lightweight node environment.
-    // Files that need jsdom opt in with a `// @vitest-environment jsdom` comment.
+    // happy-dom is 2-5x faster than jsdom for DOM operations.
     environmentMatchGlobs: [["tests/unit/**/*.test.ts", "node"]],
     setupFiles: ["./vitest.setup.ts"],
     css: false,

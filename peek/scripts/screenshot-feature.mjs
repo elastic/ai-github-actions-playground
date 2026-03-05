@@ -103,6 +103,7 @@ async function run() {
       // Connect to the mocked cluster
       await page.getByRole("button", { name: "Connect to Elasticsearch" }).click();
       await page.getByRole("textbox", { name: "Elasticsearch URL" }).fill(DEFAULT_ES_URL);
+      await page.getByRole("tab", { name: "No Auth" }).click();
       await page.getByRole("button", { name: "Connect", exact: true }).click();
 
       // Wait for the app to be ready (sidebar visible)
@@ -112,7 +113,7 @@ async function run() {
 
       // Navigate to the requested feature page
       await page.getByRole("button", { name: navButton, exact: true }).click();
-      await page.waitForTimeout(1500);
+      await page.waitForLoadState("networkidle", { timeout: opts.timeoutMs });
 
       // Take the screenshot
       await page.screenshot({ path: opts.screenshot, fullPage: true });

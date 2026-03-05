@@ -33,8 +33,7 @@ async function run() {
   });
 
   await page.goto('http://127.0.0.1:3000/ai-github-actions-playground/');
-  await page.waitForLoadState('domcontentloaded');
-  await page.waitForTimeout(2000);
+  await page.waitForLoadState('networkidle');
 
   // Set connected + connection URL via Zustand store, then navigate to traces
   await page.evaluate(async () => {
@@ -44,8 +43,8 @@ async function run() {
     window.location.hash = '#/traces';
   });
 
-  await page.waitForTimeout(1500);
-  
+  await page.waitForLoadState('networkidle');
+
   // Check what's on the page
   const title = await page.title();
   const bodyText = await page.locator('body').innerText();
@@ -60,14 +59,14 @@ async function run() {
   const searchBtn = page.getByRole('button', { name: 'Search Traces' });
   await searchBtn.waitFor({ timeout: 10000 });
   await searchBtn.click();
-  await page.waitForTimeout(2000);
+  await page.waitForLoadState('networkidle');
 
   await page.screenshot({ path: `${OUTPUT_DIR}/screenshot-traces-list-results.png` });
   console.log('Saved list with results screenshot');
 
   // Click Service Map tab
   await page.getByRole('button', { name: 'Service Map' }).click();
-  await page.waitForTimeout(1000);
+  await page.waitForLoadState('networkidle');
   await page.screenshot({ path: `${OUTPUT_DIR}/screenshot-service-map-no-trace.png` });
   console.log('Saved service map (no trace selected) screenshot');
 
@@ -87,7 +86,8 @@ async function run() {
     useTracesStore.getState().setSelectedTraceSpans(mockSpans);
   });
 
-  await page.waitForTimeout(3000);
+  // Wait for echarts to render the service map after injecting span data
+  await page.waitForTimeout(1000);
   await page.screenshot({ path: `${OUTPUT_DIR}/screenshot-service-map-with-trace.png` });
   console.log('Saved service map with trace screenshot');
 

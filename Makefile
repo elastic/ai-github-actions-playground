@@ -164,30 +164,33 @@ preview: setup build
 lint:
 	@echo "Detecting changed files against '$(BASE)'..."
 	@CHANGED=$$(cd $(PEEK_DIR) && git diff --name-only --diff-filter=ACMR --relative $(BASE) -- 'src' | grep -E '\.(ts|tsx|js|jsx)$$' || true); \
+	cd $(PEEK_DIR) && npx tsc --noEmit & _TSC_PID=$$!; \
 	if [ -n "$$CHANGED" ]; then \
-		echo "Running Prettier format check on changed files..."; \
+		echo "Running Prettier + ESLint on changed files (tsc in parallel)..."; \
 		(cd $(PEEK_DIR) && echo "$$CHANGED" | tr '\n' '\0' | xargs -0 npx prettier --check) && \
-		echo "" && \
-		echo "Running ESLint on changed files..." && \
 		(cd $(PEEK_DIR) && echo "$$CHANGED" | tr '\n' '\0' | xargs -0 npx eslint --cache --cache-location .eslintcache); \
+		_LINT_EXIT=$$?; \
 	else \
 		echo "No changed source files found — skipping Prettier and ESLint."; \
-	fi
-	@echo ""
-	@echo "Running TypeScript type check (full project)..."
-	@cd $(PEEK_DIR) && npx tsc --noEmit
+		_LINT_EXIT=0; \
+	fi; \
+	wait $$_TSC_PID; _TSC_EXIT=$$?; \
+	[ $$_LINT_EXIT -eq 0 ] && [ $$_TSC_EXIT -eq 0 ]
 	@echo ""
 	@echo "✓ All checks passed."
 
 lint-full:
-	@echo "Running Prettier format check..."
-	@cd $(PEEK_DIR) && npx prettier --check src
-	@echo ""
-	@echo "Running ESLint..."
-	@cd $(PEEK_DIR) && npx eslint src --cache --cache-location .eslintcache
-	@echo ""
-	@echo "Running TypeScript type check..."
-	@cd $(PEEK_DIR) && npx tsc --noEmit
+	@echo "Running Prettier, ESLint, and TypeScript in parallel..."
+	@cd $(PEEK_DIR) && { \
+		npx prettier --check src 2>&1 & _PID1=$$!; \
+		npx eslint src --cache --cache-location .eslintcache 2>&1 & _PID2=$$!; \
+		npx tsc --noEmit 2>&1 & _PID3=$$!; \
+		_FAIL=0; \
+		wait $$_PID1 || _FAIL=1; \
+		wait $$_PID2 || _FAIL=1; \
+		wait $$_PID3 || _FAIL=1; \
+		[ $$_FAIL -eq 0 ]; \
+	}
 	@echo ""
 	@echo "✓ All checks passed."
 
