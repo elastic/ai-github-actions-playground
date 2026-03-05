@@ -37,7 +37,7 @@ export default function NamespaceLanding({ fields, indexPattern, onSelectNamespa
         sampleMetricNames: list.slice(0, 15).map((f) => f.name),
         sampleFields: list.slice(0, 5),
       }))
-      .sort((a, b) => b.metricCount - a.metricCount);
+      .sort((a, b) => b.metricCount - a.metricCount || a.namespace.localeCompare(b.namespace));
   }, [fields]);
 
   const namespaceInfos = useMemo(
@@ -60,7 +60,7 @@ export default function NamespaceLanding({ fields, indexPattern, onSelectNamespa
       <EmptyState
         icon={<FolderIcon sx={{ mb: 0.5, color: "text.secondary", fontSize: 48 }} />}
         heading="No metric namespaces found"
-        description={`No metric fields found for index pattern "${indexPattern}". Add metrics data or try a different index pattern.`}
+        description={`No metric fields found in "${indexPattern}". Try another index pattern or add metrics data.`}
         addDataHref="/add-data"
       />
     );

@@ -6,7 +6,10 @@ import { EXPLORER_AGGREGATIONS } from "../../services/es";
 
 const FILTER_OPS = ["==", "!=", "LIKE"] as const;
 const VALID_FILTER_OPS = new Set<ExplorerFilter["op"]>(FILTER_OPS);
-export const HIDDEN_DIMENSION_FIELDS = new Set(["_metrics_name_hash", "_metrics_names_hash"]);
+export const HIDDEN_DIMENSION_FIELDS: ReadonlySet<string> = new Set([
+  "_metrics_name_hash",
+  "_metrics_names_hash",
+]);
 
 /**
  * Namespace hidden from the metric explorer UI (the top-level "metrics"
