@@ -855,9 +855,12 @@ export default function LogsPage() {
                                 (c) => c.name === TRACE_ID_FIELD,
                               );
                               if (traceColIdx < 0) return;
-                              const firstNonNull = result.values.find(
-                                (row) => row[traceColIdx] != null,
-                              );
+                              const firstNonNull = result.values.find((row) => {
+                                const traceCandidate = row[traceColIdx];
+                                return (
+                                  traceCandidate != null && String(traceCandidate).trim() !== ""
+                                );
+                              });
                               const traceValue = firstNonNull?.[traceColIdx] ?? null;
                               if (traceValue != null) {
                                 handleTracePivot(String(traceValue));
