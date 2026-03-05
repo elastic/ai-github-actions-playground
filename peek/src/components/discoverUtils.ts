@@ -32,14 +32,10 @@ export function computeRecall(
 ): { found: number; total: number } {
   const total = expectedDocIds.size;
   if (total === 0 || idColumnIndex < 0) return { found: 0, total };
-  const resultIds = new Set<string>();
+  let found = 0;
   for (const row of values) {
     const cell = row[idColumnIndex];
-    if (cell != null) resultIds.add(String(cell));
-  }
-  let found = 0;
-  for (const id of expectedDocIds) {
-    if (resultIds.has(id)) found += 1;
+    if (cell != null && expectedDocIds.has(String(cell))) found += 1;
   }
   return { found, total };
 }

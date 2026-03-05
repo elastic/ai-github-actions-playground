@@ -91,7 +91,7 @@ export default function DiscoverPage({ mode = "query-lab" }: DiscoverPageProps) 
         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center" }}>
           <Chip size="small" label={`took ${o.lastRunDurationMs} ms`} />
           {o.recall !== null && (
-            <Tooltip title="Recall: expected documents found in current results. Pin rows via the bookmark icon when an _id column is present.">
+            <Tooltip title="Fraction of expected documents found in current results">
               <Chip
                 size="small"
                 icon={<BookmarkIcon />}
