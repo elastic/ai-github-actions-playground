@@ -230,7 +230,7 @@ export default function App() {
                     px: 1,
                     borderRadius: 1,
                     bgcolor: "warning.main",
-                    color: "warning.contrastText",
+                    color: "common.black",
                     letterSpacing: "0.04em",
                     textTransform: "uppercase",
                     fontWeight: 700,

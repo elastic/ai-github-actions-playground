@@ -9,7 +9,7 @@ const MOBILE_ICON_BUTTON_PADDING =
   (COMPONENT_HEIGHTS.touchTarget - MOBILE_ICON_BUTTON_VISUAL_SIZE) / 2;
 const LIGHT_PRIMARY = "#0070C5";
 const DARK_PRIMARY = "#3BAAFF";
-const LIGHT_TEXT = { primary: "#1A1C21", secondary: "#676F7B" };
+const LIGHT_TEXT = { primary: "#1A1C21", secondary: "#636B78" };
 const DARK_TEXT = { primary: "#DFE5EF", secondary: "#98A2B3" };
 const LIGHT_BORDER = { subtle: "#E0E4EA", default: "#C5CBD3", strong: "#98A2B3" };
 const DARK_BORDER = { subtle: "#2A2E3D", default: "#3D4255", strong: "#5A6070" };

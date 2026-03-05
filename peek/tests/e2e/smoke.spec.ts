@@ -23,11 +23,11 @@ const A11Y_BASELINE: Record<string, Record<string, Record<string, number>>> = {
       "page-has-heading-one": 1,
     },
     "post-connect": {
-      "color-contrast": 2,
+      "color-contrast": 1,
     },
     Metrics: {
       "aria-prohibited-attr": 1,
-      "color-contrast": 2,
+      "color-contrast": 1,
     },
     Services: {},
     Traces: {
@@ -48,9 +48,7 @@ const A11Y_BASELINE: Record<string, Record<string, Record<string, number>>> = {
       "color-contrast": 16,
       "scrollable-region-focusable": 1,
     },
-    Indices: {
-      "color-contrast": 2,
-    },
+    Indices: {},
   },
   "mobile-safari": {
     "Query Lab": {
