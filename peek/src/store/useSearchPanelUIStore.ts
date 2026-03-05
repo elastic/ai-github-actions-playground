@@ -13,15 +13,19 @@ function clampEditorHeight(value: number, fallback: number): number {
 interface SearchPanelUIState {
   discoverEditorHeight: number;
   panelEditorHeight: number;
+  traceEditorHeight: number;
   discoverSearchCollapsed: boolean;
   traceSearchCollapsed: boolean;
+  traceMetricsChartsCollapsed: boolean;
   logsSearchCollapsed: boolean;
   metricsSearchCollapsed: boolean;
 
   setDiscoverEditorHeight: (height: number) => void;
   setPanelEditorHeight: (height: number) => void;
+  setTraceEditorHeight: (height: number) => void;
   setDiscoverSearchCollapsed: (collapsed: boolean) => void;
   setTraceSearchCollapsed: (collapsed: boolean) => void;
+  setTraceMetricsChartsCollapsed: (collapsed: boolean) => void;
   setLogsSearchCollapsed: (collapsed: boolean) => void;
   setMetricsSearchCollapsed: (collapsed: boolean) => void;
   resetSearchPanelUIState: () => void;
@@ -31,8 +35,10 @@ const STORE_NAME = "elastic-peek-search-panel-ui";
 const DEFAULT_SEARCH_PANEL_UI_STATE = {
   discoverEditorHeight: 100,
   panelEditorHeight: 120,
+  traceEditorHeight: 140,
   discoverSearchCollapsed: false,
   traceSearchCollapsed: false,
+  traceMetricsChartsCollapsed: true,
   logsSearchCollapsed: false,
   metricsSearchCollapsed: false,
 };
@@ -57,8 +63,17 @@ export const useSearchPanelUIStore = create<SearchPanelUIState>()(
               DEFAULT_SEARCH_PANEL_UI_STATE.panelEditorHeight,
             ),
           }),
+        setTraceEditorHeight: (height) =>
+          set({
+            traceEditorHeight: clampEditorHeight(
+              height,
+              DEFAULT_SEARCH_PANEL_UI_STATE.traceEditorHeight,
+            ),
+          }),
         setDiscoverSearchCollapsed: (collapsed) => set({ discoverSearchCollapsed: collapsed }),
         setTraceSearchCollapsed: (collapsed) => set({ traceSearchCollapsed: collapsed }),
+        setTraceMetricsChartsCollapsed: (collapsed) =>
+          set({ traceMetricsChartsCollapsed: collapsed }),
         setLogsSearchCollapsed: (collapsed) => set({ logsSearchCollapsed: collapsed }),
         setMetricsSearchCollapsed: (collapsed) => set({ metricsSearchCollapsed: collapsed }),
         resetSearchPanelUIState: () => {
@@ -71,8 +86,10 @@ export const useSearchPanelUIStore = create<SearchPanelUIState>()(
         partialize: (state) => ({
           discoverEditorHeight: state.discoverEditorHeight,
           panelEditorHeight: state.panelEditorHeight,
+          traceEditorHeight: state.traceEditorHeight,
           discoverSearchCollapsed: state.discoverSearchCollapsed,
           traceSearchCollapsed: state.traceSearchCollapsed,
+          traceMetricsChartsCollapsed: state.traceMetricsChartsCollapsed,
           logsSearchCollapsed: state.logsSearchCollapsed,
           metricsSearchCollapsed: state.metricsSearchCollapsed,
         }),

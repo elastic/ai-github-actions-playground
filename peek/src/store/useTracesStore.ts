@@ -27,6 +27,8 @@ interface TracesState {
 
   setFilters: (filters: TraceFilters) => void;
   updateFilters: (updates: Partial<TraceFilters>) => void;
+  /** Update only time bounds (e.g. from picker sync) without clearing rawQuery */
+  setTimeRange: (timeFrom: string, timeTo: string) => void;
   setRawQuery: (query: string | null) => void;
   setSelectedTraceId: (traceId: string | null) => void;
   setSelectedTraceSpans: (spans: Span[]) => void;
@@ -58,6 +60,8 @@ export const useTracesStore = create<TracesState>()(
       setFilters: (filters) => set({ filters, rawQuery: null }),
       updateFilters: (updates) =>
         set((s) => ({ filters: { ...s.filters, ...updates }, rawQuery: null })),
+      setTimeRange: (timeFrom, timeTo) =>
+        set((s) => ({ filters: { ...s.filters, timeFrom, timeTo } })),
       setRawQuery: (query) => set({ rawQuery: query }),
       setSelectedTraceId: (traceId) =>
         set({ selectedTraceId: traceId, selectedSpanId: null, drawerOpen: false }),

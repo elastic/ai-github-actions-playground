@@ -1,8 +1,6 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Box from "@mui/material/Box";
 import { EditorView } from "@codemirror/view";
-import { EditorState, Prec } from "@codemirror/state";
-import { SQLDialect } from "@codemirror/lang-sql";
 
 import { useThemeStore } from "../../store/useThemeStore";
 import { usePageSlotInsights } from "../../hooks/usePageSlotInsights";
@@ -10,9 +8,9 @@ import { INSIGHT_GUARDRAIL, INSIGHT_SPECIFICITY_POLICY } from "../../hooks/insig
 import type { InsightSlotDefinition } from "../../types/insightSlots";
 import { InsightSlotProvider } from "../InsightSlotContext";
 import InsightSlot from "../InsightSlot";
-import { makeLLMCompletionExtension } from "../llmCompletionExtension";
 
-import TraceSearchPanel from "./TraceSearchPanel";
+import TraceEditorPanel from "./TraceEditorPanel";
+import TraceMetricsCharts from "./TraceMetricsCharts";
 import TraceResultsView from "./TraceResultsView";
 import TraceErrorAlerts from "./TraceErrorAlerts";
 import SpanDetailDrawer from "./SpanDetailDrawer";
@@ -25,6 +23,7 @@ import {
   traceGroupRowSlotId,
   traceRowSlotId,
 } from "./tracesInsightSlots";
+import { useTraceQueryEditorExtensions } from "./useTraceQueryEditorExtensions";
 
 const TRACES_SYSTEM_PROMPT =
   "You are a distributed-tracing observability assistant." +
@@ -37,6 +36,21 @@ const TRACES_SYSTEM_PROMPT =
 export default function TracesPage() {
   const themeMode = useThemeStore((s) => s.themeMode);
   const orchestrator = useTracesOrchestrator();
+  const [tracesEditorFocused, setTracesEditorFocused] = useState(false);
+
+  const queryEditorExtensions = useTraceQueryEditorExtensions(orchestrator.handleSearch);
+
+  const tracesQueryEditorExtensions = useMemo(
+    () => [
+      EditorView.contentAttributes.of({ "aria-label": "ES|QL query editor" }),
+      ...queryEditorExtensions,
+      EditorView.focusChangeEffect.of((_state, focusing) => {
+        setTracesEditorFocused(focusing);
+        return null;
+      }),
+    ],
+    [queryEditorExtensions],
+  );
 
   const rowInsightModel = useMemo(() => {
     if (orchestrator.viewMode !== "list" || orchestrator.searchSpans.length === 0) {
@@ -150,31 +164,6 @@ export default function TracesPage() {
     slots: [...TRACES_INSIGHT_SLOTS, ...rowInsightModel.slots],
   });
 
-  const queryEditorExtensions = useMemo(
-    () => [
-      SQLDialect.define({ slashComments: true }).language,
-      Prec.highest(
-        EditorState.languageData.of(() => [
-          { commentTokens: { line: "//", block: { open: "/*", close: "*/" } } },
-        ]),
-      ),
-      EditorView.lineWrapping,
-      makeLLMCompletionExtension({
-        prompt:
-          "You are an ES|QL inline completion engine for OpenTelemetry trace data. " +
-          "The primary index is traces-*-* with OTEL fields: " +
-          "trace.id, span.id, parent_span.id, service.name, span.name, " +
-          "span.kind, span.duration.us, span.status.code, @timestamp.\n" +
-          "- ES|QL is a piped language (FROM … | WHERE … | STATS …), NOT SQL.\n" +
-          "- If a query error is shown, fix the error.\n" +
-          "- If the user writes natural language, replace it with valid ES|QL.\n" +
-          "- Return ONLY query text. No explanations, no markdown fences.",
-        esqlGuide: true,
-      }),
-    ],
-    [],
-  );
-
   return (
     <InsightSlotProvider
       summary={slotInsights.summary}
@@ -185,26 +174,38 @@ export default function TracesPage() {
     >
       <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: "100%" }}>
         <InsightSlot slotId={TRACES_INSIGHT_SLOT_IDS.traceSearch}>
-          <TraceSearchPanel
-            filters={orchestrator.filters}
-            resetFilters={orchestrator.resetFilters}
-            applyFiltersAndRun={orchestrator.applyFiltersAndRun}
+          <TraceEditorPanel
+            editorFocused={tracesEditorFocused}
+            editorHeight={orchestrator.traceEditorHeight}
+            setEditorHeight={orchestrator.setTraceEditorHeight}
             effectiveQuery={orchestrator.effectiveQuery}
-            onRawQueryChange={(val) => orchestrator.setRawQuery(val)}
+            onQueryChange={(val) => orchestrator.setRawQuery(val)}
             onCreateEditor={(view) => orchestrator.setQueryContextView(view)}
-            queryEditorExtensions={queryEditorExtensions}
+            queryEditorExtensions={tracesQueryEditorExtensions}
             themeMode={themeMode}
-            searchLoading={orchestrator.searchLoading}
-            onSearch={orchestrator.handleSearch}
-            searchResultCount={
-              orchestrator.searchResult ? orchestrator.searchResult.values.length : null
-            }
+            loading={orchestrator.searchLoading}
+            onRun={orchestrator.handleSearch}
+            onFormat={orchestrator.handleFormatQuery}
             collapsed={orchestrator.traceSearchCollapsed}
             onToggleCollapsed={() =>
               orchestrator.setTraceSearchCollapsed(!orchestrator.traceSearchCollapsed)
             }
           />
         </InsightSlot>
+
+        <TraceMetricsCharts
+          timeseriesResult={orchestrator.timeseriesResult}
+          timeseriesLoading={orchestrator.timeseriesLoading}
+          traceRows={orchestrator.traceRows}
+          searchLoading={orchestrator.searchLoading}
+          onSelectTrace={(traceId) => orchestrator.handleSelectTrace(traceId, undefined, undefined)}
+          collapsed={orchestrator.traceMetricsChartsCollapsed}
+          onToggleCollapsed={() =>
+            orchestrator.setTraceMetricsChartsCollapsed(!orchestrator.traceMetricsChartsCollapsed)
+          }
+          timeFrom={orchestrator.filters.timeFrom}
+          timeTo={orchestrator.filters.timeTo}
+        />
 
         <TraceErrorAlerts
           errors={[
@@ -227,7 +228,6 @@ export default function TracesPage() {
             minHeight: 0,
           }}
         >
-          {/* Results panel */}
           <Box
             sx={{
               display: "flex",
@@ -248,8 +248,6 @@ export default function TracesPage() {
                 selectedTraceId={orchestrator.selectedTraceId}
                 onSelectTrace={orchestrator.handleSelectTrace}
                 rawQuery={orchestrator.rawQuery}
-                timeseriesLoading={orchestrator.timeseriesLoading}
-                timeseriesResult={orchestrator.timeseriesResult}
                 detailLoading={orchestrator.detailLoading}
                 selectedTraceSpans={orchestrator.selectedTraceSpans}
                 onServiceMapNodeClick={orchestrator.handleServiceMapNodeClick}

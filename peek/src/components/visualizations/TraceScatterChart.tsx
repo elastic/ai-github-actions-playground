@@ -3,7 +3,7 @@ import { EChart } from "@perses-dev/components";
 
 import { getServiceColor, buildServiceColorMap } from "../traces/traceColors";
 import { formatSpanDuration } from "../traces/traceUtils";
-import { formatTimestamp } from "../../utils/formatDate";
+import { formatTimestamp, formatChartAxisDate } from "../../utils/formatDate";
 
 import { useEChartTheme } from "./useEChartTheme";
 import { escapeHtml } from "./htmlUtils";
@@ -19,9 +19,18 @@ interface ScatterDataPoint {
 interface TraceScatterChartProps {
   data: ScatterDataPoint[];
   onPointClick?: (traceId: string) => void;
+  /** Tighter grid for small containers (e.g. trace metrics) */
+  compact?: boolean;
+  /** Fixed time range for x-axis (ms). When set, shows full window instead of data extent. */
+  timeRange?: { min: number; max: number } | null;
 }
 
-export default function TraceScatterChart({ data, onPointClick }: TraceScatterChartProps) {
+export default function TraceScatterChart({
+  data,
+  onPointClick,
+  compact = false,
+  timeRange,
+}: TraceScatterChartProps) {
   const theme = useEChartTheme();
   const instanceRef = useRef<EChartInstance | undefined>(undefined);
 
@@ -66,8 +75,11 @@ export default function TraceScatterChart({ data, onPointClick }: TraceScatterCh
       return { title: { text: "No data to display", left: "center", top: "center" } };
     }
 
+    const grid = compact
+      ? { left: 28, right: 4, top: 4, bottom: 18 }
+      : { left: 60, right: 16, top: 24, bottom: 88 };
     return {
-      grid: { left: 60, right: 16, top: 32, bottom: 60 },
+      grid,
       tooltip: {
         ...theme.tooltip,
         trigger: "item",
@@ -83,27 +95,43 @@ export default function TraceScatterChart({ data, onPointClick }: TraceScatterCh
       },
       legend: {
         ...theme.legend,
-        show: serviceNames.length > 1,
+        show: !compact && serviceNames.length > 1,
         bottom: 0,
         type: "scroll",
       },
       xAxis: {
         ...theme.xAxis,
         type: "time",
+        splitNumber: compact ? 2 : undefined,
+        ...(timeRange
+          ? { min: timeRange.min, max: timeRange.max }
+          : { min: "dataMin", max: "dataMax" }),
+        axisLabel: {
+          ...theme.xAxis?.axisLabel,
+          ...(compact ? { fontSize: 10 } : {}),
+          rotate: compact ? 0 : 45,
+          formatter: (value: number) => formatChartAxisDate(value),
+        },
       },
       yAxis: {
         ...theme.yAxis,
         type: "log",
-        name: "Duration (ms)",
+        name: compact ? undefined : "Duration (ms)",
         axisLabel: {
           ...(theme.yAxis?.axisLabel ?? {}),
+          ...(compact ? { fontSize: 9 } : {}),
           formatter: (v: number) => formatSpanDuration(v * 1000),
         },
       },
-      dataZoom: [{ type: "inside", start: 0, end: 100 }],
+      dataZoom: compact
+        ? [{ type: "inside", start: 0, end: 100 }]
+        : [
+            { type: "inside", start: 0, end: 100 },
+            { type: "slider", start: 0, end: 100, bottom: 8, height: 20 },
+          ],
       series,
     };
-  }, [data, theme]);
+  }, [data, theme, compact, timeRange]);
 
   const handleClick = useCallback(
     (params: { data: unknown }) => {

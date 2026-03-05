@@ -1,5 +1,7 @@
 import type { EsqlResponse } from "../../types";
 import { DATE_TYPES, NUMERIC_TYPES } from "../../services/es/esFieldTypes";
+
+export { formatChartAxisDate } from "../../utils/formatDate";
 export {
   isDateColumn,
   findDateColumnIndex,
