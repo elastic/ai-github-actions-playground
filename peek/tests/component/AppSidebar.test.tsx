@@ -308,6 +308,7 @@ describe("AppSidebar", () => {
       canReadSecurityUsers: false,
       canReadSecurityRoles: true,
       canReadApiKeys: true,
+      canReadIngestPipelines: true,
     });
     renderSidebar();
 
@@ -323,11 +324,27 @@ describe("AppSidebar", () => {
       canReadSecurityUsers: true,
       canReadSecurityRoles: false,
       canReadApiKeys: true,
+      canReadIngestPipelines: true,
     });
     renderSidebar();
 
     expect(screen.queryByRole("button", { name: /roles/i })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^users$/i })).toBeInTheDocument();
+  });
+
+  it("hides Ingest Pipelines nav item when canReadIngestPipelines is false", () => {
+    useConnectionStore.getState().setConnected(true);
+    useConnectionStore.getState().setCapabilities({
+      canManageDataStreams: true,
+      canCreateApiKeys: true,
+      canReadSecurityUsers: true,
+      canReadSecurityRoles: true,
+      canReadApiKeys: true,
+      canReadIngestPipelines: false,
+    });
+    renderSidebar();
+
+    expect(screen.queryByRole("button", { name: /ingest pipelines/i })).not.toBeInTheDocument();
   });
 
   it("shows both Users and Roles when capabilities are null (not yet fetched)", () => {
@@ -346,11 +363,12 @@ describe("AppSidebar", () => {
       canReadSecurityUsers: false,
       canReadSecurityRoles: false,
       canReadApiKeys: false,
+      canReadIngestPipelines: false,
     });
     renderSidebar();
 
     expect(
-      screen.getByLabelText(/3 nav items hidden due to insufficient permissions/i),
+      screen.getByLabelText(/4 nav items hidden due to insufficient permissions/i),
     ).toBeInTheDocument();
   });
 
@@ -362,6 +380,7 @@ describe("AppSidebar", () => {
       canReadSecurityUsers: true,
       canReadSecurityRoles: true,
       canReadApiKeys: true,
+      canReadIngestPipelines: true,
     });
     renderSidebar();
 
