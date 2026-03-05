@@ -35,7 +35,7 @@ border.default           #343741         #D3DAE6
 border.strong            #535966         #98A7B9
 ```
 
-The `text.secondary` value in dark mode is `#AEB6C1` — 7.2:1 contrast against `#25262E` paper background, exceeding WCAG AA. Never go darker than this for secondary text.
+The `text.secondary` value in dark mode is `#AEB6C1` — 8.3:1 contrast against `#25262E` paper background, exceeding WCAG AA. Never go darker than this for secondary text.
 
 ### Status Colors
 
