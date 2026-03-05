@@ -353,9 +353,13 @@ export function useDiscoverOrchestrator(mode: "query-lab" | "logs") {
   const hasPendingRunChanges = effectiveQuery.trim() !== lastExecutedQuery.trim();
 
   // --- Golden set relevance tracker ---
-  const expectedDocIds = useGoldenSetStore((s) => s.expectedDocIds);
-  const toggleExpectedDoc = useGoldenSetStore((s) => s.toggleExpectedDoc);
-  const clearExpectedDocs = useGoldenSetStore((s) => s.clearExpectedDocs);
+  const { expectedDocIds, toggleExpectedDoc, clearExpectedDocs } = useGoldenSetStore(
+    useShallow((s) => ({
+      expectedDocIds: s.expectedDocIds,
+      toggleExpectedDoc: s.toggleExpectedDoc,
+      clearExpectedDocs: s.clearExpectedDocs,
+    })),
+  );
 
   // Find the `_id` column index in the *unfiltered* result (the raw response
   // always contains every column returned by ES|QL).  We need this index to

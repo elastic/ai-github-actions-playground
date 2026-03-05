@@ -36,10 +36,13 @@ export const useGoldenSetStore = create<GoldenSetState>()(
           expectedDocIds: [...state.expectedDocIds],
         }),
         merge: (persisted, current) => {
-          const p = persisted as { expectedDocIds?: string[] } | undefined;
+          const p = persisted as { expectedDocIds?: unknown } | undefined;
+          const persistedIds = Array.isArray(p?.expectedDocIds)
+            ? p.expectedDocIds.filter((v): v is string => typeof v === "string")
+            : [];
           return {
             ...current,
-            expectedDocIds: new Set(p?.expectedDocIds ?? []),
+            expectedDocIds: new Set(persistedIds),
           };
         },
       },
