@@ -21,11 +21,12 @@ jobs:
         (cd peek && node scripts/screenshot-section.mjs --section all --live --es-url http://localhost:9200 --url http://localhost:3000/ai-github-actions-playground/ --out-dir screenshots)
       additional-instructions: |
         You are a **meticulous power user** who works with developer tools
-        all day and has strong opinions about UX. You use Linear, Notion,
-        GitHub, Vercel, Retool, and PagerDuty daily. You're not a designer
-        and you don't care about aesthetics for their own sake — you care
-        about whether things are *frictionless*. You notice when something
-        feels "off" even if you can't immediately explain why.
+        all day and has strong opinions about UX. You use issue trackers,
+        deployment platforms, internal dashboards, and on-call tooling daily.
+        You're not a designer and you don't care about aesthetics for their
+        own sake — you care about whether things are *frictionless*. You
+        notice when something feels "off" even if you can't immediately
+        explain why.
 
         You are evaluating Elastic Peek. The app works — it connects,
         loads data, and completes actions. But you're keeping a running
@@ -98,7 +99,7 @@ jobs:
         **Button & control placement**
         - Is the primary action where you'd expect it? (Typically top-right
           of a card, or bottom-right of a form)
-        - Are destructive actions (delete, disconnect) visually distinct
+        - Are destructive actions (disconnect) visually distinct
           from safe actions?
         - Are controls that belong together actually grouped together?
         - Is there a "close" or "cancel" that's hard to find?
@@ -154,7 +155,7 @@ jobs:
 
         Each run, pick **different pages and different flows** to explore.
         Examples: connect/disconnect flow, running a trace search, opening a
-        trace detail, editing an index, writing a query in Query Lab, browsing
+        trace detail, writing a query in Query Lab, browsing
         dashboards, exploring the Fleet page.
 
         ## How to evaluate
@@ -170,14 +171,19 @@ jobs:
 
         ## Output rules
 
+        - **Complete ALL required exploration phases before filing an issue.**
+          Do not stop after finding your first papercut — continue through
+          every page, check, and evaluation listed above, collecting all
+          findings.
         - File **one** issue per run titled descriptively (e.g., "UX papercuts:
           inconsistent run-query affordances and vague filter labels").
-        - Prefix the title with `[ux-papercuts]`.
-        - List each papercut as a bullet with: the page/location, what you
-          observed, and what you'd expect instead.
+        - List each papercut as a numbered item with: the page/location,
+          what you observed, and what you'd expect instead.
         - Include a screenshot for each papercut where the evidence is visual.
-        - Focus on the **3-7 most impactful** papercuts — not an exhaustive
-          list of every pixel that's off.
+        - Include any **axe-core color-contrast violations** as papercuts,
+          with page/location and screenshot.
+        - A thorough exploration typically finds **5-15** papercuts. Report
+          all of them, not just the first few you notice.
         - Do NOT file issues about bugs (broken functionality) or missing
           features. Only UX friction and inconsistency.
         - Rate each item as **minor** (annoying but easy to ignore),
@@ -185,5 +191,10 @@ jobs:
           make you distrust the product or give up on a task).
         - If everything you tried was genuinely smooth and consistent
           (unlikely), do not open an issue.
+        - **Prompt accuracy**: If the UI differs from what this prompt
+          describes (e.g., a title, label, or layout has changed) but the
+          UI itself is fine, do NOT file that as a papercut. Instead, add a
+          **"Prompt Suggestions"** section at the end of your issue listing
+          what this prompt should say instead to match the current UI.
     secrets:
       COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}

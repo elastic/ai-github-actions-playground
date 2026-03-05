@@ -28,8 +28,8 @@ jobs:
         follow a fixed script. Examples of things you might try on any given
         run:
 
-        - Navigate to Fleet. How many agents are listed? Do they show status
-          (online/offline/updating), version, and policy?
+        - Navigate to Fleet. How many agents are listed? Do they show
+          agent status, version, and assigned policy?
         - Click an agent row. Does a detail view open showing agent metadata?
         - Check if the table has a search input. Try searching for an agent
           by name. Try searching for something that doesn't exist.
@@ -98,16 +98,29 @@ jobs:
 
         1. **Fleet table empty state**: If no agents are enrolled, is the
            empty state polished — icon, title, and a hint about how to enroll?
-        2. **Agent status badges**: Do Online/Offline/Updating badges use
-           distinct and readable colors in both light and dark mode?
+        2. **Agent status badges**: Do status indicators use distinct and
+           readable colors in both light and dark mode?
         3. **Table row hover**: Is the hover state visible in dark mode?
 
         ## Output rules
 
-        - **Silence is better than noise.** Only file an issue for genuine bugs.
-        - If everything works, do **not** open an issue.
-        - If you find problems, create **one** issue with what you tried,
-          what you expected, and what happened, with screenshots.
-        - Prefix the title with `[explore-fleet]`.
+        - **Complete ALL required exploration phases before filing an issue.**
+          Do not stop after finding your first problem — continue through
+          every required check listed above, collecting all findings.
+          Treat example scenarios as illustrative, not an exhaustive checklist.
+        - **Silence is better than noise.** Only file an issue for genuine
+          bugs or defects. If everything works, do **not** open an issue.
+        - Include any **axe-core color-contrast violations** found during
+          exploration in the same issue, with page/location and screenshot.
+        - Create **one** issue that lists **every** finding from your
+          exploration. Use a numbered list — for each item include: the
+          page/location, what you tried, what you expected, what actually
+          happened, and a screenshot. A thorough issue typically has 3-10
+          findings.
+        - **Prompt accuracy**: If the UI differs from what this prompt
+          describes (e.g., a title, label, or layout has changed) but the
+          UI itself is fine, do NOT file that as a bug. Instead, add a
+          **"Prompt Suggestions"** section at the end of your issue listing
+          what this prompt should say instead to match the current UI.
     secrets:
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}

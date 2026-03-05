@@ -173,12 +173,27 @@ const DARK_SCROLLBAR: ScrollbarColors = {
   track: "transparent",
 };
 
+interface CodeMirrorGutterColors {
+  background: string;
+  text: string;
+  border: string;
+}
+
 /** Build CssBaseline overrides with theme-aware scrollbars and CodeMirror focus ring. */
-function cssBaselineOverrides(primaryColor: string, scrollbar: ScrollbarColors): string {
+function cssBaselineOverrides(
+  primaryColor: string,
+  scrollbar: ScrollbarColors,
+  gutter: CodeMirrorGutterColors,
+): string {
   return `
     ${REDUCED_MOTION_CSS}
     .cm-editor.cm-focused {
       outline: 2px solid ${primaryColor};
+    }
+    .cm-editor .cm-gutters {
+      background-color: ${gutter.background};
+      color: ${gutter.text};
+      border-right: 1px solid ${gutter.border};
     }
 
     /* Firefox */
@@ -242,7 +257,11 @@ export const lightTheme = createTheme({
   components: {
     ...baseOptions.components,
     MuiCssBaseline: {
-      styleOverrides: cssBaselineOverrides(LIGHT_PRIMARY, LIGHT_SCROLLBAR),
+      styleOverrides: cssBaselineOverrides(LIGHT_PRIMARY, LIGHT_SCROLLBAR, {
+        background: "#EDF0F7",
+        text: LIGHT_TEXT.secondary,
+        border: LIGHT_BORDER.subtle,
+      }),
     },
   },
 });
@@ -261,7 +280,11 @@ export const darkTheme = createTheme({
   components: {
     ...baseOptions.components,
     MuiCssBaseline: {
-      styleOverrides: cssBaselineOverrides(DARK_PRIMARY, DARK_SCROLLBAR),
+      styleOverrides: cssBaselineOverrides(DARK_PRIMARY, DARK_SCROLLBAR, {
+        background: "#1A1D27",
+        text: DARK_TEXT.secondary,
+        border: DARK_BORDER.subtle,
+      }),
     },
   },
 });

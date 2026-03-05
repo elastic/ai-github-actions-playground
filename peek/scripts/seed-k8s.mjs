@@ -214,32 +214,161 @@ function randomHex(len) {
   return Array.from({ length: len }, () => Math.floor(Math.random() * 16).toString(16)).join("");
 }
 
+const K8S_SERVICE_META = {
+  frontend: {
+    language: "javascript",
+    version: "2.4.1",
+    operations: [
+      { name: "GET /", httpRoute: "/" },
+      { name: "GET /dashboard", httpRoute: "/dashboard" },
+      { name: "GET /api/health", httpRoute: "/api/health" },
+      { name: "POST /api/query", httpRoute: "/api/query" },
+    ],
+  },
+  "api-server": {
+    language: "go",
+    version: "1.8.0",
+    operations: [
+      { name: "GET /api/pods", httpRoute: "/api/pods" },
+      { name: "GET /api/metrics", httpRoute: "/api/metrics" },
+      { name: "POST /api/search", httpRoute: "/api/search" },
+      { name: "GET /api/health", httpRoute: "/api/health" },
+    ],
+  },
+  worker: {
+    language: "python",
+    version: "1.2.0",
+    operations: [
+      { name: "process job", httpRoute: null },
+      { name: "flush metrics", httpRoute: null },
+      { name: "sync config", httpRoute: null },
+    ],
+  },
+};
+const TRACE_WORKLOADS = new Set(Object.keys(K8S_SERVICE_META));
+
+/** Build one span doc, shared fields extracted for reuse. */
+function makeSpan(
+  traceId,
+  spanId,
+  parentSpanId,
+  startMs,
+  durationNs,
+  op,
+  isError,
+  pod,
+  meta,
+  env,
+  kind,
+) {
+  return {
+    "@timestamp": new Date(startMs).toISOString(),
+    trace_id: traceId,
+    span_id: spanId,
+    name: op.name,
+    kind,
+    duration: durationNs,
+    "attributes.span.duration.us": Math.floor(durationNs / 1000),
+    parent_span_id: parentSpanId,
+    "status.code": isError ? "Error" : "Ok",
+    "resource.attributes.service.name": pod.workloadName,
+    "resource.attributes.service.version": meta.version,
+    "resource.attributes.telemetry.sdk.language": meta.language,
+    "resource.attributes.deployment.environment": env,
+    ...(op.httpRoute != null && { "attributes.http.route": op.httpRoute }),
+    ...(op.httpRoute != null && {
+      "http.status_code": isError ? 500 : 200,
+    }),
+    "resource.attributes.k8s.cluster.name": CLUSTER,
+    "resource.attributes.k8s.namespace.name": pod.namespace,
+    "resource.attributes.k8s.pod.name": pod.podName,
+    "resource.attributes.k8s.node.name": pod.node,
+    "data_stream.type": "traces",
+    "data_stream.dataset": "generic.otel",
+    "data_stream.namespace": "default",
+  };
+}
+
 async function seedK8sTraces(client, pods) {
   const now = Date.now();
   const docs = [];
-  const servicePods = pods.filter((p) => ["frontend", "api-server", "worker"].includes(p.workloadName));
+  const servicePods = pods.filter((p) => TRACE_WORKLOADS.has(p.workloadName));
+
+  // 60 samples over the last hour at 1-minute intervals
+  const SAMPLES = 60;
+  const INTERVAL_MS = 60_000;
 
   for (const pod of servicePods) {
-    for (let i = 0; i < 15; i++) {
+    const meta = K8S_SERVICE_META[pod.workloadName];
+    if (!meta) continue;
+    const env = pod.namespace === "app-prod" ? "production" : "staging";
+
+    for (let i = 0; i < SAMPLES; i++) {
+      const startMs = now - i * INTERVAL_MS;
+      const op = meta.operations[i % meta.operations.length];
+      const isError = Math.random() < 0.05;
+      const rootDurationNs = Math.floor(Math.random() * 200 + 20) * 1_000_000;
       const traceId = randomHex(32);
-      const startMs = now - i * 4 * 60_000;
-      docs.push({
-        "@timestamp": new Date(startMs).toISOString(),
-        "trace.id": traceId,
-        "span.id": randomHex(16),
-        "span.name": `GET /api/${pod.workloadName}`,
-        "span.kind": "SERVER",
-        "span.duration": Math.floor(Math.random() * 200 + 5) * 1_000_000, // ns
-        "service.name": pod.workloadName,
-        "k8s.cluster.name": CLUSTER,
-        "k8s.namespace.name": pod.namespace,
-        "k8s.pod.name": pod.podName,
-        "k8s.node.name": pod.node,
-        "http.status_code": Math.random() < 0.05 ? 500 : 200,
-        "data_stream.type": "traces",
-        "data_stream.dataset": "generic.otel",
-        "data_stream.namespace": "default",
-      });
+      const rootSpanId = randomHex(16);
+
+      // Root span (Server)
+      docs.push(
+        makeSpan(
+          traceId,
+          rootSpanId,
+          "",
+          startMs,
+          rootDurationNs,
+          op,
+          isError,
+          pod,
+          meta,
+          env,
+          "Server",
+        ),
+      );
+
+      // Child span: DB query (always present)
+      const dbDurationNs = Math.floor(Math.random() * 30 + 2) * 1_000_000;
+      const dbStartMs = startMs + Math.floor(rootDurationNs / 1_000_000 / 4);
+      docs.push(
+        makeSpan(
+          traceId,
+          randomHex(16),
+          rootSpanId,
+          dbStartMs,
+          dbDurationNs,
+          { name: "SELECT metrics", httpRoute: null },
+          false,
+          pod,
+          { ...meta, language: "sql" },
+          env,
+          "Client",
+        ),
+      );
+
+      // Child span: downstream HTTP call (every other request)
+      if (i % 2 === 0 && pod.workloadName !== "worker") {
+        const httpDurationNs = Math.floor(Math.random() * 50 + 5) * 1_000_000;
+        const httpStartMs = startMs + Math.floor(rootDurationNs / 1_000_000 / 2);
+        const downstream =
+          pod.workloadName === "frontend" ? "api-server" : "worker";
+        docs.push(
+          makeSpan(
+            traceId,
+            randomHex(16),
+            rootSpanId,
+            httpStartMs,
+            httpDurationNs,
+            { name: `GET /api/${downstream}`, httpRoute: `/api/${downstream}` },
+            false,
+            pod,
+            meta,
+            env,
+            "Client",
+          ),
+        );
+      }
     }
   }
 

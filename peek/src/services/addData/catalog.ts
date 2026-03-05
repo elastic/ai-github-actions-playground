@@ -237,6 +237,7 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     supportedEnvironments: ["kubernetes", "docker", "linux", "macos", "windows", "on_prem"],
     expectedSignals: ["traces", "metrics"],
     recommendedNextSteps: [
+      { id: "view-java-services", label: "Open Services", path: "/services" },
       { id: "view-java-traces", label: "Open traces", path: "/traces" },
       { id: "view-java-metrics", label: "Explore metrics", path: "/explore" },
     ],
@@ -251,6 +252,7 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     supportedEnvironments: ["kubernetes", "docker", "linux", "macos", "windows", "on_prem"],
     expectedSignals: ["traces", "metrics"],
     recommendedNextSteps: [
+      { id: "view-python-services", label: "Open Services", path: "/services" },
       { id: "view-python-traces", label: "Open traces", path: "/traces" },
       { id: "view-python-metrics", label: "Explore metrics", path: "/explore" },
     ],
@@ -265,6 +267,7 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     supportedEnvironments: ["kubernetes", "docker", "linux", "macos", "windows", "on_prem"],
     expectedSignals: ["traces", "metrics"],
     recommendedNextSteps: [
+      { id: "view-nodejs-services", label: "Open Services", path: "/services" },
       { id: "view-nodejs-traces", label: "Open traces", path: "/traces" },
       { id: "view-nodejs-metrics", label: "Explore metrics", path: "/explore" },
     ],
@@ -279,6 +282,7 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     supportedEnvironments: ["kubernetes", "docker", "linux", "macos", "windows", "on_prem"],
     expectedSignals: ["traces", "metrics"],
     recommendedNextSteps: [
+      { id: "view-go-services", label: "Open Services", path: "/services" },
       { id: "view-go-traces", label: "Open traces", path: "/traces" },
       { id: "view-go-metrics", label: "Explore metrics", path: "/explore" },
     ],
@@ -293,6 +297,7 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     supportedEnvironments: ["kubernetes", "docker", "linux", "macos", "windows", "on_prem"],
     expectedSignals: ["traces", "metrics"],
     recommendedNextSteps: [
+      { id: "view-dotnet-services", label: "Open Services", path: "/services" },
       { id: "view-dotnet-traces", label: "Open traces", path: "/traces" },
       { id: "view-dotnet-metrics", label: "Explore metrics", path: "/explore" },
     ],
@@ -307,6 +312,7 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     supportedEnvironments: ["kubernetes", "docker", "linux", "macos", "windows", "on_prem"],
     expectedSignals: ["traces", "metrics"],
     recommendedNextSteps: [
+      { id: "view-ruby-services", label: "Open Services", path: "/services" },
       { id: "view-ruby-traces", label: "Open traces", path: "/traces" },
       { id: "view-ruby-metrics", label: "Explore metrics", path: "/explore" },
     ],
@@ -321,6 +327,7 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     supportedEnvironments: ["kubernetes", "docker", "linux", "macos", "windows", "on_prem"],
     expectedSignals: ["traces", "metrics"],
     recommendedNextSteps: [
+      { id: "view-php-services", label: "Open Services", path: "/services" },
       { id: "view-php-traces", label: "Open traces", path: "/traces" },
       { id: "view-php-metrics", label: "Explore metrics", path: "/explore" },
     ],

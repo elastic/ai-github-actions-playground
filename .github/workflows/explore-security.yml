@@ -32,8 +32,8 @@ jobs:
         **Users page:**
         - Navigate to Users. The page uses a list-detail layout: a searchable
           list on the left and a detail panel on the right. How many users are
-          listed? Does the detail panel show username, enabled/disabled status,
-          assigned roles, and metadata?
+          listed? Does the detail panel show relevant user information
+          (status, assigned roles, metadata)?
         - Click a user in the list. Does the detail panel update? What fields
           are shown (roles, metadata)?
         - Use the search field to filter users by name.
@@ -41,14 +41,14 @@ jobs:
 
         **Roles page:**
         - Navigate to Roles. Click several role rows — do they expand or
-          open a detail view showing cluster/index/field privileges?
+          open a detail view showing privilege information?
         - Filter or search for a built-in role (e.g., "kibana_system").
           Is the privilege breakdown readable?
         - Are read-only indicator roles visually distinct from custom roles?
 
         **API Keys page:**
-        - Navigate to API Keys. Are any API keys listed? What columns does
-          the table show (name, owner, created, expiration)?
+        - Navigate to API Keys. Are any API keys listed? Does the table
+          show relevant key metadata?
         - Click an API key row — is there a detail view or expansion?
         - If no keys exist, is the empty state helpful?
 
@@ -70,10 +70,10 @@ jobs:
         **Investigate page — search and results:**
         - Type a user name visible in the suggestions (or from the Users
           page) and press Enter or click Search. Does the timeline load?
-        - Verify the results show a summary panel with event count,
-          category chips, and data source chips.
-        - Verify the timeline table shows timestamps, categories, actions,
-          outcomes, and messages.
+        - Verify the results show a summary panel with event counts and
+          category information.
+        - Verify the timeline table shows relevant event details
+          (timestamps, categories, outcomes, etc.).
         - Search for a name that does not exist. Is the "No events found"
           empty state shown with a helpful message?
         - Try special characters in the search field (e.g., names with
@@ -186,11 +186,23 @@ jobs:
 
         ## Output rules
 
-        - **Silence is better than noise.** Only file an issue for genuine bugs.
-        - If everything works, do **not** open an issue.
-        - If you find problems, create **one** issue describing what you
-          tried, what you expected, what actually happened, and screenshots.
-        - When creating an issue, prefix the title with `[explore-security]`
-          (after the automatically added `[gemini-cli]` prefix).
+        - **Complete ALL required exploration phases before filing an issue.**
+          Do not stop after finding your first problem — continue through
+          every required check listed above, collecting all findings.
+          Treat example scenarios as illustrative, not an exhaustive checklist.
+        - **Silence is better than noise.** Only file an issue for genuine
+          bugs or defects. If everything works, do **not** open an issue.
+        - Include any **axe-core color-contrast violations** found during
+          exploration in the same issue, with page/location and screenshot.
+        - Create **one** issue that lists **every** finding from your
+          exploration. Use a numbered list — for each item include: the
+          page/location, what you tried, what you expected, what actually
+          happened, and a screenshot. A thorough issue typically has 3-10
+          findings.
+        - **Prompt accuracy**: If the UI differs from what this prompt
+          describes (e.g., a title, label, or layout has changed) but the
+          UI itself is fine, do NOT file that as a bug. Instead, add a
+          **"Prompt Suggestions"** section at the end of your issue listing
+          what this prompt should say instead to match the current UI.
     secrets:
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}

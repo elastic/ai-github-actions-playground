@@ -100,17 +100,24 @@ jobs:
 
         ## Output rules
 
+        - **Complete ALL exploration above before filing an issue.** Do not
+          stop after finding your first gap — continue through every area,
+          collecting all findings.
         - File **one** issue per run framed as customer feedback.
         - Structure it as: "I tried to do X, expected Y (because
           Kibana/Grafana/Elasticvue has it), but Peek doesn't support
           it yet."
-        - Include 3-5 specific, actionable feature requests per issue.
+        - Include **5-10** specific, actionable feature requests per issue.
+          A thorough exploration should cover multiple pages and workflows.
         - Include screenshots showing where the gap is visible.
         - Do NOT file issues about bugs. Feature gaps and visual polish
           gaps are both fair game.
         - If you genuinely can't find any gaps (unlikely), do not open
           an issue.
-        - When creating an issue, prefix the title with `[customer-feedback]`
-          (after the automatically added `[gemini-cli]` prefix).
+        - **Prompt accuracy**: If the UI differs from what this prompt
+          describes (e.g., a title, label, or layout has changed) but the
+          UI itself is fine, do NOT file that as a gap. Instead, add a
+          **"Prompt Suggestions"** section at the end of your issue listing
+          what this prompt should say instead to match the current UI.
     secrets:
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
