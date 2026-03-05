@@ -31,6 +31,7 @@ import { useDataStreams } from "../hooks/useDataStreams";
 import { useFieldCaps } from "../hooks/useFieldCaps";
 import { useOpenInDiscover } from "../hooks/useOpenInDiscover";
 import { INSIGHT_GUARDRAIL } from "../hooks/insightPromptUtils";
+import { usePageSlotInsights } from "../hooks/usePageSlotInsights";
 import { COMPACT_CHIP_SX } from "../types/tokens";
 
 import ContentSkeleton from "./ContentSkeleton";
@@ -39,6 +40,13 @@ import FieldStatsPanel from "./FieldStatsPanel";
 import PageHeader from "./PageHeader";
 import AskAiButton from "./AskAiButton";
 import PageInsightBanner from "./PageInsightBanner";
+import InsightSlot from "./InsightSlot";
+import { InsightSlotProvider } from "./InsightSlotContext";
+import { OverviewInfoCard } from "./OverviewInfoCard";
+import {
+  DATA_STREAMS_INSIGHT_SLOT_IDS,
+  DATA_STREAMS_INSIGHT_SLOTS,
+} from "./dataStreamsInsightSlots";
 
 function toFieldRows(fieldCaps: FieldCapsResponse) {
   return Object.entries(fieldCaps.fields ?? {})
@@ -173,6 +181,20 @@ export default function DataStreamsPage() {
     return [...filtered].sort((a, b) => compareStreams(a, b, streamSortField, streamSortDirection));
   }, [dataStreams, deferredSearch, showSystemStreams, streamSortField, streamSortDirection]);
 
+  const streamMetrics = useMemo(() => {
+    const green = dataStreams.filter((s) => s.status.toUpperCase() === "GREEN").length;
+    const yellow = dataStreams.filter((s) => s.status.toUpperCase() === "YELLOW").length;
+    const red = dataStreams.filter((s) => s.status.toUpperCase() === "RED").length;
+    const totalIndices = dataStreams.reduce((sum, s) => sum + s.indices.length, 0);
+    return {
+      total: dataStreams.length,
+      green,
+      yellow,
+      red,
+      totalIndices,
+    };
+  }, [dataStreams]);
+
   const handleStreamSort = useCallback(
     (field: StreamSortField) => {
       setStreamSortDirection((prev) =>
@@ -225,325 +247,455 @@ export default function DataStreamsPage() {
     [openInDiscover],
   );
 
+  const insightContext = useMemo(
+    () =>
+      streamsData
+        ? JSON.stringify({
+            totalStreams: streamMetrics.total,
+            healthy: streamMetrics.green,
+            degraded: streamMetrics.yellow,
+            unhealthy: streamMetrics.red,
+            totalBackingIndices: streamMetrics.totalIndices,
+            selectedStream: displayedName,
+            filteredCount: filteredStreams.length,
+          })
+        : "",
+    [streamsData, streamMetrics, displayedName, filteredStreams.length],
+  );
+
+  const slotInsights = usePageSlotInsights({
+    context: insightContext,
+    systemPrompt:
+      "You are an Elasticsearch data stream analyst. " +
+      "Generate one concise, high-signal insight per slot. " +
+      "Focus on operational health, capacity, and actionable recommendations. " +
+      "Use only facts from provided context; do not invent data. " +
+      "When streams are degraded or unhealthy, suggest investigation steps. " +
+      INSIGHT_GUARDRAIL,
+    cacheKey: `data-streams-slots::${streamMetrics.total}::${streamMetrics.green}::${streamMetrics.yellow}::${streamMetrics.red}::${displayedName ?? ""}`,
+    slots: DATA_STREAMS_INSIGHT_SLOTS,
+    enabled: dataStreams.length > 0,
+  });
+
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1, height: "100%", minHeight: 0 }}>
-      <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <PageHeader
-          title="Data Streams"
-          actions={
-            <>
-              <Button
-                size="small"
-                variant="outlined"
-                onClick={streamsResult.refresh}
-                disabled={loadingStreams}
-              >
-                {loadingStreams ? <CircularProgress size={16} /> : "Refresh"}
-              </Button>
-              <Button
-                size="small"
-                variant="contained"
-                disabled={!displayedName}
-                onClick={handleOpenInDiscover}
-              >
-                Open in Query Lab
-              </Button>
-              <Button
-                size="small"
-                variant="outlined"
-                disabled={!displayedName}
-                onClick={handleInspectInConsole}
-              >
-                Inspect in Console
-              </Button>
-              {displayedName && (
-                <AskAiButton
-                  label="Summarize schema"
-                  prompt={`Summarize the schema of data stream "${displayedName}" and suggest one ES|QL query to explore it.`}
-                />
-              )}
-            </>
-          }
-        />
-      </Paper>
-
-      {error && <Alert severity="error">{error}</Alert>}
-      {displayedDataStream && (
-        <PageInsightBanner
-          context={JSON.stringify({
-            name: displayedDataStream.name,
-            status: displayedDataStream.status,
-            generation: displayedDataStream.generation,
-            backingIndexCount: displayedDataStream.indices.length,
-            ilmPolicy: displayedDataStream.ilm_policy ?? null,
-          })}
-          systemPrompt={`You are an Elasticsearch data stream analyst. Give one concise operational insight and one action for this selected stream.${INSIGHT_GUARDRAIL}`}
-          cacheKey={`data-stream::${displayedDataStream.name}::${displayedDataStream.status}::${displayedDataStream.generation}::${displayedDataStream.indices.length}::${displayedDataStream.ilm_policy ?? ""}`}
-        />
-      )}
-
-      <Box sx={{ display: "flex", flex: 1, gap: 1, minHeight: 0 }}>
-        <Paper
-          variant="outlined"
-          sx={{ display: "flex", flexShrink: 0, flexDirection: "column", width: 480, minHeight: 0 }}
-        >
-          <Box sx={{ p: 1 }}>
-            <TextField
-              size="small"
-              fullWidth
-              placeholder="Search streams"
-              value={search}
-              onChange={(e) => void setSearch(e.target.value)}
-              inputProps={{ "aria-label": "Search streams" }}
-            />
-            <FormControlLabel
-              control={
-                <Switch
+    <InsightSlotProvider
+      summary={slotInsights.summary}
+      insights={slotInsights.insights}
+      loading={slotInsights.loading}
+      error={slotInsights.error}
+      refresh={slotInsights.refresh}
+    >
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1, height: "100%", minHeight: 0 }}>
+        <Paper variant="outlined" sx={{ p: 1.5 }}>
+          <PageHeader
+            title="Data Streams"
+            actions={
+              <>
+                <Button
                   size="small"
-                  checked={showSystemStreams}
-                  onChange={(e) => setShowSystemStreams(e.target.checked)}
-                  inputProps={{ "aria-label": "Show system streams" }}
-                />
-              }
-              label={
-                <Typography variant="caption" color="text.secondary">
-                  Show system streams
-                </Typography>
-              }
-              sx={{ mt: 0.5, ml: 0 }}
-            />
-          </Box>
-          <Divider />
-          <TableContainer sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
-            <Table size="small" stickyHeader aria-label="Data stream list">
-              <TableHead>
-                <TableRow>
-                  <TableCell>
-                    <TableSortLabel
-                      active={streamSortField === "name"}
-                      direction={streamSortField === "name" ? streamSortDirection : "asc"}
-                      onClick={() => handleStreamSort("name")}
-                    >
-                      Name
-                    </TableSortLabel>
-                  </TableCell>
-                  <TableCell>
-                    <TableSortLabel
-                      active={streamSortField === "status"}
-                      direction={streamSortField === "status" ? streamSortDirection : "asc"}
-                      onClick={() => handleStreamSort("status")}
-                    >
-                      Status
-                    </TableSortLabel>
-                  </TableCell>
-                  <TableCell align="right">
-                    <TableSortLabel
-                      active={streamSortField === "indices"}
-                      direction={streamSortField === "indices" ? streamSortDirection : "asc"}
-                      onClick={() => handleStreamSort("indices")}
-                    >
-                      Indices
-                    </TableSortLabel>
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredStreams.map((stream) => (
-                  <TableRow
-                    key={stream.name}
-                    hover
-                    selected={stream.name === selectedName}
-                    onClick={() => setSelectedName(stream.name)}
-                    tabIndex={0}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter" || event.key === " ") {
-                        event.preventDefault();
-                        setSelectedName(stream.name);
-                      }
-                    }}
-                    sx={{ cursor: "pointer" }}
-                  >
-                    <TableCell>
-                      <Typography
-                        variant="body2"
-                        noWrap
-                        title={stream.name}
-                        sx={{ maxWidth: 240, fontSize: "0.85rem", fontFamily: "monospace" }}
-                      >
-                        {stream.name}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={stream.status.toUpperCase()}
-                        color={STATUS_CHIP_COLORS[stream.status.toUpperCase()] ?? "default"}
-                        size="small"
-                        sx={COMPACT_CHIP_SX}
-                      />
-                    </TableCell>
-                    <TableCell align="right">
-                      <Typography variant="body2">{stream.indices.length}</Typography>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {!loadingStreams && filteredStreams.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={3} sx={{ border: 0 }}>
-                      <EmptyState
-                        size="small"
-                        heading="No data streams found"
-                        description="Try adjusting your search or check that data streams exist in the cluster"
-                      />
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Paper>
-
-        <Paper
-          variant="outlined"
-          sx={{ display: "flex", flex: 1, flexDirection: "column", minHeight: 0 }}
-        >
-          <Box sx={{ p: 1.5 }}>
-            {displayedDataStream ? (
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                <Typography variant="subtitle1">{displayedDataStream.name}</Typography>
-                <Box
-                  sx={{
-                    display: "grid",
-                    gridTemplateColumns: "minmax(120px, auto) 1fr",
-                    rowGap: 0.5,
-                    columnGap: 1.5,
-                  }}
+                  variant="outlined"
+                  onClick={streamsResult.refresh}
+                  disabled={loadingStreams}
                 >
-                  <Typography variant="caption" color="text.secondary">
-                    Status
-                  </Typography>
-                  <Typography variant="body2" data-testid="data-stream-meta-status">
-                    {displayedDataStream.status}
-                  </Typography>
-
-                  <Typography variant="caption" color="text.secondary">
-                    Generation
-                  </Typography>
-                  <Typography variant="body2" data-testid="data-stream-meta-generation">
-                    {displayedDataStream.generation}
-                  </Typography>
-
-                  <Typography variant="caption" color="text.secondary">
-                    Backing indices
-                  </Typography>
-                  <Typography variant="body2" data-testid="data-stream-meta-backing-indices">
-                    {displayedDataStream.indices.length}
-                  </Typography>
-
-                  <Typography variant="caption" color="text.secondary">
-                    Write index
-                  </Typography>
-                  <Typography variant="body2" data-testid="data-stream-meta-write-index">
-                    {displayedDataStream.indices[displayedDataStream.indices.length - 1]
-                      ?.index_name ?? "n/a"}
-                  </Typography>
-
-                  <Typography variant="caption" color="text.secondary">
-                    Managed by
-                  </Typography>
-                  <Typography variant="body2" data-testid="data-stream-meta-managed-by">
-                    {displayedDataStream.next_generation_managed_by}
-                  </Typography>
-
-                  {displayedDataStream.ilm_policy && (
-                    <>
-                      <Typography variant="caption" color="text.secondary">
-                        ILM policy
-                      </Typography>
-                      <Typography variant="body2" data-testid="data-stream-meta-ilm-policy">
-                        {displayedDataStream.ilm_policy}
-                      </Typography>
-                    </>
-                  )}
-                </Box>
-              </Box>
-            ) : (
-              <EmptyState
-                icon={<StorageIcon sx={{ fontSize: 32 }} />}
-                heading="Select a data stream"
-                description="Select a data stream from the left panel to view its fields and backing indices."
-              />
-            )}
-          </Box>
-          <Divider />
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: 0, p: 1.5 }}>
-            {displayedDataStream && (
-              <TextField
-                size="small"
-                placeholder="Search fields"
-                value={fieldSearch}
-                onChange={(e) => setFieldSearch(e.target.value)}
-                inputProps={{ "aria-label": "Search fields" }}
-              />
-            )}
-            {loadingFields ? (
-              <ContentSkeleton variant="table" />
-            ) : (
-              <Box sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
-                {displayedDataStream &&
-                  fieldRows.map((field) => (
-                    <Stack
-                      key={`${field.name}:${field.type}`}
-                      component="button"
-                      direction="row"
-                      spacing={1}
-                      onClick={() => setSelectedField({ name: field.name, type: field.type })}
-                      aria-pressed={
-                        selectedField?.name === field.name && selectedField?.type === field.type
-                      }
-                      sx={{
-                        alignItems: "center",
-                        width: "100%",
-                        py: 0.5,
-                        px: 0.5,
-                        border: "none",
-                        borderRadius: 1,
-                        background: "none",
-                        bgcolor:
-                          selectedField?.name === field.name && selectedField?.type === field.type
-                            ? "action.selected"
-                            : "transparent",
-                        cursor: "pointer",
-                        textAlign: "left",
-                        "&:hover": { bgcolor: "action.hover" },
-                      }}
-                    >
-                      <Typography variant="body2" color="text.primary" sx={{ flex: 1 }}>
-                        {field.name}
-                      </Typography>
-                      <Chip size="small" label={field.type} />
-                    </Stack>
-                  ))}
-                {!loadingFields && fieldRows.length === 0 && displayedDataStream && (
-                  <Typography variant="body2" color="text.secondary">
-                    No fields found for this data stream.
-                  </Typography>
+                  {loadingStreams ? <CircularProgress size={16} /> : "Refresh"}
+                </Button>
+                <Button
+                  size="small"
+                  variant="contained"
+                  disabled={!displayedName}
+                  onClick={handleOpenInDiscover}
+                >
+                  Open in Query Lab
+                </Button>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  disabled={!displayedName}
+                  onClick={handleInspectInConsole}
+                >
+                  Inspect in Console
+                </Button>
+                {displayedName && (
+                  <AskAiButton
+                    label="Summarize schema"
+                    prompt={`Summarize the schema of data stream "${displayedName}" and suggest one ES|QL query to explore it.`}
+                  />
                 )}
-              </Box>
-            )}
-          </Box>
+              </>
+            }
+          />
         </Paper>
 
-        {selectedField && connection && displayedName && (
-          <FieldStatsPanel
-            connection={connection}
-            streamName={displayedName}
-            fieldName={selectedField.name}
-            fieldType={selectedField.type}
-            onClose={() => setSelectedField(null)}
-            onOpenInQueryLab={handleFieldStatsQuery}
+        {!loadingStreams && dataStreams.length > 0 && (
+          <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
+            <Box sx={{ flex: 1, minWidth: 100 }}>
+              <InsightSlot slotId={DATA_STREAMS_INSIGHT_SLOT_IDS.totalStreamsCard}>
+                <OverviewInfoCard title="Total Streams">
+                  <Typography
+                    variant="h5"
+                    component="p"
+                    sx={{ fontVariantNumeric: "tabular-nums" }}
+                  >
+                    {streamMetrics.total}
+                  </Typography>
+                </OverviewInfoCard>
+              </InsightSlot>
+            </Box>
+            <Box sx={{ flex: 1, minWidth: 100 }}>
+              <InsightSlot slotId={DATA_STREAMS_INSIGHT_SLOT_IDS.healthyCard}>
+                <OverviewInfoCard title="Healthy">
+                  <Typography
+                    variant="h5"
+                    component="p"
+                    sx={{ color: "success.main", fontVariantNumeric: "tabular-nums" }}
+                  >
+                    {streamMetrics.green}
+                  </Typography>
+                </OverviewInfoCard>
+              </InsightSlot>
+            </Box>
+            <Box sx={{ flex: 1, minWidth: 100 }}>
+              <InsightSlot slotId={DATA_STREAMS_INSIGHT_SLOT_IDS.degradedCard}>
+                <OverviewInfoCard title="Degraded">
+                  <Typography
+                    variant="h5"
+                    component="p"
+                    sx={{
+                      color: streamMetrics.yellow > 0 ? "warning.main" : "text.primary",
+                      fontVariantNumeric: "tabular-nums",
+                    }}
+                  >
+                    {streamMetrics.yellow}
+                  </Typography>
+                </OverviewInfoCard>
+              </InsightSlot>
+            </Box>
+            <Box sx={{ flex: 1, minWidth: 100 }}>
+              <InsightSlot slotId={DATA_STREAMS_INSIGHT_SLOT_IDS.unhealthyCard}>
+                <OverviewInfoCard title="Unhealthy">
+                  <Typography
+                    variant="h5"
+                    component="p"
+                    sx={{
+                      color: streamMetrics.red > 0 ? "error.main" : "text.primary",
+                      fontVariantNumeric: "tabular-nums",
+                    }}
+                  >
+                    {streamMetrics.red}
+                  </Typography>
+                </OverviewInfoCard>
+              </InsightSlot>
+            </Box>
+            <Box sx={{ flex: 1, minWidth: 100 }}>
+              <InsightSlot slotId={DATA_STREAMS_INSIGHT_SLOT_IDS.backingIndicesCard}>
+                <OverviewInfoCard title="Backing Indices">
+                  <Typography
+                    variant="h5"
+                    component="p"
+                    sx={{ fontVariantNumeric: "tabular-nums" }}
+                  >
+                    {streamMetrics.totalIndices}
+                  </Typography>
+                </OverviewInfoCard>
+              </InsightSlot>
+            </Box>
+          </Stack>
+        )}
+
+        {error && <Alert severity="error">{error}</Alert>}
+        {displayedDataStream && (
+          <PageInsightBanner
+            context={JSON.stringify({
+              name: displayedDataStream.name,
+              status: displayedDataStream.status,
+              generation: displayedDataStream.generation,
+              backingIndexCount: displayedDataStream.indices.length,
+              ilmPolicy: displayedDataStream.ilm_policy ?? null,
+            })}
+            systemPrompt={`You are an Elasticsearch data stream analyst. Give one concise operational insight and one action for this selected stream.${INSIGHT_GUARDRAIL}`}
+            cacheKey={`data-stream::${displayedDataStream.name}::${displayedDataStream.status}::${displayedDataStream.generation}::${displayedDataStream.indices.length}::${displayedDataStream.ilm_policy ?? ""}`}
           />
         )}
+
+        <Box sx={{ display: "flex", flex: 1, gap: 1, minHeight: 0 }}>
+          <InsightSlot slotId={DATA_STREAMS_INSIGHT_SLOT_IDS.streamList}>
+            <Paper
+              variant="outlined"
+              sx={{
+                display: "flex",
+                flexShrink: 0,
+                flexDirection: "column",
+                width: 480,
+                minHeight: 0,
+              }}
+            >
+              <Box sx={{ p: 1 }}>
+                <TextField
+                  size="small"
+                  fullWidth
+                  placeholder="Search streams"
+                  value={search}
+                  onChange={(e) => void setSearch(e.target.value)}
+                  inputProps={{ "aria-label": "Search streams" }}
+                />
+                <FormControlLabel
+                  control={
+                    <Switch
+                      size="small"
+                      checked={showSystemStreams}
+                      onChange={(e) => setShowSystemStreams(e.target.checked)}
+                      inputProps={{ "aria-label": "Show system streams" }}
+                    />
+                  }
+                  label={
+                    <Typography variant="caption" color="text.secondary">
+                      Show system streams
+                    </Typography>
+                  }
+                  sx={{ mt: 0.5, ml: 0 }}
+                />
+              </Box>
+              <Divider />
+              <TableContainer sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
+                <Table size="small" stickyHeader aria-label="Data stream list">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>
+                        <TableSortLabel
+                          active={streamSortField === "name"}
+                          direction={streamSortField === "name" ? streamSortDirection : "asc"}
+                          onClick={() => handleStreamSort("name")}
+                        >
+                          Name
+                        </TableSortLabel>
+                      </TableCell>
+                      <TableCell>
+                        <TableSortLabel
+                          active={streamSortField === "status"}
+                          direction={streamSortField === "status" ? streamSortDirection : "asc"}
+                          onClick={() => handleStreamSort("status")}
+                        >
+                          Status
+                        </TableSortLabel>
+                      </TableCell>
+                      <TableCell align="right">
+                        <TableSortLabel
+                          active={streamSortField === "indices"}
+                          direction={streamSortField === "indices" ? streamSortDirection : "asc"}
+                          onClick={() => handleStreamSort("indices")}
+                        >
+                          Indices
+                        </TableSortLabel>
+                      </TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {filteredStreams.map((stream) => (
+                      <TableRow
+                        key={stream.name}
+                        hover
+                        selected={stream.name === selectedName}
+                        onClick={() => setSelectedName(stream.name)}
+                        tabIndex={0}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            setSelectedName(stream.name);
+                          }
+                        }}
+                        sx={{ cursor: "pointer" }}
+                      >
+                        <TableCell>
+                          <Typography
+                            variant="body2"
+                            noWrap
+                            title={stream.name}
+                            sx={{ maxWidth: 240, fontSize: "0.85rem", fontFamily: "monospace" }}
+                          >
+                            {stream.name}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={stream.status.toUpperCase()}
+                            color={STATUS_CHIP_COLORS[stream.status.toUpperCase()] ?? "default"}
+                            size="small"
+                            sx={COMPACT_CHIP_SX}
+                          />
+                        </TableCell>
+                        <TableCell align="right">
+                          <Typography variant="body2">{stream.indices.length}</Typography>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {!loadingStreams && filteredStreams.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={3} sx={{ border: 0 }}>
+                          <EmptyState
+                            size="small"
+                            heading="No data streams found"
+                            description="Try adjusting your search or check that data streams exist in the cluster"
+                          />
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Paper>
+          </InsightSlot>
+
+          <Box sx={{ display: "flex", flex: 1, flexDirection: "column", minHeight: 0 }}>
+            <InsightSlot slotId={DATA_STREAMS_INSIGHT_SLOT_IDS.streamDetail}>
+              <Paper
+                variant="outlined"
+                sx={{ display: "flex", flex: 1, flexDirection: "column", minHeight: 0 }}
+              >
+                <Box sx={{ p: 1.5 }}>
+                  {displayedDataStream ? (
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                      <Typography variant="subtitle1">{displayedDataStream.name}</Typography>
+                      <Box
+                        sx={{
+                          display: "grid",
+                          gridTemplateColumns: "minmax(120px, auto) 1fr",
+                          rowGap: 0.5,
+                          columnGap: 1.5,
+                        }}
+                      >
+                        <Typography variant="caption" color="text.secondary">
+                          Status
+                        </Typography>
+                        <Typography variant="body2" data-testid="data-stream-meta-status">
+                          {displayedDataStream.status}
+                        </Typography>
+
+                        <Typography variant="caption" color="text.secondary">
+                          Generation
+                        </Typography>
+                        <Typography variant="body2" data-testid="data-stream-meta-generation">
+                          {displayedDataStream.generation}
+                        </Typography>
+
+                        <Typography variant="caption" color="text.secondary">
+                          Backing indices
+                        </Typography>
+                        <Typography variant="body2" data-testid="data-stream-meta-backing-indices">
+                          {displayedDataStream.indices.length}
+                        </Typography>
+
+                        <Typography variant="caption" color="text.secondary">
+                          Write index
+                        </Typography>
+                        <Typography variant="body2" data-testid="data-stream-meta-write-index">
+                          {displayedDataStream.indices[displayedDataStream.indices.length - 1]
+                            ?.index_name ?? "n/a"}
+                        </Typography>
+
+                        <Typography variant="caption" color="text.secondary">
+                          Managed by
+                        </Typography>
+                        <Typography variant="body2" data-testid="data-stream-meta-managed-by">
+                          {displayedDataStream.next_generation_managed_by}
+                        </Typography>
+
+                        {displayedDataStream.ilm_policy && (
+                          <>
+                            <Typography variant="caption" color="text.secondary">
+                              ILM policy
+                            </Typography>
+                            <Typography variant="body2" data-testid="data-stream-meta-ilm-policy">
+                              {displayedDataStream.ilm_policy}
+                            </Typography>
+                          </>
+                        )}
+                      </Box>
+                    </Box>
+                  ) : (
+                    <EmptyState
+                      icon={<StorageIcon sx={{ fontSize: 32 }} />}
+                      heading="Select a data stream"
+                      description="Select a data stream from the left panel to view its fields and backing indices."
+                    />
+                  )}
+                </Box>
+                <Divider />
+                <Box
+                  sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: 0, p: 1.5 }}
+                >
+                  {displayedDataStream && (
+                    <TextField
+                      size="small"
+                      placeholder="Search fields"
+                      value={fieldSearch}
+                      onChange={(e) => setFieldSearch(e.target.value)}
+                      inputProps={{ "aria-label": "Search fields" }}
+                    />
+                  )}
+                  {loadingFields ? (
+                    <ContentSkeleton variant="table" />
+                  ) : (
+                    <Box sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
+                      {displayedDataStream &&
+                        fieldRows.map((field) => (
+                          <Stack
+                            key={`${field.name}:${field.type}`}
+                            component="button"
+                            direction="row"
+                            spacing={1}
+                            onClick={() => setSelectedField({ name: field.name, type: field.type })}
+                            aria-pressed={
+                              selectedField?.name === field.name &&
+                              selectedField?.type === field.type
+                            }
+                            sx={{
+                              alignItems: "center",
+                              width: "100%",
+                              py: 0.5,
+                              px: 0.5,
+                              border: "none",
+                              borderRadius: 1,
+                              background: "none",
+                              bgcolor:
+                                selectedField?.name === field.name &&
+                                selectedField?.type === field.type
+                                  ? "action.selected"
+                                  : "transparent",
+                              cursor: "pointer",
+                              textAlign: "left",
+                              "&:hover": { bgcolor: "action.hover" },
+                            }}
+                          >
+                            <Typography variant="body2" color="text.primary" sx={{ flex: 1 }}>
+                              {field.name}
+                            </Typography>
+                            <Chip size="small" label={field.type} />
+                          </Stack>
+                        ))}
+                      {!loadingFields && fieldRows.length === 0 && displayedDataStream && (
+                        <Typography variant="body2" color="text.secondary">
+                          No fields found for this data stream.
+                        </Typography>
+                      )}
+                    </Box>
+                  )}
+                </Box>
+              </Paper>
+            </InsightSlot>
+          </Box>
+
+          {selectedField && connection && displayedName && (
+            <FieldStatsPanel
+              connection={connection}
+              streamName={displayedName}
+              fieldName={selectedField.name}
+              fieldType={selectedField.type}
+              onClose={() => setSelectedField(null)}
+              onOpenInQueryLab={handleFieldStatsQuery}
+            />
+          )}
+        </Box>
       </Box>
-    </Box>
+    </InsightSlotProvider>
   );
 }
