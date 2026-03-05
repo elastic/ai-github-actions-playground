@@ -90,9 +90,9 @@ jobs:
         The toolbar has three view mode toggle buttons: **Lines**, **Chart**,
         and **Patterns**.
 
-        - **Lines mode** (default): Shows a table of log entries with columns.
-          Verify that @timestamp, message, log.level, service.name, host.name,
-          and other columns are visible. Does scrolling the table work?
+        - **Lines mode** (default): Shows a table of log entries with columns
+          for timestamps, messages, log levels, service names, and other
+          fields. Does scrolling the table work?
         - **Chart mode**: Shows a histogram of log volume over time (5-minute
           buckets). Are the bars rendering? Does the Y axis show counts? Are
           buckets proportionally sized? Take a screenshot in both light and
@@ -107,15 +107,15 @@ jobs:
 
         ## Sidebar field filters
 
-        The left panel shows four field sections: **service.name**, **log.level**,
-        **host.name**, and **event.dataset**. Each section lists the top 8
-        distinct values with `+` (include) and `-` (exclude) buttons.
+        The left panel shows field filter sections (typically service name,
+        log level, host name, and dataset). Each section lists top distinct
+        values with include (`+`) and exclude (`-`) buttons.
 
-        - Click the `+` button on a `log.level` value (e.g., "info"). A filter
-          chip should appear in the filter bar above the table. Does the log
-          table update to show only that level?
-        - Click the `-` button on a different value (e.g., "error"). Does an
-          **exclusion** chip appear (`NOT log.level: error`)?
+        - Click the `+` button on a value. A filter chip should appear in
+          the filter bar above the table. Does the log table update to
+          show only matching entries?
+        - Click the `-` button on a different value. Does an exclusion
+          filter appear?
         - Add multiple filters (a service name + a log level). Is the query
           composing them with AND? Check the ES|QL query in the Raw Query field
           if visible.
@@ -241,5 +241,10 @@ jobs:
           page/location, what you tried, what you expected, what actually
           happened, and a screenshot. A thorough issue typically has 3-10
           findings.
+        - **Prompt accuracy**: If the UI differs from what this prompt
+          describes (e.g., a title, label, or layout has changed) but the
+          UI itself is fine, do NOT file that as a bug. Instead, add a
+          **"Prompt Suggestions"** section at the end of your issue listing
+          what this prompt should say instead to match the current UI.
     secrets:
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
