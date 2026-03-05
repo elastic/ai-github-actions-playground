@@ -211,31 +211,62 @@ export const electronStorage = createElectronStorage<PersistedConnectionState>({
   },
   clearSecrets: async (name, localRaw) => {
     const api = window.electronAPI!;
-    if (localRaw) {
-      try {
-        const stored = JSON.parse(localRaw) as { state: PersistedConnectionState };
-        await Promise.allSettled(
-          (stored.state.connectionProfiles ?? []).flatMap((profile) => [
-            api.deleteCredential(
-              name + PROFILE_SESSION_PREFIX + profile.id + API_KEY_SESSION_SUFFIX,
-            ),
-            api.deleteCredential(
-              name + PROFILE_SESSION_PREFIX + profile.id + OTLP_API_KEY_SESSION_SUFFIX,
-            ),
-            api.deleteCredential(
-              name + PROFILE_SESSION_PREFIX + profile.id + PASSWORD_SESSION_SUFFIX,
-            ),
-          ]),
+    const throwOnDeleteFailures = (
+      results: PromiseSettledResult<unknown>[],
+      keys: string[],
+      message: string,
+    ) => {
+      const failures = results
+        .map((result, index) => ({ result, key: keys[index] }))
+        .filter(
+          (entry): entry is { result: PromiseRejectedResult; key: string } =>
+            entry.result.status === "rejected",
+        )
+        .map(
+          ({ result, key }) =>
+            new Error(`Failed to delete credential "${key}": ${String(result.reason)}`),
         );
+      if (failures.length > 0) {
+        throw new AggregateError(failures, message);
+      }
+    };
+
+    if (localRaw) {
+      let stored: { state: PersistedConnectionState } | null = null;
+      try {
+        stored = JSON.parse(localRaw) as { state: PersistedConnectionState };
       } catch {
         /* ignore parse errors during cleanup */
       }
+      if (stored) {
+        const profileDeleteKeys = (stored.state.connectionProfiles ?? []).flatMap((profile) => [
+          name + PROFILE_SESSION_PREFIX + profile.id + API_KEY_SESSION_SUFFIX,
+          name + PROFILE_SESSION_PREFIX + profile.id + OTLP_API_KEY_SESSION_SUFFIX,
+          name + PROFILE_SESSION_PREFIX + profile.id + PASSWORD_SESSION_SUFFIX,
+        ]);
+        const profileDeleteResults = await Promise.allSettled(
+          profileDeleteKeys.map((key) => api.deleteCredential(key)),
+        );
+        throwOnDeleteFailures(
+          profileDeleteResults,
+          profileDeleteKeys,
+          "Failed to delete one or more profile credentials",
+        );
+      }
     }
-    await Promise.allSettled([
-      api.deleteCredential(name + API_KEY_SESSION_SUFFIX),
-      api.deleteCredential(name + OTLP_API_KEY_SESSION_SUFFIX),
-      api.deleteCredential(name + PASSWORD_SESSION_SUFFIX),
-    ]);
+    const baseDeleteKeys = [
+      name + API_KEY_SESSION_SUFFIX,
+      name + OTLP_API_KEY_SESSION_SUFFIX,
+      name + PASSWORD_SESSION_SUFFIX,
+    ];
+    const baseDeleteResults = await Promise.allSettled(
+      baseDeleteKeys.map((key) => api.deleteCredential(key)),
+    );
+    throwOnDeleteFailures(
+      baseDeleteResults,
+      baseDeleteKeys,
+      "Failed to delete one or more base credentials",
+    );
   },
 });
 
