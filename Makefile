@@ -21,10 +21,10 @@ help:
 	@echo "  explore-down     - Stop the exploration stack (ES + dev server)"
 	@echo "  build            - Production build to peek/dist/"
 	@echo "  preview          - Build then preview locally"
-	@echo "  lint             - Prettier + ESLint on changed files + full TypeScript type check (fast default)"
-	@echo "  lint-full        - Prettier + ESLint + TypeScript type check on all files"
-	@echo "  format           - Auto-format changed files with Prettier"
-	@echo "  format-full      - Auto-format all files with Prettier"
+	@echo "  lint             - oxfmt + oxlint on changed files + tsgo type check"
+	@echo "  lint-full        - oxfmt + oxlint + tsgo + tsc type check on all files"
+	@echo "  format           - Auto-format changed files with oxfmt"
+	@echo "  format-full      - Auto-format src/ with oxfmt"
 	@echo "  ci               - npm ci + lint + unit tests + build (strict lockfile)"
 	@echo "  check            - Alias for ci"
 	@echo "  test             - Run all tests (unit, integration, e2e)"
@@ -164,14 +164,14 @@ preview: setup build
 lint:
 	@echo "Detecting changed files against '$(BASE)'..."
 	@CHANGED=$$(cd $(PEEK_DIR) && git diff --name-only --diff-filter=ACMR --relative $(BASE) -- 'src' | grep -E '\.(ts|tsx|js|jsx)$$' || true); \
-	cd $(PEEK_DIR) && npx tsc --noEmit & _TSC_PID=$$!; \
+	cd $(PEEK_DIR) && npx tsgo --noEmit & _TSC_PID=$$!; \
 	if [ -n "$$CHANGED" ]; then \
-		echo "Running Prettier + ESLint on changed files (tsc in parallel)..."; \
-		(cd $(PEEK_DIR) && echo "$$CHANGED" | tr '\n' '\0' | xargs -0 npx prettier --check) && \
-		(cd $(PEEK_DIR) && echo "$$CHANGED" | tr '\n' '\0' | xargs -0 npx eslint --cache --cache-location .eslintcache); \
+		echo "Running oxfmt + oxlint on changed files (tsgo in parallel)..."; \
+		(cd $(PEEK_DIR) && echo "$$CHANGED" | tr '\n' '\0' | xargs -0 npx oxfmt --check) && \
+		(cd $(PEEK_DIR) && echo "$$CHANGED" | tr '\n' '\0' | xargs -0 npx oxlint); \
 		_LINT_EXIT=$$?; \
 	else \
-		echo "No changed source files found — skipping Prettier and ESLint."; \
+		echo "No changed source files found — skipping oxfmt and oxlint."; \
 		_LINT_EXIT=0; \
 	fi; \
 	wait $$_TSC_PID; _TSC_EXIT=$$?; \
@@ -180,15 +180,17 @@ lint:
 	@echo "✓ All checks passed."
 
 lint-full:
-	@echo "Running Prettier, ESLint, and TypeScript in parallel..."
+	@echo "Running oxfmt, oxlint, tsgo, and tsc in parallel..."
 	@cd $(PEEK_DIR) && { \
-		npx prettier --check src 2>&1 & _PID1=$$!; \
-		npx eslint src --cache --cache-location .eslintcache 2>&1 & _PID2=$$!; \
-		npx tsc --noEmit 2>&1 & _PID3=$$!; \
+		npx oxfmt --check src 2>&1 & _PID1=$$!; \
+		npx oxlint src 2>&1 & _PID2=$$!; \
+		npx tsgo --noEmit 2>&1 & _PID3=$$!; \
+		npx tsc --noEmit 2>&1 & _PID4=$$!; \
 		_FAIL=0; \
 		wait $$_PID1 || _FAIL=1; \
 		wait $$_PID2 || _FAIL=1; \
 		wait $$_PID3 || _FAIL=1; \
+		wait $$_PID4 || _FAIL=1; \
 		[ $$_FAIL -eq 0 ]; \
 	}
 	@echo ""
@@ -198,16 +200,16 @@ format:
 	@echo "Detecting changed files against '$(BASE)'..."
 	@CHANGED=$$(cd $(PEEK_DIR) && git diff --name-only --diff-filter=ACMR --relative $(BASE) -- 'src' | grep -E '\.(ts|tsx|js|jsx|json|css|scss|md|markdown|html|yml|yaml)$$' || true); \
 	if [ -n "$$CHANGED" ]; then \
-		echo "Formatting changed files..."; \
-		(cd $(PEEK_DIR) && echo "$$CHANGED" | tr '\n' '\0' | xargs -0 npx prettier --write); \
+		echo "Formatting changed files with oxfmt..."; \
+		(cd $(PEEK_DIR) && echo "$$CHANGED" | tr '\n' '\0' | xargs -0 npx oxfmt --write); \
 		echo "✓ Formatting complete."; \
 	else \
 		echo "No changed source files to format."; \
 	fi
 
 format-full:
-	@echo "Formatting code with Prettier..."
-	@cd $(PEEK_DIR) && npx prettier --write src
+	@echo "Formatting src with oxfmt..."
+	@cd $(PEEK_DIR) && npx oxfmt --write src
 	@echo ""
 	@echo "✓ Formatting complete."
 
