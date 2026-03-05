@@ -116,52 +116,75 @@ export default function AppHeader({
         variant={isNarrow ? "regular" : "dense"}
         sx={{ flexWrap: isNarrow ? "wrap" : "nowrap", gap: 1, px: 0.5 }}
       >
-        {showMobileNavToggle && (
-          <IconButton aria-label="Open navigation menu" size="small" onClick={onToggleMobileNav}>
-            <MenuIcon />
-          </IconButton>
-        )}
+        {/* Left section: logo, title, breadcrumbs, connection switcher. flex:"1 1 0"
+            balances with the right section so the center search bar stays fixed. */}
         <Box
           sx={{
             display: "flex",
-            flexShrink: 0,
-            justifyContent: "center",
+            flex: "1 1 0",
+            gap: 1,
             alignItems: "center",
-            width: 68,
+            minWidth: 0,
+            overflow: "hidden",
           }}
         >
+          {showMobileNavToggle && (
+            <IconButton aria-label="Open navigation menu" size="small" onClick={onToggleMobileNav}>
+              <MenuIcon />
+            </IconButton>
+          )}
           <Box
-            component="img"
-            src={logoUrl}
-            alt="Peek"
-            sx={{ width: 48, height: 48, objectFit: "contain" }}
-          />
-        </Box>
-        <Typography
-          variant="subtitle1"
-          sx={{
-            mr: 1,
-            color: "primary.main",
-            lineHeight: 1,
-            fontWeight: 700,
-          }}
-        >
-          Peek
-        </Typography>
-        {!isNarrow && isDashboardView ? (
-          <Box sx={{ display: "flex", gap: 0.5, alignItems: "center", mr: 1 }}>
-            <Chip
-              label="Dashboards"
-              size="small"
-              variant="outlined"
-              clickable
-              onClick={() => navigate("/dashboards")}
+            sx={{
+              display: "flex",
+              flexShrink: 0,
+              justifyContent: "center",
+              alignItems: "center",
+              width: 68,
+            }}
+          >
+            <Box
+              component="img"
+              src={logoUrl}
+              alt="Peek"
+              sx={{ width: 48, height: 48, objectFit: "contain" }}
             />
-            <Typography variant="body2" color="text.secondary">
-              /
-            </Typography>
+          </Box>
+          <Typography
+            variant="subtitle1"
+            sx={{
+              flexShrink: 0,
+              color: "primary.main",
+              lineHeight: 1,
+              fontWeight: 700,
+            }}
+          >
+            Peek
+          </Typography>
+          {!isNarrow && isDashboardView ? (
+            <Box sx={{ display: "flex", gap: 0.5, alignItems: "center", overflow: "hidden" }}>
+              <Chip
+                label="Dashboards"
+                size="small"
+                variant="outlined"
+                clickable
+                onClick={() => navigate("/dashboards")}
+              />
+              <Typography variant="body2" color="text.secondary">
+                /
+              </Typography>
+              <Chip
+                label={dashboard.title}
+                size="small"
+                variant="outlined"
+                sx={{
+                  maxWidth: 220,
+                  "& .MuiChip-label": { overflow: "hidden", textOverflow: "ellipsis" },
+                }}
+              />
+            </Box>
+          ) : !isNarrow && activePage ? (
             <Chip
-              label={dashboard.title}
+              label={activePage.nav.label}
               size="small"
               variant="outlined"
               sx={{
@@ -169,139 +192,138 @@ export default function AppHeader({
                 "& .MuiChip-label": { overflow: "hidden", textOverflow: "ellipsis" },
               }}
             />
-          </Box>
-        ) : !isNarrow && activePage ? (
-          <Chip
-            label={activePage.nav.label}
-            size="small"
-            variant="outlined"
-            sx={{
-              maxWidth: 220,
-              mr: 1,
-              "& .MuiChip-label": { overflow: "hidden", textOverflow: "ellipsis" },
-            }}
-          />
-        ) : null}
+          ) : null}
 
-        <ConnectionProfileSwitcher />
+          <ConnectionProfileSwitcher />
+        </Box>
 
+        {/* Center: search / command palette. flexShrink:0 keeps it stable. */}
         {connected && !isNarrow ? (
-          <Box sx={{ display: "flex", flex: 1, justifyContent: "center", px: 2 }}>
-            <ButtonBase
+          <ButtonBase
+            onClick={() => setCommandPaletteOpen(true)}
+            aria-label="Open command palette"
+            sx={{
+              display: "flex",
+              flexShrink: 0,
+              gap: 1,
+              justifyContent: "flex-start",
+              alignItems: "center",
+              width: "100%",
+              maxWidth: 360,
+              height: COMPONENT_HEIGHTS.buttonSmall,
+              py: 0,
+              px: 1.5,
+              border: 1,
+              borderColor: "border.default",
+              borderRadius: 1,
+              bgcolor: "background.subtle",
+              "&:hover": { borderColor: "border.strong" },
+            }}
+          >
+            <SearchIcon sx={{ color: "text.secondary", fontSize: "1rem" }} />
+            <Typography
+              variant="body2"
+              sx={{ flex: 1, color: "text.secondary", textAlign: "left", fontSize: "0.8rem" }}
+            >
+              Search commands…
+            </Typography>
+            <Chip
+              label="Ctrl/Cmd+K"
+              size="small"
+              variant="outlined"
+              sx={{ height: 20, fontSize: "0.65rem" }}
+            />
+          </ButtonBase>
+        ) : connected && isNarrow ? (
+          <Tooltip title="Search commands">
+            <IconButton
               onClick={() => setCommandPaletteOpen(true)}
               aria-label="Open command palette"
-              sx={{
-                display: "flex",
-                gap: 1,
-                justifyContent: "flex-start",
-                alignItems: "center",
-                width: "100%",
-                maxWidth: 360,
-                height: COMPONENT_HEIGHTS.buttonSmall,
-                py: 0,
-                px: 1.5,
-                border: 1,
-                borderColor: "border.default",
-                borderRadius: 1,
-                bgcolor: "background.subtle",
-                "&:hover": { borderColor: "border.strong" },
-              }}
+              size="small"
             >
-              <SearchIcon sx={{ color: "text.secondary", fontSize: "1rem" }} />
-              <Typography
-                variant="body2"
-                sx={{ flex: 1, color: "text.secondary", textAlign: "left", fontSize: "0.8rem" }}
-              >
-                Search commands…
-              </Typography>
-              <Chip
-                label="Ctrl/Cmd+K"
-                size="small"
-                variant="outlined"
-                sx={{ height: 20, fontSize: "0.65rem" }}
+              <SearchIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        ) : null}
+
+        {/* Right section: time controls. flex:"1 1 0" mirrors the left section so
+            the center search bar stays at 50% of the toolbar regardless of what
+            controls appear or disappear on different pages. */}
+        <Box
+          sx={{
+            display: "flex",
+            flex: "1 1 0",
+            gap: 1,
+            justifyContent: "flex-end",
+            alignItems: "center",
+            minWidth: 0,
+          }}
+        >
+          {showTimeControls && (
+            <>
+              <DateRangePicker
+                value={dashboard.timeRange}
+                onChange={setTimeRange}
+                timeZone={dashboard.timeZone}
+                onTimeZoneChange={setTimeZone}
               />
-            </ButtonBase>
-          </Box>
-        ) : connected && isNarrow ? (
-          <Box sx={{ display: "flex", flex: 1, justifyContent: "center" }}>
-            <Tooltip title="Search commands">
-              <IconButton
-                onClick={() => setCommandPaletteOpen(true)}
-                aria-label="Open command palette"
-                size="small"
-              >
-                <SearchIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          </Box>
-        ) : (
-          <Box sx={{ flex: 1 }} />
-        )}
+              <RefreshIntervalPicker
+                value={refreshInterval}
+                options={REFRESH_INTERVAL_PRESETS}
+                onChange={setRefreshInterval}
+              />
 
-        {showTimeControls && (
-          <>
-            <DateRangePicker
-              value={dashboard.timeRange}
-              onChange={setTimeRange}
-              timeZone={dashboard.timeZone}
-              onTimeZoneChange={setTimeZone}
-            />
-            <RefreshIntervalPicker
-              value={refreshInterval}
-              options={REFRESH_INTERVAL_PRESETS}
-              onChange={setRefreshInterval}
-            />
-
-            {isDashboardView && (
-              <>
-                <Tooltip
-                  title={
-                    historyPast.length > 0
-                      ? `Undo: ${historyPast[historyPast.length - 1]?.label ?? ""}`
-                      : "Nothing to undo"
-                  }
-                >
-                  <span>
-                    <IconButton
-                      size="small"
-                      aria-label="Undo"
-                      disabled={historyPast.length === 0}
-                      onClick={undoDashboardChange}
-                    >
-                      <UndoIcon fontSize="small" />
-                    </IconButton>
-                  </span>
-                </Tooltip>
-                <Tooltip
-                  title={
-                    historyFuture.length > 0
-                      ? `Redo: ${historyFuture[0]?.label ?? ""}`
-                      : "Nothing to redo"
-                  }
-                >
-                  <span>
-                    <IconButton
-                      size="small"
-                      aria-label="Redo"
-                      disabled={historyFuture.length === 0}
-                      onClick={redoDashboardChange}
-                    >
-                      <RedoIcon fontSize="small" />
-                    </IconButton>
-                  </span>
-                </Tooltip>
-                <Button
-                  size="small"
-                  variant="contained"
-                  startIcon={<AddIcon />}
-                  onClick={handleAddPanel}
-                >
-                  Add Panel
-                </Button>
-              </>
-            )}
-          </>
-        )}
+              {isDashboardView && (
+                <>
+                  <Tooltip
+                    title={
+                      historyPast.length > 0
+                        ? `Undo: ${historyPast[historyPast.length - 1]?.label ?? ""}`
+                        : "Nothing to undo"
+                    }
+                  >
+                    <span>
+                      <IconButton
+                        size="small"
+                        aria-label="Undo"
+                        disabled={historyPast.length === 0}
+                        onClick={undoDashboardChange}
+                      >
+                        <UndoIcon fontSize="small" />
+                      </IconButton>
+                    </span>
+                  </Tooltip>
+                  <Tooltip
+                    title={
+                      historyFuture.length > 0
+                        ? `Redo: ${historyFuture[0]?.label ?? ""}`
+                        : "Nothing to redo"
+                    }
+                  >
+                    <span>
+                      <IconButton
+                        size="small"
+                        aria-label="Redo"
+                        disabled={historyFuture.length === 0}
+                        onClick={redoDashboardChange}
+                      >
+                        <RedoIcon fontSize="small" />
+                      </IconButton>
+                    </span>
+                  </Tooltip>
+                  <Button
+                    size="small"
+                    variant="contained"
+                    startIcon={<AddIcon />}
+                    onClick={handleAddPanel}
+                  >
+                    Add Panel
+                  </Button>
+                </>
+              )}
+            </>
+          )}
+        </Box>
       </Toolbar>
     </AppBar>
   );
