@@ -170,7 +170,7 @@ jobs:
 
         ## Output rules
 
-        - **Complete ALL exploration phases above before filing an issue.**
+        - **Complete ALL required exploration phases before filing an issue.**
           Do not stop after finding your first papercut — continue through
           every page, check, and evaluation listed above, collecting all
           findings.
@@ -179,6 +179,8 @@ jobs:
         - List each papercut as a numbered item with: the page/location,
           what you observed, and what you'd expect instead.
         - Include a screenshot for each papercut where the evidence is visual.
+        - Include any **axe-core color-contrast violations** as papercuts,
+          with page/location and screenshot.
         - A thorough exploration typically finds **5-15** papercuts. Report
           all of them, not just the first few you notice.
         - Do NOT file issues about bugs (broken functionality) or missing

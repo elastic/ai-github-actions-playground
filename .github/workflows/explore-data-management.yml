@@ -131,11 +131,14 @@ jobs:
 
         ## Output rules
 
-        - **Complete ALL exploration phases above before filing an issue.**
+        - **Complete ALL required exploration phases before filing an issue.**
           Do not stop after finding your first problem — continue through
-          every check and scenario listed above, collecting all findings.
+          every required check listed above, collecting all findings.
+          Treat example scenarios as illustrative, not an exhaustive checklist.
         - **Silence is better than noise.** Only file an issue for genuine
           bugs or defects. If everything works, do **not** open an issue.
+        - Include any **axe-core color-contrast violations** found during
+          exploration in the same issue, with page/location and screenshot.
         - Create **one** issue that lists **every** finding from your
           exploration. Use a numbered list — for each item include: the
           page/location, what you tried, what you expected, what actually
