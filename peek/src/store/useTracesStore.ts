@@ -4,6 +4,7 @@ import { devtools } from "zustand/middleware";
 import type { Span } from "../components/traces/traceUtils";
 import type { TraceFilters } from "../components/traces/traceQueryBuilder";
 import { EMPTY_FILTERS } from "../components/traces/traceQueryBuilder";
+import type { EsqlResponse } from "../types";
 
 export type TracesViewMode = "list" | "timeseries" | "scatter" | "serviceMap" | "driftRadar";
 
@@ -24,6 +25,12 @@ interface TracesState {
   drawerOpen: boolean;
   /** When true, the orchestrator should auto-execute search on mount */
   pendingSearch: boolean;
+  /** Cached search result (persists across navigation) */
+  searchResult: EsqlResponse | null;
+  /** Cached search spans (persists across navigation) */
+  searchSpans: Span[];
+  /** Cached timeseries result (persists across navigation) */
+  timeseriesResult: EsqlResponse | null;
 
   setFilters: (filters: TraceFilters) => void;
   updateFilters: (updates: Partial<TraceFilters>) => void;
@@ -39,6 +46,9 @@ interface TracesState {
   removeTagFilter: (index: number) => void;
   resetFilters: () => void;
   setPendingSearch: (pending: boolean) => void;
+  setSearchResult: (result: EsqlResponse | null) => void;
+  setSearchSpans: (spans: Span[]) => void;
+  setTimeseriesResult: (result: EsqlResponse | null) => void;
 }
 
 const getInitialTracesState = () => ({
@@ -50,6 +60,9 @@ const getInitialTracesState = () => ({
   viewMode: "list" as TracesViewMode,
   drawerOpen: false,
   pendingSearch: false,
+  searchResult: null as EsqlResponse | null,
+  searchSpans: [] as Span[],
+  timeseriesResult: null as EsqlResponse | null,
 });
 
 export const useTracesStore = create<TracesState>()(
@@ -82,6 +95,9 @@ export const useTracesStore = create<TracesState>()(
         })),
       resetFilters: () => set(getInitialTracesState()),
       setPendingSearch: (pending) => set({ pendingSearch: pending }),
+      setSearchResult: (result) => set({ searchResult: result }),
+      setSearchSpans: (spans) => set({ searchSpans: spans }),
+      setTimeseriesResult: (result) => set({ timeseriesResult: result }),
     }),
     { name: "TracesStore", enabled: import.meta.env.DEV },
   ),

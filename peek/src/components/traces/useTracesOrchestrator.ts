@@ -46,9 +46,12 @@ export function useTracesOrchestrator() {
   const viewMode = useTracesStore((s) => s.viewMode);
   const setViewMode = useTracesStore((s) => s.setViewMode);
   const resetFilters = useTracesStore((s) => s.resetFilters);
-  const [searchResult, setSearchResult] = useState<EsqlResponse | null>(null);
-  const [searchTraceSpans, setSearchTraceSpans] = useState<Span[]>([]);
-  const [timeseriesResult, setTimeseriesResult] = useState<EsqlResponse | null>(null);
+  const searchResult = useTracesStore((s) => s.searchResult);
+  const setSearchResult = useTracesStore((s) => s.setSearchResult);
+  const searchTraceSpans = useTracesStore((s) => s.searchSpans);
+  const setSearchTraceSpans = useTracesStore((s) => s.setSearchSpans);
+  const timeseriesResult = useTracesStore((s) => s.timeseriesResult);
+  const setTimeseriesResult = useTracesStore((s) => s.setTimeseriesResult);
 
   // Sync the global AppHeader time range into trace filters (without clearing rawQuery)
   const dashboardTimeRange = useDashboardEditorStore((s) => s.dashboard.timeRange);
@@ -133,12 +136,12 @@ export function useTracesOrchestrator() {
       }
       runSearchSpansQuery(buildTraceSpansForTraceIdsQuery(traceIds));
     },
-    [setSearchResult, runSearchSpansQuery],
+    [setSearchResult, setSearchTraceSpans, runSearchSpansQuery],
   );
   const handleSearchFailure = useCallback(() => {
     setSearchResult(null);
     setSearchTraceSpans([]);
-  }, [setSearchResult]);
+  }, [setSearchResult, setSearchTraceSpans]);
   const {
     runQuery: runSearchQuery,
     loading: searchLoading,
