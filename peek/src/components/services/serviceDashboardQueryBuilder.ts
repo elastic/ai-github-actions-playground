@@ -63,7 +63,7 @@ export function buildServiceRoutesQuery(
       `is_error = ${buildIsErrorExpr(fields)}, ` +
       'route_key = COALESCE(attributes.http.route, "/")',
     `STATS request_count = COUNT(*), avg_latency_ms = AVG(duration_ms), error_count = SUM(is_error) BY route_key`,
-    `EVAL error_rate = error_count / request_count`,
+    `EVAL error_rate = error_count * 1.0 / request_count`,
     `SORT request_count DESC`,
   ]);
 }
@@ -104,7 +104,7 @@ export function buildServiceDeploymentsQuery(
     `EVAL version_key = CASE(${fields.serviceVersion} IS NULL OR TRIM(${fields.serviceVersion}) == "", "unknown", ${fields.serviceVersion})`,
     `EVAL is_error = ${buildIsErrorExpr(fields)}`,
     `STATS first_seen = MIN(${fields.timestamp}), last_seen = MAX(${fields.timestamp}), request_count = COUNT(*), error_count = SUM(is_error) BY version_key`,
-    `EVAL error_rate = error_count / request_count`,
+    `EVAL error_rate = error_count * 1.0 / request_count`,
     `SORT last_seen DESC, first_seen DESC`,
   ]);
 }
@@ -157,7 +157,7 @@ export function buildServiceRouteSparklineQuery(
       `is_error = ${buildIsErrorExpr(fields)}, ` +
       'route_key = COALESCE(attributes.http.route, "/")',
     `STATS request_count = COUNT(*), avg_latency_ms = AVG(duration_ms), error_count = SUM(is_error) BY route_key, bucket = BUCKET(${fields.timestamp}, ${SPARKLINE_BUCKETS}, ${safeTimeFrom}, ${safeTimeTo})`,
-    `EVAL error_rate = error_count / request_count`,
+    `EVAL error_rate = error_count * 1.0 / request_count`,
     `SORT bucket`,
   ]);
 }

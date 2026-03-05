@@ -181,6 +181,16 @@ export default function ExploreContentArea({
               <TimeSeriesChart data={chartData} options={{ smooth: true, showArea: true }} />
             </Box>
           )}
+
+          {/* Fallback when metric is selected but no chart data yet */}
+          {selectedMetric && !chartData && queryStatus !== "loading" && (
+            <EmptyState
+              icon={<ShowChartIcon sx={{ mb: 0.5, color: "text.secondary", fontSize: 48 }} />}
+              heading="No chart data"
+              description="Run a search to visualize this metric, or adjust the time range and filters."
+              size="small"
+            />
+          )}
         </Paper>
       )}
     </Box>

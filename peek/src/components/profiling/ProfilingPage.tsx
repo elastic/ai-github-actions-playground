@@ -248,6 +248,26 @@ export default function ProfilingPage() {
     },
     [effectiveQuery, openInDiscover],
   );
+
+  const handleResetFilters = useCallback(() => {
+    resetFilters();
+    abortRef.current?.abort();
+    abortRef.current = null;
+    setLoading(false);
+    setError(null);
+    setHasRunByMode({
+      topFunctions: false,
+      stacktraces: false,
+      timeline: false,
+      flamegraph: false,
+      flamescope: false,
+    });
+    setTopFunctionsRows([]);
+    setTimelineResult(null);
+    setStacktraces([]);
+    setFlamescopeWindow(null);
+  }, [resetFilters]);
+
   const timelineHasData = (timelineResult?.values.length ?? 0) > 0;
   const timelineCountStats = useMemo(() => {
     if (!timelineResult) return null;
@@ -326,10 +346,16 @@ export default function ProfilingPage() {
               size="small"
               variant="text"
               onClick={() => navigate(PAGE_MANIFEST.profiling.path)}
+              sx={{ height: COMPONENT_HEIGHTS.input }}
             >
               ← Guided flow
             </Button>
-            <Button size="small" variant="text" onClick={resetFilters}>
+            <Button
+              size="small"
+              variant="text"
+              onClick={handleResetFilters}
+              sx={{ height: COMPONENT_HEIGHTS.input }}
+            >
               Reset Filters
             </Button>
             <Button
@@ -337,6 +363,7 @@ export default function ProfilingPage() {
               variant="outlined"
               onClick={handleOpenInQueryLab}
               disabled={viewMode === "topFunctions" || !hasRunCurrentView}
+              sx={{ height: COMPONENT_HEIGHTS.input }}
             >
               Open in Query Lab
             </Button>

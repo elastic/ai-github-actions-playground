@@ -32,6 +32,9 @@ describe("useTracesStore", () => {
       selectedSpanId: null,
       viewMode: "list",
       drawerOpen: false,
+      searchResult: null,
+      searchSpans: [],
+      timeseriesResult: null,
     });
   });
 
@@ -214,6 +217,52 @@ describe("useTracesStore", () => {
 
       useTracesStore.getState().setViewMode("serviceMap");
       expect(useTracesStore.getState().viewMode).toBe("serviceMap");
+    });
+  });
+
+  describe("search results persistence", () => {
+    it("setSearchResult stores and retrieves the search result", () => {
+      const mockResult = {
+        columns: [{ name: "trace.id", type: "keyword" }],
+        values: [["abc123"]],
+      };
+      useTracesStore.getState().setSearchResult(mockResult);
+      expect(useTracesStore.getState().searchResult).toBe(mockResult);
+    });
+
+    it("setSearchSpans stores and retrieves search spans", () => {
+      const spans = [makeSpan({ spanId: "s1" }), makeSpan({ spanId: "s2" })];
+      useTracesStore.getState().setSearchSpans(spans);
+      expect(useTracesStore.getState().searchSpans).toHaveLength(2);
+      expect(useTracesStore.getState().searchSpans[0]!.spanId).toBe("s1");
+    });
+
+    it("setTimeseriesResult stores and retrieves the timeseries result", () => {
+      const mockResult = {
+        columns: [{ name: "bucket", type: "date" }],
+        values: [["2026-01-01T00:00:00.000Z"]],
+      };
+      useTracesStore.getState().setTimeseriesResult(mockResult);
+      expect(useTracesStore.getState().timeseriesResult).toBe(mockResult);
+    });
+
+    it("resetFilters clears search results", () => {
+      useTracesStore.getState().setSearchResult({
+        columns: [{ name: "trace.id", type: "keyword" }],
+        values: [["abc123"]],
+      });
+      useTracesStore.getState().setSearchSpans([makeSpan()]);
+      useTracesStore.getState().setTimeseriesResult({
+        columns: [{ name: "bucket", type: "date" }],
+        values: [["2026-01-01T00:00:00.000Z"]],
+      });
+
+      useTracesStore.getState().resetFilters();
+
+      const state = useTracesStore.getState();
+      expect(state.searchResult).toBeNull();
+      expect(state.searchSpans).toEqual([]);
+      expect(state.timeseriesResult).toBeNull();
     });
   });
 });
