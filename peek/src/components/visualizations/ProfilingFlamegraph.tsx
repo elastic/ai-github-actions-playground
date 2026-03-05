@@ -157,6 +157,34 @@ export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
     if (hideUnknownFrames) {
       rects = rects.filter((r) => !UNKNOWN_NAME_RE.test(r.name));
     }
+    if (rects.length === 0) {
+      return {
+        xAxis: {
+          type: "value" as const,
+          max: totalSamples,
+          show: false,
+        },
+        yAxis: {
+          type: "value" as const,
+          max: 1,
+          inverse: true,
+          show: false,
+        },
+        grid: { left: 0, right: 0, top: 0, bottom: 0 },
+        graphic: {
+          type: "text",
+          left: "center",
+          top: "middle",
+          style: {
+            text: "No frames to display - filters may be hiding results.",
+            fill: "#8f95a1",
+            fontSize: 12,
+          },
+        },
+        series: [],
+      };
+    }
+    const maxDepth = rects.reduce((max, r) => Math.max(max, r.depth), 0);
 
     if (rects.length === 0) return null;
     const maxDepth = rects.reduce((max, r) => Math.max(max, r.depth), 0);
