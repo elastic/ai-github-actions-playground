@@ -20,7 +20,7 @@ import EmptyState from "./EmptyState";
 import InsightSlot from "./InsightSlot";
 import { DATA_STREAMS_INSIGHT_SLOT_IDS } from "./dataStreamsInsightSlots";
 import type { StreamSortField, StreamSortDirection } from "./dataStreamsUtils";
-import { STATUS_CHIP_COLORS } from "./dataStreamsUtils";
+import { getStatusChipColor } from "./dataStreamsUtils";
 
 interface DataStreamTableProps {
   search: string;
@@ -151,7 +151,7 @@ export default function DataStreamTable({
                   <TableCell>
                     <Chip
                       label={stream.status.toUpperCase()}
-                      color={STATUS_CHIP_COLORS[stream.status.toUpperCase()] ?? "default"}
+                      color={getStatusChipColor(stream.status)}
                       size="small"
                       sx={COMPACT_CHIP_SX}
                     />

@@ -87,7 +87,7 @@ export default function LogsResultsView({
               onClick={() => onAnomalyDrillIn(bucket.start, bucket.end)}
               sx={{
                 minWidth: 12,
-                height: Math.max(12, Math.min(52, bucket.count * 2)),
+                height: Math.max(12, Math.min(52, Math.log2(bucket.count + 1) * 8 + 12)),
                 py: 0,
                 px: 0.5,
               }}

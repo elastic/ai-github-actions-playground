@@ -5,11 +5,17 @@ import { DATA_STREAMS_INSIGHT_SLOT_IDS } from "./dataStreamsInsightSlots";
 export type StreamSortField = "name" | "status" | "indices";
 export type StreamSortDirection = "asc" | "desc";
 
-export const STATUS_CHIP_COLORS: Record<string, "success" | "warning" | "error" | "default"> = {
+type StreamStatus = "GREEN" | "YELLOW" | "RED";
+
+export const STATUS_CHIP_COLORS: Readonly<Record<StreamStatus, "success" | "warning" | "error">> = {
   GREEN: "success",
   YELLOW: "warning",
   RED: "error",
 };
+
+export function getStatusChipColor(status: string): "success" | "warning" | "error" | "default" {
+  return STATUS_CHIP_COLORS[status.toUpperCase() as StreamStatus] ?? "default";
+}
 
 const STREAM_STATUS_ORDER: Record<string, number> = { GREEN: 0, YELLOW: 1, RED: 2 };
 
