@@ -31,6 +31,14 @@ import ConnectionProfilesList from "./ConnectionProfilesList";
 
 type AuthType = "apiKey" | "userpass" | "none";
 
+function deriveAuthType(
+  conn: Pick<ElasticsearchConnection, "username" | "apiKey"> | null | undefined,
+): AuthType {
+  if (conn?.username) return "userpass";
+  if (conn?.apiKey) return "apiKey";
+  return conn ? "none" : "apiKey";
+}
+
 function deriveIngestUrlOrEmpty(url: string | undefined): string {
   return deriveOtlpEndpoint(url ?? "") ?? "";
 }
@@ -85,13 +93,7 @@ export default function ConnectionDialog() {
     })),
   );
 
-  const initialAuthType: AuthType = savedConn?.username
-    ? "userpass"
-    : savedConn?.apiKey
-      ? "apiKey"
-      : savedConn
-        ? "none"
-        : "apiKey";
+  const initialAuthType: AuthType = deriveAuthType(savedConn);
 
   const [url, setUrl] = useState(savedConn?.url ?? "");
   const [authType, setAuthType] = useState<AuthType>(initialAuthType);
@@ -120,15 +122,7 @@ export default function ConnectionDialog() {
 
   useEffect(() => {
     setUrl(savedConn?.url ?? "");
-    setAuthType(
-      savedConn?.username
-        ? "userpass"
-        : savedConn?.apiKey
-          ? "apiKey"
-          : savedConn
-            ? "none"
-            : "apiKey",
-    );
+    setAuthType(deriveAuthType(savedConn));
     setApiKey(savedConn?.apiKey ?? "");
     setUsername(savedConn?.username ?? "");
     setPassword(savedConn?.password ?? "");
@@ -298,7 +292,7 @@ export default function ConnectionDialog() {
       if (!profile) return;
       const conn = profile.connection;
       setUrl(conn.url);
-      setAuthType(conn.username ? "userpass" : conn.apiKey ? "apiKey" : "none");
+      setAuthType(deriveAuthType(conn));
       setApiKey(conn.apiKey ?? "");
       setUsername(conn.username ?? "");
       setPassword(conn.password ?? "");
