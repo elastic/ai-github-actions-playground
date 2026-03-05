@@ -28,6 +28,7 @@ describe("stale switch failure result", () => {
       canReadSecurityUsers: true,
       canReadSecurityRoles: true,
       canReadApiKeys: true,
+      canReadIngestPipelines: true,
     };
 
     let rejectA!: (reason?: unknown) => void;

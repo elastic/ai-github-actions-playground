@@ -24,6 +24,7 @@ describe("retestConnectionProfile race", () => {
       canReadSecurityUsers: true,
       canReadSecurityRoles: true,
       canReadApiKeys: true,
+      canReadIngestPipelines: true,
     };
 
     let rejectFirst!: (reason?: unknown) => void;

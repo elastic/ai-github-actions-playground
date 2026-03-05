@@ -521,14 +521,21 @@ export default function ParameterDialog({
             </Box>
             {esqlOptions.length > 0 && (
               <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                {esqlOptions.slice(0, 20).map((opt, idx) => (
-                  <Chip key={`${opt}-${idx}`} label={opt} size="small" variant="outlined" />
-                ))}
-                {esqlOptions.length > 20 && (
-                  <Typography variant="caption" color="text.secondary">
-                    +{esqlOptions.length - 20} more
-                  </Typography>
-                )}
+                {(() => {
+                  const uniqueOptions = Array.from(new Set(esqlOptions));
+                  return (
+                    <>
+                      {uniqueOptions.slice(0, 20).map((opt) => (
+                        <Chip key={opt} label={opt} size="small" variant="outlined" />
+                      ))}
+                      {uniqueOptions.length > 20 && (
+                        <Typography variant="caption" color="text.secondary">
+                          +{uniqueOptions.length - 20} more
+                        </Typography>
+                      )}
+                    </>
+                  );
+                })()}
               </Box>
             )}
           </>

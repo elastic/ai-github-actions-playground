@@ -513,8 +513,10 @@ export default function ProfilingPage() {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {topFunctionsRows.map((row, index) => (
-                      <TableRow key={`${row.functionName}-${index}`}>
+                    {topFunctionsRows.map((row) => (
+                      <TableRow
+                        key={`${row.functionName}-${String(row.selfCount)}-${String(row.totalCount)}`}
+                      >
                         <TableCell>{row.functionName}</TableCell>
                         <TableCell align="right">{row.selfCount ?? "—"}</TableCell>
                         <TableCell align="right">{row.totalCount ?? "—"}</TableCell>
@@ -549,7 +551,6 @@ export default function ProfilingPage() {
                         <Fragment key={stacktrace.stacktraceId}>
                           <TableRow
                             hover
-                            role="button"
                             tabIndex={0}
                             aria-expanded={isExpanded}
                             aria-controls={detailsId}

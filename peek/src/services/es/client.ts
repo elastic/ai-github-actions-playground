@@ -251,6 +251,7 @@ export class ElasticsearchClient {
     let lastError: ElasticsearchError | undefined;
     const signal = options?.signal;
 
+    /* eslint-disable no-await-in-loop -- sequential retry with backoff */
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       let response: Response;
       try {
@@ -285,6 +286,7 @@ export class ElasticsearchClient {
       const backoff = INITIAL_BACKOFF_MS * Math.pow(2, attempt);
       await sleepWithJitter(backoff, signal);
     }
+    /* eslint-enable no-await-in-loop */
 
     // Should never reach here, but satisfy TypeScript
     throw (
@@ -578,6 +580,8 @@ export class ElasticsearchClient {
             "manage_security",
             "manage_own_api_key",
             "manage_api_key",
+            "read_pipeline",
+            "manage_ingest_pipelines",
           ],
         }),
         signal,
@@ -588,12 +592,16 @@ export class ElasticsearchClient {
       const canCreateApiKeys = Boolean(
         response.cluster?.["manage_own_api_key"] || response.cluster?.["manage_api_key"],
       );
+      const canReadIngestPipelines = Boolean(
+        response.cluster?.["read_pipeline"] || response.cluster?.["manage_ingest_pipelines"],
+      );
       return {
         canManageDataStreams: response.cluster?.["manage"] ?? false,
         canCreateApiKeys,
         canReadSecurityUsers: canReadSecurity,
         canReadSecurityRoles: canReadSecurity,
         canReadApiKeys: canCreateApiKeys,
+        canReadIngestPipelines,
       };
     } catch (err: unknown) {
       if (isElasticsearchError(err)) {
@@ -608,30 +616,24 @@ export class ElasticsearchClient {
             canReadSecurityUsers: true,
             canReadSecurityRoles: true,
             canReadApiKeys: true,
+            canReadIngestPipelines: true,
           };
         }
         // 400: Security is disabled or the security plugin is not installed.
-        // Without a security layer the cluster enforces no privilege checks, so
-        // return an optimistic capability set — the user effectively has full
-        // access and hiding features would be incorrect.
-        // Narrow to known "security absent" error messages to avoid granting
-        // optimistic capabilities for unrelated 400s (e.g. proxy errors).
+        // ES clusters with xpack.security.enabled=false return a 400 from this
+        // endpoint, but the exact error message varies across ES versions (e.g.
+        // "no handler found for uri", "security_exception", etc.).  Any 400 here
+        // is treated as "security absent" — the user effectively has full access
+        // and hiding features would be incorrect.
         if (err.status === 400) {
-          const msg = err.message.toLowerCase();
-          const looksLikeSecurityAbsent =
-            msg.includes("no handler found for uri") ||
-            msg.includes("security is disabled") ||
-            msg.includes("x-pack security");
-          if (looksLikeSecurityAbsent) {
-            return {
-              canManageDataStreams: true,
-              canCreateApiKeys: true,
-              canReadSecurityUsers: true,
-              canReadSecurityRoles: true,
-              canReadApiKeys: true,
-            };
-          }
-          throw err;
+          return {
+            canManageDataStreams: true,
+            canCreateApiKeys: true,
+            canReadSecurityUsers: true,
+            canReadSecurityRoles: true,
+            canReadApiKeys: true,
+            canReadIngestPipelines: true,
+          };
         }
         // 403: Security is enabled but the current user lacks the privilege to
         // query _has_privileges itself.  Default to minimal capabilities so the
@@ -643,6 +645,7 @@ export class ElasticsearchClient {
             canReadSecurityUsers: false,
             canReadSecurityRoles: false,
             canReadApiKeys: false,
+            canReadIngestPipelines: false,
           };
         }
       }

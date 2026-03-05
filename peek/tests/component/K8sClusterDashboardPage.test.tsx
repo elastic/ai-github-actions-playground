@@ -27,11 +27,12 @@ const NAMESPACE_RESPONSE = {
     { name: "pod_count", type: "long" },
     { name: "avg_cpu", type: "double" },
     { name: "avg_memory", type: "double" },
+    { name: "cluster_name", type: "keyword" },
     { name: "namespace_name", type: "keyword" },
   ],
   values: [
-    [20, 0.5, 536870912, "kube-system"],
-    [15, 0.3, 268435456, "default"],
+    [20, 0.5, 536870912, "prod-cluster", "kube-system"],
+    [15, 0.3, 268435456, "prod-cluster", "default"],
   ],
 };
 
@@ -63,7 +64,7 @@ const EMPTY_RESPONSE = { columns: [], values: [] };
 
 function responseForQuery(query: string) {
   if (query.includes("namespace_count = COUNT_DISTINCT")) return CLUSTER_RESPONSE;
-  if (/BY namespace_name = /.test(query)) return NAMESPACE_RESPONSE;
+  if (/namespace_name = /.test(query)) return NAMESPACE_RESPONSE;
   if (query.includes("FROM logs-")) return LOGS_RESPONSE;
   if (query.includes("FROM traces-")) return TRACES_RESPONSE;
   return EMPTY_RESPONSE;

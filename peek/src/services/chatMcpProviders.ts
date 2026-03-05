@@ -49,6 +49,7 @@ export async function discoverMcpTools(
   const mcpInstructions: string[] = [];
   let maxStepCountLimit = 0;
 
+  /* eslint-disable no-await-in-loop -- sequential: each provider checks for tool name collisions with previous ones */
   for (const provider of MCP_TOOL_PROVIDERS) {
     if (!provider.enabled(config)) continue;
     try {
@@ -72,6 +73,7 @@ export async function discoverMcpTools(
       provider.onError?.(error);
     }
   }
+  /* eslint-enable no-await-in-loop */
 
   return { tools, mcpInstructions, maxStepCountLimit };
 }

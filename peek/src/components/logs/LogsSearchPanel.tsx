@@ -336,7 +336,7 @@ export default function LogsSearchPanel({
           <Stack direction="row" spacing={0.5} useFlexGap sx={{ flexWrap: "wrap", mb: 1 }}>
             {filters.map((filter, index) => (
               <Chip
-                key={`${filter.field}-${filter.value}-${String(filter.exclude)}-${index}`}
+                key={`${filter.field}-${filter.value}-${String(filter.exclude)}`}
                 size="small"
                 color={filter.exclude ? "warning" : "default"}
                 label={`${filter.exclude ? "NOT " : ""}${filter.field}: ${filter.value}`}

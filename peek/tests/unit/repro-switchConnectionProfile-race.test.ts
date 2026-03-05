@@ -29,6 +29,7 @@ describe("repro: switchConnectionProfile race", () => {
           canReadSecurityUsers: true,
           canReadSecurityRoles: true,
           canReadApiKeys: true,
+          canReadIngestPipelines: true,
         };
       },
     );
@@ -69,6 +70,7 @@ describe("repro: switchConnectionProfile race", () => {
           canReadSecurityUsers: true,
           canReadSecurityRoles: true,
           canReadApiKeys: true,
+          canReadIngestPipelines: true,
         };
       },
     );
@@ -99,6 +101,7 @@ describe("repro: switchConnectionProfile race", () => {
       canReadSecurityUsers: false,
       canReadSecurityRoles: false,
       canReadApiKeys: false,
+      canReadIngestPipelines: false,
     };
     const latestCaps: Capabilities = {
       canManageDataStreams: true,
@@ -106,6 +109,7 @@ describe("repro: switchConnectionProfile race", () => {
       canReadSecurityUsers: true,
       canReadSecurityRoles: true,
       canReadApiKeys: true,
+      canReadIngestPipelines: true,
     };
 
     let aAttempt = 0;
@@ -167,6 +171,7 @@ describe("repro: switchConnectionProfile race", () => {
       canReadSecurityUsers: true,
       canReadSecurityRoles: true,
       canReadApiKeys: true,
+      canReadIngestPipelines: true,
     };
 
     let resolveA: ((value: Capabilities) => void) | undefined;

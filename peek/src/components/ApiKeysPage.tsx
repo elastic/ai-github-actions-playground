@@ -103,8 +103,8 @@ export default function ApiKeysPage() {
   const insightCacheKey = `api-keys::${keys.length}`;
 
   const copyQuery = useCallback(async () => {
-    const copied = await copyToClipboard("GET /_security/api_key");
-    if (!copied) return;
+    const didCopy = await copyToClipboard("GET /_security/api_key");
+    if (!didCopy) return;
     setCopied(true);
     if (copyTimeoutRef.current) {
       clearTimeout(copyTimeoutRef.current);

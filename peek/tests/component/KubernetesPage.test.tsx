@@ -28,19 +28,22 @@ const CLUSTER_RESPONSE = {
 
 const NAMESPACE_RESPONSE = {
   columns: [
+    { name: "cluster_name", type: "keyword" },
     { name: "namespace_name", type: "keyword" },
     { name: "pod_count", type: "long" },
     { name: "avg_cpu", type: "double" },
     { name: "avg_memory", type: "double" },
   ],
   values: [
-    ["default", 40, 0.3, 1073741824],
-    ["kube-system", 25, 0.5, 536870912],
+    ["prod-cluster", "default", 40, 0.3, 1073741824],
+    ["prod-cluster", "kube-system", 25, 0.5, 536870912],
   ],
 };
 
 const WORKLOAD_RESPONSE = {
   columns: [
+    { name: "cluster_name", type: "keyword" },
+    { name: "namespace_name", type: "keyword" },
     { name: "workload_kind", type: "keyword" },
     { name: "workload_name", type: "keyword" },
     { name: "pod_count", type: "long" },
@@ -48,13 +51,14 @@ const WORKLOAD_RESPONSE = {
     { name: "avg_memory", type: "double" },
   ],
   values: [
-    ["deployment", "nginx-deployment", 3, 0.15, 268435456],
-    ["statefulset", "api-server", 2, 0.35, 536870912],
+    ["prod-cluster", "default", "deployment", "nginx-deployment", 3, 0.15, 268435456],
+    ["prod-cluster", "kube-system", "statefulset", "api-server", 2, 0.35, 536870912],
   ],
 };
 
 const POD_RESPONSE = {
   columns: [
+    { name: "cluster_name", type: "keyword" },
     { name: "pod_name", type: "keyword" },
     { name: "namespace_name", type: "keyword" },
     { name: "node_name", type: "keyword" },
@@ -63,16 +67,16 @@ const POD_RESPONSE = {
     { name: "restarts", type: "long" },
   ],
   values: [
-    ["nginx-abc123", "default", "node-1", 0.1, 134217728, 0],
-    ["api-xyz789", "kube-system", "node-2", 0.3, 268435456, 2],
+    ["prod-cluster", "nginx-abc123", "default", "node-1", 0.1, 134217728, 0],
+    ["prod-cluster", "api-xyz789", "kube-system", "node-2", 0.3, 268435456, 2],
   ],
 };
 
 function responseForQuery(query: string) {
   if (query.includes("namespace_count = COUNT_DISTINCT")) return CLUSTER_RESPONSE;
-  if (/BY namespace_name = /.test(query)) return NAMESPACE_RESPONSE;
-  if (/workload_name = COALESCE\(/.test(query)) return WORKLOAD_RESPONSE;
-  if (/BY pod_name = /.test(query)) return POD_RESPONSE;
+  if (/pod_name = /.test(query)) return POD_RESPONSE;
+  if (/workload_name = /.test(query)) return WORKLOAD_RESPONSE;
+  if (/namespace_name = /.test(query)) return NAMESPACE_RESPONSE;
   return POD_RESPONSE;
 }
 

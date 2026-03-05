@@ -92,14 +92,18 @@ describe("WelcomeScreen", () => {
       canReadSecurityUsers: false,
       canReadSecurityRoles: false,
       canReadApiKeys: false,
+      canReadIngestPipelines: false,
     });
   });
 
   it("shows error message when demo connection fails", async () => {
     useConnectionStore.getState().setCapabilities({
       canManageDataStreams: true,
+      canCreateApiKeys: false,
       canReadSecurityUsers: false,
       canReadSecurityRoles: false,
+      canReadApiKeys: false,
+      canReadIngestPipelines: false,
     });
     fetchMock
       .mockResolvedValueOnce(new Response(JSON.stringify(DEMO_CONFIG), { status: 200 }))

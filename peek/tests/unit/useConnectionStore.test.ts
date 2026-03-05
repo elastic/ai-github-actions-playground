@@ -316,6 +316,7 @@ describe("useConnectionStore profile switch actions", () => {
       canReadSecurityUsers: true,
       canReadSecurityRoles: true,
       canReadApiKeys: true,
+      canReadIngestPipelines: true,
     };
     vi.spyOn(esServices, "fetchCapabilitiesForConnection").mockResolvedValue(capabilities);
 

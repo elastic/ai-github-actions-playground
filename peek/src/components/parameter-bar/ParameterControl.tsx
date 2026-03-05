@@ -80,7 +80,7 @@ export default function ParameterControl({
           ? esqlOptions
           : []
         : [];
-  const options = optionStrings
+  const options = Array.from(new Set(optionStrings))
     .map((opt) => ({ label: opt, parsed: parseParameterValue(param.type, opt) }))
     .filter((entry) => entry.parsed.value !== undefined)
     .map((entry) => ({ label: entry.label, value: entry.parsed.value as ParameterValue }));
@@ -143,9 +143,9 @@ export default function ParameterControl({
                 <MenuItem value="false">false</MenuItem>
               </>
             )}
-            {options.map((opt, idx) => (
+            {options.map((opt) => (
               <MenuItem
-                key={`option-${idx}-${opt.label}`}
+                key={`option-${opt.label}-${String(opt.value)}`}
                 value={formatValueForInput(param.type, opt.value)}
               >
                 {opt.label}

@@ -24,6 +24,7 @@ describe("repro: switch/retest cross-action race", () => {
       canReadSecurityUsers: true,
       canReadSecurityRoles: true,
       canReadApiKeys: true,
+      canReadIngestPipelines: true,
     };
 
     let rejectSwitch!: (reason?: unknown) => void;
@@ -70,6 +71,7 @@ describe("repro: switch/retest cross-action race", () => {
       canReadSecurityUsers: true,
       canReadSecurityRoles: true,
       canReadApiKeys: true,
+      canReadIngestPipelines: true,
     };
 
     let resolveSwitch!: (value: Capabilities) => void;

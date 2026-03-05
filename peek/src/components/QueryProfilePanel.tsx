@@ -130,8 +130,11 @@ function DriverRow({ driver, index }: DriverRowProps) {
                     const bNanos = b.status?.elapsed_nanos ?? b.status?.process_nanos ?? 0;
                     return bNanos - aNanos;
                   })
-                  .map((op, opIdx) => (
-                    <TableRow key={opIdx} hover>
+                  .map((op) => (
+                    <TableRow
+                      key={`${op.operator ?? "op"}-${String(op.status?.elapsed_nanos ?? "")}-${String(op.status?.process_nanos ?? "")}-${String(op.status?.rows_processed ?? "")}-${String(op.status?.pages_processed ?? "")}-${String(op.status?.cpu_nanos ?? "")}`}
+                      hover
+                    >
                       <TableCell>
                         <Typography variant="caption">{op.operator ?? "—"}</Typography>
                       </TableCell>
@@ -229,9 +232,19 @@ export default function QueryProfilePanel({ profile }: QueryProfilePanelProps) {
       <Collapse in={expanded}>
         {knownShape ? (
           (profile.drivers ?? []).length > 0 ? (
-            (profile.drivers ?? []).map((driver, idx) => (
-              <DriverRow key={idx} driver={driver} index={idx} />
-            ))
+            (() => {
+              const seenDriverKeys = new Map<string, number>();
+              return (profile.drivers ?? []).map((driver, idx) => {
+                const baseKey = JSON.stringify([
+                  driver.description ?? "",
+                  driver.cluster_name ?? "",
+                  driver.node_name ?? "",
+                ]);
+                const occurrence = seenDriverKeys.get(baseKey) ?? 0;
+                seenDriverKeys.set(baseKey, occurrence + 1);
+                return <DriverRow key={`${baseKey}-${occurrence}`} driver={driver} index={idx} />;
+              });
+            })()
           ) : (
             <Typography variant="caption" color="text.secondary" sx={{ display: "block", p: 1.5 }}>
               Profile returned no driver details.

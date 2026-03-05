@@ -15,18 +15,20 @@ const WORKLOAD_RESPONSE = {
     { name: "pod_count", type: "long" },
     { name: "avg_cpu", type: "double" },
     { name: "avg_memory", type: "double" },
+    { name: "cluster_name", type: "keyword" },
+    { name: "namespace_name", type: "keyword" },
     { name: "workload_kind", type: "keyword" },
     { name: "workload_name", type: "keyword" },
   ],
   values: [
-    [3, 0.15, 268435456, "deployment", "nginx-deployment"],
-    [2, 0.35, 536870912, "deployment", "api-server"],
+    [3, 0.15, 268435456, "prod-cluster", "default", "deployment", "nginx-deployment"],
+    [2, 0.35, 536870912, "prod-cluster", "default", "deployment", "api-server"],
   ],
 };
 
 const WORKLOAD_DETAIL_RESPONSE = {
   ...WORKLOAD_RESPONSE,
-  values: [[3, 0.15, 268435456, "deployment", "nginx-deployment"]],
+  values: [[3, 0.15, 268435456, "prod-cluster", "default", "deployment", "nginx-deployment"]],
 };
 
 const EMPTY_RESPONSE = { columns: [], values: [] };

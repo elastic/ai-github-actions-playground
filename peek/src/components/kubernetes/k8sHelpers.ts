@@ -30,6 +30,7 @@ export interface ClusterRow {
 }
 
 export interface NamespaceRow {
+  clusterName: string;
   namespace: string;
   podCount: number;
   avgCpu: number | null;
@@ -37,6 +38,8 @@ export interface NamespaceRow {
 }
 
 export interface WorkloadRow {
+  clusterName: string;
+  namespace: string;
   workloadName: string;
   workloadKind: string;
   podCount: number;
@@ -45,6 +48,7 @@ export interface WorkloadRow {
 }
 
 export interface PodRow {
+  clusterName: string;
   podName: string;
   namespace: string;
   nodeName: string;
@@ -134,12 +138,14 @@ export function parseClusterInventory(response: EsqlResponse): ClusterRow[] {
 
 export function parseNamespaceInventory(response: EsqlResponse): NamespaceRow[] {
   const cols = response.columns;
+  const iCluster = columnIndex(cols, "cluster_name");
   const iNamespace = columnIndex(cols, "namespace_name");
   const iPodCount = columnIndex(cols, "pod_count");
   const iAvgCpu = columnIndex(cols, "avg_cpu");
   const iAvgMemory = columnIndex(cols, "avg_memory");
 
   return response.values.map((row) => ({
+    clusterName: String(row[iCluster] ?? ""),
     namespace: String(row[iNamespace] ?? ""),
     podCount: Number(row[iPodCount] ?? 0),
     avgCpu: row[iAvgCpu] != null ? Number(row[iAvgCpu]) : null,
@@ -149,6 +155,8 @@ export function parseNamespaceInventory(response: EsqlResponse): NamespaceRow[] 
 
 export function parseWorkloadInventory(response: EsqlResponse): WorkloadRow[] {
   const cols = response.columns;
+  const iCluster = columnIndex(cols, "cluster_name");
+  const iNamespace = columnIndex(cols, "namespace_name");
   const iWorkloadName = columnIndex(cols, "workload_name");
   const iWorkloadKind = columnIndex(cols, "workload_kind");
   const iPodCount = columnIndex(cols, "pod_count");
@@ -156,6 +164,8 @@ export function parseWorkloadInventory(response: EsqlResponse): WorkloadRow[] {
   const iAvgMemory = columnIndex(cols, "avg_memory");
 
   return response.values.map((row) => ({
+    clusterName: String(row[iCluster] ?? ""),
+    namespace: String(row[iNamespace] ?? ""),
     workloadName: String(row[iWorkloadName] ?? ""),
     workloadKind: String(row[iWorkloadKind] ?? ""),
     podCount: Number(row[iPodCount] ?? 0),
@@ -166,6 +176,7 @@ export function parseWorkloadInventory(response: EsqlResponse): WorkloadRow[] {
 
 export function parsePodInventory(response: EsqlResponse): PodRow[] {
   const cols = response.columns;
+  const iCluster = columnIndex(cols, "cluster_name");
   const iPodName = columnIndex(cols, "pod_name");
   const iNamespace = columnIndex(cols, "namespace_name");
   const iNodeName = columnIndex(cols, "node_name");
@@ -174,6 +185,7 @@ export function parsePodInventory(response: EsqlResponse): PodRow[] {
   const iRestarts = columnIndex(cols, "restarts");
 
   return response.values.map((row) => ({
+    clusterName: String(row[iCluster] ?? ""),
     podName: String(row[iPodName] ?? ""),
     namespace: String(row[iNamespace] ?? ""),
     nodeName: String(row[iNodeName] ?? ""),

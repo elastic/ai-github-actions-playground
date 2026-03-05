@@ -339,8 +339,8 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
               open={Boolean(historyAnchor)}
               onClose={() => setHistoryAnchor(null)}
             >
-              {queryHistory.map((historyQuery, idx) => (
-                <MenuItem key={idx} onClick={() => handleSelectHistory(historyQuery)}>
+              {queryHistory.map((historyQuery) => (
+                <MenuItem key={historyQuery} onClick={() => handleSelectHistory(historyQuery)}>
                   {historyQuery}
                 </MenuItem>
               ))}

@@ -11,7 +11,9 @@ import AddIcon from "@mui/icons-material/Add";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import { useShallow } from "zustand/react/shallow";
 
+// eslint-disable-next-line import/no-unassigned-import -- CSS side-effect import required by react-grid-layout
 import "react-grid-layout/css/styles.css";
+// eslint-disable-next-line import/no-unassigned-import -- CSS side-effect import required by react-resizable
 import "react-resizable/css/styles.css";
 import { useDashboardEditorStore } from "../store/useDashboardEditorStore";
 import { useUIStore } from "../store/useUIStore";

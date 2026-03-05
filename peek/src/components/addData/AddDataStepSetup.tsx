@@ -86,6 +86,8 @@ interface NavigationProps {
   onReset: () => void;
   onContinue: () => void;
   canContinue: boolean;
+  verificationSkipped: boolean;
+  onSkipVerification: () => void;
 }
 
 interface AddDataStepSetupProps
@@ -123,6 +125,7 @@ export default function AddDataStepSetup(p: AddDataStepSetupProps) {
   const installAutoCollapseTimeoutRef = useRef<number | null>(null);
   const installVisibleSinceRef = useRef<number | null>(null);
   const autoGenerateRequestedRef = useRef(false);
+  const autoExpandDoneRef = useRef(false);
   const MIN_INSTALL_VISIBLE_MS = 3000;
 
   const guideType = p.selectedTechnology?.guideType;
@@ -187,20 +190,28 @@ export default function AddDataStepSetup(p: AddDataStepSetupProps) {
   useEffect(() => {
     const apply = () => {
       if (showConfigureSection && !configureComplete) {
+        autoExpandDoneRef.current = false;
         setConfigureExpanded(true);
         setCredentialsExpanded(false);
         setInstallExpanded(false);
         return;
       }
       if (!hasAnyApiKey) {
+        autoExpandDoneRef.current = false;
         setConfigureExpanded(false);
         setCredentialsExpanded(true);
         setInstallExpanded(false);
         return;
       }
-      setConfigureExpanded(false);
-      setCredentialsExpanded(false);
-      setInstallExpanded(awsFlowEnabled ? !p.awsDeployStarted : true);
+      if (!autoExpandDoneRef.current) {
+        autoExpandDoneRef.current = true;
+        setConfigureExpanded(false);
+        setCredentialsExpanded(false);
+        setInstallExpanded(awsFlowEnabled ? !p.awsDeployStarted : true);
+      } else if (awsFlowEnabled) {
+        // For AWS, keep tracking deploy state for install section
+        setInstallExpanded(!p.awsDeployStarted);
+      }
     };
     queueMicrotask(apply);
   }, [showConfigureSection, configureComplete, hasAnyApiKey, awsFlowEnabled, p.awsDeployStarted]);
@@ -556,7 +567,16 @@ export default function AddDataStepSetup(p: AddDataStepSetupProps) {
       )}
 
       {/* Navigation */}
-      <Stack direction="row" justifyContent="flex-end">
+      <Stack direction="row" justifyContent="flex-end" spacing={1} alignItems="center">
+        {showVerifySection &&
+          !p.canContinue &&
+          !p.verificationSkipped &&
+          (p.verification.status === "polling" ||
+            p.verification.status === "capturing_baseline") && (
+            <Button variant="text" size="small" onClick={p.onSkipVerification}>
+              Skip verification
+            </Button>
+          )}
         <Button variant="contained" onClick={p.onContinue} disabled={!p.canContinue}>
           Continue
         </Button>

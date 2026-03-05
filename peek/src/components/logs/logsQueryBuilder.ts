@@ -34,7 +34,7 @@ function buildSearchClause(searchText: string): string | null {
   const trimmed = searchText.trim();
   if (!trimmed) return null;
   if (trimmed.startsWith('"') && trimmed.endsWith('"') && trimmed.length >= 2) {
-    const phrase = trimmed.slice(1, -1).trim();
+    const phrase = trimmed.slice(1, -1).trim().replace(/\\"/g, '"').replace(/\\\\/g, "\\");
     if (!phrase) return null;
     return `MATCH_PHRASE(message, "${escapeEsqlString(phrase)}")`;
   }

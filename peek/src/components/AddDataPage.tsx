@@ -45,6 +45,7 @@ export default function AddDataPage() {
     useState<FluentBitOutputMode>("elasticsearch");
   const [edotRecommendedSelected, setEdotRecommendedSelected] = useState(false);
   const [onboardingSessionId, setOnboardingSessionId] = useState(0);
+  const [verificationSkipped, setVerificationSkipped] = useState(false);
 
   const [clusterVersion, setClusterVersion] = useState<string | null>(null);
   const [ingestAvailable, setIngestAvailable] = useState<boolean | null>(null);
@@ -101,6 +102,7 @@ export default function AddDataPage() {
     let cancelled = false;
     (async () => {
       let firstReachable: string | null = null;
+      /* eslint-disable no-await-in-loop -- sequential probing with early exit on first reachable endpoint */
       for (const candidate of ingestCandidates) {
         const available = await probeOtlpEndpoint(candidate);
         if (cancelled) return;
@@ -109,6 +111,7 @@ export default function AddDataPage() {
           break;
         }
       }
+      /* eslint-enable no-await-in-loop */
       if (cancelled) return;
       setDerivedOtlpUrl(firstReachable ?? ingestCandidates[0] ?? null);
       const available = Boolean(firstReachable);
@@ -160,7 +163,7 @@ export default function AddDataPage() {
   );
   // APM guides can always advance to Step 3 (verification is informational for APM)
   const canContinueToNextSteps =
-    selectedTechnology?.guideType === "apm" || verification.overallDetected;
+    selectedTechnology?.guideType === "apm" || verification.overallDetected || verificationSkipped;
   const lastAutoStartedApiKeyRef = useRef<string | null>(null);
 
   // Auto-start polling when API key is generated
@@ -207,6 +210,7 @@ export default function AddDataPage() {
     setFluentBitOutputMode("elasticsearch");
     setManualApiKeyValue("");
     setEdotRecommendedSelected(tech.guideType !== "edot_collector");
+    setVerificationSkipped(false);
 
     // Pre-select APM language from tech ID (e.g., "java-apm" → "java")
     if (tech.guideType === "apm") {
@@ -234,6 +238,7 @@ export default function AddDataPage() {
     setSelectedApmLanguage(null);
     setFluentBitOutputMode("elasticsearch");
     setEdotRecommendedSelected(false);
+    setVerificationSkipped(false);
     apiKeyResult.reset();
     verification.resetVerification();
     lastAutoStartedApiKeyRef.current = null;
@@ -241,11 +246,7 @@ export default function AddDataPage() {
   };
 
   const handleResetCurrentOnboarding = () => {
-    if (!selectedTechnology) return;
-    verification.resetVerification();
-    lastAutoStartedApiKeyRef.current = null;
-    apiKeyResult.reset();
-    handleSelectTechnology(selectedTechnology);
+    handleAddAnotherSource();
   };
 
   const handleSwitchToTechnology = (technologyId: "fluent-bit" | "vector") => {
@@ -326,6 +327,8 @@ export default function AddDataPage() {
           }}
           onReset={handleResetCurrentOnboarding}
           canContinue={canContinueToNextSteps}
+          verificationSkipped={verificationSkipped}
+          onSkipVerification={() => setVerificationSkipped(true)}
           onContinue={() => {
             if (!canContinueToNextSteps) return;
             setWizardStep(3);

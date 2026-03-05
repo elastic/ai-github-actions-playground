@@ -43,13 +43,13 @@ export function usePipelineSimulate(
       setResult(null);
       void (async () => {
         try {
-          const { data, error } = await runConnectionRequest({
+          const { data, error: reqError } = await runConnectionRequest({
             connection,
             run: (client) => client.simulateIngestPipeline(pipelineName, docs, { verbose }),
           });
           if (requestId !== requestSeqRef.current) return;
-          if (error !== null) {
-            setError(error);
+          if (reqError !== null) {
+            setError(reqError);
           } else if (data !== null) {
             setResult(data);
           }
