@@ -38,17 +38,19 @@ export default function CollectorCredentials({
   ingestAvailable,
 }: CollectorCredentialsProps) {
   const [copiedApiKeyValue, setCopiedApiKeyValue] = useState<string | null>(null);
-  const [showApiKey, setShowApiKey] = useState(false);
+  // Track which specific key value was revealed; auto-hides when key changes
+  const [revealedKey, setRevealedKey] = useState<string | null>(null);
   const scheduleCopyFeedbackReset = useCopyFeedbackTimeout(() => setCopiedApiKeyValue(null));
   const effectiveApiKey = apiKeyValue ?? manualApiKeyValue.trim();
   const copied = effectiveApiKey.length > 0 && copiedApiKeyValue === effectiveApiKey;
+  const showApiKey = revealedKey !== null && revealedKey === effectiveApiKey;
   const handleCreateApiKey = useCallback(() => {
-    setShowApiKey(false);
+    setRevealedKey(null);
     onCreateApiKey();
   }, [onCreateApiKey]);
   const handleManualApiKeyValueChange = useCallback(
     (value: string) => {
-      setShowApiKey(false);
+      setRevealedKey(null);
       onManualApiKeyValueChange(value);
     },
     [onManualApiKeyValueChange],
@@ -180,7 +182,11 @@ export default function CollectorCredentials({
               type={showApiKey ? "text" : "password"}
               slotProps={{ input: { readOnly: true } }}
             />
-            <Button size="small" variant="outlined" onClick={() => setShowApiKey((prev) => !prev)}>
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={() => setRevealedKey(showApiKey ? null : effectiveApiKey)}
+            >
               {showApiKey ? "Hide" : "Show"}
             </Button>
             <Button size="small" variant="outlined" onClick={() => void handleCopyApiKey()}>
