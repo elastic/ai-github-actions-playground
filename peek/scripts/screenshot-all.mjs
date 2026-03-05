@@ -18,7 +18,7 @@ import path from "node:path";
 import { DEFAULT_ES_URL, registerElasticsearchMocks } from "./elasticsearch-mocks.mjs";
 import { isIgnorableConsoleError } from "./ignorable-console-errors.mjs";
 import { PAGE_NAV_BUTTONS } from "./page-nav-buttons.mjs";
-import { captureAddDataScreenshots } from "./screenshot-add-data-helpers.mjs";
+import { captureAddDataScreenshots, waitForSettle } from "./screenshot-add-data-helpers.mjs";
 
 // ---------------------------------------------------------------------------
 // Argument parsing
@@ -89,14 +89,12 @@ async function run() {
       .getByRole("button", { name: "Metrics", exact: true })
       .waitFor({ timeout: opts.live ? 15_000 : opts.timeoutMs });
 
-    const settleMs = opts.live ? 2000 : 1500;
-
     console.log(`Capturing ${Object.keys(PAGE_NAV_BUTTONS).length} pages to ${opts.outDir}/...`);
 
     // Screenshot each page
     for (const [slug, navButton] of Object.entries(PAGE_NAV_BUTTONS)) {
       await page.getByRole("button", { name: navButton, exact: true }).click();
-      await page.waitForTimeout(settleMs);
+      await waitForSettle(page, opts.timeoutMs);
 
       const screenshotPath = path.join(opts.outDir, `screenshot-${slug}.png`);
       await page.screenshot({ path: screenshotPath, fullPage: true });
@@ -108,7 +106,7 @@ async function run() {
     // -----------------------------------------------------------------------
     const addDataDir = path.join(opts.outDir, "add-data");
     console.log(`\nCapturing add-data flows to ${addDataDir}/...`);
-    const addDataCount = await captureAddDataScreenshots(page, addDataDir, settleMs);
+    const addDataCount = await captureAddDataScreenshots(page, addDataDir, opts.timeoutMs);
     console.log(`\nCaptured ${addDataCount} add-data screenshots.`);
   } catch (error) {
     pageErrors.push(String(error));
