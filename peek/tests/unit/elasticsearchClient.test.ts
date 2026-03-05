@@ -670,6 +670,9 @@ describe("getCapabilities", () => {
     // because ES varies the error message across versions.
     expect(caps.canManageDataStreams).toBe(true);
     expect(caps.canCreateApiKeys).toBe(true);
+    expect(caps.canReadSecurityUsers).toBe(true);
+    expect(caps.canReadSecurityRoles).toBe(true);
+    expect(caps.canReadApiKeys).toBe(true);
     expect(caps.canReadIngestPipelines).toBe(true);
   });
 
