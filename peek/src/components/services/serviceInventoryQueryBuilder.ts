@@ -57,7 +57,7 @@ export function buildServiceInventoryQuery(
     // ES|QL lacks ARG_MAX; for precise latest-version tracking, see the Service Dashboard's
     // deployments panel which queries version history with timestamps.
     `STATS request_count = COUNT(*), avg_latency_ms = AVG(duration_ms), error_count = SUM(is_error), unique_routes = COUNT_DISTINCT(route_key), unique_span_names = COUNT_DISTINCT(span_name_key), top_route = TOP(route_key, 1, "desc"), top_span_name = TOP(span_name_key, 1, "desc"), top_error = TOP(error_message_key, 1, "desc"), language = TOP(language_key, 1, "desc"), environment = TOP(environment_key, 1, "desc"), version = TOP(version_key, 1, "desc"), unique_versions = COUNT_DISTINCT(version_key) BY ${fields.serviceName}`,
-    `EVAL error_rate = error_count / request_count`,
+    `EVAL error_rate = error_count * 1.0 / request_count`,
     `SORT request_count DESC`,
     `LIMIT 200`,
   ]);
@@ -117,7 +117,7 @@ export function buildServiceSparklineQuery(
     `EVAL duration_ms = ${durationExpr} / 1000.0, ` +
       `is_error = CASE(${fields.statusCode} IN ("Error", "STATUS_CODE_ERROR"), 1, 0)`,
     `STATS request_count = COUNT(*), avg_latency_ms = AVG(duration_ms), error_count = SUM(is_error) BY ${fields.serviceName}, bucket = BUCKET(${fields.timestamp}, ${SPARKLINE_BUCKETS}, ${safeTimeFrom}, ${safeTimeTo})`,
-    `EVAL error_rate = error_count / request_count`,
+    `EVAL error_rate = error_count * 1.0 / request_count`,
     `SORT bucket`,
   ]);
 }
@@ -152,7 +152,7 @@ export function buildServiceSparklineIntervalQuery(
     `EVAL duration_ms = ${durationExpr} / 1000.0, ` +
       `is_error = CASE(${fields.statusCode} IN ("Error", "STATUS_CODE_ERROR"), 1, 0)`,
     `STATS request_count = COUNT(*), avg_latency_ms = AVG(duration_ms), error_count = SUM(is_error) BY ${fields.serviceName}, bucket = BUCKET(${fields.timestamp}, ${interval})`,
-    `EVAL error_rate = error_count / request_count`,
+    `EVAL error_rate = error_count * 1.0 / request_count`,
     `SORT bucket`,
     `LIMIT 10000`,
   ]);
