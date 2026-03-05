@@ -177,16 +177,13 @@ export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
           top: "middle",
           style: {
             text: "No frames to display - filters may be hiding results.",
-            fill: "#8f95a1",
+            fill: muiTheme.palette.text.secondary,
             fontSize: 12,
           },
         },
         series: [],
       };
     }
-    const maxDepth = rects.reduce((max, r) => Math.max(max, r.depth), 0);
-
-    if (rects.length === 0) return null;
     const maxDepth = rects.reduce((max, r) => Math.max(max, r.depth), 0);
 
     return {
@@ -276,6 +273,8 @@ export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
     visibleTree,
     muiTheme.palette.background.paper,
     muiTheme.palette.primary.main,
+    muiTheme.palette.text,
+    muiTheme.palette.text.secondary,
     searchTerm,
     zoomPath,
     hideSmallFrames,
@@ -321,8 +320,6 @@ export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
       </Box>
     );
   }
-
-  const filtersActive = hideSmallFrames || hideUnknownFrames;
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", width: "100%", height: "100%" }}>
@@ -464,13 +461,7 @@ export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
 
       {/* Chart */}
       <Box sx={{ flex: 1, minHeight: 0 }}>
-        {!option && filtersActive ? (
-          <Box sx={{ p: 3 }}>
-            <Typography variant="body2" color="text.secondary">
-              No frames to display — active filters are hiding all results.
-            </Typography>
-          </Box>
-        ) : option ? (
+        {option ? (
           <EChart
             option={option as Record<string, unknown>}
             theme={theme}
