@@ -32,20 +32,20 @@ jobs:
         - Search for traces, click into one, expand every span in the
           tree. Are parent-child relationships rendered correctly?
         - Click a trace, look at the span detail panel. Does it show
-          all expected fields (duration, service name, status)?
+          key span fields (duration, service name, status, etc.)?
         - Switch between the span tree and service map views multiple
           times. Does the visualization re-render each time?
-        - Click "Open in Query Lab" from a trace. Does the pivot carry
-          context (trace ID, service name) into the query?
+        - Look for a way to pivot from a trace into Query Lab. Does the
+          pivot carry context (trace ID, service name) into the query?
         - Go back from Query Lab to Traces. Does the trace list still
           show your previous search results?
         - Search for traces, then clear the search. Does the UI reset?
         - Use the **service name filter** to narrow to one specific service.
           Does the trace list update? Clear the filter — does the full list
           return?
-        - Use the **Error / Success status chips** to filter for only error traces.
+        - Use the status filter controls to filter for only error traces.
           Are the filtered results actually errors? Click one to verify.
-        - Use the **min/max duration inputs** to filter for traces over 100ms.
+        - Use the duration filter to narrow to traces over 100ms.
           Are the results within the expected range?
         - Try clicking on service map nodes. Do they highlight or show
           detail? Try edges too.
@@ -53,10 +53,9 @@ jobs:
           tree, then navigate away and come back. Is state preserved?
         - Check what happens with traces that have many spans. Does the
           tree scroll? Are deeply nested spans indented correctly?
-        - Navigate to the **Services (Service Inventory)** page from the
-          sidebar. Does the table list services with request rate, error
-          rate, and latency columns? Click a service row — does it navigate
-          to a filtered trace search for that service?
+        - Navigate to the **Services** page from the sidebar. Does the
+          table list services with performance metrics? Click a service
+          row — does it navigate to a detail view or filtered trace search?
         - On the Services page, sort by error rate descending. Are the
           services with the most errors at the top?
         - Look for any console errors during trace and service navigation.
@@ -122,14 +121,13 @@ jobs:
         On every run, also check these visual quality dimensions:
 
         1. **Filter bar height consistency**: Measure the bounding rect heights
-           of every control in the Traces filter bar (service name field,
-           min/max duration fields, Apply button, time selector, Error/OK
-           chips). All must be the same height (within 4px). Use
-           `browser_console_execute` to measure bounding rect heights.
+           of the controls in the Traces filter bar (inputs, buttons,
+           selectors, chips). All should be the same height (within 4px).
+           Use `browser_console_execute` to measure bounding rect heights.
 
         2. **Dark mode contrast**: Switch to dark mode. Take a screenshot of
            the traces list. Are column headers visible? Are status badges
-           readable? Is the "Trace Search" label contrast sufficient?
+           readable? Are page and section labels contrast-sufficient?
 
         3. **Service map empty state**: Navigate to the service map view with
            no traces loaded. Is there a helpful empty state with an icon and
@@ -154,5 +152,10 @@ jobs:
           page/location, what you tried, what you expected, what actually
           happened, and a screenshot. A thorough issue typically has 3-10
           findings.
+        - **Prompt accuracy**: If the UI differs from what this prompt
+          describes (e.g., a title, label, or layout has changed) but the
+          UI itself is fine, do NOT file that as a bug. Instead, add a
+          **"Prompt Suggestions"** section at the end of your issue listing
+          what this prompt should say instead to match the current UI.
     secrets:
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}

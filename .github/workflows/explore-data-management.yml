@@ -144,5 +144,10 @@ jobs:
           page/location, what you tried, what you expected, what actually
           happened, and a screenshot. A thorough issue typically has 3-10
           findings.
+        - **Prompt accuracy**: If the UI differs from what this prompt
+          describes (e.g., a title, label, or layout has changed) but the
+          UI itself is fine, do NOT file that as a bug. Instead, add a
+          **"Prompt Suggestions"** section at the end of your issue listing
+          what this prompt should say instead to match the current UI.
     secrets:
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}

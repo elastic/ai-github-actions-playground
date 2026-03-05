@@ -32,17 +32,17 @@ jobs:
         - Navigate to the Kubernetes page, select a cluster, and drill into
           a namespace. Then select a different namespace without going back to
           the top. Does the view update cleanly?
-        - Click on a pod row. Does a detail drawer open? Does it show CPU,
-          memory, and restart info? Is anything missing?
+        - Click on a pod row. Does a detail drawer open? Does it show
+          key resource metrics and pod info? Is anything missing?
         - Switch the time range to "last 15 minutes" when only one data point
           might be in range. Is there a graceful empty state?
         - Filter by node name. Does the pod list narrow correctly?
         - Try sorting the pod list by CPU utilization, memory usage, and
           restart count. Does the order change each time?
-        - Check workload grouping — are pods grouped under their Deployment
-          or StatefulSet? If a pod name doesn't match a known workload, how
-          does it appear?
-        - Look for any pods with restarts > 0. Is there a warning indicator?
+        - Check workload grouping — are pods organized by workload type?
+          How do ungrouped or unmatched pods appear?
+        - Look for pods with restart activity. Are there visual indicators
+          for pods that have restarted?
         - Switch to dark mode and check contrast on the Kubernetes page
           specifically.
         - Navigate to Kubernetes, then to another page, then back. Is the
@@ -112,9 +112,8 @@ jobs:
 
         On every run, also check these visual quality dimensions:
 
-        1. **Pod table readability**: After viewing pods, are CPU utilization
-           percentages, memory values, and restart counts formatted clearly?
-           Are units shown (e.g. "%" for CPU, "MB"/"GB" for memory)?
+        1. **Pod table readability**: After viewing pods, are resource metrics
+           formatted clearly with appropriate units?
 
         2. **Node list contrast**: Check the node list in dark mode. Are
            hostname labels and health indicators readable?
@@ -123,8 +122,8 @@ jobs:
            "last 5 minutes" to test a near-empty range. Verify the no-data
            state is visually complete with icon, title, and description.
 
-        4. **Workload grouping labels**: Are Deployment, StatefulSet, and
-           DaemonSet badges styled consistently? Are they readable in dark mode?
+        4. **Workload grouping labels**: Are workload type indicators styled
+           consistently? Are they readable in dark mode?
 
         5. **Dark mode tables**: Switch to dark mode. Navigate to the pod
            list. Are alternating row backgrounds, borders, and text all readable?
@@ -144,5 +143,10 @@ jobs:
           page/location, what you tried, what you expected, what actually
           happened, and a screenshot. A thorough issue typically has 3-10
           findings.
+        - **Prompt accuracy**: If the UI differs from what this prompt
+          describes (e.g., a title, label, or layout has changed) but the
+          UI itself is fine, do NOT file that as a bug. Instead, add a
+          **"Prompt Suggestions"** section at the end of your issue listing
+          what this prompt should say instead to match the current UI.
     secrets:
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}

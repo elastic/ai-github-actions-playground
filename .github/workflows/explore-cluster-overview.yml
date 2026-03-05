@@ -51,19 +51,16 @@ jobs:
         This is the main summary dashboard. It shows info cards and an embedded
         nodes table.
 
-        - Count and read the info cards: cluster name, node count, version,
-          health status, data stream count, index count, aliases count, docs
-          count, store size, total shards, total indices, node role summary.
-          Are values plausible?
-        - The **Health card** is clickable — does it navigate to
-          `/cluster-health`? Does the cluster-health page show detail?
-        - The **Data Streams card** is clickable — does it navigate to
-          `/data-streams`?
-        - The **Indices card** is clickable — does it navigate to `/indices`?
-        - The **Nodes table** at the bottom shows each node with its name and
-          status. Are node role badges visible?
-        - If a **Fleet summary** card is present (showing total/healthy/offline
-          agents), is it readable? Does "View Fleet →" link navigate correctly?
+        - Count and read the info cards (they may include cluster name,
+          node count, version, health, data streams, indices, docs, store
+          size, shards, etc.). Are values plausible?
+        - Check if any info cards are clickable — do they navigate to
+          relevant detail pages (e.g., cluster health, data streams,
+          indices)?
+        - Look for a nodes table showing node names and status. Are node
+          role indicators visible?
+        - If a Fleet summary card is present, is it readable? Does its
+          link navigate correctly?
         - Navigate away to Indices, then back to Cluster Overview. Does data
           refresh?
         - Resize the browser to a narrow width (800px). Do the info cards wrap
@@ -76,8 +73,8 @@ jobs:
         Navigate to `http://localhost:3000/ai-github-actions-playground/cluster-health`
         or click the "Health" entry in the sidebar.
 
-        - Does the page show cluster status (green/yellow/red), shard counts,
-          active shards, unassigned shards?
+        - Does the page show cluster health status, shard counts, and
+          related cluster health metrics?
         - Are the numeric values formatted readably?
         - Is there an AI Insight banner? Is the content relevant and readable?
 
@@ -226,5 +223,10 @@ jobs:
           page/location, what you tried, what you expected, what actually
           happened, and a screenshot. A thorough issue typically has 3-10
           findings.
+        - **Prompt accuracy**: If the UI differs from what this prompt
+          describes (e.g., a title, label, or layout has changed) but the
+          UI itself is fine, do NOT file that as a bug. Instead, add a
+          **"Prompt Suggestions"** section at the end of your issue listing
+          what this prompt should say instead to match the current UI.
     secrets:
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
