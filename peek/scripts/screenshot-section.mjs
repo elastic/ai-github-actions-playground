@@ -171,6 +171,11 @@ async function captureThemeScreenshots(browser, opts, pages, themeMode, outDir) 
       }
 
       await page.getByRole("button", { name: navButton, exact: true }).click();
+      // Wait for client-side route change to take effect. Some pages (e.g.
+      // profiling focus picker) don't trigger network requests, so networkidle
+      // alone resolves instantly. A brief wait lets React render the new route
+      // before we capture.
+      await page.waitForTimeout(500);
       await waitForSettle(page, opts.timeoutMs);
 
       const screenshotPath = path.join(outDir, `${slug}.png`);

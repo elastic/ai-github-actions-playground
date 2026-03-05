@@ -6,6 +6,7 @@ import {
   countMatchingFrames,
   findSubtreeByPath,
   inferFrameType,
+  isMissingProfilingIndex,
   joinStacktraces,
   normalizeTopFunctions,
   parseFrameIds,
@@ -14,6 +15,15 @@ import {
 import type { SymbolizedStacktrace } from "../../src/components/profiling/profilingUtils";
 
 describe("profilingUtils", () => {
+  it("detects missing profiling index errors", () => {
+    expect(
+      isMissingProfilingIndex("Found 1 problem line 1:1: Unknown index [profiling-events-all]"),
+    ).toBe(true);
+    expect(isMissingProfilingIndex("Unknown index [profiling-stacktraces]")).toBe(true);
+    expect(isMissingProfilingIndex("Some other error")).toBe(false);
+    expect(isMissingProfilingIndex("")).toBe(false);
+  });
+
   it("parses frame IDs from compact payload (legacy format)", () => {
     const joined = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
     expect(parseFrameIds(joined)).toEqual([

@@ -90,20 +90,26 @@ jobs:
 
         ## Filter bar
 
-        The page has four filter fields and a date range picker.
+        The main Profiling page uses a guided flow with no traditional filter
+        fields. The focus picker lets you choose a dimension (Service, Host,
+        Process, Thread, or Everything). Selecting a specific dimension opens a
+        value picker with a single "Search … names" text input and a date range
+        picker.
 
-        - Type a service name and click Run — does the query preview update?
-        - Enter a value that matches nothing — is the empty state clean (icon,
-          title, description) or just a blank panel?
-        - Change the time range — does the ES|QL preview update accordingly?
-        - Click "Reset Filters" — do all fields clear and results reset?
+        - Select a focus dimension and pick a value — does the results view
+          load?
+        - In the value picker, type a name that matches nothing — is the empty
+          state clean (icon, title, description) or just a blank panel?
+        - Change the time range — does the value list update?
+        - Click "Change focus" in the results header — do you return to the
+          focus picker?
 
         ---
 
         ## View modes
 
-        Five mode chips: **Top Functions**, **Stacktraces**, **Timeline**,
-        **Flamegraph**, **Flamescope**. For each mode you test, verify:
+        Five mode chips: **Flamegraph**, **Top Functions**, **Timeline**,
+        **Flamescope**, **Stacktraces**. For each mode you test, verify:
 
         - Does the view render without console errors?
         - Is the "Open in Query Lab" button correctly enabled/disabled?
@@ -150,9 +156,9 @@ jobs:
         3. **Top Functions table in dark mode**: Are column headers and cell
            text readable against the dark background?
 
-        4. **Filter label contrast**: In dark mode, are the field labels
-           ("Executable", "Thread", "Service", "Host") readable in both
-           focused and unfocused states?
+        4. **Value picker contrast**: In dark mode, is the search input
+           placeholder text and the value list text readable in both the
+           value picker and the results toolbar?
 
         ---
 
