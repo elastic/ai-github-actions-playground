@@ -26,6 +26,9 @@ interface UseServiceDashboardQueriesParams {
   timeTo: string;
 }
 
+/** Shared query key prefix for all service-dashboard queries. */
+const KEY_PREFIX = "service-dashboard-" as const;
+
 /** Shared options for all service-dashboard queries. */
 const QUERY_OPTIONS = {
   retry: false,
@@ -34,7 +37,7 @@ const QUERY_OPTIONS = {
 } as const;
 
 function isServiceDashboardQuery(queryKey: readonly unknown[]): boolean {
-  return typeof queryKey[0] === "string" && queryKey[0].startsWith("service-dashboard-");
+  return typeof queryKey[0] === "string" && queryKey[0].startsWith(KEY_PREFIX);
 }
 
 export function useServiceDashboardQueries({
@@ -61,7 +64,7 @@ export function useServiceDashboardQueries({
 
   // --- Routes ---
   const routesQuery = useQuery<EsqlResponse | null>({
-    queryKey: ["service-dashboard-routes", connectionUrl, serviceName, timeFrom, timeTo] as const,
+    queryKey: [`${KEY_PREFIX}routes`, connectionUrl, serviceName, timeFrom, timeTo] as const,
     queryFn: async ({ signal }) => {
       if (!connection) return null;
       const query = buildServiceRoutesQuery(filters);
@@ -74,7 +77,7 @@ export function useServiceDashboardQueries({
 
   // --- Traces ---
   const tracesQuery = useQuery<EsqlResponse | null>({
-    queryKey: ["service-dashboard-traces", connectionUrl, serviceName, timeFrom, timeTo] as const,
+    queryKey: [`${KEY_PREFIX}traces`, connectionUrl, serviceName, timeFrom, timeTo] as const,
     queryFn: async ({ signal }) => {
       if (!connection) return null;
       const query = buildServiceRecentTracesQuery(filters);
@@ -102,7 +105,7 @@ export function useServiceDashboardQueries({
   // --- Trace Spans (dependent on traces) ---
   const traceSpansQuery = useQuery<EsqlResponse | null>({
     queryKey: [
-      "service-dashboard-trace-spans",
+      `${KEY_PREFIX}trace-spans`,
       connectionUrl,
       serviceName,
       timeFrom,
@@ -121,13 +124,7 @@ export function useServiceDashboardQueries({
 
   // --- Deployments ---
   const deploymentsQuery = useQuery<EsqlResponse | null>({
-    queryKey: [
-      "service-dashboard-deployments",
-      connectionUrl,
-      serviceName,
-      timeFrom,
-      timeTo,
-    ] as const,
+    queryKey: [`${KEY_PREFIX}deployments`, connectionUrl, serviceName, timeFrom, timeTo] as const,
     queryFn: async ({ signal }) => {
       if (!connection) return null;
       const query = buildServiceDeploymentsQuery(filters);
@@ -140,13 +137,7 @@ export function useServiceDashboardQueries({
 
   // --- Sparkline ---
   const sparklineQuery = useQuery<EsqlResponse | null>({
-    queryKey: [
-      "service-dashboard-sparkline",
-      connectionUrl,
-      serviceName,
-      timeFrom,
-      timeTo,
-    ] as const,
+    queryKey: [`${KEY_PREFIX}sparkline`, connectionUrl, serviceName, timeFrom, timeTo] as const,
     queryFn: async ({ signal }) => {
       if (!connection) return null;
       const query = buildServiceRouteSparklineQuery(filters);
@@ -159,13 +150,7 @@ export function useServiceDashboardQueries({
 
   // --- K8s Context ---
   const k8sContextQuery = useQuery<EsqlResponse | null>({
-    queryKey: [
-      "service-dashboard-k8s-context",
-      connectionUrl,
-      serviceName,
-      timeFrom,
-      timeTo,
-    ] as const,
+    queryKey: [`${KEY_PREFIX}k8s-context`, connectionUrl, serviceName, timeFrom, timeTo] as const,
     queryFn: async ({ signal }) => {
       if (!connection) return null;
       const query = buildServiceK8sContextQuery(filters);

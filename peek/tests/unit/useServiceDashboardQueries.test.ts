@@ -273,9 +273,9 @@ describe("useServiceDashboardQueries", () => {
   });
 
   it("aggregates loading state from all queries", async () => {
-    let resolveRoutes!: (value: EsqlResponse) => void;
+    let resolveQuery!: (value: EsqlResponse) => void;
     mockExecute.mockImplementation(
-      () => new Promise<EsqlResponse>((resolve) => (resolveRoutes = resolve)),
+      () => new Promise<EsqlResponse>((resolve) => (resolveQuery = resolve)),
     );
 
     const { result } = renderHook(
@@ -294,7 +294,7 @@ describe("useServiceDashboardQueries", () => {
     });
 
     await act(async () => {
-      resolveRoutes(SAMPLE_ROUTES);
+      resolveQuery(SAMPLE_ROUTES);
     });
   });
 
