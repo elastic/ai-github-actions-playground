@@ -160,6 +160,20 @@ interface CreateApiKeyResponse {
   encoded?: string;
 }
 
+/**
+ * Optimistic capability set returned when the security API is absent or
+ * unreachable (404 / security-disabled 400).  Without a security layer the
+ * cluster enforces no privilege checks, so the user effectively has full
+ * access and hiding features would be incorrect.
+ */
+const OPTIMISTIC_CAPABILITIES: UserCapabilities = {
+  canManageDataStreams: true,
+  canCreateApiKeys: true,
+  canReadSecurityUsers: true,
+  canReadSecurityRoles: true,
+  canReadApiKeys: true,
+};
+
 // ---------------------------------------------------------------------------
 // Client
 // ---------------------------------------------------------------------------
@@ -600,13 +614,7 @@ export class ElasticsearchClient {
         // the user lacks privileges, so return an optimistic set and let the
         // actual operation surface a clear error if it also fails.
         if (err.status === 404) {
-          return {
-            canManageDataStreams: true,
-            canCreateApiKeys: true,
-            canReadSecurityUsers: true,
-            canReadSecurityRoles: true,
-            canReadApiKeys: true,
-          };
+          return OPTIMISTIC_CAPABILITIES;
         }
         // 400: Security is disabled or the security plugin is not installed.
         // Without a security layer the cluster enforces no privilege checks, so
@@ -621,13 +629,7 @@ export class ElasticsearchClient {
             msg.includes("security is disabled") ||
             msg.includes("x-pack security");
           if (looksLikeSecurityAbsent) {
-            return {
-              canManageDataStreams: true,
-              canCreateApiKeys: true,
-              canReadSecurityUsers: true,
-              canReadSecurityRoles: true,
-              canReadApiKeys: true,
-            };
+            return OPTIMISTIC_CAPABILITIES;
           }
           throw err;
         }
