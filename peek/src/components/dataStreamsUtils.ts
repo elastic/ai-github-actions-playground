@@ -1,0 +1,84 @@
+import type { FieldCapsResponse } from "../services/es";
+
+import { DATA_STREAMS_INSIGHT_SLOT_IDS } from "./dataStreamsInsightSlots";
+
+export type StreamSortField = "name" | "status" | "indices";
+export type StreamSortDirection = "asc" | "desc";
+
+export const STATUS_CHIP_COLORS: Record<string, "success" | "warning" | "error" | "default"> = {
+  GREEN: "success",
+  YELLOW: "warning",
+  RED: "error",
+};
+
+const STREAM_STATUS_ORDER: Record<string, number> = { GREEN: 0, YELLOW: 1, RED: 2 };
+
+export function toFieldRows(fieldCaps: FieldCapsResponse) {
+  return Object.entries(fieldCaps.fields ?? {})
+    .flatMap(([name, capabilities]) =>
+      Object.values(capabilities).map((cap) => ({ name, type: cap.type })),
+    )
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+// ---------------------------------------------------------------------------
+// Overview card helpers
+// ---------------------------------------------------------------------------
+
+export const OVERVIEW_CARD_DEFS = [
+  { slotId: DATA_STREAMS_INSIGHT_SLOT_IDS.totalStreamsCard, title: "Total Streams" },
+  { slotId: DATA_STREAMS_INSIGHT_SLOT_IDS.healthyCard, title: "Healthy" },
+  { slotId: DATA_STREAMS_INSIGHT_SLOT_IDS.degradedCard, title: "Degraded" },
+  { slotId: DATA_STREAMS_INSIGHT_SLOT_IDS.unhealthyCard, title: "Unhealthy" },
+  { slotId: DATA_STREAMS_INSIGHT_SLOT_IDS.backingIndicesCard, title: "Backing Indices" },
+] as const;
+
+export type StreamMetrics = {
+  total: number;
+  green: number;
+  yellow: number;
+  red: number;
+  totalIndices: number;
+};
+
+export function getCardValue(title: string, m: StreamMetrics): { value: number; color?: string } {
+  switch (title) {
+    case "Total Streams":
+      return { value: m.total };
+    case "Healthy":
+      return { value: m.green, color: "success.main" };
+    case "Degraded":
+      return { value: m.yellow, color: m.yellow > 0 ? "warning.main" : "text.primary" };
+    case "Unhealthy":
+      return { value: m.red, color: m.red > 0 ? "error.main" : "text.primary" };
+    case "Backing Indices":
+      return { value: m.totalIndices };
+    default:
+      return { value: 0 };
+  }
+}
+
+export function compareStreams(
+  a: { name: string; status: string; indices: unknown[] },
+  b: { name: string; status: string; indices: unknown[] },
+  field: StreamSortField,
+  dir: StreamSortDirection,
+): number {
+  let cmp: number;
+  switch (field) {
+    case "name":
+      cmp = a.name.localeCompare(b.name);
+      break;
+    case "status":
+      cmp =
+        (STREAM_STATUS_ORDER[a.status.toUpperCase()] ?? 99) -
+        (STREAM_STATUS_ORDER[b.status.toUpperCase()] ?? 99);
+      break;
+    case "indices":
+      cmp = a.indices.length - b.indices.length;
+      break;
+    default:
+      cmp = 0;
+  }
+  return dir === "asc" ? cmp : -cmp;
+}
