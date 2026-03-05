@@ -101,7 +101,7 @@ export default function NodesPage() {
           variant="outlined"
           sx={{ display: "flex", flex: 1, minHeight: 0, overflow: "hidden" }}
         >
-          {rows.length === 0 && !loading ? (
+          {rows.length === 0 && !loading && partialErrors.length === 0 ? (
             <EmptyState
               icon={<MemoryIcon sx={{ fontSize: 28 }} />}
               heading={
