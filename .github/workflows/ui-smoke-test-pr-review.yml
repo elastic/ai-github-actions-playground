@@ -6,6 +6,7 @@ on:
     paths:
       - "peek/src/**"
       - "peek/tests/**"
+      - "peek/scripts/screenshot-preflight.mjs"
       - "peek/package*.json"
       - "peek/tsconfig*.json"
       - "peek/vite.config.ts"
@@ -20,6 +21,7 @@ on:
     paths:
       - "peek/src/**"
       - "peek/tests/**"
+      - "peek/scripts/screenshot-preflight.mjs"
       - "peek/package*.json"
       - "peek/tsconfig*.json"
       - "peek/vite.config.ts"
