@@ -89,11 +89,11 @@ export default function AwsDeployInstall({
               size="small"
               variant="outlined"
               onClick={() => {
+                onLaunchStack();
                 void copyToClipboard(manualDeployCommand).then((ok) => {
                   if (!ok) return;
                   setCopied(true);
                   scheduleReset();
-                  onLaunchStack();
                 });
               }}
             >
