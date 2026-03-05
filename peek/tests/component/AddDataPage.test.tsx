@@ -172,6 +172,42 @@ describe("AddDataPage", () => {
     expect(screen.queryByRole("heading", { name: /next steps/i })).not.toBeInTheDocument();
   }, 30_000);
 
+  it("allows skipping verification to proceed to Step 3", async () => {
+    // Return empty data streams so verification never detects data
+    mockGetDataStreams.mockResolvedValue({ data_streams: [] });
+    mockRawRequest.mockResolvedValue({
+      status: 200,
+      body: { hits: { total: { value: 0, relation: "eq" } } },
+    });
+
+    const user = userEvent.setup();
+    renderPage();
+
+    await goToStep2(user);
+    await chooseRecommendedCollector(user);
+
+    // Wait for verification to start polling so the skip button appears
+    await waitFor(
+      () => {
+        expect(screen.getByRole("button", { name: /Skip verification/i })).toBeInTheDocument();
+      },
+      { timeout: 10_000 },
+    );
+
+    // Continue should be disabled before skipping
+    expect(screen.getByRole("button", { name: /^Continue$/i })).toBeDisabled();
+
+    // Click skip verification
+    await user.click(screen.getByRole("button", { name: /Skip verification/i }));
+
+    // Continue should now be enabled
+    expect(screen.getByRole("button", { name: /^Continue$/i })).toBeEnabled();
+
+    // Click Continue to reach Step 3
+    await user.click(screen.getByRole("button", { name: /^Continue$/i }));
+    expect(screen.getByRole("button", { name: "Add another source" })).toBeInTheDocument();
+  }, 30_000);
+
   it("shows configure and install sections with credentials in merged Step 2", async () => {
     const user = userEvent.setup();
     renderPage();
@@ -563,11 +599,16 @@ describe("AddDataPage", () => {
     expect(screen.getByText("Connecting using AWS Firehose")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /Start over/i }));
-    expect(
-      screen.getByRole("heading", { name: /Set up Amazon Web Services/i }),
-    ).toBeInTheDocument();
-    expect(screen.getByText("How should we connect?")).toBeInTheDocument();
+    // Start over now navigates back to Step 1 (technology selection)
+    await waitFor(() => {
+      expect(
+        screen.getByRole("heading", { name: /What do you want to monitor\?/i }),
+      ).toBeInTheDocument();
+    });
     expect(screen.queryByText("Connecting using AWS Firehose")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: /Set up Amazon Web Services/i }),
+    ).not.toBeInTheDocument();
   }, 30_000);
 });
 
