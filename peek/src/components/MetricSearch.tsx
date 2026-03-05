@@ -51,7 +51,13 @@ export default function MetricSearch({
 }: Props) {
   const HIDDEN_NAMESPACE = "metrics";
   // Only show numeric (gauge/counter) fields for metric search
-  const metricFields = useMemo(() => fields.filter((f) => f.metricType !== "unknown"), [fields]);
+  const metricFields = useMemo(
+    () =>
+      fields.filter(
+        (f) => f.metricType !== "unknown" && metricNamespaceOf(f.name) !== HIDDEN_NAMESPACE,
+      ),
+    [fields],
+  );
   const namespaceLabelId = useId();
   const namespaces = useMemo(
     () =>

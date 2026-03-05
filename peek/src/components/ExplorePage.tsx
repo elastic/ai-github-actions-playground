@@ -15,7 +15,6 @@ import CodeMirror from "@uiw/react-codemirror";
 import { useShallow } from "zustand/react/shallow";
 import { parseAsString, useQueryState, useQueryStates } from "nuqs";
 import { EditorView } from "@codemirror/view";
-import TextField from "@mui/material/TextField";
 
 import { useDashboardEditorStore } from "../store/useDashboardEditorStore";
 import { useConnectionStore } from "../store/useConnectionStore";
@@ -43,6 +42,7 @@ import {
   encodeFilters,
   explorerSearchParsers,
   exploreSearchUrlKeys,
+  isHiddenDimensionField,
   metricNamespaceOf,
 } from "./explore/exploreUtils";
 import { EXPLORE_INSIGHT_SLOT_IDS, EXPLORE_INSIGHT_SLOTS } from "./explore/exploreInsightSlots";
@@ -157,12 +157,6 @@ export default function ExplorePage() {
     if (!selectedMetric) return null;
     return metricNamespaceOf(selectedMetric);
   }, [selectedMetric]);
-
-  useEffect(() => {
-    if (selectedNamespace === "metrics") {
-      setSelectedNamespace(null);
-    }
-  }, [selectedNamespace, setSelectedNamespace]);
 
   const selectedMetricField = useMemo(
     () => fields.find((field) => field.name === selectedMetric) ?? null,
@@ -380,10 +374,7 @@ export default function ExplorePage() {
   }, [queryResult]);
 
   const dimensionFieldNames = useMemo(() => {
-    const base = fields.filter(
-      (f) =>
-        isDimensionField(f) && f.name !== "_metrics_name_hash" && f.name !== "_metrics_names_hash",
-    );
+    const base = fields.filter((f) => isDimensionField(f) && !isHiddenDimensionField(f.name));
     if (!selectedMetricNamespace) return base.map((f) => f.name);
     const scoped = base.filter(
       (f) => f.name === selectedMetricNamespace || f.name.startsWith(`${selectedMetricNamespace}.`),
@@ -454,18 +445,6 @@ export default function ExplorePage() {
       <Box sx={{ display: "flex", flexDirection: "column", gap: 1, height: "100%" }}>
         {showLanding ? (
           <>
-            {selectedMetric && (
-              <Paper variant="outlined" sx={{ p: 1.5 }}>
-                <TextField
-                  size="small"
-                  label="Index pattern"
-                  value={indexPattern}
-                  onChange={(e) => setIndexPattern(e.target.value)}
-                  placeholder="metrics-*"
-                  sx={{ width: 280, "& .MuiOutlinedInput-root": { height: 40 } }}
-                />
-              </Paper>
-            )}
             <Paper
               variant="outlined"
               sx={{ display: "flex", flex: 1, flexDirection: "column", overflow: "auto" }}

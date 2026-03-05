@@ -33,6 +33,7 @@ export function useNamespaceSummaries(namespaces: NamespaceInfo[], enabled: bool
     })),
   );
   const hasApiKey = Boolean(apiKey?.trim());
+  const authScope = apiKey?.trim() ?? "";
 
   const contextJson = JSON.stringify(
     namespaces.map((n) => ({
@@ -43,7 +44,7 @@ export function useNamespaceSummaries(namespaces: NamespaceInfo[], enabled: bool
   );
 
   const { data, isFetching, error } = useQuery({
-    queryKey: ["namespace-summaries", contextJson, provider, llmModel, hasApiKey] as const,
+    queryKey: ["namespace-summaries", contextJson, provider, llmModel, authScope] as const,
     queryFn: async ({ signal }) => {
       const systemPrompt =
         "You are a metrics observability assistant. " +

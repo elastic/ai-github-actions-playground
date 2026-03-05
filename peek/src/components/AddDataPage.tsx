@@ -24,6 +24,7 @@ type WizardStep = 1 | 2 | 3;
 
 export default function AddDataPage() {
   const connection = useConnectionStore((s) => s.connection);
+  const canCreateApiKeys = useConnectionStore((s) => s.capabilities?.canCreateApiKeys ?? null);
 
   const [wizardStep, setWizardStep] = useState<WizardStep>(1);
   const [selectedTechnology, setSelectedTechnology] =
@@ -261,6 +262,7 @@ export default function AddDataPage() {
           onClearTechnology={() => setSelectedTechnology(null)}
           technologySearch={technologySearch}
           onTechnologySearchChange={setTechnologySearch}
+          canCreateApiKeys={canCreateApiKeys}
         />
       )}
 

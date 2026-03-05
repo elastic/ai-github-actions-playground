@@ -21,6 +21,7 @@ export const pageInsightsSchema = z.object({
       suggestedDimension: z
         .string()
         .trim()
+        .min(1)
         .optional()
         .describe(
           "For metrics chart slots: when suggesting a dimension to group by, include the exact field name (e.g. host.name) so the UI can offer an Apply action",

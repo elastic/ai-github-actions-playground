@@ -83,6 +83,7 @@ export default function InsightSlot({ slotId, children, renderActions }: Insight
   }
 
   const severity = insight.severity ?? "info";
+  const actions = renderActions?.(insight);
 
   return (
     <Box
@@ -151,7 +152,7 @@ export default function InsightSlot({ slotId, children, renderActions }: Insight
           <ReactMarkdown remarkPlugins={[remarkGfm]}>{insight.text}</ReactMarkdown>
         </Box>
 
-        {renderActions?.(insight) && <Box sx={{ mt: 1 }}>{renderActions(insight)}</Box>}
+        {actions && <Box sx={{ mt: 1 }}>{actions}</Box>}
 
         <Box sx={{ display: "flex", gap: 0.5, justifyContent: "flex-end", mt: 1 }}>
           <Tooltip title="Refresh insight">

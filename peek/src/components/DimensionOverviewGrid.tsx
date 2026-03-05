@@ -30,6 +30,7 @@ import {
   normalizeDimensionBucketLabel,
 } from "./DimensionOverviewGrid.utils";
 import { classifyFieldVisual, getFieldVisualIcon } from "./explore/fieldVisuals";
+import { isHiddenDimensionField } from "./explore/exploreUtils";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -54,7 +55,6 @@ interface Props {
 // ---------------------------------------------------------------------------
 
 const MAX_SERIES = 5;
-const HIDDEN_DIMENSION_FIELDS = new Set(["_metrics_name_hash", "_metrics_names_hash"]);
 const NO_DIMENSIONS_ITEM_NAME = "__no_dimensions__";
 const DIMENSION_CARD_SLOT_PREFIX = "metrics-dimension-card";
 const NO_DIMENSIONS_SLOT_SUFFIX = "__no_dimensions__";
@@ -191,7 +191,7 @@ export default function DimensionOverviewGrid({
 
   // Discover dimension fields — same logic as DimensionSidebar
   const dimensionFields = useMemo(() => {
-    const base = fields.filter((f) => isDimensionField(f) && !HIDDEN_DIMENSION_FIELDS.has(f.name));
+    const base = fields.filter((f) => isDimensionField(f) && !isHiddenDimensionField(f.name));
     if (metricNamespace === null) return base;
     const scoped = base.filter(
       (f) => f.name === metricNamespace || f.name.startsWith(`${metricNamespace}.`),
@@ -202,6 +202,7 @@ export default function DimensionOverviewGrid({
   const scopeKey = [
     metricField,
     metricType,
+    aggregation,
     indexPattern,
     timeRange.from,
     timeRange.to,
@@ -228,7 +229,10 @@ export default function DimensionOverviewGrid({
     buildQuery,
     timeRange,
   });
-  const noDimensionsItems = useMemo(() => [{ name: NO_DIMENSIONS_ITEM_NAME }], []);
+  const noDimensionsItems = useMemo(
+    () => (dimensionFields.length > 0 ? [{ name: NO_DIMENSIONS_ITEM_NAME }] : []),
+    [dimensionFields.length],
+  );
   const { results: noDimensionsResults } = useBatchedOverviewQueries({
     items: noDimensionsItems,
     client,
