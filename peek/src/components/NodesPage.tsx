@@ -80,6 +80,7 @@ export default function NodesPage() {
               size="small"
               variant="outlined"
               onClick={refresh}
+              disabled={loading}
               startIcon={loading ? <CircularProgress size={14} aria-hidden="true" /> : undefined}
             >
               {loading ? "Refreshing..." : "Refresh"}
@@ -95,83 +96,88 @@ export default function NodesPage() {
         </Alert>
       )}
 
-      <Paper variant="outlined" sx={{ display: "flex", flex: 1, minHeight: 0, overflow: "hidden" }}>
-        {rows.length === 0 && !loading ? (
-          <EmptyState
-            icon={<MemoryIcon sx={{ fontSize: 28 }} />}
-            heading="No nodes found"
-            description="No node metadata is currently available."
-          />
-        ) : (
-          <TableContainer sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
-            <Table size="small" stickyHeader aria-label="Nodes table">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Roles</TableCell>
-                  <TableCell>Version</TableCell>
-                  <TableCell align="right">CPU</TableCell>
-                  <TableCell align="right">Heap</TableCell>
-                  <TableCell align="right">Memory</TableCell>
-                  <TableCell align="right">Disk</TableCell>
-                  <TableCell align="right">Docs</TableCell>
-                  <TableCell align="right">Shards</TableCell>
-                  <TableCell align="right">FDs</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {rows.map((row) => (
-                  <TableRow key={row.id} hover>
-                    <TableCell>
-                      <Typography variant="body2" noWrap title={`${row.name} (${row.id})`}>
-                        {row.name}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="caption" color="text.secondary">
-                        {row.roles.length > 0 ? row.roles.join(", ") : "n/a"}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>{row.version}</TableCell>
-                    <TableCell align="right">
-                      {row.cpuPercent === null ? "n/a" : `${row.cpuPercent.toFixed(0)}%`}
-                    </TableCell>
-                    <TableCell align="right">
-                      {row.heapPercent === null ? "n/a" : `${row.heapPercent.toFixed(0)}%`}
-                    </TableCell>
-                    <TableCell align="right">
-                      {row.memUsedPercent === null ? "n/a" : `${row.memUsedPercent.toFixed(0)}%`}
-                    </TableCell>
-                    <TableCell align="right">
-                      {row.fsUsedPercent === null ? "n/a" : `${row.fsUsedPercent.toFixed(0)}%`}
-                    </TableCell>
-                    <TableCell align="right">
-                      {row.docCount === null ? "n/a" : row.docCount.toLocaleString()}
-                    </TableCell>
-                    <TableCell align="right">
-                      {row.shardCount === null ? "n/a" : row.shardCount.toLocaleString()}
-                    </TableCell>
-                    <TableCell align="right">
-                      {row.openFds === null || row.maxFds === null
-                        ? "n/a"
-                        : `${row.openFds.toLocaleString()} / ${row.maxFds.toLocaleString()}`}
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {loading && (
+      {!error && (
+        <Paper
+          variant="outlined"
+          sx={{ display: "flex", flex: 1, minHeight: 0, overflow: "hidden" }}
+        >
+          {rows.length === 0 && !loading ? (
+            <EmptyState
+              icon={<MemoryIcon sx={{ fontSize: 28 }} />}
+              heading="No nodes found"
+              description="No node metadata is currently available."
+            />
+          ) : (
+            <TableContainer sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
+              <Table size="small" stickyHeader aria-label="Nodes table">
+                <TableHead>
                   <TableRow>
-                    <TableCell colSpan={10}>
-                      <Typography variant="body2" color="text.secondary">
-                        Loading node data...
-                      </Typography>
-                    </TableCell>
+                    <TableCell>Name</TableCell>
+                    <TableCell>Roles</TableCell>
+                    <TableCell>Version</TableCell>
+                    <TableCell align="right">CPU</TableCell>
+                    <TableCell align="right">Heap</TableCell>
+                    <TableCell align="right">Memory</TableCell>
+                    <TableCell align="right">Disk</TableCell>
+                    <TableCell align="right">Docs</TableCell>
+                    <TableCell align="right">Shards</TableCell>
+                    <TableCell align="right">FDs</TableCell>
                   </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
-      </Paper>
+                </TableHead>
+                <TableBody>
+                  {rows.map((row) => (
+                    <TableRow key={row.id} hover>
+                      <TableCell>
+                        <Typography variant="body2" noWrap title={`${row.name} (${row.id})`}>
+                          {row.name}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="caption" color="text.secondary">
+                          {row.roles.length > 0 ? row.roles.join(", ") : "n/a"}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>{row.version}</TableCell>
+                      <TableCell align="right">
+                        {row.cpuPercent === null ? "n/a" : `${row.cpuPercent.toFixed(0)}%`}
+                      </TableCell>
+                      <TableCell align="right">
+                        {row.heapPercent === null ? "n/a" : `${row.heapPercent.toFixed(0)}%`}
+                      </TableCell>
+                      <TableCell align="right">
+                        {row.memUsedPercent === null ? "n/a" : `${row.memUsedPercent.toFixed(0)}%`}
+                      </TableCell>
+                      <TableCell align="right">
+                        {row.fsUsedPercent === null ? "n/a" : `${row.fsUsedPercent.toFixed(0)}%`}
+                      </TableCell>
+                      <TableCell align="right">
+                        {row.docCount === null ? "n/a" : row.docCount.toLocaleString()}
+                      </TableCell>
+                      <TableCell align="right">
+                        {row.shardCount === null ? "n/a" : row.shardCount.toLocaleString()}
+                      </TableCell>
+                      <TableCell align="right">
+                        {row.openFds === null || row.maxFds === null
+                          ? "n/a"
+                          : `${row.openFds.toLocaleString()} / ${row.maxFds.toLocaleString()}`}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {loading && (
+                    <TableRow>
+                      <TableCell colSpan={10}>
+                        <Typography variant="body2" color="text.secondary">
+                          Loading node data...
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+        </Paper>
+      )}
     </Box>
   );
 }
