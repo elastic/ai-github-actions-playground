@@ -21,6 +21,8 @@ export default function BarChart({ data, options, onExportReady }: Props) {
   const stacked = options?.stacked === true;
   const horizontal = options?.horizontal === true;
   const format = options?.format;
+  const compact = options?.compact === true;
+  const axisLabelInterval = options?.axisLabelInterval;
 
   useEffect(() => {
     if (!onExportReady) return;
@@ -106,7 +108,9 @@ export default function BarChart({ data, options, onExportReady }: Props) {
       axisLabel: {
         rotate: !horizontal && categories.length > 10 ? 45 : 0,
         overflow: "truncate" as const,
-        width: 80,
+        width: compact ? 60 : 80,
+        ...(compact ? { fontSize: 10 } : {}),
+        ...(axisLabelInterval != null ? { interval: axisLabelInterval } : {}),
       },
     };
 
@@ -115,19 +119,23 @@ export default function BarChart({ data, options, onExportReady }: Props) {
       type: "value" as const,
       axisLabel: {
         ...theme.yAxis.axisLabel,
+        ...(compact ? { fontSize: 9 } : {}),
         ...axisLabelFormatter,
       },
     };
 
+    const grid = compact
+      ? { left: 22, right: 4, top: 4, bottom: 18 }
+      : { left: 48, right: 16, top: 32, bottom: 40 };
     return {
-      grid: { left: 48, right: 16, top: 32, bottom: 40 },
+      grid,
       tooltip: {
         ...theme.tooltip,
         trigger: "axis",
       },
       legend: {
         ...theme.legend,
-        show: series.length > 1,
+        show: !compact && series.length > 1,
         bottom: 0,
         type: "scroll" as const,
       },
@@ -135,7 +143,7 @@ export default function BarChart({ data, options, onExportReady }: Props) {
       yAxis: horizontal ? { ...theme.yAxis, ...categoryAxis } : valueAxis,
       series,
     };
-  }, [data, theme, stacked, horizontal, format]);
+  }, [data, theme, stacked, horizontal, format, compact, axisLabelInterval]);
 
   return (
     <EChart

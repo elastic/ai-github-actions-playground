@@ -29,6 +29,25 @@ export function formatDate(value: DateInput): string {
   return d.toLocaleDateString();
 }
 
+/** Intl options for compact chart x-axis labels (e.g. trace metrics). */
+export const CHART_AXIS_DATE_OPTIONS: Intl.DateTimeFormatOptions = {
+  month: "short",
+  day: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
+};
+
+/**
+ * Format a value for chart x-axis labels. Uses consistent format across
+ * trace metrics (Requests, Errors, Latency).
+ */
+export function formatChartAxisDate(value: DateInput): string {
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return String(value);
+  return d.toLocaleString(undefined, CHART_AXIS_DATE_OPTIONS);
+}
+
 /**
  * Format a value as a locale time string.
  *

@@ -156,7 +156,7 @@ describe("TimeSeriesChart", () => {
     expect(typeof xAxis.axisLabel?.formatter).toBe("function");
   });
 
-  it("does not set custom axisLabel formatter when no timeZone is provided", () => {
+  it("sets a formatter on xAxis when data has a date column even without timeZone", () => {
     const data: EsqlResponse = {
       columns: [
         { name: "doc_count", type: "long" },
@@ -170,7 +170,7 @@ describe("TimeSeriesChart", () => {
     render(<TimeSeriesChart data={data} />);
     const option = getLastSetOptionCall();
     const xAxis = option.xAxis as { axisLabel?: { formatter?: unknown } };
-    expect(xAxis.axisLabel?.formatter).toBeUndefined();
+    expect(typeof xAxis.axisLabel?.formatter).toBe("function");
   });
 
   it("formats axis labels consistently regardless of local timezone when timeZone is UTC", () => {

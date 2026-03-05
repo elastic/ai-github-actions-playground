@@ -6,9 +6,9 @@ import type { EsqlResponse, TimeSeriesOptions } from "../../types";
 import { toTimeSeriesData } from "../../services/perses/dataTransformers";
 import { CHART_COLORS } from "../../theme";
 
-import { useEChartTheme } from "./useEChartTheme";
 import { createPngExporter, type EChartInstance } from "./chartExport";
-import { findDateColumnIndex } from "./chartUtils";
+import { findDateColumnIndex, formatChartAxisDate } from "./chartUtils";
+import { useEChartTheme } from "./useEChartTheme";
 
 interface Props {
   data: EsqlResponse;
@@ -24,6 +24,8 @@ export default function TimeSeriesChart({ data, options, onExportReady, timeZone
   const showArea = options?.showArea !== false;
   const stacked = options?.stacked === true;
   const format = options?.format;
+  const compact = options?.compact === true;
+  const timeRange = options?.timeRange;
 
   // Register the PNG-export capability once the chart instance is available.
   // The `_instance` ref is populated by the Perses EChart component during its
@@ -73,8 +75,11 @@ export default function TimeSeriesChart({ data, options, onExportReady, timeZone
       ? (value: number) => tzFormatter.format(new Date(value))
       : undefined;
 
+    const grid = compact
+      ? { left: 22, right: 4, top: 4, bottom: dateIdx >= 0 ? 18 : 12 }
+      : { left: 48, right: 16, top: 32, bottom: dateIdx >= 0 ? 60 : 32 };
     return {
-      grid: { left: 48, right: 16, top: 32, bottom: dateIdx >= 0 ? 60 : 32 },
+      grid,
       tooltip: {
         trigger: "axis",
         ...(tzDateFormatter
@@ -97,24 +102,48 @@ export default function TimeSeriesChart({ data, options, onExportReady, timeZone
           : {}),
       },
       legend: {
-        show: series.length > 1,
+        show: !compact && series.length > 1,
         bottom: 0,
         type: "scroll",
       },
       xAxis: {
+        ...theme.xAxis,
         type: dateIdx >= 0 ? "time" : "value",
-        ...(tzDateFormatter ? { axisLabel: { formatter: tzDateFormatter } } : {}),
+        ...(timeRange && dateIdx >= 0
+          ? { min: timeRange.min, max: timeRange.max, splitNumber: compact ? 2 : undefined }
+          : {}),
+        axisLabel: {
+          ...theme.xAxis?.axisLabel,
+          ...(compact ? { fontSize: 10 } : {}),
+          ...(tzDateFormatter
+            ? { formatter: tzDateFormatter }
+            : dateIdx >= 0
+              ? { formatter: (v: number) => formatChartAxisDate(v) }
+              : {}),
+        },
       },
       yAxis: {
+        ...theme.yAxis,
         type: "value",
+        splitLine: compact
+          ? {
+              ...(theme.yAxis?.splitLine ?? {}),
+              lineStyle: {
+                ...(theme.yAxis?.splitLine?.lineStyle ?? {}),
+                opacity: 0.2,
+              },
+            }
+          : (theme.yAxis?.splitLine ?? {}),
         axisLabel: {
+          ...(theme.yAxis?.axisLabel ?? {}),
+          ...(compact ? { fontSize: 9 } : {}),
           ...(format ? { formatter: (v: number) => formatValue(v, format) } : {}),
         },
       },
       dataZoom: dateIdx >= 0 ? [{ type: "inside", start: 0, end: 100 }] : undefined,
       series,
     };
-  }, [data, theme, smooth, showArea, stacked, format, timeZone]);
+  }, [data, theme, smooth, showArea, stacked, format, timeZone, compact, timeRange]);
 
   return (
     <EChart

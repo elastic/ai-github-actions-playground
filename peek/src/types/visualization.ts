@@ -23,12 +23,20 @@ export interface TimeSeriesOptions {
   smooth?: boolean;
   showArea?: boolean;
   stacked?: boolean;
+  /** Tighter grid for small containers (e.g. trace metrics) */
+  compact?: boolean;
+  /** Fixed time range for x-axis (ms). When set, all charts use full window. */
+  timeRange?: { min: number; max: number };
 }
 
 export interface BarChartOptions {
   format?: FormatOptions;
   stacked?: boolean;
   horizontal?: boolean;
+  /** Tighter grid for small containers (e.g. trace metrics) */
+  compact?: boolean;
+  /** Show every Nth category label (e.g. 3 = show ~1/4 of labels). For trace metrics alignment. */
+  axisLabelInterval?: number;
 }
 
 /** A single threshold boundary: value is the cutoff, color is applied when value >= this cutoff */

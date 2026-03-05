@@ -10,6 +10,7 @@ import { useTracesStore } from "../../store/useTracesStore";
 import { useSearchPanelUIStore } from "../../store/useSearchPanelUIStore";
 import type { EsqlResponse } from "../../types";
 import { toTraceTimeRange } from "../timePresets";
+import { formatEsqlQuery } from "../discoverUtils";
 
 import { parseSpansFromEsql, formatStatusLabel } from "./traceUtils";
 import type { Span } from "./traceUtils";
@@ -33,6 +34,7 @@ export function useTracesOrchestrator() {
   const rawQuery = useTracesStore((s) => s.rawQuery);
   const setRawQuery = useTracesStore((s) => s.setRawQuery);
   const updateFilters = useTracesStore((s) => s.updateFilters);
+  const setTimeRange = useTracesStore((s) => s.setTimeRange);
   const selectedTraceId = useTracesStore((s) => s.selectedTraceId);
   const setSelectedTraceId = useTracesStore((s) => s.setSelectedTraceId);
   const setSelectedTraceSpans = useTracesStore((s) => s.setSelectedTraceSpans);
@@ -48,14 +50,14 @@ export function useTracesOrchestrator() {
   const [searchTraceSpans, setSearchTraceSpans] = useState<Span[]>([]);
   const [timeseriesResult, setTimeseriesResult] = useState<EsqlResponse | null>(null);
 
-  // Sync the global AppHeader time range into trace filters
+  // Sync the global AppHeader time range into trace filters (without clearing rawQuery)
   const dashboardTimeRange = useDashboardEditorStore((s) => s.dashboard.timeRange);
   useEffect(() => {
     const { from, to } = toTraceTimeRange(dashboardTimeRange);
     const { filters: currentFilters } = useTracesStore.getState();
     if (currentFilters.timeFrom === from && currentFilters.timeTo === to) return;
-    updateFilters({ timeFrom: from, timeTo: to });
-  }, [dashboardTimeRange, updateFilters]);
+    setTimeRange(from, to);
+  }, [dashboardTimeRange, setTimeRange]);
 
   const [queryContextView, setQueryContextView] = useState<EditorView | null>(null);
   const [selectedTraceTimestamp, setSelectedTraceTimestamp] = useState<string | null>(null);
@@ -71,14 +73,18 @@ export function useTracesOrchestrator() {
 
   const traceSearchCollapsed = useSearchPanelUIStore((s) => s.traceSearchCollapsed);
   const setTraceSearchCollapsed = useSearchPanelUIStore((s) => s.setTraceSearchCollapsed);
+  const traceMetricsChartsCollapsed = useSearchPanelUIStore((s) => s.traceMetricsChartsCollapsed);
+  const setTraceMetricsChartsCollapsed = useSearchPanelUIStore(
+    (s) => s.setTraceMetricsChartsCollapsed,
+  );
+  const traceEditorHeight = useSearchPanelUIStore((s) => s.traceEditorHeight);
+  const setTraceEditorHeight = useSearchPanelUIStore((s) => s.setTraceEditorHeight);
 
-  const generatedQuery = useMemo(() => buildTraceSearchQuery(filters), [filters]);
+  const generatedQuery = useMemo(
+    () => buildTraceSearchQuery(filters, DEFAULT_FIELD_MAPPING, { limit: 500 }),
+    [filters],
+  );
   const effectiveQuery = rawQuery ?? generatedQuery;
-
-  // Clear user edits when filters change so the generated query takes effect
-  useEffect(() => {
-    setRawQuery(null);
-  }, [filters, setRawQuery]);
 
   // Cmd/Ctrl+[ toggles the search panel collapse
   useEffect(() => {
@@ -180,8 +186,10 @@ export function useTracesOrchestrator() {
         setSelectedTraceSpans([]);
         setSelectedSpanId(null);
         setDrawerOpen(false);
-        setSelectedRootSpanId(null);
-        setSelectedTraceTimestamp(null);
+        queueMicrotask(() => {
+          setSelectedRootSpanId(null);
+          setSelectedTraceTimestamp(null);
+        });
       }
     }
   }, [
@@ -234,18 +242,29 @@ export function useTracesOrchestrator() {
   });
 
   const runTraceQueries = useCallback(
-    (query: string, updatedFilters = filters, includeTimeseries = rawQuery == null) => {
+    (query: string, updatedFilters = filters) => {
       setSearchResult(null);
       setSearchTraceSpans([]);
       setTimeseriesResult(null);
       runSearchQuery(query);
-      if (includeTimeseries) {
-        runTimeseriesQuery(buildTraceTimeseriesQuery(updatedFilters));
-      }
+      // Always run timeseries for charts; use time-only filters when user has raw query.
+      // Read rawQuery from store at execution time to avoid stale closure after filter resets.
+      const chartFilters =
+        useTracesStore.getState().rawQuery != null
+          ? {
+              ...updatedFilters,
+              services: [],
+              operations: [],
+              statusCodes: [],
+              minDurationMs: null,
+              maxDurationMs: null,
+              tags: [],
+            }
+          : updatedFilters;
+      runTimeseriesQuery(buildTraceTimeseriesQuery(chartFilters));
     },
     [
       filters,
-      rawQuery,
       runSearchQuery,
       runTimeseriesQuery,
       setSearchResult,
@@ -294,26 +313,44 @@ export function useTracesOrchestrator() {
     (updates: Partial<TraceFilters>) => {
       updateFilters(updates);
       const updatedFilters = useTracesStore.getState().filters;
-      runTraceQueries(buildTraceSearchQuery(updatedFilters), updatedFilters, true);
+      runTraceQueries(
+        buildTraceSearchQuery(updatedFilters, DEFAULT_FIELD_MAPPING, { limit: 500 }),
+        updatedFilters,
+      );
       runDriftRadarQueries(updatedFilters);
     },
     [updateFilters, runTraceQueries, runDriftRadarQueries],
   );
 
   const handleSearch = useCallback(() => {
-    runTraceQueries(effectiveQuery, filters, rawQuery == null);
+    runTraceQueries(effectiveQuery, filters);
     runDriftRadarQueries(filters);
-  }, [runTraceQueries, runDriftRadarQueries, effectiveQuery, filters, rawQuery]);
+  }, [runTraceQueries, runDriftRadarQueries, effectiveQuery, filters]);
+
+  const handleFormatQuery = useCallback(() => {
+    const formatted = formatEsqlQuery(effectiveQuery);
+    if (formatted === formatEsqlQuery(generatedQuery)) {
+      setRawQuery(null);
+    } else if (formatted !== effectiveQuery) {
+      setRawQuery(formatted);
+    }
+  }, [effectiveQuery, generatedQuery, setRawQuery]);
 
   // Auto-execute search when navigating from another page with pendingSearch flag
   useEffect(() => {
     const { pendingSearch } = useTracesStore.getState();
-    if (pendingSearch) {
-      useTracesStore.getState().setPendingSearch(false);
-      const { filters: latestFilters, rawQuery: latestRawQuery } = useTracesStore.getState();
-      runTraceQueries(buildTraceSearchQuery(latestFilters), latestFilters, latestRawQuery == null);
+    if (!pendingSearch) return;
+    useTracesStore.getState().setPendingSearch(false);
+    const { filters: latestFilters } = useTracesStore.getState();
+    // Defer to avoid calling setState synchronously within an effect
+    const id = setTimeout(() => {
+      runTraceQueries(
+        buildTraceSearchQuery(latestFilters, DEFAULT_FIELD_MAPPING, { limit: 500 }),
+        latestFilters,
+      );
       runDriftRadarQueries(latestFilters);
-    }
+    }, 0);
+    return () => clearTimeout(id);
   }, [runTraceQueries, runDriftRadarQueries]);
 
   const handleSelectTrace = useCallback(
@@ -362,7 +399,10 @@ export function useTracesOrchestrator() {
         : [...state.filters.services, serviceName];
       state.updateFilters({ services });
       const updatedFilters = useTracesStore.getState().filters;
-      runTraceQueries(buildTraceSearchQuery(updatedFilters), updatedFilters, true);
+      runTraceQueries(
+        buildTraceSearchQuery(updatedFilters, DEFAULT_FIELD_MAPPING, { limit: 500 }),
+        updatedFilters,
+      );
       runDriftRadarQueries(updatedFilters);
     },
     [runTraceQueries, runDriftRadarQueries],
@@ -429,7 +469,10 @@ export function useTracesOrchestrator() {
     (key: string, value: string) => {
       useTracesStore.getState().addTagFilter(key, value, false);
       const updatedFilters = useTracesStore.getState().filters;
-      runTraceQueries(buildTraceSearchQuery(updatedFilters), updatedFilters, true);
+      runTraceQueries(
+        buildTraceSearchQuery(updatedFilters, DEFAULT_FIELD_MAPPING, { limit: 500 }),
+        updatedFilters,
+      );
       runDriftRadarQueries(updatedFilters);
     },
     [runTraceQueries, runDriftRadarQueries],
@@ -439,7 +482,10 @@ export function useTracesOrchestrator() {
     (key: string, value: string) => {
       useTracesStore.getState().addTagFilter(key, value, true);
       const updatedFilters = useTracesStore.getState().filters;
-      runTraceQueries(buildTraceSearchQuery(updatedFilters), updatedFilters, true);
+      runTraceQueries(
+        buildTraceSearchQuery(updatedFilters, DEFAULT_FIELD_MAPPING, { limit: 500 }),
+        updatedFilters,
+      );
       runDriftRadarQueries(updatedFilters);
     },
     [runTraceQueries, runDriftRadarQueries],
@@ -504,6 +550,7 @@ export function useTracesOrchestrator() {
 
     // Handlers
     handleSearch,
+    handleFormatQuery,
     handleSelectTrace,
     handleOpenInDiscover,
     clearTraceSelection,
@@ -511,9 +558,13 @@ export function useTracesOrchestrator() {
     selectedRootSpanId,
     selectedTraceTimestamp,
 
-    // Search panel collapse
+    // Search panel collapse & editor
     traceSearchCollapsed,
     setTraceSearchCollapsed,
+    traceMetricsChartsCollapsed,
+    setTraceMetricsChartsCollapsed,
+    traceEditorHeight,
+    setTraceEditorHeight,
 
     // Drawer handlers
     handleDrawerFilterBy,

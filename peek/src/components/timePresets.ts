@@ -66,6 +66,26 @@ export function toDashboardTimeRange(traceRange: { from: string; to: string }): 
   return dashboardPreset?.range ?? traceRange;
 }
 
+/**
+ * Resolve trace time range (ES|QL expressions) to milliseconds for chart axes.
+ * Returns null when the range cannot be resolved (e.g. "Any time" or custom).
+ */
+export function resolveTraceTimeRangeToMs(
+  timeFrom: string | null,
+  timeTo: string | null,
+  now: Date = new Date(),
+): { min: number; max: number } | null {
+  if (!timeFrom || !timeTo) return null;
+  const preset = TRACE_TIME_RANGE_OPTIONS.find((opt) => opt.from === timeFrom && opt.to === timeTo);
+  if (!preset) return null;
+  const dashboardPreset = DASHBOARD_TIME_PRESETS.find((p) => p.label === preset.label);
+  if (!dashboardPreset) return null;
+  const fromDate = resolveDateTime(dashboardPreset.range.from, now);
+  const toDate = resolveDateTime(dashboardPreset.range.to, now);
+  if (!fromDate || !toDate) return null;
+  return { min: fromDate.getTime(), max: toDate.getTime() };
+}
+
 export function toTraceTimeRange(range: TimeRange): { from: string; to: string } {
   // Try known preset match first (relative presets get clean ES|QL syntax)
   const dashboardPreset = DASHBOARD_TIME_PRESETS.find(

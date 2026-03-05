@@ -221,7 +221,8 @@ export function buildTraceTimeseriesQuery(
     limit: 10000,
     rootSpansOnly: true,
   });
-  return `${body} | EVAL duration_ms = ${buildDurationUsExpression(fields)} / 1000.0 | STATS request_count = COUNT(*), avg_latency_ms = AVG(duration_ms), p95_latency_ms = PERCENTILE(duration_ms, 95) BY BUCKET(${fields.timestamp}, 50, ${from}, ${to})`;
+  const errorCondition = `${fields.statusCode} == "Error" OR ${fields.statusCode} == "STATUS_CODE_ERROR"`;
+  return `${body} | EVAL duration_ms = ${buildDurationUsExpression(fields)} / 1000.0 | STATS request_count = COUNT(*), error_count = COUNT(*) WHERE ${errorCondition}, avg_latency_ms = AVG(duration_ms), p95_latency_ms = PERCENTILE(duration_ms, 95) BY BUCKET(${fields.timestamp}, 20, ${from}, ${to})`;
 }
 
 /**
