@@ -168,8 +168,7 @@ export default function LogsResultsView({
             <ListItem key={group.pattern} disablePadding>
               <ListItemButton
                 onClick={() => {
-                  const escapedSample = group.sample.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
-                  onSearchTextChange(`"${escapedSample}"`);
+                  onSearchTextChange(`"${group.sample}"`);
                   onViewModeChange("lines");
                 }}
               >
