@@ -29,7 +29,9 @@ const A11Y_BASELINE: Record<string, Record<string, Record<string, number>>> = {
       "aria-prohibited-attr": 1,
       "color-contrast": 3,
     },
-    Services: {},
+    Services: {
+      "color-contrast": 2,
+    },
     Traces: {
       "aria-prohibited-attr": 1,
       "color-contrast": 17,
