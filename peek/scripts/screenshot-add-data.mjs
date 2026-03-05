@@ -87,8 +87,7 @@ async function run() {
       .getByRole("button", { name: "Metrics", exact: true })
       .waitFor({ timeout: opts.live ? 15_000 : opts.timeoutMs });
 
-    const settleMs = opts.live ? 2000 : 1500;
-    const captured = await captureAddDataScreenshots(page, opts.outDir, settleMs);
+    const captured = await captureAddDataScreenshots(page, opts.outDir, opts.timeoutMs);
 
     console.log(`\nCaptured ${captured} screenshots to ${opts.outDir}/`);
   } catch (error) {

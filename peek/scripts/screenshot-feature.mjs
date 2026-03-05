@@ -113,7 +113,7 @@ async function run() {
 
       // Navigate to the requested feature page
       await page.getByRole("button", { name: navButton, exact: true }).click();
-      await page.waitForTimeout(1500);
+      await page.waitForLoadState("networkidle", { timeout: opts.timeoutMs });
 
       // Take the screenshot
       await page.screenshot({ path: opts.screenshot, fullPage: true });

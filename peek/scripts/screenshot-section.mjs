@@ -36,6 +36,7 @@ import path from "node:path";
 import { DEFAULT_ES_URL, registerElasticsearchMocks } from "./elasticsearch-mocks.mjs";
 import { isIgnorableConsoleError } from "./ignorable-console-errors.mjs";
 import { PAGE_NAV_BUTTONS } from "./page-nav-buttons.mjs";
+import { waitForSettle } from "./screenshot-add-data-helpers.mjs";
 
 // ---------------------------------------------------------------------------
 // Section → page slug mapping
@@ -142,7 +143,6 @@ async function connectApp(page, opts) {
 async function captureThemeScreenshots(browser, opts, pages, themeMode, outDir) {
   const errors = [];
   const captured = [];
-  const settleMs = opts.live ? 2_000 : 1_500;
 
   const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
 
@@ -171,7 +171,7 @@ async function captureThemeScreenshots(browser, opts, pages, themeMode, outDir) 
       }
 
       await page.getByRole("button", { name: navButton, exact: true }).click();
-      await page.waitForTimeout(settleMs);
+      await waitForSettle(page, opts.timeoutMs);
 
       const screenshotPath = path.join(outDir, `${slug}.png`);
       await page.screenshot({ path: screenshotPath, fullPage: true });
@@ -215,20 +215,14 @@ async function run() {
   const allErrors = [];
 
   try {
-    const { captured: lightCaptured, errors: lightErrors } = await captureThemeScreenshots(
-      browser,
-      opts,
-      pages,
-      "light",
-      lightDir,
-    );
-    const { captured: darkCaptured, errors: darkErrors } = await captureThemeScreenshots(
-      browser,
-      opts,
-      pages,
-      "dark",
-      darkDir,
-    );
+    // Capture light and dark themes in parallel using separate browser contexts
+    const [lightResult, darkResult] = await Promise.all([
+      captureThemeScreenshots(browser, opts, pages, "light", lightDir),
+      captureThemeScreenshots(browser, opts, pages, "dark", darkDir),
+    ]);
+
+    const { captured: lightCaptured, errors: lightErrors } = lightResult;
+    const { captured: darkCaptured, errors: darkErrors } = darkResult;
 
     allErrors.push(...lightErrors, ...darkErrors);
 
