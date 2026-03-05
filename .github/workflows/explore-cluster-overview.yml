@@ -29,16 +29,16 @@ jobs:
         tabs on a single page. Most of them are not visible in the sidebar and
         must be reached by navigating directly to their URLs:
 
-        - `/cluster-overview` — Main summary dashboard (sidebar: "Overview")
-        - `/cluster-health` — Cluster health detail (sidebar: "Health")
-        - `/cluster-tasks` — Active cluster tasks (no sidebar entry — use URL)
-        - `/cluster-capacity` — Node disk capacity (no sidebar entry — use URL)
-        - `/cluster-shards` — Shard distribution (no sidebar entry — use URL)
-        - `/cluster-resilience` — Resilience and unassigned shards (no sidebar entry — use URL)
+        - `#/cluster-overview` — Main summary dashboard (sidebar: "Overview")
+        - `#/cluster-health` — Cluster health detail (sidebar: "Health")
+        - `#/cluster-tasks` — Active cluster tasks (no sidebar entry — use URL)
+        - `#/cluster-capacity` — Node disk capacity (no sidebar entry — use URL)
+        - `#/cluster-shards` — Shard distribution (no sidebar entry — use URL)
+        - `#/cluster-resilience` — Resilience and unassigned shards (no sidebar entry — use URL)
 
         To navigate to a page not in the sidebar, use `browser_navigate` with
         the full URL, e.g.:
-        `http://localhost:3000/ai-github-actions-playground/cluster-tasks`
+        `http://localhost:3000/ai-github-actions-playground/#/cluster-tasks`
 
         Each time you run, do something **different**. Be creative. Do NOT
         follow a fixed script. Examples of things you might try on any given
@@ -46,7 +46,7 @@ jobs:
 
         ---
 
-        ## Cluster Overview (`/cluster-overview`)
+        ## Cluster Overview (`#/cluster-overview`)
 
         This is the main summary dashboard. It shows info cards and an embedded
         nodes table.
@@ -57,8 +57,8 @@ jobs:
         - Check if any info cards are clickable — do they navigate to
           relevant detail pages (e.g., cluster health, data streams,
           indices)?
-        - Look for a nodes table showing node names and status. Are node
-          role indicators visible?
+        - Look for a nodes table showing node names and roles. Are the
+          node roles listed correctly?
         - If a Fleet summary card is present, is it readable? Does its
           link navigate correctly?
         - Navigate away to Indices, then back to Cluster Overview. Does data
@@ -68,9 +68,9 @@ jobs:
 
         ---
 
-        ## Cluster Health (`/cluster-health`)
+        ## Cluster Health (`#/cluster-health`)
 
-        Navigate to `http://localhost:3000/ai-github-actions-playground/cluster-health`
+        Navigate to `http://localhost:3000/ai-github-actions-playground/#/cluster-health`
         or click the "Health" entry in the sidebar.
 
         - Does the page show cluster health status, shard counts, and
@@ -83,9 +83,9 @@ jobs:
 
         ---
 
-        ## Cluster Tasks (`/cluster-tasks`)
+        ## Cluster Tasks (`#/cluster-tasks`)
 
-        Navigate to `http://localhost:3000/ai-github-actions-playground/cluster-tasks`
+        Navigate to `http://localhost:3000/ai-github-actions-playground/#/cluster-tasks`
 
         - Does the page load a table of active cluster tasks?
         - If no tasks are running, is there a clear empty state (icon + message)?
@@ -94,9 +94,9 @@ jobs:
 
         ---
 
-        ## Cluster Capacity (`/cluster-capacity`)
+        ## Cluster Capacity (`#/cluster-capacity`)
 
-        Navigate to `http://localhost:3000/ai-github-actions-playground/cluster-capacity`
+        Navigate to `http://localhost:3000/ai-github-actions-playground/#/cluster-capacity`
 
         - Does the page show disk usage per node (e.g., used/total bytes,
           percentage used)?
@@ -106,9 +106,9 @@ jobs:
 
         ---
 
-        ## Cluster Shards (`/cluster-shards`)
+        ## Cluster Shards (`#/cluster-shards`)
 
-        Navigate to `http://localhost:3000/ai-github-actions-playground/cluster-shards`
+        Navigate to `http://localhost:3000/ai-github-actions-playground/#/cluster-shards`
 
         - Does the page show shard distribution across indices and nodes?
         - Are primary and replica shard counts shown separately?
@@ -117,9 +117,9 @@ jobs:
 
         ---
 
-        ## Cluster Resilience (`/cluster-resilience`)
+        ## Cluster Resilience (`#/cluster-resilience`)
 
-        Navigate to `http://localhost:3000/ai-github-actions-playground/cluster-resilience`
+        Navigate to `http://localhost:3000/ai-github-actions-playground/#/cluster-resilience`
 
         - Does the page show resilience metrics (unassigned shards, cluster
           health color indicator)?
