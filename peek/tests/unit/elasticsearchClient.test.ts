@@ -620,7 +620,7 @@ describe("getCapabilities", () => {
     expect(caps.canReadSecurityRoles).toBe(false);
   });
 
-  it("falls back to minimal capabilities when the security API returns 400 (no security plugin)", async () => {
+  it("falls back to optimistic capabilities when the security API returns 400 (no security plugin)", async () => {
     const fetchSpy = mockFetchOnce(
       {
         error: {
@@ -634,25 +634,19 @@ describe("getCapabilities", () => {
     const client = makeClient({ apiKey: "key" });
     const caps = await client.getCapabilities();
 
-    expect(caps.canManageDataStreams).toBe(false);
-    expect(caps.canCreateApiKeys).toBe(false);
-    expect(caps.canReadSecurityUsers).toBe(false);
-    expect(caps.canReadSecurityRoles).toBe(false);
-    expect(caps.canReadApiKeys).toBe(false);
+    expect(caps.canManageDataStreams).toBe(true);
+    expect(caps.canCreateApiKeys).toBe(true);
+    expect(caps.canReadSecurityUsers).toBe(true);
+    expect(caps.canReadSecurityRoles).toBe(true);
+    expect(caps.canReadApiKeys).toBe(true);
   });
 
-  it("falls back to minimal capabilities on a generic 400 Bad Request from _has_privileges", async () => {
+  it("re-throws on a generic 400 Bad Request from _has_privileges (not a security-disabled signature)", async () => {
     const fetchSpy = mockFetchOnce({ error: { reason: "Bad Request" } }, { status: 400 });
     vi.stubGlobal("fetch", fetchSpy);
 
     const client = makeClient({ apiKey: "key" });
-    const caps = await client.getCapabilities();
-
-    expect(caps.canManageDataStreams).toBe(false);
-    expect(caps.canCreateApiKeys).toBe(false);
-    expect(caps.canReadSecurityUsers).toBe(false);
-    expect(caps.canReadSecurityRoles).toBe(false);
-    expect(caps.canReadApiKeys).toBe(false);
+    await expect(client.getCapabilities()).rejects.toMatchObject({ status: 400 });
   });
 
   it("returns optimistic capabilities when the _has_privileges endpoint returns 404", async () => {
