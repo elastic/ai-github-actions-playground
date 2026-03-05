@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -32,6 +32,21 @@ interface PipelineDetailPanelProps {
   pipelinesExist: boolean;
 }
 
+function stableStringify(value: unknown): string {
+  if (Array.isArray(value)) {
+    return `[${value.map((entry) => stableStringify(entry)).join(",")}]`;
+  }
+  if (value && typeof value === "object") {
+    const entries = Object.entries(value as Record<string, unknown>).sort(([a], [b]) =>
+      a.localeCompare(b),
+    );
+    return `{${entries
+      .map(([key, entry]) => `${JSON.stringify(key)}:${stableStringify(entry)}`)
+      .join(",")}}`;
+  }
+  return JSON.stringify(value);
+}
+
 export default function PipelineDetailPanel({
   selectedPipeline,
   connection,
@@ -41,6 +56,20 @@ export default function PipelineDetailPanel({
   const [verbose, setVerbose] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [expandedProcessors, setExpandedProcessors] = useState<Set<string>>(new Set());
+
+  const processors = selectedPipeline?.pipeline.processors ?? [];
+
+  const processorKeys = useMemo(() => {
+    const identityCounts = new Map<string, number>();
+    return processors.map((processor) => {
+      const [type, config] = Object.entries(processor)[0] ?? ["unknown", {}];
+      const identity = `${type}:${stableStringify(config)}`;
+      const occurrence = identityCounts.get(identity) ?? 0;
+      identityCounts.set(identity, occurrence + 1);
+      return `${selectedPipeline?.name}:${identity}:${occurrence}`;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- processors reference is stable when pipeline.processors is unchanged
+  }, [selectedPipeline?.pipeline.processors, selectedPipeline?.name]);
 
   const {
     simulating,
@@ -145,7 +174,7 @@ export default function PipelineDetailPanel({
           <Typography variant="caption" color="text.secondary" gutterBottom display="block">
             Processors
           </Typography>
-          {(selectedPipeline.pipeline.processors ?? []).length === 0 ? (
+          {processors.length === 0 ? (
             <EmptyState
               size="small"
               heading="No processors"
@@ -153,14 +182,14 @@ export default function PipelineDetailPanel({
             />
           ) : (
             <Stack spacing={1} data-testid="pipeline-processors-list">
-              {(selectedPipeline.pipeline.processors ?? []).map((processor, index) => {
+              {processors.map((processor, index) => {
                 const [type, config] = Object.entries(processor)[0] ?? ["unknown", {}];
                 const configJson = JSON.stringify(config, null, 2);
-                const processorKey = `${selectedPipeline.name}:${index}`;
+                const processorKey = processorKeys[index]!;
                 const isExpanded = expandedProcessors.has(processorKey);
                 return (
                   <Box
-                    key={index}
+                    key={processorKey}
                     component="fieldset"
                     sx={{
                       m: 0,
