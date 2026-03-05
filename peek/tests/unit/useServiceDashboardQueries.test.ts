@@ -519,6 +519,8 @@ describe("useServiceDashboardQueries", () => {
   });
 
   it("clearLatestQueries is a no-op", () => {
+    mockAllQueries();
+
     const { result } = renderHook(
       () =>
         useServiceDashboardQueries({
