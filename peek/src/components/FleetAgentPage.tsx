@@ -43,6 +43,9 @@ const LOG_LEVEL_COLORS: Record<string, string> = {
   debug: STATUS_COLORS.unknown,
 };
 
+const EMPTY_LOGS: ElasticAgentLogEntry[] = [];
+const EMPTY_METRICS: ElasticAgentMetricPoint[] = [];
+
 export default function FleetAgentPage() {
   const navigate = useNavigate();
   const { agentId = "" } = useParams<{ agentId: string }>();
@@ -67,8 +70,8 @@ export default function FleetAgentPage() {
   const loading = agentResult.status === "loading";
   const error = agentResult.status === "error" ? agentResult.error : null;
   const agentInfo = agentResult.status === "success" ? agentResult.data.agentInfo : null;
-  const logs = agentResult.status === "success" ? agentResult.data.logs : [];
-  const metrics = agentResult.status === "success" ? agentResult.data.metrics : [];
+  const logs = agentResult.status === "success" ? agentResult.data.logs : EMPTY_LOGS;
+  const metrics = agentResult.status === "success" ? agentResult.data.metrics : EMPTY_METRICS;
 
   // Publish screen context for AI chat
   const setPageSection = usePageContextStore((s) => s.setPageSection);

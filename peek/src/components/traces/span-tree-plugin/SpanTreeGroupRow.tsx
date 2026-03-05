@@ -60,8 +60,6 @@ export const SpanTreeGroupRow = React.memo(function SpanTreeGroupRow({
 
   return (
     <ButtonBase
-      component="div"
-      role="button"
       tabIndex={0}
       aria-label={`Open grouped span details for ${groupLabel}`}
       onClick={() => {

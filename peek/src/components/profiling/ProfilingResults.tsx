@@ -114,7 +114,6 @@ export default function ProfilingResults({
                 <Fragment key={stacktrace.stacktraceId}>
                   <TableRow
                     hover
-                    role="button"
                     tabIndex={0}
                     aria-expanded={isExpanded}
                     aria-controls={detailsId}

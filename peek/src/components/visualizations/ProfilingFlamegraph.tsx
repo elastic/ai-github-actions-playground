@@ -274,7 +274,6 @@ export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
     muiTheme.palette.background.paper,
     muiTheme.palette.primary.main,
     muiTheme.palette.text,
-    muiTheme.palette.text.secondary,
     searchTerm,
     zoomPath,
     hideSmallFrames,
