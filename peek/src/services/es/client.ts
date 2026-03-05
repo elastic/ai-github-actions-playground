@@ -608,13 +608,33 @@ export class ElasticsearchClient {
             canReadApiKeys: true,
           };
         }
-        // 400: Security plugin not installed, malformed request body, or the
-        // cluster does not support the privileges we asked about.  All are
-        // non-fatal — the user's actual actions will surface a clear error if
-        // a specific operation is truly disallowed.
-        // 403: Security enabled but user lacks privilege to check capabilities.
-        // Both are non-fatal — default to minimal privileges.
-        if (err.status === 400 || err.status === 403) {
+        // 400: Security is disabled or the security plugin is not installed.
+        // Without a security layer the cluster enforces no privilege checks, so
+        // return an optimistic capability set — the user effectively has full
+        // access and hiding features would be incorrect.
+        // Narrow to known "security absent" error messages to avoid granting
+        // optimistic capabilities for unrelated 400s (e.g. proxy errors).
+        if (err.status === 400) {
+          const msg = err.message.toLowerCase();
+          const looksLikeSecurityAbsent =
+            msg.includes("no handler found for uri") ||
+            msg.includes("security is disabled") ||
+            msg.includes("x-pack security");
+          if (looksLikeSecurityAbsent) {
+            return {
+              canManageDataStreams: true,
+              canCreateApiKeys: true,
+              canReadSecurityUsers: true,
+              canReadSecurityRoles: true,
+              canReadApiKeys: true,
+            };
+          }
+          throw err;
+        }
+        // 403: Security is enabled but the current user lacks the privilege to
+        // query _has_privileges itself.  Default to minimal capabilities so the
+        // UI hides features the user probably cannot reach.
+        if (err.status === 403) {
           return {
             canManageDataStreams: false,
             canCreateApiKeys: false,

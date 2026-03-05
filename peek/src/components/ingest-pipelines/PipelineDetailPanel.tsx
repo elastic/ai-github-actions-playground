@@ -183,8 +183,22 @@ export default function PipelineDetailPanel({
           ) : (
             <Stack spacing={1} data-testid="pipeline-processors-list">
               {processors.map((processor, index) => {
-                const [type, config] = Object.entries(processor)[0] ?? ["unknown", {}];
-                const configJson = JSON.stringify(config, null, 2);
+                const [type, rawConfig] = Object.entries(processor)[0] ?? ["unknown", {}];
+                // When Elasticsearch returns the config as a pre-serialised JSON
+                // string, parse it first so we can pretty-print it properly
+                // instead of rendering an escaped inline literal.
+                let parsedConfig: unknown = rawConfig;
+                if (typeof rawConfig === "string") {
+                  try {
+                    parsedConfig = JSON.parse(rawConfig);
+                  } catch {
+                    // Not valid JSON — keep the original string
+                  }
+                }
+                const configJson =
+                  typeof parsedConfig === "string"
+                    ? parsedConfig
+                    : (JSON.stringify(parsedConfig, null, 2) ?? "");
                 const processorKey = processorKeys[index]!;
                 const isExpanded = expandedProcessors.has(processorKey);
                 return (
