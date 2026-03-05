@@ -18,7 +18,7 @@ export function toFieldRows(fieldCaps: FieldCapsResponse) {
     .flatMap(([name, capabilities]) =>
       Object.values(capabilities).map((cap) => ({ name, type: cap.type })),
     )
-    .sort((a, b) => a.name.localeCompare(b.name));
+    .sort((a, b) => a.name.localeCompare(b.name) || a.type.localeCompare(b.type));
 }
 
 // ---------------------------------------------------------------------------

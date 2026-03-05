@@ -29,6 +29,8 @@ import {
   normalizePattern,
 } from "./logsUtils";
 
+const HISTOGRAM_INTERVAL_MINUTES = HISTOGRAM_INTERVAL_MS / (60 * 1000);
+
 const LOGS_SYSTEM_PROMPT =
   "You are a log analysis assistant for Elasticsearch." +
   " Analyse the current log exploration context and produce per-slot insights." +
@@ -137,7 +139,7 @@ export function useLogsPageState() {
     const bucketCounts = new Map<number, number>();
     for (const row of result.values) {
       const rawValue = row[timestampIndex];
-      if (!rawValue) continue;
+      if (rawValue == null) continue;
       const parsed = Date.parse(String(rawValue));
       if (Number.isNaN(parsed)) continue;
       const start = Math.floor(parsed / HISTOGRAM_INTERVAL_MS) * HISTOGRAM_INTERVAL_MS;
@@ -180,7 +182,7 @@ export function useLogsPageState() {
     const groups = new Map<string, { pattern: string; sample: string; count: number }>();
     for (const row of result.values) {
       const raw = row[messageIndex];
-      if (!raw) continue;
+      if (raw == null) continue;
       const sample = String(raw);
       const pattern = normalizePattern(sample);
       const existing = groups.get(pattern);
@@ -265,13 +267,19 @@ export function useLogsPageState() {
       setFieldValuesLoading(true);
       setFieldValuesError(null);
       try {
-        const entries = await Promise.all(
-          SIDEBAR_FIELDS.map(async (field) => [
-            field,
-            await getFieldValues(client, indexPattern, field, 8, controller.signal),
-          ]),
+        const settled = await Promise.allSettled(
+          SIDEBAR_FIELDS.map((field) =>
+            getFieldValues(client, indexPattern, field, 8, controller.signal),
+          ),
         );
         if (!mounted) return;
+        const entries: Array<[string, Array<{ value: string; count: number }>]> = [];
+        for (const [index, settledResult] of settled.entries()) {
+          if (settledResult.status !== "fulfilled") continue;
+          const field = SIDEBAR_FIELDS[index];
+          if (!field) continue;
+          entries.push([field, settledResult.value]);
+        }
         setFieldValues(Object.fromEntries(entries));
       } catch (e: unknown) {
         if (!mounted) return;
@@ -313,7 +321,7 @@ export function useLogsPageState() {
   const handleAnomalyDrillIn = useCallback(
     (start: number, end: number) => {
       const clause = [
-        "STATS log_count = COUNT(*) BY bucket = BUCKET(@timestamp, 5 minutes)",
+        `STATS log_count = COUNT(*) BY bucket = BUCKET(@timestamp, ${HISTOGRAM_INTERVAL_MINUTES} minutes)`,
         "EVAL anomaly = CHANGE_POINT(log_count)",
         `WHERE anomaly IS NOT NULL AND bucket >= TO_DATETIME("${new Date(start).toISOString()}") AND bucket < TO_DATETIME("${new Date(end).toISOString()}")`,
       ].join(" | ");
@@ -365,7 +373,7 @@ export function useLogsPageState() {
   const runChangePointExperience = useCallback(() => {
     const nextQuery = appendPipeClause(
       effectiveQuery,
-      "STATS log_count = COUNT(*) BY bucket = BUCKET(@timestamp, 5 minutes) | EVAL anomaly = CHANGE_POINT(log_count) | WHERE anomaly IS NOT NULL | SORT bucket DESC",
+      `STATS log_count = COUNT(*) BY bucket = BUCKET(@timestamp, ${HISTOGRAM_INTERVAL_MINUTES} minutes) | EVAL anomaly = CHANGE_POINT(log_count) | WHERE anomaly IS NOT NULL | SORT bucket DESC`,
     );
     setRawQuery(nextQuery);
     void runQuery(nextQuery);
@@ -389,12 +397,13 @@ export function useLogsPageState() {
 
   const runServicePivotExperience = useCallback(
     (opts: { serviceName?: string; topN: number }) => {
+      const topN = Number.isInteger(opts.topN) && opts.topN > 0 ? opts.topN : 20;
       const serviceFilter = opts.serviceName
         ? `WHERE service.name == "${escapeEsqlString(opts.serviceName)}" | `
         : "";
       const nextQuery = appendPipeClause(
         effectiveQuery,
-        `${serviceFilter}WHERE service.name IS NOT NULL | STATS log_count = COUNT(*) BY service.name | SORT log_count DESC | LIMIT ${opts.topN}`,
+        `${serviceFilter}WHERE service.name IS NOT NULL | STATS log_count = COUNT(*) BY service.name | SORT log_count DESC | LIMIT ${topN}`,
       );
       setRawQuery(nextQuery);
       void runQuery(nextQuery);

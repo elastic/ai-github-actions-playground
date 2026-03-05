@@ -120,7 +120,7 @@ export default function DataStreamDetailPanel({
               />
             )}
             {loadingFields ? (
-              <ContentSkeleton variant="table" />
+              <ContentSkeleton variant="detail-panel" />
             ) : (
               <Box sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
                 {displayedDataStream &&
