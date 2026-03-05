@@ -66,8 +66,8 @@ export default function UsersPage() {
     : null;
 
   const copyQuery = useCallback(async () => {
-    const copied = await copyToClipboard("GET /_security/user");
-    if (!copied) return;
+    const didCopy = await copyToClipboard("GET /_security/user");
+    if (!didCopy) return;
     setCopied(true);
     scheduleCopyFeedbackReset();
   }, [scheduleCopyFeedbackReset]);

@@ -121,13 +121,13 @@ export default function ProfilingGuidedPage() {
     if (countIdx < 0) return null;
     const counts = timelineResult.values
       .map((row) => Number(row[countIdx] ?? 0))
-      .filter((value) => Number.isFinite(value));
+      .filter((v) => Number.isFinite(v));
     if (counts.length === 0) return null;
     return {
       points: counts.length,
       max: Math.max(...counts),
       min: Math.min(...counts),
-      avg: counts.reduce((sum, value) => sum + value, 0) / counts.length,
+      avg: counts.reduce((sum, v) => sum + v, 0) / counts.length,
     };
   }, [timelineResult]);
 

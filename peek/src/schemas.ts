@@ -40,7 +40,7 @@ function isValidTimeZone(timeZone: string): boolean {
     return timeZone === "UTC" || Intl.supportedValuesOf("timeZone").includes(timeZone);
   }
   try {
-    new Intl.DateTimeFormat("en", { timeZone });
+    Intl.DateTimeFormat("en", { timeZone });
     return true;
   } catch {
     return false;
