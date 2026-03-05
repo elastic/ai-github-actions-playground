@@ -96,6 +96,8 @@ export default function TraceResultsView({
   onSelectSpan,
   onOpenInQueryLab,
 }: TraceResultsViewProps) {
+  // Coerce legacy "timeseries" view mode (no longer supported) to "list"
+  const effectiveViewMode = viewMode === "timeseries" ? "list" : viewMode;
   return (
     <Box
       sx={{ display: "flex", flex: 1, flexDirection: "column", minHeight: 0, overflow: "hidden" }}
@@ -117,7 +119,7 @@ export default function TraceResultsView({
             onClick={() => onViewModeChange(mode)}
           />
         ))}
-        {viewMode === "driftRadar" && filters.timeFrom && rawQuery == null && (
+        {effectiveViewMode === "driftRadar" && filters.timeFrom && rawQuery == null && (
           <Tooltip title="Compare with the previous time window of equal length to highlight new, regressed, or improved edges.">
             <FormControlLabel
               control={
@@ -136,7 +138,7 @@ export default function TraceResultsView({
 
       {/* Results view */}
       <Paper variant="outlined" sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
-        {!searchResult && !searchLoading && viewMode !== "driftRadar" && (
+        {!searchResult && !searchLoading && effectiveViewMode !== "driftRadar" && (
           <EmptyState
             icon={<SearchIcon sx={{ mb: 0.5, color: "text.secondary", fontSize: 48 }} />}
             heading="Search for traces"
@@ -156,41 +158,47 @@ export default function TraceResultsView({
             }
           />
         )}
-        {searchLoading && !searchResult && viewMode !== "driftRadar" && (
+        {searchLoading && !searchResult && effectiveViewMode !== "driftRadar" && (
           <Box sx={{ p: 2 }}>
-            <ContentSkeleton variant={viewMode === "list" ? "table" : "chart"} />
+            <ContentSkeleton variant={effectiveViewMode === "list" ? "table" : "chart"} />
           </Box>
         )}
 
         {/* List mode: single hierarchical traces + spans view */}
-        {searchResult && viewMode === "list" && searchSpansLoading && (
+        {searchResult && effectiveViewMode === "list" && searchSpansLoading && (
           <Box sx={{ p: 2 }}>
             <ContentSkeleton variant="table" />
           </Box>
         )}
-        {searchResult && viewMode === "list" && !searchSpansLoading && searchSpans.length === 0 && (
-          <EmptyState
-            icon={<SearchIcon sx={{ mb: 0.5, color: "text.secondary", fontSize: 48 }} />}
-            heading="No traces matched the current query."
-            description="Adjust your query or widen the time range."
-          />
-        )}
-        {searchResult && viewMode === "list" && !searchSpansLoading && searchSpans.length > 0 && (
-          <SpanTreeView
-            spans={searchSpans}
-            showToolbar={false}
-            spanInsightSlotIds={spanInsightSlotIds}
-            groupInsightSlotIds={groupInsightSlotIds}
-            selectedTraceId={selectedTraceId}
-            selectedSpanId={selectedSpanId}
-            onSelectTrace={onSelectTrace}
-            onSelectSpan={onSelectSpan}
-            onOpenInQueryLab={onOpenInQueryLab}
-            loading={false}
-          />
-        )}
+        {searchResult &&
+          effectiveViewMode === "list" &&
+          !searchSpansLoading &&
+          searchSpans.length === 0 && (
+            <EmptyState
+              icon={<SearchIcon sx={{ mb: 0.5, color: "text.secondary", fontSize: 48 }} />}
+              heading="No traces matched the current query."
+              description="Adjust your query or widen the time range."
+            />
+          )}
+        {searchResult &&
+          effectiveViewMode === "list" &&
+          !searchSpansLoading &&
+          searchSpans.length > 0 && (
+            <SpanTreeView
+              spans={searchSpans}
+              showToolbar={false}
+              spanInsightSlotIds={spanInsightSlotIds}
+              groupInsightSlotIds={groupInsightSlotIds}
+              selectedTraceId={selectedTraceId}
+              selectedSpanId={selectedSpanId}
+              onSelectTrace={onSelectTrace}
+              onSelectSpan={onSelectSpan}
+              onOpenInQueryLab={onOpenInQueryLab}
+              loading={false}
+            />
+          )}
 
-        {searchResult && viewMode === "scatter" && (
+        {searchResult && effectiveViewMode === "scatter" && (
           <TraceScatterChart
             data={traceRows.map((r) => ({
               timestamp: r.timestamp,
@@ -201,7 +209,7 @@ export default function TraceResultsView({
             onPointClick={(traceId) => onSelectTrace(traceId)}
           />
         )}
-        {searchResult && viewMode === "serviceMap" && (
+        {searchResult && effectiveViewMode === "serviceMap" && (
           <Box sx={{ height: "100%" }}>
             {traceRows.length === 0 ? (
               <EmptyState
@@ -224,9 +232,10 @@ export default function TraceResultsView({
             )}
           </Box>
         )}
-        {viewMode === "driftRadar" &&
+        {effectiveViewMode === "driftRadar" &&
           (rawQuery ? (
             <EmptyState
+              icon={<AccountTreeIcon sx={{ mb: 0.5, color: "text.secondary", fontSize: 48 }} />}
               heading="Drift Radar is not available for custom ES|QL queries."
               description="Use the default query (no manual edits) to scope the window for Drift Radar."
             />

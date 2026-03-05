@@ -247,9 +247,10 @@ export function useTracesOrchestrator() {
       setSearchTraceSpans([]);
       setTimeseriesResult(null);
       runSearchQuery(query);
-      // Always run timeseries for charts; use time-only filters when user has raw query
+      // Always run timeseries for charts; use time-only filters when user has raw query.
+      // Read rawQuery from store at execution time to avoid stale closure after filter resets.
       const chartFilters =
-        rawQuery != null
+        useTracesStore.getState().rawQuery != null
           ? {
               ...updatedFilters,
               services: [],
@@ -264,7 +265,6 @@ export function useTracesOrchestrator() {
     },
     [
       filters,
-      rawQuery,
       runSearchQuery,
       runTimeseriesQuery,
       setSearchResult,

@@ -77,7 +77,7 @@ export function resolveTraceTimeRangeToMs(
 ): { min: number; max: number } | null {
   if (!timeFrom || !timeTo) return null;
   const preset = TRACE_TIME_RANGE_OPTIONS.find((opt) => opt.from === timeFrom && opt.to === timeTo);
-  if (!preset || preset.from === null || preset.to === null) return null;
+  if (!preset) return null;
   const dashboardPreset = DASHBOARD_TIME_PRESETS.find((p) => p.label === preset.label);
   if (!dashboardPreset) return null;
   const fromDate = resolveDateTime(dashboardPreset.range.from, now);

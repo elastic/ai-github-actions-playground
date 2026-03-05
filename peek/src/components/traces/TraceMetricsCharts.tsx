@@ -5,9 +5,11 @@ import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 import Skeleton from "@mui/material/Skeleton";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ShowChartIcon from "@mui/icons-material/ShowChart";
 
 import type { EsqlResponse } from "../../types";
 import { TRACE_TIME_RANGE_OPTIONS, resolveTraceTimeRangeToMs } from "../timePresets";
+import EmptyState from "../EmptyState";
 import TimeSeriesChart from "../visualizations/TimeSeriesChart";
 import BarChart from "../visualizations/BarChart";
 import TraceScatterChart from "../visualizations/TraceScatterChart";
@@ -64,19 +66,12 @@ function ErrorsBarCell({ data, loading, timeRange }: ErrorsBarCellProps) {
           />
         </Box>
       ) : (
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            height: CHART_HEIGHT,
-            border: 1,
-            borderColor: "divider",
-            borderRadius: 1,
-            color: "text.disabled",
-          }}
-        >
-          <Typography variant="body2">Run search to load</Typography>
+        <Box sx={{ height: CHART_HEIGHT, border: 1, borderColor: "divider", borderRadius: 1 }}>
+          <EmptyState
+            icon={<ShowChartIcon sx={{ color: "text.secondary", fontSize: 32 }} />}
+            heading="Run a search to see results"
+            description="Write an ES|QL query above and click Search."
+          />
         </Box>
       )}
     </Box>
@@ -119,19 +114,12 @@ function ChartCell({ title, data, metricColumn, loading, timeRange }: ChartCellP
           />
         </Box>
       ) : (
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            height: CHART_HEIGHT,
-            border: 1,
-            borderColor: "divider",
-            borderRadius: 1,
-            color: "text.disabled",
-          }}
-        >
-          <Typography variant="body2">Run search to load</Typography>
+        <Box sx={{ height: CHART_HEIGHT, border: 1, borderColor: "divider", borderRadius: 1 }}>
+          <EmptyState
+            icon={<ShowChartIcon sx={{ color: "text.secondary", fontSize: 32 }} />}
+            heading="Run a search to see results"
+            description="Write an ES|QL query above and click Search."
+          />
         </Box>
       )}
     </Box>
@@ -264,18 +252,13 @@ export default function TraceMetricsCharts({
               </Box>
             ) : (
               <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  height: CHART_HEIGHT,
-                  border: 1,
-                  borderColor: "divider",
-                  borderRadius: 1,
-                  color: "text.disabled",
-                }}
+                sx={{ height: CHART_HEIGHT, border: 1, borderColor: "divider", borderRadius: 1 }}
               >
-                <Typography variant="body2">Run search to load</Typography>
+                <EmptyState
+                  icon={<ShowChartIcon sx={{ color: "text.secondary", fontSize: 32 }} />}
+                  heading="Run a search to see results"
+                  description="Write an ES|QL query above and click Search."
+                />
               </Box>
             )}
           </Box>

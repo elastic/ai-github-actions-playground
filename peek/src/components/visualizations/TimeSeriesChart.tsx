@@ -125,13 +125,15 @@ export default function TimeSeriesChart({ data, options, onExportReady, timeZone
       yAxis: {
         ...theme.yAxis,
         type: "value",
-        splitLine: {
-          ...(theme.yAxis?.splitLine ?? {}),
-          lineStyle: {
-            ...(theme.yAxis?.splitLine?.lineStyle ?? {}),
-            opacity: 0.2,
-          },
-        },
+        splitLine: compact
+          ? {
+              ...(theme.yAxis?.splitLine ?? {}),
+              lineStyle: {
+                ...(theme.yAxis?.splitLine?.lineStyle ?? {}),
+                opacity: 0.2,
+              },
+            }
+          : (theme.yAxis?.splitLine ?? {}),
         axisLabel: {
           ...(theme.yAxis?.axisLabel ?? {}),
           ...(compact ? { fontSize: 9 } : {}),

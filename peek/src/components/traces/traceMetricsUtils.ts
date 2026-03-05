@@ -32,11 +32,14 @@ export function extractTimeRangeFromTimeseries(data: EsqlResponse): {
 } | null {
   const dateIdx = findDateColumnIndex(data);
   if (dateIdx < 0 || data.values.length === 0) return null;
-  const first = parseTimestampMs(data.values[0]?.[dateIdx]);
-  const last = parseTimestampMs(data.values[data.values.length - 1]?.[dateIdx]);
-  if (first == null || last == null) return null;
-  const bucketWidth = data.values.length > 1 ? (last - first) / (data.values.length - 1) : 0;
-  return { min: first, max: last + bucketWidth };
+  const timestamps = data.values
+    .map((row) => parseTimestampMs(row?.[dateIdx]))
+    .filter((ts): ts is number => ts != null);
+  if (timestamps.length === 0) return null;
+  const min = Math.min(...timestamps);
+  const max = Math.max(...timestamps);
+  const bucketWidth = timestamps.length > 1 ? (max - min) / (timestamps.length - 1) : 0;
+  return { min, max: max + bucketWidth };
 }
 
 /** Transform timeseries (bucket, error_count) to BarChart format: categories = formatted dates, values = counts */
@@ -49,7 +52,7 @@ export function toErrorsBarData(data: EsqlResponse): EsqlResponse | null {
       { name: "error_count", type: "long" },
     ],
     values: sliced.values.map((row) => [
-      formatChartAxisDate(String(row[0] ?? "")),
+      row[0] == null ? "" : formatChartAxisDate(row[0] as string | number | Date),
       Number(row[1]) || 0,
     ]),
   };
