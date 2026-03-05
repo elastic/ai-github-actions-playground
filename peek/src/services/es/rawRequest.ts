@@ -90,6 +90,7 @@ export async function executeRawRequest(
   const shouldRetryMethod = RETRYABLE_METHODS.has(normalizedMethod);
   try {
     let response: Response | undefined;
+    /* eslint-disable no-await-in-loop -- sequential retry with backoff */
     for (let attempt = 0; ; attempt++) {
       try {
         response = await doFetch(
@@ -113,6 +114,7 @@ export async function executeRawRequest(
       }
       await delay(RETRY_DELAYS_MS[attempt] ?? 0, combinedSignal);
     }
+    /* eslint-enable no-await-in-loop */
     if (!response) {
       throw new Error("No response received");
     }
