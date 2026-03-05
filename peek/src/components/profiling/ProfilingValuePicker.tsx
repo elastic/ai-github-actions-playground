@@ -25,6 +25,7 @@ import {
   PROFILING_DIMENSION_LABELS,
   type ProfilingFocusDimension,
 } from "./profilingQueryBuilder";
+import { isMissingProfilingIndex } from "./profilingUtils";
 
 interface ValueRow {
   value: string;
@@ -158,7 +159,14 @@ export default function ProfilingValuePicker({
 
       {loading && <ContentSkeleton variant="list" />}
 
-      {error && <Alert severity="error">{error}</Alert>}
+      {error && isMissingProfilingIndex(error) && (
+        <EmptyState
+          heading="No profiling data available"
+          description="The profiling-events data stream was not found. Enable Universal Profiling in your Elastic cluster to start collecting continuous profiling data."
+          size="small"
+        />
+      )}
+      {error && !isMissingProfilingIndex(error) && <Alert severity="error">{error}</Alert>}
 
       {!loading && !error && filtered.length === 0 && (
         <EmptyState heading={emptyHeading} description={emptyDescription} size="small" />
