@@ -123,8 +123,8 @@ describe("TracesPage empty states", () => {
 
     await waitFor(() => {
       expect(screen.getByText("No traces matched the current query.")).toBeInTheDocument();
+      expect(screen.getByText("Adjust your query or widen the time range.")).toBeInTheDocument();
     });
-    expect(screen.getByText("Adjust your query or widen the time range.")).toBeInTheDocument();
   });
 });
 

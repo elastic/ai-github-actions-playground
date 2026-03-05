@@ -329,8 +329,12 @@ export function useTracesOrchestrator() {
 
   const handleFormatQuery = useCallback(() => {
     const formatted = formatEsqlQuery(effectiveQuery);
-    if (formatted !== effectiveQuery) setRawQuery(formatted);
-  }, [effectiveQuery, setRawQuery]);
+    if (formatted === formatEsqlQuery(generatedQuery)) {
+      setRawQuery(null);
+    } else if (formatted !== effectiveQuery) {
+      setRawQuery(formatted);
+    }
+  }, [effectiveQuery, generatedQuery, setRawQuery]);
 
   // Auto-execute search when navigating from another page with pendingSearch flag
   useEffect(() => {
