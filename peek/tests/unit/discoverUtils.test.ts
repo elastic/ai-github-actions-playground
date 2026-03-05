@@ -11,6 +11,8 @@ import {
   toCsv,
   applyEsqlSort,
   buildColumnInsightsQuery,
+  findIdColumnIndex,
+  computeRecall,
 } from "../../src/components/discoverUtils";
 
 function createLargeResult(rowCount = 1000, columnCount = 500): EsqlResponse {
@@ -434,5 +436,78 @@ describe("buildColumnInsightsQuery", () => {
   it("returns an empty string for a blank base query", () => {
     expect(buildColumnInsightsQuery("", "count", "long")).toBe("");
     expect(buildColumnInsightsQuery("   ", "count", "long")).toBe("");
+  });
+});
+
+describe("findIdColumnIndex", () => {
+  it("returns the index of the _id column", () => {
+    const columns = [
+      { name: "@timestamp", type: "date" },
+      { name: "_id", type: "keyword" },
+      { name: "message", type: "keyword" },
+    ];
+    expect(findIdColumnIndex(columns)).toBe(1);
+  });
+
+  it("returns -1 when _id column is absent", () => {
+    const columns = [
+      { name: "@timestamp", type: "date" },
+      { name: "message", type: "keyword" },
+    ];
+    expect(findIdColumnIndex(columns)).toBe(-1);
+  });
+
+  it("returns -1 for empty columns", () => {
+    expect(findIdColumnIndex([])).toBe(-1);
+  });
+});
+
+describe("computeRecall", () => {
+  it("returns found=0, total=0 when golden set is empty", () => {
+    const result = computeRecall(new Set(), [["doc1", "hello"]], 0);
+    expect(result).toEqual({ found: 0, total: 0 });
+  });
+
+  it("computes recall when all expected docs are found", () => {
+    const expected = new Set(["doc1", "doc2"]);
+    const values = [
+      ["doc1", "hello"],
+      ["doc2", "world"],
+      ["doc3", "extra"],
+    ];
+    expect(computeRecall(expected, values, 0)).toEqual({ found: 2, total: 2 });
+  });
+
+  it("computes recall when some expected docs are missing", () => {
+    const expected = new Set(["doc1", "doc2", "doc3"]);
+    const values = [
+      ["doc1", "hello"],
+      ["doc4", "world"],
+    ];
+    expect(computeRecall(expected, values, 0)).toEqual({ found: 1, total: 3 });
+  });
+
+  it("computes recall when no expected docs are found", () => {
+    const expected = new Set(["doc-a", "doc-b"]);
+    const values = [
+      ["doc1", "hello"],
+      ["doc2", "world"],
+    ];
+    expect(computeRecall(expected, values, 0)).toEqual({ found: 0, total: 2 });
+  });
+
+  it("returns found=0 when idColumnIndex is -1", () => {
+    const expected = new Set(["doc1"]);
+    const values = [["doc1", "hello"]];
+    expect(computeRecall(expected, values, -1)).toEqual({ found: 0, total: 1 });
+  });
+
+  it("handles null values in the _id column", () => {
+    const expected = new Set(["doc1"]);
+    const values = [
+      ["doc1", "hello"],
+      [null, "world"],
+    ];
+    expect(computeRecall(expected, values, 0)).toEqual({ found: 1, total: 1 });
   });
 });

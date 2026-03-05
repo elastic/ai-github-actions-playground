@@ -555,4 +555,100 @@ describe("DataTable", () => {
       expect(screen.getByTestId("row-inspector-field-message")).toHaveTextContent("row-25");
     });
   });
+
+  describe("golden set pin", () => {
+    const dataWithId: EsqlResponse = {
+      columns: [
+        { name: "_id", type: "keyword" },
+        { name: "message", type: "keyword" },
+      ],
+      values: [
+        ["doc-1", "hello"],
+        ["doc-2", "world"],
+        ["doc-3", "foo"],
+      ],
+    };
+
+    it("does not render pin icons when idColumnIndex is not provided", () => {
+      render(<DataTable data={dataWithId} />);
+      expect(
+        screen.queryByRole("button", { name: /pin expected result/i }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("does not render pin icons when idColumnIndex is -1", () => {
+      render(
+        <DataTable
+          data={dataWithId}
+          idColumnIndex={-1}
+          onTogglePinDoc={vi.fn()}
+          pinnedDocIds={new Set()}
+        />,
+      );
+      expect(
+        screen.queryByRole("button", { name: /pin expected result/i }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("renders pin icons for each row when _id column is present", () => {
+      render(
+        <DataTable
+          data={dataWithId}
+          idColumnIndex={0}
+          onTogglePinDoc={vi.fn()}
+          pinnedDocIds={new Set()}
+        />,
+      );
+      const pinButtons = screen.getAllByRole("button", { name: /pin expected result/i });
+      expect(pinButtons).toHaveLength(3);
+    });
+
+    it("calls onTogglePinDoc with the document _id when pin icon is clicked", async () => {
+      const user = userEvent.setup();
+      const onTogglePinDoc = vi.fn();
+      render(
+        <DataTable
+          data={dataWithId}
+          idColumnIndex={0}
+          onTogglePinDoc={onTogglePinDoc}
+          pinnedDocIds={new Set()}
+        />,
+      );
+      const pinButtons = screen.getAllByRole("button", { name: /pin expected result/i });
+      await user.click(pinButtons[0]!);
+      expect(onTogglePinDoc).toHaveBeenCalledWith("doc-1");
+    });
+
+    it("shows filled bookmark for pinned docs and outline for unpinned", () => {
+      render(
+        <DataTable
+          data={dataWithId}
+          idColumnIndex={0}
+          onTogglePinDoc={vi.fn()}
+          pinnedDocIds={new Set(["doc-2"])}
+        />,
+      );
+      expect(
+        screen.getByRole("button", { name: /unpin expected result doc-2/i }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /pin expected result doc-1/i }),
+      ).toBeInTheDocument();
+    });
+
+    it("does not open row inspector when pin icon is clicked", async () => {
+      const user = userEvent.setup();
+      render(
+        <DataTable
+          data={dataWithId}
+          idColumnIndex={0}
+          onTogglePinDoc={vi.fn()}
+          pinnedDocIds={new Set()}
+        />,
+      );
+      const pinButtons = screen.getAllByRole("button", { name: /pin expected result/i });
+      await user.click(pinButtons[0]!);
+      expect(screen.queryByText("Row Inspector")).not.toBeInTheDocument();
+    });
+  });
 });
