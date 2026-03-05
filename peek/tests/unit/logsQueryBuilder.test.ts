@@ -44,6 +44,17 @@ describe("buildLogsQuery", () => {
     expect(query).toContain('MATCH_PHRASE(message, "connection reset")');
   });
 
+  it("normalizes escaped quoted phrase before building ES|QL", () => {
+    const query = buildLogsQuery({
+      indexPattern: "logs-*",
+      searchText: '"Error: \\"C:\\\\temp\\\\app.log\\""',
+      filters: [],
+      selectedColumns: ["@timestamp", "message"],
+    });
+
+    expect(query).toContain('MATCH_PHRASE(message, "Error: \\"C:\\\\temp\\\\app.log\\"")');
+  });
+
   it("uses match operator when search text is unquoted", () => {
     const query = buildLogsQuery({
       indexPattern: "logs-*",
