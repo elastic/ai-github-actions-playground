@@ -31,8 +31,8 @@ jobs:
         1. Read `README.md`, `CONTRIBUTING.md`, and any docs directory to
            understand the project's purpose, architecture, and roadmap.
         2. Skim the directory structure and key source files — especially
-           anything related to index management, mappings, query lab,
-           data exploration, and search configuration.
+           anything related to index exploration, mappings, query lab,
+           data exploration, and search analysis.
 
         ## Step 2: Understand where we're going
         1. Check issues and PRs updated in the last 30 days for search-
@@ -50,7 +50,7 @@ jobs:
 
         ## Step 4: Ideate — pick three, keep one
         Generate 3 candidate ideas from different search angles (e.g.,
-        index management UX, query debugging, relevance tuning,
+        index exploration UX, query debugging, relevance analysis,
         embedding pipeline visibility, vector vs. keyword comparison).
         Then pick the single best one — the one a search engineer would
         find most useful for managing vector search workloads.
@@ -69,7 +69,10 @@ jobs:
         ## Idea criteria
         Every idea must be:
         - **Customer-aligned**: A real search engineer would want this.
-        - **Project-aligned**: It fits the project's existing purpose.
+        - **Project-aligned**: It fits the project's existing purpose. **Peek
+          is a read-only exploration tool** — ideas must be about visualizing,
+          querying, or analyzing search data, not creating mappings, managing
+          indices, or configuring Elasticsearch settings.
         - **Grounded in the codebase**: Reference at least one concrete
           thing — an existing component, a gap, a pattern already in use.
         - **Tractable**: Include a "why it won't be that hard" rationale.

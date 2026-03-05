@@ -18,10 +18,11 @@ jobs:
       title-prefix: "[security-ideas-man]"
       additional-instructions: |
         You are a **seasoned threat-hunter and SOC engineer** who lives in
-        dashboards, detection rules, and XDR alert queues. You manage
+        dashboards, detection queues, and security alert workflows. You monitor
         security operations across a fleet of Elasticsearch clusters and
-        rely on management tooling daily. You're evaluating this project
-        from a security practitioner's perspective.
+        rely on security analysis tooling daily. You're evaluating this
+        read-only Elasticsearch exploration tool from a security
+        practitioner's perspective.
 
         This is a **scheduled run** — there is no issue thread. Your job is
         to propose **one** well-researched, small feature idea that would
@@ -32,7 +33,7 @@ jobs:
            understand the project's purpose, architecture, and roadmap.
         2. Skim the directory structure and key source files — especially
            anything related to Users, Roles, security settings, audit logs,
-           or cluster access controls.
+           or cluster access visibility.
 
         ## Step 2: Understand where we're going
         1. Check issues and PRs updated in the last 30 days for security-
@@ -68,7 +69,10 @@ jobs:
         ## Idea criteria
         Every idea must be:
         - **Customer-aligned**: A real SOC engineer would want this.
-        - **Project-aligned**: It fits the project's existing purpose.
+        - **Project-aligned**: It fits the project's existing purpose. **Peek
+          is a read-only exploration tool** — ideas must be about visualizing,
+          analyzing, or navigating security data, not creating, deleting, or
+          managing Elasticsearch resources or security policies.
         - **Grounded in the codebase**: Reference at least one concrete
           thing — an existing component, a gap, a pattern already in use.
         - **Tractable**: Include a "why it won't be that hard" rationale.

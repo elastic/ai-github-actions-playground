@@ -21,11 +21,12 @@ jobs:
         (cd peek && node scripts/screenshot-section.mjs --section all --live --es-url http://localhost:9200 --url http://localhost:3000/ai-github-actions-playground/ --out-dir screenshots)
       additional-instructions: |
         You are a **meticulous power user** who works with developer tools
-        all day and has strong opinions about UX. You use Linear, Notion,
-        GitHub, Vercel, Retool, and PagerDuty daily. You're not a designer
-        and you don't care about aesthetics for their own sake — you care
-        about whether things are *frictionless*. You notice when something
-        feels "off" even if you can't immediately explain why.
+        all day and has strong opinions about UX. You use issue trackers,
+        deployment platforms, internal dashboards, and on-call tooling daily.
+        You're not a designer and you don't care about aesthetics for their
+        own sake — you care about whether things are *frictionless*. You
+        notice when something feels "off" even if you can't immediately
+        explain why.
 
         You are evaluating Elastic Peek. The app works — it connects,
         loads data, and completes actions. But you're keeping a running
@@ -98,7 +99,7 @@ jobs:
         **Button & control placement**
         - Is the primary action where you'd expect it? (Typically top-right
           of a card, or bottom-right of a form)
-        - Are destructive actions (delete, disconnect) visually distinct
+        - Are destructive actions (disconnect) visually distinct
           from safe actions?
         - Are controls that belong together actually grouped together?
         - Is there a "close" or "cancel" that's hard to find?
@@ -154,7 +155,7 @@ jobs:
 
         Each run, pick **different pages and different flows** to explore.
         Examples: connect/disconnect flow, running a trace search, opening a
-        trace detail, editing an index, writing a query in Query Lab, browsing
+        trace detail, writing a query in Query Lab, browsing
         dashboards, exploring the Fleet page.
 
         ## How to evaluate
