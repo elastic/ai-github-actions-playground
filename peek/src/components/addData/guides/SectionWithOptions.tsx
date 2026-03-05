@@ -13,6 +13,8 @@ export interface SectionOption<T extends string> {
 interface SectionWithOptionsProps<T extends string> {
   /** Optional label above the options (e.g. "Install method"). */
   label?: string;
+  /** Accessible name used when no visible label is rendered. */
+  ariaLabelWhenUnlabeled?: string;
   /** Options to display as a single row of toggles. */
   options: readonly SectionOption<T>[];
   /** Currently selected value. */
@@ -29,6 +31,7 @@ interface SectionWithOptionsProps<T extends string> {
  */
 export default function SectionWithOptions<T extends string>({
   label,
+  ariaLabelWhenUnlabeled,
   options,
   value,
   onChange,
@@ -46,7 +49,7 @@ export default function SectionWithOptions<T extends string>({
         exclusive
         onChange={(_, v) => v != null && onChange(v)}
         size="small"
-        aria-label={label ?? "Options"}
+        aria-label={label ?? ariaLabelWhenUnlabeled ?? "Section options"}
         sx={{
           flexWrap: "wrap",
           "& .MuiToggleButton-root": {

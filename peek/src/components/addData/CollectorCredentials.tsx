@@ -150,6 +150,8 @@ export default function CollectorCredentials({
           size="small"
           fullWidth
           label="Enter API key"
+          type="password"
+          autoComplete="off"
           value={manualApiKeyValue}
           onChange={(event) => onManualApiKeyValueChange(event.target.value)}
           placeholder="Base64 API key"
