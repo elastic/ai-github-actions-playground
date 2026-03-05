@@ -11,9 +11,24 @@ import Typography from "@mui/material/Typography";
 
 import { copyToClipboard } from "../../../utils/copyToClipboard";
 import { useCopyFeedbackTimeout } from "../../../hooks/useCopyFeedbackTimeout";
-import { parseCommandSteps, PLATFORM_GUIDES } from "../../../utils/addDataUtils";
-import type { EndpointType, Platform } from "../../../utils/addDataUtils";
+import {
+  linuxChoiceToContext,
+  parseCommandSteps,
+  PLATFORM_GUIDES,
+} from "../../../utils/addDataUtils";
+import type { EndpointType, LinuxInstallChoice, Platform } from "../../../utils/addDataUtils";
 import AskAiButton from "../../AskAiButton";
+
+import CompactSegmentedControl from "./CompactSegmentedControl";
+import QuickCommandPanel from "./QuickCommandPanel";
+import SectionWithOptions from "./SectionWithOptions";
+import { CODE_BLOCK_SX } from "./sharedStyles";
+
+const LINUX_INSTALL_OPTIONS: { value: LinuxInstallChoice; label: string }[] = [
+  { value: "run_once", label: "Run once" },
+  { value: "deb", label: "Install on Debian/Ubuntu (.deb)" },
+  { value: "rpm", label: "Install on Red Hat/CentOS (.rpm)" },
+];
 
 export interface EdotCollectorInstallProps {
   technologyLabel: string;
@@ -24,11 +39,7 @@ export interface EdotCollectorInstallProps {
   endpointType: EndpointType;
   otlpUrl: string;
   apiKeyValue: string | null;
-  hasEndpoint: boolean;
   prefilledCount: number;
-  derivedOtlpUrl: string | null;
-  clusterVersion: string | null;
-  connectionUrl: string | null;
 }
 
 export default function EdotCollectorInstall({
@@ -40,22 +51,30 @@ export default function EdotCollectorInstall({
   endpointType,
   otlpUrl,
   apiKeyValue,
-  hasEndpoint,
   prefilledCount,
-  derivedOtlpUrl,
-  clusterVersion,
-  connectionUrl,
 }: EdotCollectorInstallProps) {
+  const [linuxChoice, setLinuxChoice] = useState<LinuxInstallChoice>("run_once");
+  const [commandView, setCommandView] = useState<"quick" | "steps">("quick");
   const [copied, setCopied] = useState(false);
   const scheduleCopyFeedbackReset = useCopyFeedbackTimeout(() => setCopied(false));
   const [stepCopiedIndex, setStepCopiedIndex] = useState<number | null>(null);
   const scheduleStepCopyReset = useCopyFeedbackTimeout(() => setStepCopiedIndex(null));
 
   const activeGuide = useMemo(() => PLATFORM_GUIDES[platform], [platform]);
+  const showRunModeTabs = platform === "linux";
+
+  const commandContext = useMemo(() => {
+    const base = { esUrl, version, apiKey, endpointType, otlpUrl };
+    if (platform === "linux") {
+      const { runMode, linuxPackageFormat } = linuxChoiceToContext(linuxChoice);
+      return { ...base, runMode, linuxPackageFormat };
+    }
+    return base;
+  }, [platform, linuxChoice, esUrl, version, apiKey, endpointType, otlpUrl]);
 
   const fullCommand = useMemo(
-    () => activeGuide.command({ esUrl, version, apiKey, endpointType, otlpUrl }),
-    [activeGuide, esUrl, version, apiKey, endpointType, otlpUrl],
+    () => activeGuide.command(commandContext),
+    [activeGuide, commandContext],
   );
   const commandSteps = useMemo(() => parseCommandSteps(fullCommand), [fullCommand]);
 
@@ -79,106 +98,159 @@ export default function EdotCollectorInstall({
   );
 
   return (
-    <>
+    <Stack spacing={1.5}>
       <Typography variant="body2" color="text.secondary">
-        Use the generated quickstart commands for {technologyLabel}.
+        Use the options below to copy and run commands for {technologyLabel}.
       </Typography>
 
-      <Box role="tabpanel">
-        <Stack direction="row" spacing={1} alignItems="center">
-          <Typography variant="body2" sx={{ flex: 1 }}>
-            {activeGuide.label} commands
-          </Typography>
-          <Button size="small" variant="outlined" onClick={() => void handleCopyAll()}>
-            {copied ? "Copied!" : "Copy all"}
-          </Button>
-          <Button
-            size="small"
-            variant="outlined"
-            href={activeGuide.quickstartUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            endIcon={<OpenInNewIcon fontSize="small" />}
-          >
-            Open official docs
-          </Button>
-        </Stack>
+      <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
+        <Typography variant="body2" sx={{ flex: 1, minWidth: 120 }}>
+          {activeGuide.label} command guide
+        </Typography>
+        <CompactSegmentedControl
+          value={commandView}
+          options={[
+            { value: "quick", label: "Quick command" },
+            { value: "steps", label: "Step by step" },
+          ]}
+          onChange={(v) => setCommandView(v)}
+        />
+        <Button
+          size="small"
+          variant="outlined"
+          href={activeGuide.quickstartUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          endIcon={<OpenInNewIcon fontSize="small" />}
+        >
+          Docs
+        </Button>
+      </Stack>
 
-        <Stack spacing={1.5} sx={{ mt: 1.5 }}>
-          {commandSteps.map((step, index) => {
-            const safeCommand =
-              apiKeyValue && apiKeyValue.length > 0
-                ? step.command.split(apiKeyValue).join("<REDACTED_API_KEY>")
-                : step.command;
-            return (
-              <Paper key={index} variant="outlined" sx={{ p: 1.5 }}>
-                <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
-                  <Chip
-                    label={step.number}
-                    size="small"
-                    color="primary"
-                    sx={{ minWidth: 28, fontWeight: 700 }}
-                  />
-                  <Typography variant="body2" sx={{ flex: 1, fontWeight: 500 }}>
-                    {step.title}
-                  </Typography>
-                  <Button
-                    size="small"
-                    variant="text"
-                    startIcon={<ContentCopyIcon fontSize="small" />}
-                    onClick={() => void handleCopyStep(index)}
-                  >
-                    {stepCopiedIndex === index ? "Copied!" : "Copy"}
-                  </Button>
-                  <AskAiButton
-                    label="Explain"
-                    prompt={`Explain what this onboarding command step does and why it matters.\nStep ${step.number}: ${step.title}\nCommand:\n${safeCommand}`}
-                  />
-                </Stack>
-                <Box
-                  component="pre"
-                  sx={{
-                    overflow: "auto",
-                    m: 0,
-                    p: 1.5,
-                    borderRadius: 1,
-                    bgcolor: "background.default",
-                    wordBreak: "break-all",
-                    whiteSpace: "pre-wrap",
-                    fontSize: "0.8rem",
-                    fontFamily: "monospace",
-                  }}
+      <Box>
+        {showRunModeTabs ? (
+          <SectionWithOptions
+            label="Install method"
+            options={LINUX_INSTALL_OPTIONS}
+            value={linuxChoice}
+            onChange={(v) => setLinuxChoice(v)}
+          >
+            {commandView === "quick" ? (
+              <Box sx={{ mt: 1 }}>
+                <QuickCommandPanel command={fullCommand} />
+              </Box>
+            ) : (
+              <Stack spacing={1.5} sx={{ mt: 1 }}>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={() => void handleCopyAll()}
+                  sx={{ alignSelf: "flex-end" }}
                 >
-                  {step.command}
-                </Box>
-              </Paper>
-            );
-          })}
-        </Stack>
+                  {copied ? "Copied!" : "Copy all steps"}
+                </Button>
+                {commandSteps.map((step, index) => {
+                  const safeCommand =
+                    apiKeyValue && apiKeyValue.length > 0
+                      ? step.command.split(apiKeyValue).join("<REDACTED_API_KEY>")
+                      : step.command;
+                  return (
+                    <Paper key={index} variant="outlined" sx={{ p: 1.5 }}>
+                      <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+                        <Chip
+                          label={step.number}
+                          size="small"
+                          color="primary"
+                          sx={{ minWidth: 28, fontWeight: 700 }}
+                        />
+                        <Typography variant="body2" sx={{ flex: 1, fontWeight: 500 }}>
+                          {step.title}
+                        </Typography>
+                        <Button
+                          size="small"
+                          variant="text"
+                          startIcon={<ContentCopyIcon fontSize="small" />}
+                          onClick={() => void handleCopyStep(index)}
+                        >
+                          {stepCopiedIndex === index ? "Copied!" : "Copy"}
+                        </Button>
+                        <AskAiButton
+                          label="Explain"
+                          prompt={`Explain what this onboarding command step does and why it matters.\nStep ${step.number}: ${step.title}\nCommand:\n${safeCommand}`}
+                        />
+                      </Stack>
+                      <Box component="pre" sx={CODE_BLOCK_SX}>
+                        {step.command}
+                      </Box>
+                    </Paper>
+                  );
+                })}
+              </Stack>
+            )}
+          </SectionWithOptions>
+        ) : (
+          <>
+            {commandView === "quick" ? (
+              <Box sx={{ mt: 1 }}>
+                <QuickCommandPanel command={fullCommand} />
+              </Box>
+            ) : (
+              <Stack spacing={1.5} sx={{ mt: 1 }}>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={() => void handleCopyAll()}
+                  sx={{ alignSelf: "flex-end" }}
+                >
+                  {copied ? "Copied!" : "Copy all steps"}
+                </Button>
+                {commandSteps.map((step, index) => {
+                  const safeCommand =
+                    apiKeyValue && apiKeyValue.length > 0
+                      ? step.command.split(apiKeyValue).join("<REDACTED_API_KEY>")
+                      : step.command;
+                  return (
+                    <Paper key={index} variant="outlined" sx={{ p: 1.5 }}>
+                      <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+                        <Chip
+                          label={step.number}
+                          size="small"
+                          color="primary"
+                          sx={{ minWidth: 28, fontWeight: 700 }}
+                        />
+                        <Typography variant="body2" sx={{ flex: 1, fontWeight: 500 }}>
+                          {step.title}
+                        </Typography>
+                        <Button
+                          size="small"
+                          variant="text"
+                          startIcon={<ContentCopyIcon fontSize="small" />}
+                          onClick={() => void handleCopyStep(index)}
+                        >
+                          {stepCopiedIndex === index ? "Copied!" : "Copy"}
+                        </Button>
+                        <AskAiButton
+                          label="Explain"
+                          prompt={`Explain what this onboarding command step does and why it matters.\nStep ${step.number}: ${step.title}\nCommand:\n${safeCommand}`}
+                        />
+                      </Stack>
+                      <Box component="pre" sx={CODE_BLOCK_SX}>
+                        {step.command}
+                      </Box>
+                    </Paper>
+                  );
+                })}
+              </Stack>
+            )}
+          </>
+        )}
 
         <Alert severity="info" sx={{ mt: 1.5 }}>
           {apiKeyValue
-            ? "Your generated API key" + (hasEndpoint || clusterVersion ? ", " : " ")
-            : "Generate an API key below (or provide your own) — "}
-          {endpointType === "managed_otlp" && derivedOtlpUrl
-            ? "OTLP endpoint, "
-            : connectionUrl
-              ? "Elasticsearch endpoint, "
-              : ""}
-          {clusterVersion ? `and EDOT Collector v${clusterVersion} ` : ""}
-          {apiKeyValue ||
-          (endpointType === "managed_otlp" ? Boolean(derivedOtlpUrl) : Boolean(connectionUrl)) ||
-          clusterVersion
-            ? (prefilledCount > 1 ? "have" : "has") + " been pre-filled in the command above."
-            : "Replace the placeholders before running."}
-          {!apiKeyValue && (
-            <>
-              {" "}
-              Replace <code>&lt;YOUR_API_KEY&gt;</code> with a generated or existing key.
-            </>
-          )}
+            ? "API key, endpoint, and version are pre-filled. Copy and run the commands to complete setup."
+            : `Replace \`<YOUR_API_KEY>\` in the commands with your API key. ${prefilledCount > 1 ? "Endpoint and version are" : "The version is"} pre-filled.`}
         </Alert>
       </Box>
-    </>
+    </Stack>
   );
 }

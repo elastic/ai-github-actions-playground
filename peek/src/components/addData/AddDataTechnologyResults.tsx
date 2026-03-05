@@ -1,26 +1,27 @@
 import Box from "@mui/material/Box";
 import ButtonBase from "@mui/material/ButtonBase";
-import Chip from "@mui/material/Chip";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
+import { COMPONENT_HEIGHTS } from "../../types/tokens";
 import EmptyState from "../EmptyState";
 import {
   ADD_DATA_EXPERIENCE_LABELS,
   type AddDataTechnologyCatalogEntry,
 } from "../../services/addData/catalog";
-import { COMPONENT_HEIGHTS } from "../../types/tokens";
 
-import { EXPERIENCE_ICONS, SIGNAL_COLORS, TECHNOLOGY_ICONS } from "./addDataTechnologyConstants";
+import { EXPERIENCE_ICONS, TECHNOLOGY_ICONS } from "./addDataTechnologyConstants";
 
 function TechnologyCard({
   tech,
   selected,
+  showExperienceLabel,
   onClick,
 }: {
   tech: AddDataTechnologyCatalogEntry;
   selected: boolean;
+  showExperienceLabel: boolean;
   onClick: () => void;
 }) {
   const icon = TECHNOLOGY_ICONS[tech.id] ?? EXPERIENCE_ICONS[tech.experience];
@@ -38,7 +39,8 @@ function TechnologyCard({
           flexDirection: "column",
           gap: 1,
           height: "100%",
-          p: 1.5,
+          minHeight: 116,
+          p: 2,
           boxShadow: selected ? 2 : 0,
           borderWidth: selected ? 2 : 1,
           borderColor: selected ? "primary.main" : "divider",
@@ -57,8 +59,8 @@ function TechnologyCard({
               flexShrink: 0,
               justifyContent: "center",
               alignItems: "center",
-              width: COMPONENT_HEIGHTS.button,
-              height: COMPONENT_HEIGHTS.button,
+              width: COMPONENT_HEIGHTS.touchTarget,
+              height: COMPONENT_HEIGHTS.touchTarget,
               borderRadius: 1,
               bgcolor: selected ? "primary.main" : "action.selected",
               color: selected ? "primary.contrastText" : "text.secondary",
@@ -72,7 +74,11 @@ function TechnologyCard({
               <Typography variant="body2" sx={{ fontWeight: 600 }} noWrap>
                 {tech.technology}
               </Typography>
-              {selected && <Chip label="Selected" size="small" color="primary" />}
+              {selected && (
+                <Typography variant="caption" color="primary.main" sx={{ fontWeight: 600 }}>
+                  Selected
+                </Typography>
+              )}
             </Stack>
             <Typography
               variant="caption"
@@ -90,24 +96,13 @@ function TechnologyCard({
           </Box>
         </Stack>
 
-        <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
-          {tech.expectedSignals.map((signal) => (
-            <Chip
-              key={signal}
-              label={signal}
-              size="small"
-              variant="outlined"
-              color={SIGNAL_COLORS[signal] ?? "default"}
-              sx={{ height: 20, fontSize: "0.7rem" }}
-            />
-          ))}
-          <Chip
-            label={ADD_DATA_EXPERIENCE_LABELS[tech.experience]}
-            size="small"
-            variant="outlined"
-            sx={{ height: 20, ml: "auto", fontSize: "0.7rem" }}
-          />
-        </Stack>
+        {showExperienceLabel && (
+          <Typography variant="caption" color="text.secondary">
+            {tech.experience === "servers"
+              ? "Servers"
+              : ADD_DATA_EXPERIENCE_LABELS[tech.experience]}
+          </Typography>
+        )}
       </Paper>
     </ButtonBase>
   );
@@ -117,26 +112,28 @@ interface AddDataTechnologyResultsProps {
   filteredTechnologies: readonly AddDataTechnologyCatalogEntry[];
   selectedTechnology: AddDataTechnologyCatalogEntry | null;
   onSelectTechnology: (tech: AddDataTechnologyCatalogEntry) => void;
+  showExperienceLabel?: boolean;
 }
 
 export default function AddDataTechnologyResults({
   filteredTechnologies,
   selectedTechnology,
   onSelectTechnology,
+  showExperienceLabel = true,
 }: AddDataTechnologyResultsProps) {
   return (
     <Box>
       {filteredTechnologies.length === 0 ? (
         <EmptyState
           heading="No matching technologies"
-          description="No technologies match your search. Try a broader term or browse by category above."
+          description="No technologies match your search. Try a different term or choose a category."
           size="small"
         />
       ) : (
         <Box
           sx={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(min(220px, 100%), 1fr))",
+            gridTemplateColumns: "repeat(auto-fill, minmax(min(240px, 100%), 1fr))",
             gap: 1.5,
           }}
         >
@@ -145,6 +142,7 @@ export default function AddDataTechnologyResults({
               key={tech.id}
               tech={tech}
               selected={selectedTechnology?.id === tech.id}
+              showExperienceLabel={showExperienceLabel}
               onClick={() => onSelectTechnology(tech)}
             />
           ))}

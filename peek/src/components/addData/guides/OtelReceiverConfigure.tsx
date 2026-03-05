@@ -7,6 +7,8 @@ import Typography from "@mui/material/Typography";
 
 import type { OtelReceiverDefinition } from "../../../services/addData/otelReceiverCatalog";
 
+import CollectorAlternatives from "./CollectorAlternatives";
+
 export interface OtelReceiverConfigureProps {
   receiver: OtelReceiverDefinition;
   fieldValues: Record<string, string>;
@@ -81,6 +83,7 @@ export default function OtelReceiverConfigure({
           />
         )}
       </Stack>
+      <CollectorAlternatives idPrefix="receiver" onSwitchToTechnology={onSwitchToTechnology} />
     </>
   );
 }

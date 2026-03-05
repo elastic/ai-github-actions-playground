@@ -18,6 +18,10 @@ import {
 } from "../../../services/addData/otelReceiverCatalog";
 import type { OtelReceiverDefinition } from "../../../services/addData/otelReceiverCatalog";
 
+import CompactSegmentedControl from "./CompactSegmentedControl";
+import QuickCommandPanel from "./QuickCommandPanel";
+import { CODE_BLOCK_SX } from "./sharedStyles";
+
 export interface OtelReceiverInstallProps {
   receiver: OtelReceiverDefinition;
   fieldValues: Record<string, string>;
@@ -39,6 +43,7 @@ export default function OtelReceiverInstall({
 }: OtelReceiverInstallProps) {
   const [copiedConfig, setCopiedConfig] = useState(false);
   const [copiedRun, setCopiedRun] = useState(false);
+  const [commandView, setCommandView] = useState<"quick" | "steps">("quick");
   const scheduleCopyConfigReset = useCopyFeedbackTimeout(() => setCopiedConfig(false));
   const scheduleCopyRunReset = useCopyFeedbackTimeout(() => setCopiedRun(false));
 
@@ -108,11 +113,10 @@ export default function OtelReceiverInstall({
     setCopiedRun(true);
     scheduleCopyRunReset();
   }, [scheduleCopyRunReset]);
-
   return (
     <Stack spacing={1.5}>
       <Typography variant="body2" color="text.secondary">
-        Configure and run the EDOT Collector with the {receiver.label} receiver.
+        Use the options below to copy and run commands for the {receiver.label} receiver.
       </Typography>
 
       {/* Step 1: Save config */}
@@ -157,58 +161,68 @@ export default function OtelReceiverInstall({
         </Box>
       </Paper>
 
-      {/* Step 2: Run the collector */}
-      <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
-          <Chip label="2" size="small" color="primary" sx={{ minWidth: 28, fontWeight: 700 }} />
-          <Typography variant="body2" sx={{ flex: 1, fontWeight: 500 }}>
-            Start the EDOT Collector
-          </Typography>
-          <Button
-            size="small"
-            variant="text"
-            startIcon={<ContentCopyIcon fontSize="small" />}
-            onClick={() => void handleCopyRun()}
-          >
-            {copiedRun ? "Copied!" : "Copy"}
-          </Button>
-        </Stack>
-        <Box
-          component="pre"
-          sx={{
-            overflow: "auto",
-            m: 0,
-            p: 1.5,
-            borderRadius: 1,
-            bgcolor: "background.default",
-            whiteSpace: "pre-wrap",
-            fontSize: "0.8rem",
-            fontFamily: "monospace",
-          }}
-        >
-          {RUN_COMMAND}
-        </Box>
-      </Paper>
+      {commandView === "quick" ? (
+        <QuickCommandPanel command={quickCommand} />
+      ) : (
+        <Stack spacing={1.5}>
+          {/* Step 1: Save config */}
+          <Paper variant="outlined" sx={{ p: 1.5 }}>
+            <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+              <Chip label="1" size="small" color="primary" sx={{ minWidth: 28, fontWeight: 700 }} />
+              <Typography variant="body2" sx={{ flex: 1, fontWeight: 500 }}>
+                Save the collector configuration
+              </Typography>
+              <Button
+                size="small"
+                variant="text"
+                startIcon={<ContentCopyIcon fontSize="small" />}
+                onClick={() => void handleCopyConfig()}
+              >
+                {copiedConfig ? "Copied!" : "Copy"}
+              </Button>
+            </Stack>
+            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
+              Save this as <code>otel-collector-config.yaml</code>
+            </Typography>
+            <Box component="pre" sx={CODE_BLOCK_SX}>
+              {fullConfig}
+            </Box>
+          </Paper>
 
-      {/* Step 3: Docs link */}
-      <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <Stack direction="row" spacing={1} alignItems="center">
-          <Chip label="3" size="small" color="primary" sx={{ minWidth: 28, fontWeight: 700 }} />
-          <Typography variant="body2" sx={{ flex: 1, fontWeight: 500 }}>
-            Review the {receiver.label} receiver documentation
-          </Typography>
-          <Button
-            size="small"
-            variant="outlined"
-            href="https://www.elastic.co/docs/solutions/observability/get-started/opentelemetry"
-            target="_blank"
-            rel="noopener noreferrer"
-            endIcon={<OpenInNewIcon fontSize="small" />}
-          >
-            Open docs
-          </Button>
+          {/* Step 2: Run the collector */}
+          <Paper variant="outlined" sx={{ p: 1.5 }}>
+            <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+              <Chip label="2" size="small" color="primary" sx={{ minWidth: 28, fontWeight: 700 }} />
+              <Typography variant="body2" sx={{ flex: 1, fontWeight: 500 }}>
+                Start the EDOT Collector
+              </Typography>
+              <Button
+                size="small"
+                variant="text"
+                startIcon={<ContentCopyIcon fontSize="small" />}
+                onClick={() => void handleCopyRun()}
+              >
+                {copiedRun ? "Copied!" : "Copy"}
+              </Button>
+            </Stack>
+            <Box component="pre" sx={CODE_BLOCK_SX}>
+              {RUN_COMMAND}
+            </Box>
+          </Paper>
         </Stack>
-      </Paper>
+      )}
+
+      <Button
+        size="small"
+        variant="outlined"
+        href="https://www.elastic.co/docs/solutions/observability/get-started/opentelemetry"
+        target="_blank"
+        rel="noopener noreferrer"
+        endIcon={<OpenInNewIcon fontSize="small" />}
+        sx={{ alignSelf: "flex-start" }}
+      >
+        {receiver.label} receiver docs
+      </Button>
     </Stack>
   );
 }

@@ -19,11 +19,11 @@ export interface GuideTypeDefinition {
 
 export const GUIDE_TYPE_DEFINITIONS: Record<AddDataGuideType, GuideTypeDefinition> = {
   edot_collector: {
-    configureLabel: "Select your environment",
+    configureLabel: "Choose collector",
     installLabel: "Install and configure",
   },
   aws_cloud_deploy: {
-    configureLabel: "Select AWS services",
+    configureLabel: "How should we connect?",
     installLabel: "Deploy stack",
   },
   otel_receiver: {
@@ -32,7 +32,7 @@ export const GUIDE_TYPE_DEFINITIONS: Record<AddDataGuideType, GuideTypeDefinitio
   },
   fluent_bit: {
     configureLabel: "Configure output",
-    installLabel: "Install Fluent Bit",
+    installLabel: "Install collector",
   },
   apm: {
     configureLabel: "Select language",

@@ -1,5 +1,6 @@
 import { useId, useState } from "react";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import ButtonBase from "@mui/material/ButtonBase";
 import Collapse from "@mui/material/Collapse";
 import Paper from "@mui/material/Paper";
@@ -8,11 +9,14 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import RadioButtonCheckedIcon from "@mui/icons-material/RadioButtonChecked";
 import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
+import { useNavigate } from "react-router-dom";
 
 import type { PerSignalDelta } from "../../services/addData/ingestionQueries";
+import { useOpenInDiscover } from "../../hooks/useOpenInDiscover";
 import { formatNumber } from "../visualizations/chartUtils";
 
 import { SIGNAL_COLORS } from "./addDataTechnologyConstants";
+import { PULSE_KEYFRAMES } from "./guides/sharedStyles";
 
 const SIGNAL_LABELS: Record<string, string> = {
   logs: "Logs",
@@ -27,19 +31,33 @@ interface SignalVerificationCardProps {
 
 export default function SignalVerificationCard({ delta, isPolling }: SignalVerificationCardProps) {
   const [expanded, setExpanded] = useState(false);
+  const navigate = useNavigate();
+  const openInDiscover = useOpenInDiscover();
   const baseId = useId();
   const toggleId = `${baseId}-toggle`;
   const detailsId = `${baseId}-details`;
 
-  const detected =
-    delta.dataStreamAppeared ||
-    delta.isDataFlowing ||
-    delta.newHostsDetected > 0 ||
-    delta.newAgentsDetected > 0;
+  const detected = delta.signalDetected;
   const label = SIGNAL_LABELS[delta.signal] ?? delta.signal;
   const color = SIGNAL_COLORS[delta.signal] ?? "info";
+  const relativeLatest = delta.latestTimestamp ? formatRelativeTime(delta.latestTimestamp) : null;
 
   const summaryText = detected ? "Detected" : isPolling ? "Checking..." : "Not yet";
+  const shouldOpenServices = delta.signal === "traces" && delta.newServicesDetected > 0;
+  const ctaLabel = shouldOpenServices ? "See in Service Inventory" : "See in Query Lab";
+  const targetServiceName = delta.newServiceNames[0] ?? null;
+
+  const handleOpen = () => {
+    if (shouldOpenServices) {
+      if (targetServiceName) {
+        navigate(`/services/${encodeURIComponent(targetServiceName)}`);
+      } else {
+        navigate("/services");
+      }
+      return;
+    }
+    openInDiscover(buildSignalQuery(delta));
+  };
 
   return (
     <Paper
@@ -121,7 +139,8 @@ export default function SignalVerificationCard({ delta, isPolling }: SignalVerif
             </Typography>
             {delta.docCountDelta > 0 && (
               <Typography variant="caption" color="success.main" sx={{ fontWeight: 600 }}>
-                +{formatNumber(delta.docCountDelta)}
+                (+{formatNumber(delta.docCountDelta)}
+                {relativeLatest ? `, ${relativeLatest}` : ""})
               </Typography>
             )}
           </Box>
@@ -135,17 +154,41 @@ export default function SignalVerificationCard({ delta, isPolling }: SignalVerif
             </Typography>
             {delta.newHostsDetected > 0 && (
               <Typography variant="caption" color="success.main" sx={{ fontWeight: 600 }}>
-                +{delta.newHostsDetected} new!
+                (+{delta.newHostsDetected} new{relativeLatest ? `, ${relativeLatest}` : ""})
               </Typography>
             )}
           </Box>
 
-          {/* Last seen */}
-          <Typography variant="caption" color="text.secondary">
-            {delta.latestTimestamp
-              ? `Last: ${formatRelativeTime(delta.latestTimestamp)}`
-              : "Last: never"}
-          </Typography>
+          {/* Service count (traces-oriented signal) */}
+          {delta.signal === "traces" && (
+            <Box sx={{ display: "flex", gap: 0.5, alignItems: "baseline" }}>
+              <Typography variant="body2" sx={{ fontVariantNumeric: "tabular-nums" }}>
+                {delta.currentServiceCount > 0
+                  ? `${delta.currentServiceCount} service${delta.currentServiceCount !== 1 ? "s" : ""}`
+                  : "--"}
+              </Typography>
+              {delta.newServicesDetected > 0 && (
+                <Typography variant="caption" color="success.main" sx={{ fontWeight: 600 }}>
+                  (+{delta.newServicesDetected} new{relativeLatest ? `, ${relativeLatest}` : ""})
+                </Typography>
+              )}
+            </Box>
+          )}
+          {!relativeLatest && (
+            <Typography variant="caption" color="text.secondary">
+              Last: never
+            </Typography>
+          )}
+          {detected && (
+            <Button
+              size="small"
+              variant="text"
+              onClick={handleOpen}
+              sx={{ alignSelf: "flex-start", px: 0 }}
+            >
+              {ctaLabel}
+            </Button>
+          )}
         </Box>
       </Collapse>
     </Paper>
@@ -167,10 +210,7 @@ function StatusIcon({ detected, isPolling }: { detected: boolean; isPolling: boo
         sx={{
           animation: "pulse 1.5s ease-in-out infinite",
           fontSize: 18,
-          "@keyframes pulse": {
-            "0%, 100%": { opacity: 1 },
-            "50%": { opacity: 0.3 },
-          },
+          ...PULSE_KEYFRAMES,
         }}
       />
     );
@@ -190,4 +230,39 @@ function formatRelativeTime(isoTimestamp: string): string {
   if (minutes < 60) return `${minutes}m ago`;
   const hours = Math.floor(minutes / 60);
   return `${hours}h ago`;
+}
+
+function buildSignalQuery(delta: PerSignalDelta): string {
+  const sourceBySignal: Record<PerSignalDelta["signal"], string> = {
+    logs: "FROM logs-*",
+    metrics: "FROM metrics-*",
+    traces: "FROM traces-*",
+  };
+  const keepBySignal: Record<PerSignalDelta["signal"], string> = {
+    logs: "KEEP @timestamp, host.name, service.name, message, data_stream.dataset",
+    metrics: "KEEP @timestamp, host.name, service.name, metricset.name, data_stream.dataset",
+    traces: "KEEP @timestamp, host.name, service.name, trace.id, span.id",
+  };
+  const source = sourceBySignal[delta.signal] ?? "FROM logs-*";
+  const keep = keepBySignal[delta.signal] ?? "KEEP @timestamp";
+  const escapedHostName = escapeEsqlString(delta.newHostNames[0] ?? "");
+  const escapedServiceName = escapeEsqlString(delta.newServiceNames[0] ?? "");
+  const where =
+    delta.newHostsDetected > 0 && escapedHostName.length > 0
+      ? `WHERE host.name == "${escapedHostName}"`
+      : delta.newServicesDetected > 0 && escapedServiceName.length > 0
+        ? `WHERE service.name == "${escapedServiceName}"`
+        : delta.newHostsDetected > 0
+          ? "WHERE host.name IS NOT NULL"
+          : delta.newServicesDetected > 0
+            ? "WHERE service.name IS NOT NULL"
+            : null;
+  const parts = [source, where, keep, "SORT @timestamp DESC", "LIMIT 200"].filter(
+    (part): part is string => Boolean(part),
+  );
+  return parts.join(" | ");
+}
+
+function escapeEsqlString(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
 }

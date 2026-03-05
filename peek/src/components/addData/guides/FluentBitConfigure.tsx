@@ -3,25 +3,33 @@ import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
-import { FLUENT_BIT_OUTPUT_CONFIGS } from "../../../services/addData/fluentBitConfig";
-import type { FluentBitOutputMode } from "../../../services/addData/fluentBitConfig";
+import type {
+  FluentBitOutputMode,
+  ThirdPartyCollectorId,
+} from "../../../services/addData/fluentBitConfig";
+import { getCollectorOutputConfigs } from "../../../services/addData/fluentBitConfig";
 
 export interface FluentBitConfigureProps {
+  collectorId: ThirdPartyCollectorId;
+  technologyLabel: string;
   outputMode: FluentBitOutputMode;
   onOutputModeChange: (mode: FluentBitOutputMode) => void;
 }
 
 export default function FluentBitConfigure({
+  collectorId,
+  technologyLabel,
   outputMode,
   onOutputModeChange,
 }: FluentBitConfigureProps) {
+  const supportedOutputs = getCollectorOutputConfigs(collectorId);
   return (
     <>
       <Typography variant="body2" sx={{ fontWeight: 600 }}>
         Select output mode
       </Typography>
       <Stack spacing={1}>
-        {FLUENT_BIT_OUTPUT_CONFIGS.map((config) => {
+        {supportedOutputs.map((config) => {
           const isSelected = outputMode === config.mode;
           return (
             <ButtonBase
@@ -42,7 +50,7 @@ export default function FluentBitConfigure({
                   {config.label}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  {config.description}
+                  {`${config.description} (${technologyLabel})`}
                 </Typography>
               </Paper>
             </ButtonBase>

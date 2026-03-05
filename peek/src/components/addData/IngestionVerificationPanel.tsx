@@ -1,9 +1,9 @@
+import { useEffect } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import CircularProgress from "@mui/material/CircularProgress";
 import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import RadioButtonCheckedIcon from "@mui/icons-material/RadioButtonChecked";
@@ -14,14 +14,12 @@ import type { PerSignalDelta } from "../../services/addData/ingestionQueries";
 import AskAiButton from "../AskAiButton";
 
 import SignalVerificationCard from "./SignalVerificationCard";
+import { PULSE_KEYFRAMES } from "./guides/sharedStyles";
 
 const PULSE_ICON_SX = {
-  animation: "ingestionPulse 1.5s ease-in-out infinite",
+  animation: "pulse 1.5s ease-in-out infinite",
   fontSize: 16,
-  "@keyframes ingestionPulse": {
-    "0%, 100%": { opacity: 1 },
-    "50%": { opacity: 0.3 },
-  },
+  ...PULSE_KEYFRAMES,
 } as const;
 
 interface IngestionVerificationPanelProps {
@@ -31,6 +29,7 @@ interface IngestionVerificationPanelProps {
   verification: IngestionVerificationState;
   connectionAvailable: boolean;
   troubleshootingDocsUrl?: string;
+  autoStart?: boolean;
 }
 
 export default function IngestionVerificationPanel({
@@ -40,10 +39,18 @@ export default function IngestionVerificationPanel({
   verification,
   connectionAvailable,
   troubleshootingDocsUrl,
+  autoStart = true,
 }: IngestionVerificationPanelProps) {
   const { status, deltas, overallDetected, error } = verification;
+  const isAwsDeploymentVerification = technologyName === "Amazon Web Services";
   const isPolling = status === "polling" || status === "capturing_baseline";
   const isActive = isPolling || status === "detected";
+  useEffect(() => {
+    if (!autoStart) return;
+    if (!connectionAvailable) return;
+    if (status !== "idle") return;
+    verification.startPolling();
+  }, [autoStart, connectionAvailable, status, verification]);
 
   // Build per-signal deltas for display (even when no deltas yet, show placeholder cards)
   const displayDeltas: PerSignalDelta[] =
@@ -51,53 +58,63 @@ export default function IngestionVerificationPanel({
       ? deltas
       : expectedSignals.map((signal) => ({
           signal,
+          baselineDataStreamExists: false,
           dataStreamAppeared: false,
           newHostsDetected: 0,
+          newHostNames: [],
+          newServicesDetected: 0,
+          newServiceNames: [],
           newAgentsDetected: 0,
           docCountDelta: 0,
+          docsPerSecondDelta: 0,
           isDataFlowing: false,
+          signalDetected: false,
           latestTimestampIsRecent: false,
           latestTimestamp: null,
           currentHostCount: 0,
+          currentServiceCount: 0,
           currentAgentCount: 0,
           currentDocCount: 0,
+          currentDocsPerSecond: 0,
         }));
+  const detectedMessage = getDetectedMessage(deltas);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
       <Typography variant="body2" color="text.secondary">
-        For {technologyName}, we expect to receive {signalExpectation}.
+        {isAwsDeploymentVerification
+          ? "Verifying stack deployment."
+          : `${technologyName} sends ${signalExpectation}.`}
       </Typography>
+      {isAwsDeploymentVerification && (
+        <Typography variant="caption" color="text.secondary">
+          Checking for successful stack deployment by detecting new telemetry data in the cluster.
+        </Typography>
+      )}
 
       {/* Action row */}
       <Stack direction="row" spacing={1} alignItems="center">
-        <Button
-          size="small"
-          variant="contained"
-          onClick={() => {
-            if (status === "idle") {
-              verification.startPolling();
-              return;
-            }
-            if (status === "error" && !verification.baseline) {
-              verification.resetVerification();
-              verification.startPolling();
-              return;
-            }
-            verification.checkNow();
-          }}
-          disabled={!connectionAvailable || status === "capturing_baseline"}
-          startIcon={
-            isPolling ? <CircularProgress size={16} /> : <CheckCircleOutlineIcon fontSize="small" />
-          }
-        >
-          {isPolling ? "Checking..." : "Check now"}
-        </Button>
         {isPolling && (
+          <Tooltip title='Verification checks for new "metrics-*", "logs-*", or "traces-*" streams, meaningful volume changes, and new hosts/agents sending data.'>
+            <Stack direction="row" spacing={0.5} alignItems="center">
+              <RadioButtonCheckedIcon color="info" sx={PULSE_ICON_SX} />
+              <Typography variant="body2" color="info.main">
+                Checking...
+              </Typography>
+            </Stack>
+          </Tooltip>
+        )}
+        {(isPolling || status === "error") && (
+          <AskAiButton
+            prompt="I'm onboarding data but not seeing expected ingestion signals. Help me troubleshoot collector setup and data flow."
+            label="Troubleshoot data collection"
+          />
+        )}
+        {!isPolling && status === "detected" && (
           <Stack direction="row" spacing={0.5} alignItems="center">
-            <RadioButtonCheckedIcon color="info" sx={PULSE_ICON_SX} />
+            <CheckCircleOutlineIcon color="success" fontSize="small" />
             <Typography variant="body2" color="info.main">
-              Listening for data...
+              {detectedMessage}
             </Typography>
           </Stack>
         )}
@@ -128,8 +145,9 @@ export default function IngestionVerificationPanel({
       {status === "polling" && !overallDetected && (
         <>
           <Alert severity="info">
-            No new data detected yet. Make sure the collector is running — we&apos;ll keep checking
-            automatically.{" "}
+            {isAwsDeploymentVerification
+              ? "No meaningful ingestion changes detected yet. Make sure your Amazon Data Firehose delivery stream is active and sending telemetry to Elastic - we'll keep checking automatically."
+              : "No meaningful ingestion changes detected yet. Make sure the collector is running and producing telemetry - we'll keep checking automatically."}{" "}
             <Link
               href={
                 troubleshootingDocsUrl ??
@@ -147,44 +165,30 @@ export default function IngestionVerificationPanel({
           />
         </>
       )}
-
-      {overallDetected && <DetectionSummaryAlert deltas={deltas} />}
     </Box>
   );
 }
 
-// ---------------------------------------------------------------------------
-// Detection summary
-// ---------------------------------------------------------------------------
-
-function DetectionSummaryAlert({ deltas }: { deltas: PerSignalDelta[] }) {
-  const parts: string[] = [];
-
-  const newStreams = deltas.filter((d) => d.dataStreamAppeared).map((d) => d.signal);
-  if (newStreams.length > 0) {
-    parts.push(`${newStreams.join(", ")} data stream${newStreams.length > 1 ? "s" : ""} appeared`);
-  }
-
+function getDetectedMessage(deltas: PerSignalDelta[]): string {
   const hostsAdded = deltas.reduce((sum, d) => sum + d.newHostsDetected, 0);
   if (hostsAdded > 0) {
-    parts.push(`${hostsAdded} new host${hostsAdded > 1 ? "s" : ""} detected`);
+    return `${hostsAdded} new host${hostsAdded > 1 ? "s" : ""} detected!`;
+  }
+
+  const servicesAdded = deltas.reduce((sum, d) => sum + d.newServicesDetected, 0);
+  if (servicesAdded > 0) {
+    return `${servicesAdded} new service${servicesAdded > 1 ? "s" : ""} detected!`;
   }
 
   const agentsAdded = deltas.reduce((sum, d) => sum + d.newAgentsDetected, 0);
   if (agentsAdded > 0) {
-    parts.push(`${agentsAdded} new agent${agentsAdded > 1 ? "s" : ""} detected`);
+    return `${agentsAdded} new agent${agentsAdded > 1 ? "s" : ""} detected!`;
   }
 
-  const flowing = deltas.filter((d) => d.isDataFlowing && !d.dataStreamAppeared);
-  if (flowing.length > 0) {
-    parts.push("data is flowing — document counts are increasing");
+  const newStreams = deltas.filter((d) => d.dataStreamAppeared).map((d) => d.signal);
+  if (newStreams.length > 0) {
+    return `${newStreams.length} new data stream${newStreams.length > 1 ? "s" : ""} detected!`;
   }
 
-  const message = parts.length > 0 ? parts.join(". ") + "." : "New data detected!";
-
-  return (
-    <Alert severity="success" icon={<CheckCircleOutlineIcon />}>
-      {message.charAt(0).toUpperCase() + message.slice(1)}
-    </Alert>
-  );
+  return "Data detected!";
 }

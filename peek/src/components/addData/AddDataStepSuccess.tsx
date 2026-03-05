@@ -72,19 +72,17 @@ export default function AddDataStepSuccess({
 
   return (
     <Paper variant="outlined" sx={{ display: "flex", flexDirection: "column", gap: 1.5, p: 1.5 }}>
-      <Typography variant="h6">
-        {hasVerifiedSignals ? "Explore your data + next steps" : "Next steps"}
-      </Typography>
+      <Typography variant="h6">{hasVerifiedSignals ? "You're all set" : "Next steps"}</Typography>
       <Typography variant="body2" color="text.secondary">
         {hasVerifiedSignals
-          ? `${techName} is configured. Choose a next action to explore dashboards, set up alerting, or onboard another source.`
-          : `${techName} setup is complete but data has not been verified yet. You can explore your data or go back to verify.`}
+          ? `Data is flowing from ${techName}. Explore dashboards, set up alerting, or add another source.`
+          : `${techName} setup is complete, but data is not verified yet. Start your collector, then verify or explore now.`}
       </Typography>
       {outcomeSignals.length > 0 && (
         <Alert severity={hasVerifiedSignals ? "success" : "info"}>
           {hasVerifiedSignals
             ? `Verified signals: ${outcomeSignals.map((signal) => SIGNAL_NAV[signal].label).join(", ")}.`
-            : `Expected signals: ${outcomeSignals.map((signal) => SIGNAL_NAV[signal].label).join(", ")}. Run the collector and check back to verify.`}
+            : `Expected signals: ${outcomeSignals.map((signal) => SIGNAL_NAV[signal].label).join(", ")}. Run your collector and verify again.`}
         </Alert>
       )}
       <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>

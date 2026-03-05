@@ -1,15 +1,16 @@
-import Alert from "@mui/material/Alert";
+import ButtonBase from "@mui/material/ButtonBase";
+import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
-import ToggleButton from "@mui/material/ToggleButton";
-import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
-import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
+import Chip from "@mui/material/Chip";
 
 import { COMPONENT_HEIGHTS } from "../../../types/tokens";
-import type { EndpointType, Platform } from "../../../utils/addDataUtils";
+import type { Platform } from "../../../utils/addDataUtils";
 import type { AddDataEnvironment } from "../../../services/addData/catalog";
+
+import CollectorAlternatives from "./CollectorAlternatives";
 
 const ALL_PLATFORM_TABS: { value: Platform; label: string }[] = [
   { value: "kubernetes", label: "Kubernetes" },
@@ -20,79 +21,56 @@ const ALL_PLATFORM_TABS: { value: Platform; label: string }[] = [
 ];
 
 export interface EdotCollectorConfigureProps {
-  endpointType: EndpointType;
-  onEndpointTypeChange: (type: EndpointType) => void;
-  onEndpointTypeManuallySet: () => void;
-  probeTargetOtlpUrl: string | null;
-  ingestAvailable: boolean | null;
+  recommendedSelected: boolean;
+  onSelectRecommended: () => void;
   platform: Platform;
   onPlatformChange: (platform: Platform) => void;
   supportedEnvironments?: readonly AddDataEnvironment[];
+  onSwitchToTechnology?: (technologyId: "fluent-bit" | "vector") => void;
 }
 
 export default function EdotCollectorConfigure({
-  endpointType,
-  onEndpointTypeChange,
-  onEndpointTypeManuallySet,
-  probeTargetOtlpUrl,
-  ingestAvailable,
+  recommendedSelected,
+  onSelectRecommended,
   platform,
   onPlatformChange,
   supportedEnvironments,
+  onSwitchToTechnology,
 }: EdotCollectorConfigureProps) {
-  const filteredTabs = supportedEnvironments
+  const displayTabs = (supportedEnvironments ?? []).length
     ? ALL_PLATFORM_TABS.filter((tab) =>
-        supportedEnvironments.includes(tab.value as AddDataEnvironment),
+        (supportedEnvironments ?? []).includes(tab.value as AddDataEnvironment),
       )
-    : ALL_PLATFORM_TABS;
-  const displayTabs = filteredTabs.length > 0 ? filteredTabs : ALL_PLATFORM_TABS;
+    : [];
 
   return (
     <>
-      <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
-        <Typography variant="body2">Endpoint type</Typography>
-        <ToggleButtonGroup
-          value={endpointType}
-          exclusive
-          size="small"
-          onChange={(_, value: EndpointType | null) => {
-            if (value) {
-              onEndpointTypeManuallySet();
-              onEndpointTypeChange(value);
-            }
-          }}
-          aria-label="Endpoint type"
+      <Stack spacing={1}>
+        <ButtonBase
+          onClick={onSelectRecommended}
+          sx={{ display: "block", borderRadius: 1, textAlign: "left" }}
         >
-          <ToggleButton value="elasticsearch">Elasticsearch</ToggleButton>
-          <ToggleButton value="managed_otlp">
-            <Tooltip title="Send telemetry via OpenTelemetry Protocol to an Elastic-managed ingest endpoint.">
-              <span>Managed OTLP</span>
-            </Tooltip>
-          </ToggleButton>
-        </ToggleButtonGroup>
+          <Paper
+            variant="outlined"
+            sx={{
+              p: 1.5,
+              borderWidth: recommendedSelected ? 2 : 1,
+              borderColor: recommendedSelected ? "primary.main" : undefined,
+            }}
+          >
+            <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.5 }}>
+              <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                Monitor with OpenTelemetry Collector
+              </Typography>
+              <Chip size="small" color="primary" label="Recommended" />
+            </Stack>
+            <Typography variant="caption" color="text.secondary">
+              Full telemetry support with the guided EDOT onboarding flow.
+            </Typography>
+          </Paper>
+        </ButtonBase>
+        <CollectorAlternatives idPrefix="edot" onSwitchToTechnology={onSwitchToTechnology} />
       </Stack>
-
-      {endpointType === "managed_otlp" && (
-        <Alert
-          severity={
-            !probeTargetOtlpUrl
-              ? "warning"
-              : ingestAvailable
-                ? "success"
-                : ingestAvailable === false
-                  ? "warning"
-                  : "info"
-          }
-        >
-          {!probeTargetOtlpUrl
-            ? "Could not derive an OTLP endpoint from the Elasticsearch URL. Enter an ingest URL in connection settings or use an Elastic Cloud deployment."
-            : ingestAvailable === null
-              ? `Checking OTLP endpoint availability at ${probeTargetOtlpUrl}…`
-              : ingestAvailable
-                ? `OTLP endpoint verified at ${probeTargetOtlpUrl}`
-                : `Could not reach OTLP endpoint at ${probeTargetOtlpUrl} — verify the URL is correct`}
-        </Alert>
-      )}
 
       {displayTabs.length > 1 && (
         <Tabs

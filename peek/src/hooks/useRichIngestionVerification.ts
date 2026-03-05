@@ -24,7 +24,7 @@ export interface IngestionVerificationState {
   baseline: IngestionSnapshot | null;
   current: IngestionSnapshot | null;
   deltas: PerSignalDelta[];
-  /** True if any signal shows a new data stream, new hosts/agents, or growing doc count. */
+  /** True if any signal shows a new data stream, new hosts/agents, or meaningful volume changes. */
   overallDetected: boolean;
   /** Tier 1 data stream signals (from the latest poll). */
   dataStreamSignals: Set<TelemetrySignal>;
@@ -113,10 +113,7 @@ export function useRichIngestionVerification(
 
   const deltas = baseline && current ? computeIngestionDelta(baseline, current) : [];
 
-  const overallDetected = deltas.some(
-    (d) =>
-      d.dataStreamAppeared || d.isDataFlowing || d.newHostsDetected > 0 || d.newAgentsDetected > 0,
-  );
+  const overallDetected = deltas.some((d) => d.signalDetected);
 
   // Status derivation
   const anyError = baselineQuery.isError || pollQuery.isError;

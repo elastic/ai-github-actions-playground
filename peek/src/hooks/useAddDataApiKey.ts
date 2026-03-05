@@ -7,6 +7,7 @@ import type { DataFetchResult } from "../types/query";
 
 export function useAddDataApiKey(): DataFetchResult<string> & {
   createKey: () => void;
+  reset: () => void;
 } {
   const connection = useConnectionStore((s) => s.connection);
   const mutation = useMutation({
@@ -25,15 +26,19 @@ export function useAddDataApiKey(): DataFetchResult<string> & {
     if (!connection) return;
     mutation.mutate();
   }, [connection, mutation]);
+  const reset = useCallback(() => {
+    mutation.reset();
+  }, [mutation]);
 
-  if (mutation.isPending) return { status: "loading", createKey };
+  if (mutation.isPending) return { status: "loading", createKey, reset };
   if (mutation.isError) {
     return {
       status: "error",
       error: isElasticsearchError(mutation.error) ? mutation.error.message : String(mutation.error),
       createKey,
+      reset,
     };
   }
-  if (mutation.isSuccess) return { status: "success", data: mutation.data, createKey };
-  return { status: "idle", createKey };
+  if (mutation.isSuccess) return { status: "success", data: mutation.data, createKey, reset };
+  return { status: "idle", createKey, reset };
 }

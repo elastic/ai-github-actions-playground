@@ -13,6 +13,8 @@ interface CollapsibleSectionProps {
   subtitle?: string;
   expanded: boolean;
   onToggle: () => void;
+  /** Optional leading icon in header (left side, before title). */
+  leading?: ReactNode;
   /** Show a green checkmark to indicate the section is "done". */
   completed?: boolean;
   /** Optional trailing element in the header (e.g. a status indicator). */
@@ -25,6 +27,7 @@ export default function CollapsibleSection({
   subtitle,
   expanded,
   onToggle,
+  leading,
   completed,
   trailing,
   children,
@@ -44,6 +47,7 @@ export default function CollapsibleSection({
         }}
       >
         <Box sx={{ display: "flex", gap: 1, alignItems: "center", minWidth: 0 }}>
+          {leading}
           {completed && <CheckCircleIcon color="success" fontSize="small" />}
           <Box>
             <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>

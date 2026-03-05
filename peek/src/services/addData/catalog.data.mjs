@@ -20,7 +20,7 @@ export const ADD_DATA_EXPERIENCE_DESCRIPTIONS = {
   kubernetes: "Collect cluster, node, and workload telemetry",
   servers: "Monitor Linux, Windows, or macOS hosts and VMs",
   saas_databases: "Connect databases and services with OTel receivers",
-  advanced: "Configure custom collectors, FluentBit, or APM agents",
+  advanced: "Configure custom collectors, Fluent Bit, or APM agents",
 };
 
 export const ADD_DATA_PRIMARY_EXPERIENCES = [
