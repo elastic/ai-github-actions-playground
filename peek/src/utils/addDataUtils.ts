@@ -358,15 +358,7 @@ docker compose up -d`;
     label: "Linux",
     quickstartUrl:
       "https://www.elastic.co/docs/solutions/observability/get-started/quickstart-monitor-hosts-with-opentelemetry",
-    command: ({
-      esUrl,
-      version,
-      apiKey,
-      endpointType,
-      otlpUrl,
-      runMode = "run_once",
-      linuxPackageFormat = "deb",
-    }) => {
+    command: ({ esUrl, version, apiKey, endpointType, otlpUrl, linuxPackageFormat = "deb" }) => {
       const isOtlp = endpointType === "managed_otlp";
       const sampleConfig = isOtlp
         ? "otel_samples/managed_otlp/platformlogs_hostmetrics.yml"

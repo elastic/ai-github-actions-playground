@@ -246,8 +246,8 @@ export default function EdotCollectorInstall({
         )}
 
         <Alert severity="info" sx={{ mt: 1.5 }}>
-          API key, endpoint, and version are pre-filled. Copy and run the commands to complete
-          setup.
+          API key, endpoint, and version are pre-filled ({prefilledCount}/3). Copy and run the
+          commands to complete setup.
         </Alert>
       </Box>
     </Stack>

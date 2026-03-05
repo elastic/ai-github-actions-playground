@@ -75,12 +75,12 @@ const DOC_RATE_LOOKBACK_GTE = "now-60s";
 
 async function queryHostAgentCardinality(
   client: ElasticsearchClient,
-  signalType: TelemetrySignal,
+  indexPattern: string,
   signal?: AbortSignal,
 ): Promise<{ hostCount: number; serviceCount: number; agentCount: number }> {
   const data = await gracefulSearch(
     client,
-    `${signalType}-*`,
+    indexPattern,
     {
       size: 0,
       // Use a longer window for infra cardinality to avoid short-lived host churn.
@@ -204,7 +204,7 @@ export async function captureIngestionSnapshot(
     expectedSignals.map(async (signalType): Promise<PerSignalSnapshot> => {
       const indexPattern = getIngestionIndexPattern(signalType, hostOnboarding);
       const [cardinality, entityNames, docCount, docsPerSecond, maxTimestamp] = await Promise.all([
-        queryHostAgentCardinality(client, signalType, indexPattern, signal),
+        queryHostAgentCardinality(client, indexPattern, signal),
         queryRecentEntityNames(client, indexPattern, signal),
         queryDocCount(client, indexPattern, signal),
         queryDocsPerSecond(client, indexPattern, signal),
