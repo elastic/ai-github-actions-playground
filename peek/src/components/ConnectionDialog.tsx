@@ -320,7 +320,12 @@ export default function ConnectionDialog() {
     <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
       <DialogTitle>Elasticsearch Connection</DialogTitle>
       <DialogContent>
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+        <Box
+          component="form"
+          onSubmit={(e: React.FormEvent) => e.preventDefault()}
+          autoComplete="on"
+          sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}
+        >
           <Typography variant="caption" color="text.secondary">
             Enter your endpoint and credentials. Connections are direct from the browser unless a
             proxy URL is configured.
@@ -393,7 +398,7 @@ export default function ConnectionDialog() {
                 setApiKey(e.target.value);
                 setActiveProfileId(null);
               }}
-              helperText="In browser mode, stored in session storage and cleared when the tab closes; in Electron, stored in the OS credential store."
+              helperText="In browser mode, credentials are stored in session storage and cleared when the tab closes; in Electron, credentials are stored in the OS credential store."
               slotProps={{
                 input: {
                   endAdornment: (
@@ -416,6 +421,7 @@ export default function ConnectionDialog() {
               <TextField
                 label="Username"
                 fullWidth
+                autoComplete="username"
                 value={username}
                 onChange={(e) => {
                   setUsername(e.target.value);
@@ -425,13 +431,14 @@ export default function ConnectionDialog() {
               <TextField
                 label="Password"
                 fullWidth
+                autoComplete="current-password"
                 type={showSecret ? "text" : "password"}
                 value={password}
                 onChange={(e) => {
                   setPassword(e.target.value);
                   setActiveProfileId(null);
                 }}
-                helperText="In browser mode, stored in session storage and cleared when the tab closes; in Electron, stored in the OS credential store."
+                helperText="In browser mode, credentials are stored in session storage and cleared when the tab closes; in Electron, credentials are stored in the OS credential store."
                 slotProps={{
                   input: {
                     endAdornment: (
