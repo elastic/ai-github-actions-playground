@@ -260,8 +260,11 @@ function AgentOverview({ agent, logs }: { agent: ElasticAgentInfo; logs: Elastic
             Recent Errors
           </Typography>
           <Stack spacing={0.5}>
-            {recentErrors.map((log, i) => (
-              <Box key={i} sx={{ display: "flex", gap: 1, alignItems: "baseline" }}>
+            {recentErrors.map((log) => (
+              <Box
+                key={`${log.timestamp}-${log.component}`}
+                sx={{ display: "flex", gap: 1, alignItems: "baseline" }}
+              >
                 <Typography variant="caption" color="text.secondary" sx={{ flexShrink: 0 }}>
                   {formatFleetTime(log.timestamp)}
                 </Typography>
@@ -343,9 +346,9 @@ function AgentLogs({
           fontFamily: "monospace",
         }}
       >
-        {filtered.map((log, i) => (
+        {filtered.map((log) => (
           <Box
-            key={i}
+            key={`${log.timestamp}-${log.message.slice(0, 80)}`}
             sx={{
               display: "flex",
               gap: 1,

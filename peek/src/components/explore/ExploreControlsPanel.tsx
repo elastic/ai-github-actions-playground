@@ -158,7 +158,7 @@ export default function ExploreControlsPanel({
           </Typography>
           {filters.map((f, i) => (
             <Chip
-              key={`${f.field}-${f.op}-${f.value}-${i}`}
+              key={`${f.field}-${f.op}-${f.value}`}
               label={`${f.field} ${f.op} "${f.value}"`}
               size="small"
               onDelete={() => onRemoveFilter(i)}

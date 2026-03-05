@@ -41,7 +41,7 @@ export default function DataTableBody({
 }: DataTableBodyProps) {
   return (
     <TableBody>
-      {visibleRows.map((row, rowIdx) => (
+      {[...visibleRows.entries()].map(([rowIdx, row]) => (
         <Tooltip
           key={page * rowsPerPage + rowIdx}
           title="Click to inspect row"

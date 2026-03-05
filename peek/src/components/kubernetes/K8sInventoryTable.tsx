@@ -58,7 +58,7 @@ export default function K8sInventoryTable({
         sortDirection,
         handleSort,
         "Namespace inventory",
-        (r, index) => `${r.namespace}-${index}`,
+        (r) => r.namespace,
       );
     case "workloads":
       return renderTable(
@@ -68,7 +68,7 @@ export default function K8sInventoryTable({
         sortDirection,
         handleSort,
         "Workload inventory",
-        (r, index) => `${r.workloadName}-${index}`,
+        (r) => `${r.workloadName}-${r.workloadKind}`,
       );
     case "pods":
       return renderTable(
@@ -78,7 +78,7 @@ export default function K8sInventoryTable({
         sortDirection,
         handleSort,
         "Pod inventory",
-        (r, index) => `${r.namespace}-${r.podName}-${index}`,
+        (r) => `${r.namespace}-${r.podName}`,
       );
     default: {
       const _exhaustive: never = activeTab;

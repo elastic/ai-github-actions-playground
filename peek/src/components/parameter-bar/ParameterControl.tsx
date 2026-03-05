@@ -143,9 +143,9 @@ export default function ParameterControl({
                 <MenuItem value="false">false</MenuItem>
               </>
             )}
-            {options.map((opt, idx) => (
+            {options.map((opt) => (
               <MenuItem
-                key={`option-${idx}-${opt.label}`}
+                key={`option-${opt.label}-${String(opt.value)}`}
                 value={formatValueForInput(param.type, opt.value)}
               >
                 {opt.label}

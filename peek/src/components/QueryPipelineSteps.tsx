@@ -47,7 +47,7 @@ export default function QueryPipelineSteps({
         const durationMs = stepDurationsMs?.[idx];
         return (
           <Tooltip
-            key={idx}
+            key={step}
             title={
               durationMs !== undefined ? (
                 <>

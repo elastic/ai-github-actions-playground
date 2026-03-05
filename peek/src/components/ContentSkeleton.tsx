@@ -19,8 +19,8 @@ export default function ContentSkeleton({ variant }: ContentSkeletonProps) {
             gap: 1,
           }}
         >
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} variant="rounded" height={90} />
+          {[...Array(4).keys()].map((n) => (
+            <Skeleton key={n} variant="rounded" height={90} />
           ))}
         </Box>
         <Skeleton variant="rounded" height={220} />
@@ -40,8 +40,8 @@ export default function ContentSkeleton({ variant }: ContentSkeletonProps) {
   if (variant === "list") {
     return (
       <Stack spacing={1}>
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Skeleton key={i} variant="rounded" height={48} />
+        {[...Array(5).keys()].map((n) => (
+          <Skeleton key={n} variant="rounded" height={48} />
         ))}
       </Stack>
     );
@@ -58,8 +58,8 @@ export default function ContentSkeleton({ variant }: ContentSkeletonProps) {
             gap: 1,
           }}
         >
-          {Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton key={i} variant="rounded" height={72} />
+          {[...Array(3).keys()].map((n) => (
+            <Skeleton key={n} variant="rounded" height={72} />
           ))}
         </Box>
         <Skeleton variant="rounded" height={200} />
@@ -70,8 +70,8 @@ export default function ContentSkeleton({ variant }: ContentSkeletonProps) {
   return (
     <Stack spacing={1}>
       <Skeleton variant="rounded" height={32} />
-      {Array.from({ length: 6 }).map((_, i) => (
-        <Skeleton key={i} variant="text" height={24} />
+      {[...Array(6).keys()].map((n) => (
+        <Skeleton key={n} variant="text" height={24} />
       ))}
     </Stack>
   );

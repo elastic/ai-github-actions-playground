@@ -158,7 +158,7 @@ export default function EdotCollectorInstall({
                 {commandSteps.map((step, index) => {
                   const safeCommand = redactApiKey(step.command);
                   return (
-                    <Paper key={index} variant="outlined" sx={{ p: 1.5 }}>
+                    <Paper key={step.number} variant="outlined" sx={{ p: 1.5 }}>
                       <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
                         <Chip
                           label={step.number}
@@ -210,7 +210,7 @@ export default function EdotCollectorInstall({
                 {commandSteps.map((step, index) => {
                   const safeCommand = redactApiKey(step.command);
                   return (
-                    <Paper key={index} variant="outlined" sx={{ p: 1.5 }}>
+                    <Paper key={step.number} variant="outlined" sx={{ p: 1.5 }}>
                       <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
                         <Chip
                           label={step.number}

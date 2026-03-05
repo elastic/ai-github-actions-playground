@@ -159,8 +159,8 @@ export default function DiscoverPage({ mode = "query-lab" }: DiscoverPageProps) 
           {o.loading && !o.result && (
             <Box sx={{ p: 2 }}>
               <Skeleton variant="rectangular" height={36} sx={{ mb: 1, borderRadius: 1 }} />
-              {[...Array(6)].map((_, i) => (
-                <Skeleton key={i} variant="text" height={28} sx={{ mb: 0.5 }} />
+              {[...Array(6).keys()].map((n) => (
+                <Skeleton key={n} variant="text" height={28} sx={{ mb: 0.5 }} />
               ))}
             </Box>
           )}

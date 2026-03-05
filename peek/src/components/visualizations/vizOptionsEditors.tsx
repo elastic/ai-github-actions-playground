@@ -129,7 +129,10 @@ function ThresholdEditor({
       </Box>
 
       {steps.map((step, idx) => (
-        <Box key={idx} sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+        <Box
+          key={`${step.value}-${step.color}`}
+          sx={{ display: "flex", gap: 1, alignItems: "center" }}
+        >
           <TextField
             size="small"
             type="number"

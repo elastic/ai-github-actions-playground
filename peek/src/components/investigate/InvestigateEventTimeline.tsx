@@ -98,9 +98,9 @@ export default function InvestigateEventTimeline({
         />
 
         {/* event tick marks */}
-        {eventTicks.map((pct, i) => (
+        {eventTicks.map((pct) => (
           <Box
-            key={i}
+            key={pct}
             sx={{
               position: "absolute",
               top: 24,

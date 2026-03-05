@@ -521,8 +521,8 @@ export default function ParameterDialog({
             </Box>
             {esqlOptions.length > 0 && (
               <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                {esqlOptions.slice(0, 20).map((opt, idx) => (
-                  <Chip key={`${opt}-${idx}`} label={opt} size="small" variant="outlined" />
+                {esqlOptions.slice(0, 20).map((opt) => (
+                  <Chip key={opt} label={opt} size="small" variant="outlined" />
                 ))}
                 {esqlOptions.length > 20 && (
                   <Typography variant="caption" color="text.secondary">

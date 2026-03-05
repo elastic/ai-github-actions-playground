@@ -28,21 +28,21 @@ export default function SimulateResults({ simulateResult }: SimulateResultsProps
         {(simulateResult.docs?.length ?? 0) !== 1 ? "s" : ""}
       </Typography>
       <Box data-testid="simulate-result" sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-        {simulateResult.docs?.map((docResult, idx) => {
+        {[...(simulateResult.docs ?? []).entries()].map(([docIdx, docResult]) => {
           const isError = !!docResult.doc?.error;
-          const isExpanded = expandedDocs.has(idx);
+          const isExpanded = expandedDocs.has(docIdx);
           const hasTrace = (docResult.processor_results?.length ?? 0) > 0;
           return (
-            <Paper key={idx} variant="outlined" sx={{ p: 1 }}>
+            <Paper key={docIdx} variant="outlined" sx={{ p: 1 }}>
               <Stack direction="row" spacing={1} alignItems="center">
                 <Chip
                   size="small"
                   label={isError ? "Error" : "OK"}
                   color={isError ? "error" : "success"}
-                  data-testid={`doc-result-status-${idx}`}
+                  data-testid={`doc-result-status-${docIdx}`}
                 />
                 <Typography variant="body2" sx={{ flex: 1 }}>
-                  Doc {idx + 1}
+                  Doc {docIdx + 1}
                   {isError &&
                     docResult.doc?.error &&
                     ` — ${docResult.doc.error.type}: ${docResult.doc.error.reason}`}
@@ -52,13 +52,13 @@ export default function SimulateResults({ simulateResult }: SimulateResultsProps
                   onClick={() => {
                     setExpandedDocs((prev) => {
                       const next = new Set(prev);
-                      if (next.has(idx)) next.delete(idx);
-                      else next.add(idx);
+                      if (next.has(docIdx)) next.delete(docIdx);
+                      else next.add(docIdx);
                       return next;
                     });
                   }}
                   aria-expanded={isExpanded}
-                  aria-label={`${isExpanded ? "Collapse" : "Expand"} Doc ${idx + 1}`}
+                  aria-label={`${isExpanded ? "Collapse" : "Expand"} Doc ${docIdx + 1}`}
                 >
                   {isExpanded ? "Collapse" : "Expand"}
                 </Button>
@@ -101,11 +101,11 @@ export default function SimulateResults({ simulateResult }: SimulateResultsProps
                         Processor trace
                       </Typography>
                       <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-                        {docResult.processor_results?.map((pr, prIdx) => (
+                        {[...(docResult.processor_results ?? []).entries()].map(([prIdx, pr]) => (
                           <Stack key={prIdx} direction="row" spacing={1} alignItems="center">
                             <Chip
                               size="small"
-                              data-testid={`processor-trace-status-${idx}-${prIdx}`}
+                              data-testid={`processor-trace-status-${docIdx}-${prIdx}`}
                               label={
                                 pr.status === "success"
                                   ? "OK"

@@ -130,8 +130,11 @@ function DriverRow({ driver, index }: DriverRowProps) {
                     const bNanos = b.status?.elapsed_nanos ?? b.status?.process_nanos ?? 0;
                     return bNanos - aNanos;
                   })
-                  .map((op, opIdx) => (
-                    <TableRow key={opIdx} hover>
+                  .map((op) => (
+                    <TableRow
+                      key={`${op.operator ?? "op"}-${String(op.status?.elapsed_nanos ?? "")}-${String(op.status?.process_nanos ?? "")}`}
+                      hover
+                    >
                       <TableCell>
                         <Typography variant="caption">{op.operator ?? "—"}</Typography>
                       </TableCell>
@@ -230,7 +233,11 @@ export default function QueryProfilePanel({ profile }: QueryProfilePanelProps) {
         {knownShape ? (
           (profile.drivers ?? []).length > 0 ? (
             (profile.drivers ?? []).map((driver, idx) => (
-              <DriverRow key={idx} driver={driver} index={idx} />
+              <DriverRow
+                key={`${driver.description ?? ""}-${driver.cluster_name ?? ""}-${driver.node_name ?? ""}`}
+                driver={driver}
+                index={idx}
+              />
             ))
           ) : (
             <Typography variant="caption" color="text.secondary" sx={{ display: "block", p: 1.5 }}>

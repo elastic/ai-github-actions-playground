@@ -432,7 +432,7 @@ export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
             >
               root
             </Link>
-            {zoomPath.map((name, i) =>
+            {[...zoomPath.entries()].map(([i, name]) =>
               i < zoomPath.length - 1 ? (
                 <Link
                   key={i}
