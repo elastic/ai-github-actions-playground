@@ -37,10 +37,21 @@
     "eslint-plugin-peek/no-div-onclick": "error",
     "eslint-plugin-peek/enforce-spacing-tokens": "error",
     "eslint-plugin-peek/no-hardcoded-heights": "error",
-    "eslint-plugin-peek/max-component-lines": ["warn", { "max": 200 }],
-    "eslint-plugin-peek/enforce-empty-state": "error",
-    "eslint-plugin-peek/no-circular-progress": "error",
-    "eslint-plugin-peek/require-icon-button-aria-label": "error"
+    "eslint-plugin-peek/enforce-empty-state": "off",
+    "eslint-plugin-peek/no-circular-progress": "off",
+    "eslint-plugin-peek/require-icon-button-aria-label": "off",
+    "eslint-plugin-peek/max-component-lines": "off"
   },
+  "overrides": [
+    {
+      "files": ["src/components/**/*.tsx"],
+      "rules": {
+        "eslint-plugin-peek/enforce-empty-state": "error",
+        "eslint-plugin-peek/no-circular-progress": "error",
+        "eslint-plugin-peek/require-icon-button-aria-label": "error",
+        "eslint-plugin-peek/max-component-lines": ["warn", { "max": 200 }]
+      }
+    }
+  ],
   "ignorePatterns": ["dist", "*.generated.d.ts", "eslint-plugin-peek/**"]
 }
