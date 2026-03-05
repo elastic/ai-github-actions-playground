@@ -390,6 +390,7 @@ describe("AddDataPage", () => {
 
     // Technology-specific recommended next steps from Kubernetes catalog entry
     expect(screen.getByRole("button", { name: "Explore metrics" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Open Logs" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Open Query Lab" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Open traces" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Add another source" })).toBeInTheDocument();

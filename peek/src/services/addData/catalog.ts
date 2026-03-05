@@ -70,6 +70,7 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     expectedSignals: ["metrics", "logs", "traces"],
     recommendedNextSteps: [
       { id: "inspect-aws-health", label: "Explore metrics", path: "/explore" },
+      { id: "open-aws-logs", label: "Open Logs", path: "/logs" },
       { id: "inspect-aws-logs", label: "Open Query Lab", path: "/discover" },
       { id: "inspect-aws-traces", label: "Open traces", path: "/traces" },
     ],
@@ -84,6 +85,7 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     supportedEnvironments: ["aws", "gcp", "azure", "on_prem"],
     expectedSignals: ["logs", "metrics"],
     recommendedNextSteps: [
+      { id: "open-flow-logs", label: "Open Logs", path: "/logs" },
       { id: "inspect-network-traffic", label: "Open Query Lab", path: "/discover" },
       { id: "inspect-network-metrics", label: "Explore metrics", path: "/explore" },
     ],
@@ -99,6 +101,7 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     expectedSignals: ["metrics", "logs", "traces"],
     recommendedNextSteps: [
       { id: "view-cluster-metrics", label: "Explore metrics", path: "/explore" },
+      { id: "open-pod-logs", label: "Open Logs", path: "/logs" },
       { id: "inspect-pod-logs", label: "Open Query Lab", path: "/discover" },
       { id: "review-service-traces", label: "Open traces", path: "/traces" },
     ],
@@ -114,6 +117,7 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     expectedSignals: ["logs", "metrics", "traces"],
     recommendedNextSteps: [
       { id: "view-host-metrics", label: "Explore metrics", path: "/explore" },
+      { id: "open-container-logs", label: "Open Logs", path: "/logs" },
       { id: "inspect-container-logs", label: "Open Query Lab", path: "/discover" },
       { id: "review-container-traces", label: "Open traces", path: "/traces" },
     ],
@@ -129,6 +133,7 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     expectedSignals: ["logs", "metrics"],
     recommendedNextSteps: [
       { id: "view-host-overview", label: "Explore metrics", path: "/explore" },
+      { id: "open-host-logs", label: "Open Logs", path: "/logs" },
       { id: "inspect-system-logs", label: "Open Query Lab", path: "/discover" },
     ],
   },
@@ -143,6 +148,7 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     expectedSignals: ["logs", "metrics"],
     recommendedNextSteps: [
       { id: "view-host-overview", label: "Explore metrics", path: "/explore" },
+      { id: "open-host-logs", label: "Open Logs", path: "/logs" },
       { id: "inspect-system-logs", label: "Open Query Lab", path: "/discover" },
     ],
   },
@@ -157,6 +163,7 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     expectedSignals: ["logs", "metrics"],
     recommendedNextSteps: [
       { id: "view-host-overview", label: "Explore metrics", path: "/explore" },
+      { id: "open-host-logs", label: "Open Logs", path: "/logs" },
       { id: "inspect-system-logs", label: "Open Query Lab", path: "/discover" },
     ],
   },
@@ -170,6 +177,7 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     supportedEnvironments: ["kubernetes", "docker", "linux", "on_prem"],
     expectedSignals: ["logs", "metrics"],
     recommendedNextSteps: [
+      { id: "open-nginx-logs", label: "Open Logs", path: "/logs" },
       { id: "inspect-nginx-traffic", label: "Open Query Lab", path: "/discover" },
       { id: "check-http-latency", label: "Explore metrics", path: "/explore" },
     ],
@@ -185,6 +193,7 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     expectedSignals: ["logs", "metrics"],
     recommendedNextSteps: [
       { id: "inspect-db-health", label: "Explore metrics", path: "/explore" },
+      { id: "open-db-logs", label: "Open Logs", path: "/logs" },
       { id: "inspect-db-logs", label: "Open Query Lab", path: "/discover" },
     ],
   },
@@ -372,6 +381,7 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     supportedEnvironments: ["kubernetes", "docker", "linux", "on_prem"],
     expectedSignals: ["logs"],
     recommendedNextSteps: [
+      { id: "open-fluent-bit-logs", label: "Open Logs", path: "/logs" },
       { id: "inspect-fluent-bit-logs", label: "Open Query Lab", path: "/discover" },
     ],
   },
@@ -385,6 +395,7 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     supportedEnvironments: ["kubernetes", "docker", "linux", "on_prem"],
     expectedSignals: ["logs"],
     recommendedNextSteps: [
+      { id: "open-vector-logs", label: "Open Logs", path: "/logs" },
       { id: "inspect-vector-logs", label: "Open Query Lab", path: "/discover" },
     ],
   },
@@ -398,6 +409,7 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     supportedEnvironments: ["kubernetes", "docker", "linux", "on_prem"],
     expectedSignals: ["logs"],
     recommendedNextSteps: [
+      { id: "open-fluentd-logs", label: "Open Logs", path: "/logs" },
       { id: "inspect-fluentd-logs", label: "Open Query Lab", path: "/discover" },
     ],
   },
@@ -411,6 +423,7 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     supportedEnvironments: ["kubernetes", "docker", "linux", "on_prem"],
     expectedSignals: ["logs"],
     recommendedNextSteps: [
+      { id: "open-filebeat-logs", label: "Open Logs", path: "/logs" },
       { id: "inspect-filebeat-logs", label: "Open Query Lab", path: "/discover" },
     ],
   },
@@ -424,6 +437,7 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     supportedEnvironments: ["kubernetes", "docker", "linux", "on_prem"],
     expectedSignals: ["logs"],
     recommendedNextSteps: [
+      { id: "open-logstash-logs", label: "Open Logs", path: "/logs" },
       { id: "inspect-logstash-logs", label: "Open Query Lab", path: "/discover" },
     ],
   },
