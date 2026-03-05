@@ -90,10 +90,6 @@ export function useExploreQuery({
         throw new Error("Missing connection or query definition");
       }
       const client = new ElasticsearchClient(connection);
-      // Skip time params for override queries — user-edited queries contain concrete time expressions
-      if (trimmedOverride) {
-        return client.query({ query: trimmedOverride }, signal);
-      }
       const params = buildTimeParams(trimmedEffectiveEsql, timeRange);
       return client.query(
         Object.keys(params).length > 0

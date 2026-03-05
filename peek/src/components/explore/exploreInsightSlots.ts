@@ -13,6 +13,7 @@ export const EXPLORE_INSIGHT_SLOTS: InsightSlotDefinition[] = [
   },
   {
     slotId: EXPLORE_INSIGHT_SLOT_IDS.exploreContent,
-    label: "Metrics content area — chart visualization, dimension overview, and metric overview",
+    label:
+      "Metrics chart — when showing an ungrouped metric, suggest the best dimension to group by (use suggestedDimension with exact field name)",
   },
 ];

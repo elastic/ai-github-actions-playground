@@ -13,7 +13,6 @@ import type { EditorView } from "@codemirror/view";
 
 import type { AggregationType, ExplorerFilter, FieldInfo } from "../../services/es";
 import { getAggregationOptions, buildExplorerQuery } from "../../services/es";
-import { resolveDateTime } from "../../services/datemath";
 import type { TimeRange } from "../../types/dashboard";
 import { COMPONENT_HEIGHTS } from "../../types/tokens";
 import MetricSearch from "../MetricSearch";
@@ -49,27 +48,6 @@ interface MetricsSearchPanelProps {
   searchResultCount: number | null;
   collapsed: boolean;
   onToggleCollapsed: () => void;
-}
-
-/**
- * Replace `?_tstart` / `?_tend` named-parameter placeholders with concrete
- * `TO_DATETIME("...")` expressions so the displayed ES|QL is self-contained
- * and editable in the CodeMirror editor.
- */
-function resolveTimePlaceholders(esql: string, timeRange: TimeRange): string {
-  const now = new Date();
-  let result = esql;
-  if (result.includes("?_tstart")) {
-    const resolved = resolveDateTime(timeRange.from, now);
-    const iso = resolved ? resolved.toISOString() : timeRange.from;
-    result = result.replaceAll("?_tstart", `TO_DATETIME("${iso}")`);
-  }
-  if (result.includes("?_tend")) {
-    const resolved = resolveDateTime(timeRange.to, now);
-    const iso = resolved ? resolved.toISOString() : timeRange.to;
-    result = result.replaceAll("?_tend", `TO_DATETIME("${iso}")`);
-  }
-  return result;
 }
 
 export default function MetricsSearchPanel({
@@ -119,7 +97,7 @@ export default function MetricsSearchPanel({
       groupBy: groupBy ?? undefined,
       timeRange,
     });
-    return resolveTimePlaceholders(result.esql, timeRange);
+    return result.esql;
   }, [indexPattern, selectedMetric, metricType, aggregation, filters, groupBy, timeRange]);
 
   const effectiveQuery = rawQuery ?? generatedQuery ?? "";
@@ -271,6 +249,10 @@ export default function MetricsSearchPanel({
       activeFilterCount={activeFilterCount}
       onResetFilters={handleResetFilters}
       renderFilterControls={renderFilterControls}
+      filterControlsLabel="Metrics picker"
+      showCollapsedQuerySummary={false}
+      showSearchButtons={false}
+      showQueryEditor={false}
     />
   );
 }

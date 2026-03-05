@@ -1,34 +1,46 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import Box from "@mui/material/Box";
 import Alert from "@mui/material/Alert";
+import Button from "@mui/material/Button";
+import Collapse from "@mui/material/Collapse";
 import IconButton from "@mui/material/IconButton";
+import Paper from "@mui/material/Paper";
+import Typography from "@mui/material/Typography";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import CloseIcon from "@mui/icons-material/Close";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import CodeMirror from "@uiw/react-codemirror";
 import { useShallow } from "zustand/react/shallow";
 import { parseAsString, useQueryState, useQueryStates } from "nuqs";
 import { EditorView } from "@codemirror/view";
+import TextField from "@mui/material/TextField";
 
 import { useDashboardEditorStore } from "../store/useDashboardEditorStore";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useThemeStore } from "../store/useThemeStore";
 import { useSearchPanelUIStore } from "../store/useSearchPanelUIStore";
 import { useExplorerStore } from "../store/useExplorerStore";
-import { ElasticsearchClient } from "../services/es";
+import { ElasticsearchClient, buildExplorerQuery, isDimensionField } from "../services/es";
 import type { FieldInfo, ExplorerFilter } from "../services/es";
 import type { EsqlResponse } from "../types";
 import { useExploreFields } from "../hooks/useExploreFields";
 import { useExploreQuery } from "../hooks/useExploreQuery";
 import { INSIGHT_GUARDRAIL } from "../hooks/insightPromptUtils";
 import { usePageSlotInsights } from "../hooks/usePageSlotInsights";
+import { formatEsqlQuery } from "../services/es/queryText";
 
+import QueryAnnotationOverlay, { useQueryExplanation } from "./QueryAnnotationOverlay";
 import { createEsqlQueryEditorExtensions } from "./queryEditorExtensions";
 import { InsightSlotProvider } from "./InsightSlotContext";
 import InsightSlot from "./InsightSlot";
 import MetricsSearchPanel from "./explore/MetricsSearchPanel";
+import NamespaceLanding from "./explore/NamespaceLanding";
 import ExploreContentArea from "./explore/ExploreContentArea";
 import { useExplorerUrlSync } from "./explore/useExplorerUrlSync";
 import {
+  encodeFilters,
   explorerSearchParsers,
   exploreSearchUrlKeys,
   metricNamespaceOf,
@@ -38,6 +50,9 @@ import { EXPLORE_INSIGHT_SLOT_IDS, EXPLORE_INSIGHT_SLOTS } from "./explore/explo
 const EXPLORE_SYSTEM_PROMPT =
   "You are a metrics observability assistant." +
   " Analyse the current metric exploration context and produce per-slot insights." +
+  " When the explore-content slot shows an ungrouped metric chart, suggest the most useful dimension to group by from the available dimensionFields. " +
+  " Include suggestedDimension with the exact field name (e.g. host.name) so the UI can offer a one-click Apply. " +
+  " Prefer dimensions that split the metric meaningfully (e.g. host.name for system metrics, service.name for app metrics)." +
   INSIGHT_GUARDRAIL;
 
 export default function ExplorePage() {
@@ -128,6 +143,10 @@ export default function ExplorePage() {
 
   const { fields, fieldsLoading } = useExploreFields(indexPattern);
   const [, setQueryContextView] = useState<EditorView | null>(null);
+  const [metricsQueryEditorCollapsed, setMetricsQueryEditorCollapsed] = useState(true);
+  const [metricsEditorFocused, setMetricsEditorFocused] = useState(false);
+  const [metricsExplainOpen, setMetricsExplainOpen] = useState(false);
+  const metricsExplainPanelId = useId();
 
   const client = useMemo(
     () => (connection ? new ElasticsearchClient(connection) : null),
@@ -138,6 +157,13 @@ export default function ExplorePage() {
     if (!selectedMetric) return null;
     return metricNamespaceOf(selectedMetric);
   }, [selectedMetric]);
+
+  useEffect(() => {
+    if (selectedNamespace === "metrics") {
+      setSelectedNamespace(null);
+    }
+  }, [selectedNamespace, setSelectedNamespace]);
+
   const selectedMetricField = useMemo(
     () => fields.find((field) => field.name === selectedMetric) ?? null,
     [fields, selectedMetric],
@@ -148,6 +174,7 @@ export default function ExplorePage() {
   // True when a metric is set (e.g. via URL) but does not exist in the loaded field list.
   const metricNotFound = selectedMetric !== null && !fieldsLoading && selectedMetricField === null;
 
+  const showLanding = !selectedNamespace && !selectedMetric;
   // Show namespace overview when a namespace is picked but no single metric is selected.
   const showOverview = selectedNamespace !== null && !selectedMetric;
   // Show dimension overview when a metric is selected but no groupBy is set yet.
@@ -201,6 +228,59 @@ export default function ExplorePage() {
     ],
     [],
   );
+
+  const effectiveQuery = useMemo(() => {
+    if (!selectedMetric) return "";
+    const result = buildExplorerQuery({
+      indexPattern,
+      metricField: selectedMetric,
+      metricType,
+      aggregation,
+      filters,
+      groupBy: groupBy ?? undefined,
+      timeRange: dashboard.timeRange,
+    });
+    return result.esql;
+  }, [
+    indexPattern,
+    selectedMetric,
+    metricType,
+    aggregation,
+    filters,
+    groupBy,
+    dashboard.timeRange,
+  ]);
+  const displayQuery = useMemo(() => {
+    const raw = rawQuery ?? effectiveQuery;
+    if (!raw.trim()) return raw;
+    return rawQuery ? raw : formatEsqlQuery(raw);
+  }, [rawQuery, effectiveQuery]);
+
+  const metricsQueryEditorExtensions = useMemo(
+    () => [
+      ...queryEditorExtensions,
+      EditorView.contentAttributes.of({ "aria-label": "ES|QL query editor" }),
+      EditorView.focusChangeEffect.of((state, focusing) => {
+        setMetricsEditorFocused(focusing);
+        if (!focusing) {
+          const current = state.doc.toString().trim();
+          if (current) {
+            const formatted = formatEsqlQuery(current);
+            if (formatted !== current) {
+              setRawQuery(formatted);
+            }
+          }
+        }
+        return null;
+      }),
+    ],
+    [queryEditorExtensions, setRawQuery],
+  );
+  const metricsQueryExplanation = useQueryExplanation(displayQuery);
+
+  useEffect(() => {
+    setRawQuery(null);
+  }, [effectiveQuery, setRawQuery]);
 
   // Cmd/Ctrl+[ toggles the search panel collapse
   useEffect(() => {
@@ -274,24 +354,67 @@ export default function ExplorePage() {
     [addFilter],
   );
 
+  const handleBackToNamespaceLanding = useCallback(() => {
+    setSelectedMetric(null);
+    setSelectedNamespace(null);
+    setGroupBy(null);
+    setRawQuery(null);
+    setSkipDimensionOverview(false);
+    // Clear URL-backed metric state immediately so it cannot be re-hydrated.
+    void Promise.all([
+      setUrlState({ selectedMetric: null, groupBy: null }),
+      setUrlFilters(encodeFilters([])),
+    ]);
+  }, [
+    setSelectedMetric,
+    setSelectedNamespace,
+    setGroupBy,
+    setRawQuery,
+    setUrlState,
+    setUrlFilters,
+  ]);
+
   const chartData: EsqlResponse | null = useMemo(() => {
     if (queryResult.status !== "success" || !queryResult.data) return null;
     return queryResult.data as EsqlResponse;
   }, [queryResult]);
+
+  const dimensionFieldNames = useMemo(() => {
+    const base = fields.filter(
+      (f) =>
+        isDimensionField(f) && f.name !== "_metrics_name_hash" && f.name !== "_metrics_names_hash",
+    );
+    if (!selectedMetricNamespace) return base.map((f) => f.name);
+    const scoped = base.filter(
+      (f) => f.name === selectedMetricNamespace || f.name.startsWith(`${selectedMetricNamespace}.`),
+    );
+    return (scoped.length > 0 ? scoped : base).map((f) => f.name);
+  }, [fields, selectedMetricNamespace]);
 
   const slotContext = useMemo(
     () =>
       JSON.stringify({
         indexPattern,
         selectedMetric,
+        metricType,
         aggregation,
         groupBy,
         filterCount: filters.length,
+        dimensionFields: dimensionFieldNames,
         rowCount: chartData?.values.length ?? 0,
         columns: chartData?.columns.map((c) => c.name) ?? [],
         sampleValues: chartData?.values.slice(0, 10) ?? [],
       }),
-    [indexPattern, selectedMetric, aggregation, groupBy, filters.length, chartData],
+    [
+      indexPattern,
+      selectedMetric,
+      metricType,
+      aggregation,
+      groupBy,
+      filters.length,
+      dimensionFieldNames,
+      chartData,
+    ],
   );
 
   const slotInsights = usePageSlotInsights({
@@ -302,6 +425,24 @@ export default function ExplorePage() {
     enabled: Boolean(selectedMetric && chartData),
   });
 
+  const renderExploreContentActions = useCallback(
+    (insight: { suggestedDimension?: string }) => {
+      const dim = insight.suggestedDimension?.trim();
+      if (!dim || !dimensionFieldNames.includes(dim) || groupBy) return null;
+      return (
+        <Button
+          size="small"
+          variant="contained"
+          onClick={() => handleDimensionSelect(dim)}
+          sx={{ mr: 0.5 }}
+        >
+          Group by {dim}
+        </Button>
+      );
+    },
+    [dimensionFieldNames, groupBy, handleDimensionSelect],
+  );
+
   return (
     <InsightSlotProvider
       summary={slotInsights.summary}
@@ -311,101 +452,264 @@ export default function ExplorePage() {
       refresh={slotInsights.refresh}
     >
       <Box sx={{ display: "flex", flexDirection: "column", gap: 1, height: "100%" }}>
-        <Box sx={{ width: "100%" }}>
-          <InsightSlot slotId={EXPLORE_INSIGHT_SLOT_IDS.exploreSearch}>
-            <Box sx={{ width: "100%" }}>
-              <MetricsSearchPanel
-                indexPattern={indexPattern}
+        {showLanding ? (
+          <>
+            {selectedMetric && (
+              <Paper variant="outlined" sx={{ p: 1.5 }}>
+                <TextField
+                  size="small"
+                  label="Index pattern"
+                  value={indexPattern}
+                  onChange={(e) => setIndexPattern(e.target.value)}
+                  placeholder="metrics-*"
+                  sx={{ width: 280, "& .MuiOutlinedInput-root": { height: 40 } }}
+                />
+              </Paper>
+            )}
+            <Paper
+              variant="outlined"
+              sx={{ display: "flex", flex: 1, flexDirection: "column", overflow: "auto" }}
+            >
+              <NamespaceLanding
                 fields={fields}
-                fieldsLoading={fieldsLoading}
-                selectedMetric={selectedMetric}
-                selectedNamespace={selectedNamespace}
-                metricType={metricType}
-                aggregation={aggregation}
-                filters={filters}
-                groupBy={groupBy}
-                rawQuery={rawQuery}
-                timeRange={dashboard.timeRange}
-                onIndexPatternChange={setIndexPattern}
-                onNamespaceChange={(namespace) => {
-                  setSelectedNamespace(namespace);
-                  if (
-                    selectedMetric &&
-                    namespace &&
-                    !selectedMetric.startsWith(`${namespace}.`) &&
-                    selectedMetric !== namespace
-                  ) {
-                    setSelectedMetric(null);
-                  }
-                }}
-                onMetricSelect={handleMetricSelect}
-                onAggregationChange={setAggregation}
-                onRemoveFilter={removeFilter}
-                onClearFilters={clearFilters}
-                onGroupByDelete={() => setGroupBy(null)}
-                onRawQueryChange={setRawQuery}
-                onCreateEditor={setQueryContextView}
-                queryEditorExtensions={queryEditorExtensions}
-                themeMode={themeMode}
-                searchLoading={queryResult.status === "loading"}
-                onSearch={handleSearch}
-                searchResultCount={chartData ? chartData.values.length : null}
-                collapsed={metricsSearchCollapsed}
-                onToggleCollapsed={() => setMetricsSearchCollapsed(!metricsSearchCollapsed)}
+                indexPattern={indexPattern}
+                onSelectNamespace={(ns) => setSelectedNamespace(ns)}
               />
+            </Paper>
+          </>
+        ) : (
+          <>
+            <Paper variant="outlined" sx={{ p: 1 }}>
+              <Button size="small" variant="text" onClick={handleBackToNamespaceLanding}>
+                Back to namespace browser
+              </Button>
+            </Paper>
+            <Box sx={{ width: "100%" }}>
+              <InsightSlot slotId={EXPLORE_INSIGHT_SLOT_IDS.exploreSearch}>
+                <Box sx={{ width: "100%" }}>
+                  <MetricsSearchPanel
+                    indexPattern={indexPattern}
+                    fields={fields}
+                    fieldsLoading={fieldsLoading}
+                    selectedMetric={selectedMetric}
+                    selectedNamespace={selectedNamespace}
+                    metricType={metricType}
+                    aggregation={aggregation}
+                    filters={filters}
+                    groupBy={groupBy}
+                    rawQuery={rawQuery}
+                    timeRange={dashboard.timeRange}
+                    onIndexPatternChange={setIndexPattern}
+                    onNamespaceChange={(namespace) => {
+                      setSelectedNamespace(namespace);
+                      if (
+                        selectedMetric &&
+                        namespace &&
+                        !selectedMetric.startsWith(`${namespace}.`) &&
+                        selectedMetric !== namespace
+                      ) {
+                        setSelectedMetric(null);
+                      }
+                    }}
+                    onMetricSelect={handleMetricSelect}
+                    onAggregationChange={setAggregation}
+                    onRemoveFilter={removeFilter}
+                    onClearFilters={clearFilters}
+                    onGroupByDelete={() => setGroupBy(null)}
+                    onRawQueryChange={setRawQuery}
+                    onCreateEditor={setQueryContextView}
+                    queryEditorExtensions={queryEditorExtensions}
+                    themeMode={themeMode}
+                    searchLoading={queryResult.status === "loading"}
+                    onSearch={handleSearch}
+                    searchResultCount={chartData ? chartData.values.length : null}
+                    collapsed={metricsSearchCollapsed}
+                    onToggleCollapsed={() => setMetricsSearchCollapsed(!metricsSearchCollapsed)}
+                  />
+                </Box>
+              </InsightSlot>
             </Box>
-          </InsightSlot>
-        </Box>
 
-        {/* Error display */}
-        {queryResult.status === "error" &&
-          queryResult.error &&
-          queryResult.error !== dismissedError && (
-            <Alert
-              severity="error"
-              action={
+            <Paper variant="outlined" sx={{ p: 1.5 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  gap: 0.5,
+                  alignItems: "center",
+                  mb: metricsQueryEditorCollapsed ? 0 : 1,
+                }}
+              >
                 <IconButton
                   size="small"
-                  aria-label="Dismiss error"
-                  onClick={() => setDismissedError(queryResult.error ?? null)}
+                  onClick={() => setMetricsQueryEditorCollapsed((v) => !v)}
+                  aria-expanded={!metricsQueryEditorCollapsed}
+                  aria-label={
+                    metricsQueryEditorCollapsed
+                      ? "Expand ES|QL query section"
+                      : "Collapse ES|QL query section"
+                  }
                 >
-                  <CloseIcon fontSize="small" />
+                  <ExpandMoreIcon
+                    sx={{
+                      transform: metricsQueryEditorCollapsed ? "rotate(-90deg)" : "rotate(0deg)",
+                      transition: "transform 0.2s",
+                      fontSize: 20,
+                    }}
+                  />
                 </IconButton>
-              }
-            >
-              {queryResult.error}
-            </Alert>
-          )}
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  ES|QL Query
+                </Typography>
+              </Box>
 
-        <Box sx={{ flex: 1, width: "100%", minHeight: 0 }}>
-          <InsightSlot slotId={EXPLORE_INSIGHT_SLOT_IDS.exploreContent}>
-            <Box sx={{ width: "100%" }}>
-              <ExploreContentArea
-                fields={fields}
-                client={client}
-                indexPattern={indexPattern}
-                selectedMetric={selectedMetric}
-                selectedMetricNamespace={selectedMetricNamespace}
-                metricType={metricType}
-                selectedNamespace={selectedNamespace}
-                groupBy={groupBy}
-                showOverview={showOverview}
-                showDimensionOverview={showDimensionOverview}
-                metricNotFound={metricNotFound}
-                chartData={chartData}
-                queryStatus={queryResult.status}
-                timeRange={dashboard.timeRange}
-                onMetricSelect={handleMetricSelect}
-                onDimensionSelect={handleDimensionSelect}
-                onBackToOverview={handleBackToOverview}
-                onBackToDimensionOverview={handleBackToDimensionOverview}
-                onViewUngrouped={handleViewUngrouped}
-                onAddFilter={handleAddFilter}
-                onSetGroupBy={setGroupBy}
-              />
+              {metricsQueryEditorCollapsed && (
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  noWrap
+                  sx={{ display: "block", fontStyle: "italic" }}
+                >
+                  {metricsQueryExplanation ?? displayQuery}
+                </Typography>
+              )}
+
+              <Collapse in={!metricsQueryEditorCollapsed} unmountOnExit>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ display: "block", mb: 0.5 }}
+                >
+                  Generated from the metrics picker. Edit before running if needed.
+                </Typography>
+                <Box
+                  sx={{ overflow: "hidden", border: 1, borderColor: "divider", borderRadius: 1 }}
+                >
+                  <Box sx={{ position: "relative" }}>
+                    <CodeMirror
+                      value={displayQuery}
+                      onChange={(v) => setRawQuery(v || null)}
+                      onCreateEditor={setQueryContextView}
+                      extensions={metricsQueryEditorExtensions}
+                      theme={themeMode}
+                      height="120px"
+                      basicSetup={{ lineNumbers: true, foldGutter: false, indentOnInput: false }}
+                    />
+                    <QueryAnnotationOverlay
+                      query={displayQuery}
+                      editorFocused={metricsEditorFocused}
+                      height={120}
+                    />
+                    <Box sx={{ position: "absolute", zIndex: 3, right: 8, bottom: 6 }}>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        startIcon={<AutoAwesomeIcon sx={{ fontSize: "14px !important" }} />}
+                        onClick={() => setMetricsExplainOpen((v) => !v)}
+                        aria-expanded={metricsExplainOpen}
+                        aria-controls={metricsExplainPanelId}
+                        sx={{
+                          minHeight: "unset",
+                          py: 0.5,
+                          px: 1,
+                          opacity: 0.75,
+                          lineHeight: 1.4,
+                          fontSize: "0.7rem",
+                          "&:hover": { opacity: 1 },
+                        }}
+                      >
+                        Explain Query
+                      </Button>
+                    </Box>
+                  </Box>
+                  <Collapse in={metricsExplainOpen}>
+                    <Box
+                      id={metricsExplainPanelId}
+                      sx={{
+                        py: 1,
+                        px: 1.5,
+                        borderTop: 1,
+                        borderColor: "divider",
+                        bgcolor: "action.hover",
+                      }}
+                    >
+                      {metricsQueryExplanation ? (
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ fontStyle: "italic" }}
+                        >
+                          {metricsQueryExplanation}
+                        </Typography>
+                      ) : (
+                        <Typography
+                          variant="body2"
+                          color="text.disabled"
+                          sx={{ fontStyle: "italic" }}
+                        >
+                          Generating explanation… (requires an AI provider configured in Settings)
+                        </Typography>
+                      )}
+                    </Box>
+                  </Collapse>
+                </Box>
+              </Collapse>
+            </Paper>
+
+            {/* Error display */}
+            {queryResult.status === "error" &&
+              queryResult.error &&
+              queryResult.error !== dismissedError && (
+                <Alert
+                  severity="error"
+                  action={
+                    <IconButton
+                      size="small"
+                      aria-label="Dismiss error"
+                      onClick={() => setDismissedError(queryResult.error ?? null)}
+                    >
+                      <CloseIcon fontSize="small" />
+                    </IconButton>
+                  }
+                >
+                  {queryResult.error}
+                </Alert>
+              )}
+
+            <Box sx={{ flex: 1, width: "100%", minHeight: 0 }}>
+              <InsightSlot
+                slotId={EXPLORE_INSIGHT_SLOT_IDS.exploreContent}
+                renderActions={renderExploreContentActions}
+              >
+                <Box sx={{ width: "100%" }}>
+                  <ExploreContentArea
+                    fields={fields}
+                    client={client}
+                    indexPattern={indexPattern}
+                    selectedMetric={selectedMetric}
+                    selectedMetricNamespace={selectedMetricNamespace}
+                    metricType={metricType}
+                    aggregation={aggregation}
+                    selectedNamespace={selectedNamespace}
+                    groupBy={groupBy}
+                    showOverview={showOverview}
+                    showDimensionOverview={showDimensionOverview}
+                    metricNotFound={metricNotFound}
+                    chartData={chartData}
+                    queryStatus={queryResult.status}
+                    timeRange={dashboard.timeRange}
+                    onMetricSelect={handleMetricSelect}
+                    onDimensionSelect={handleDimensionSelect}
+                    onBackToOverview={handleBackToOverview}
+                    onBackToDimensionOverview={handleBackToDimensionOverview}
+                    onViewUngrouped={handleViewUngrouped}
+                    onAddFilter={handleAddFilter}
+                    onSetGroupBy={setGroupBy}
+                  />
+                </Box>
+              </InsightSlot>
             </Box>
-          </InsightSlot>
-        </Box>
+          </>
+        )}
       </Box>
     </InsightSlotProvider>
   );

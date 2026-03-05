@@ -49,11 +49,15 @@ export default function MetricSearch({
   onNamespaceChange,
   onSelect,
 }: Props) {
+  const HIDDEN_NAMESPACE = "metrics";
   // Only show numeric (gauge/counter) fields for metric search
   const metricFields = useMemo(() => fields.filter((f) => f.metricType !== "unknown"), [fields]);
   const namespaceLabelId = useId();
   const namespaces = useMemo(
-    () => Array.from(new Set(metricFields.map((f) => metricNamespaceOf(f.name)))).sort(),
+    () =>
+      Array.from(new Set(metricFields.map((f) => metricNamespaceOf(f.name))))
+        .filter((namespace) => namespace !== HIDDEN_NAMESPACE)
+        .sort(),
     [metricFields],
   );
   const scopedMetricFields = useMemo(() => {

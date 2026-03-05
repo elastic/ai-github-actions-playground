@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { listFields, type FieldInfo } from "../services/es";
@@ -25,8 +26,33 @@ export function useExploreFields(indexPattern: string): {
   });
   useRefetchOnConnectionChange(connection, query.refetch);
 
+  const fields = useMemo(() => {
+    const all = query.data ?? [];
+    if (all.length === 0) return all;
+
+    // EDOT aliases many resource/attribute fields to root names (e.g.
+    // resource.attributes.host.name -> host.name). When both are present,
+    // keep the prefixed field and hide the duplicate root field.
+    const ATTRIBUTE_PREFIXES = ["attributes.", "resource.attributes."] as const;
+    const aliasedRootNames = new Set<string>();
+    for (const field of all) {
+      for (const prefix of ATTRIBUTE_PREFIXES) {
+        if (field.name.startsWith(prefix)) {
+          aliasedRootNames.add(field.name.slice(prefix.length));
+          break;
+        }
+      }
+    }
+
+    return all.filter((field) => {
+      const isPrefixed = ATTRIBUTE_PREFIXES.some((prefix) => field.name.startsWith(prefix));
+      if (isPrefixed) return true;
+      return !aliasedRootNames.has(field.name);
+    });
+  }, [query.data]);
+
   return {
-    fields: query.data ?? [],
+    fields,
     fieldsLoading: query.isFetching,
   };
 }

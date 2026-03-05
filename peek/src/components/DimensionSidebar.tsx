@@ -44,6 +44,8 @@ interface DimensionState {
   values: FieldValueEntry[];
 }
 
+const HIDDEN_DIMENSION_FIELDS = new Set(["_metrics_name_hash", "_metrics_names_hash"]);
+
 export default function DimensionSidebar({
   fields,
   client,
@@ -58,7 +60,9 @@ export default function DimensionSidebar({
   const abortRef = useRef<AbortController | null>(null);
 
   // Filter to only non-metric, non-timestamp dimension fields
-  const baseDimensionFields = fields.filter(isDimensionField);
+  const baseDimensionFields = fields.filter(
+    (f) => isDimensionField(f) && !HIDDEN_DIMENSION_FIELDS.has(f.name),
+  );
   const scopedDimensionFields =
     metricNamespace === null
       ? baseDimensionFields

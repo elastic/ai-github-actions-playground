@@ -6,7 +6,12 @@ import ShowChartIcon from "@mui/icons-material/ShowChart";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
 
-import type { FieldInfo, ExplorerFilter, ElasticsearchClient } from "../../services/es";
+import type {
+  AggregationType,
+  FieldInfo,
+  ExplorerFilter,
+  ElasticsearchClient,
+} from "../../services/es";
 import type { EsqlResponse } from "../../types";
 import DimensionSidebar from "../DimensionSidebar";
 import MetricOverviewGrid from "../MetricOverviewGrid";
@@ -21,6 +26,7 @@ interface ExploreContentAreaProps {
   selectedMetric: string | null;
   selectedMetricNamespace: string | null;
   metricType: "counter" | "gauge";
+  aggregation: AggregationType;
   selectedNamespace: string | null;
   groupBy: string | null;
   showOverview: boolean;
@@ -45,6 +51,7 @@ export default function ExploreContentArea({
   selectedMetric,
   selectedMetricNamespace,
   metricType,
+  aggregation,
   selectedNamespace,
   groupBy,
   showOverview,
@@ -117,6 +124,7 @@ export default function ExploreContentArea({
             fields={fields}
             metricField={selectedMetric}
             metricType={metricType}
+            aggregation={aggregation}
             metricNamespace={selectedMetricNamespace}
             indexPattern={indexPattern}
             timeRange={timeRange}
