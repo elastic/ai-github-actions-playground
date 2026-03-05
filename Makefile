@@ -22,7 +22,7 @@ help:
 	@echo "  build            - Production build to peek/dist/"
 	@echo "  preview          - Build then preview locally"
 	@echo "  lint             - oxfmt + oxlint on changed files + tsgo type check"
-	@echo "  lint-full        - oxfmt + oxlint + tsgo type check on all files"
+	@echo "  lint-full        - oxfmt + oxlint + tsgo + tsc type check on all files"
 	@echo "  format           - Auto-format changed files with oxfmt"
 	@echo "  format-full      - Auto-format src/ with oxfmt"
 	@echo "  ci               - npm ci + lint + unit tests + build (strict lockfile)"
