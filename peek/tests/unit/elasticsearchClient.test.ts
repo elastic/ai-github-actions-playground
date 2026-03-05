@@ -659,12 +659,21 @@ describe("getCapabilities", () => {
     expect(caps.canReadIngestPipelines).toBe(true);
   });
 
-  it("re-throws on a generic 400 Bad Request from _has_privileges (not a security-disabled signature)", async () => {
+  it("falls back to optimistic capabilities on a generic 400 from _has_privileges", async () => {
     const fetchSpy = mockFetchOnce({ error: { reason: "Bad Request" } }, { status: 400 });
     vi.stubGlobal("fetch", fetchSpy);
 
     const client = makeClient({ apiKey: "key" });
-    await expect(client.getCapabilities()).rejects.toMatchObject({ status: 400 });
+    const caps = await client.getCapabilities();
+
+    // All 400 responses from _has_privileges are treated as security-absent
+    // because ES varies the error message across versions.
+    expect(caps.canManageDataStreams).toBe(true);
+    expect(caps.canCreateApiKeys).toBe(true);
+    expect(caps.canReadSecurityUsers).toBe(true);
+    expect(caps.canReadSecurityRoles).toBe(true);
+    expect(caps.canReadApiKeys).toBe(true);
+    expect(caps.canReadIngestPipelines).toBe(true);
   });
 
   it("returns optimistic capabilities when the _has_privileges endpoint returns 404", async () => {
