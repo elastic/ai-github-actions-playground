@@ -4,12 +4,34 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
-      - "peek/**"
+      - ".github/workflows/ui-smoke-test-pr-review.yml"
+      - "peek/src/**"
+      - "peek/tests/**"
+      - "peek/scripts/screenshot-preflight.mjs"
+      - "peek/package*.json"
+      - "peek/tsconfig*.json"
+      - "peek/vite.config.ts"
+      - "peek/vitest*.ts"
+      - "peek/playwright.config.ts"
+      - "peek/index.html"
+      - "peek/public/**"
+      - "peek/eslint*"
       - "Makefile"
   push:
     branches: [main]
     paths:
-      - "peek/**"
+      - ".github/workflows/ui-smoke-test-pr-review.yml"
+      - "peek/src/**"
+      - "peek/tests/**"
+      - "peek/scripts/screenshot-preflight.mjs"
+      - "peek/package*.json"
+      - "peek/tsconfig*.json"
+      - "peek/vite.config.ts"
+      - "peek/vitest*.ts"
+      - "peek/playwright.config.ts"
+      - "peek/index.html"
+      - "peek/public/**"
+      - "peek/eslint*"
       - "Makefile"
 
 permissions:

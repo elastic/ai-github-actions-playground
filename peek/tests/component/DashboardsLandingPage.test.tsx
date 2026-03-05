@@ -1,3 +1,5 @@
+// @vitest-environment jsdom
+// happy-dom has a known issue with user.type + nuqs URL-based search filtering
 import { describe, it, expect, beforeEach } from "vitest";
 import { render, screen, within, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
