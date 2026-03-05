@@ -608,10 +608,14 @@ export class ElasticsearchClient {
             canReadApiKeys: true,
           };
         }
-        // 400: Security plugin not installed (e.g. "no handler found for uri").
+        // 400: Security plugin not installed ("no handler found for uri").
+        // Gate on the specific message to avoid masking other 400 errors
+        // (e.g. malformed proxy requests) as a successful connection.
         // 403: Security enabled but user lacks privilege to check capabilities.
         // Both are non-fatal — default to minimal privileges.
-        if (err.status === 400 || err.status === 403) {
+        const isNoHandlerFound =
+          err.status === 400 && err.message.toLowerCase().includes("no handler found");
+        if (isNoHandlerFound || err.status === 403) {
           return {
             canManageDataStreams: false,
             canCreateApiKeys: false,
