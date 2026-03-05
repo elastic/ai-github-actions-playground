@@ -245,7 +245,10 @@ export const electronStorage = createElectronStorage<PersistedConnectionState>({
       }
       if (stored) {
         const storedProfiles = Array.isArray(stored.state.connectionProfiles)
-          ? stored.state.connectionProfiles
+          ? stored.state.connectionProfiles.filter(
+              (profile): profile is ConnectionProfile =>
+                !!profile && typeof profile === "object" && typeof profile.id === "string",
+            )
           : [];
         const profileDeleteKeys = storedProfiles.flatMap((profile) => [
           name + PROFILE_SESSION_PREFIX + profile.id + API_KEY_SESSION_SUFFIX,
