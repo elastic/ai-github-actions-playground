@@ -119,7 +119,9 @@ export default function LogsResultsView({
             data={result}
             onCellClick={({ columnName, value }) => {
               if (columnName === TRACE_ID_FIELD) {
-                onTracePivot(value);
+                const traceId = String(value ?? "").trim();
+                if (!traceId) return;
+                onTracePivot(traceId);
                 return;
               }
               if (columnName === MESSAGE_FIELD) {
@@ -168,7 +170,8 @@ export default function LogsResultsView({
             <ListItem key={group.pattern} disablePadding>
               <ListItemButton
                 onClick={() => {
-                  onSearchTextChange(`"${group.sample}"`);
+                  const escapedSample = group.sample.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+                  onSearchTextChange(`"${escapedSample}"`);
                   onViewModeChange("lines");
                 }}
               >
