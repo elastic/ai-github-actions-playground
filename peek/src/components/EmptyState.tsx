@@ -61,12 +61,7 @@ export default function EmptyState({
         {heading}
       </Typography>
       {description && (
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          noWrap
-          sx={{ maxWidth: 320, overflow: "hidden", textOverflow: "ellipsis" }}
-        >
+        <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 320 }}>
           {description}
         </Typography>
       )}
