@@ -420,6 +420,12 @@ export default function AddDataStepSetup(p: AddDataStepSetupProps) {
             apiKey={p.apiKey}
           />
         );
+      } else {
+        installContent = (
+          <Typography variant="body2" color="text.secondary">
+            Collector details are unavailable for this selection.
+          </Typography>
+        );
       }
       break;
     default: {
