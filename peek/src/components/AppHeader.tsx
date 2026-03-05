@@ -131,7 +131,7 @@ export default function AppHeader({
               aria-label="Open navigation menu"
               size="small"
               onClick={onToggleMobileNav}
-              sx={{ width: COMPONENT_HEIGHTS.buttonSmall, height: COMPONENT_HEIGHTS.buttonSmall }}
+              sx={{ width: COMPONENT_HEIGHTS.touchTarget, height: COMPONENT_HEIGHTS.touchTarget }}
             >
               <MenuIcon fontSize="small" />
             </IconButton>
