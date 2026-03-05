@@ -10,7 +10,7 @@ import type { FieldInfo } from "../../services/es";
 import { useNamespaceSummaries } from "../../hooks/useNamespaceSummaries";
 import EmptyState from "../EmptyState";
 
-import { metricNamespaceOf } from "./exploreUtils";
+import { HIDDEN_NAMESPACE, metricNamespaceOf } from "./exploreUtils";
 import { classifyFieldVisual, getFieldVisualIcon } from "./fieldVisuals";
 
 interface Props {
@@ -20,7 +20,6 @@ interface Props {
 }
 
 export default function NamespaceLanding({ fields, indexPattern, onSelectNamespace }: Props) {
-  const HIDDEN_NAMESPACE = "metrics";
   const namespacesWithCounts = useMemo(() => {
     const metricFields = fields.filter((f) => f.metricType !== "unknown");
     const byNs = new Map<string, FieldInfo[]>();

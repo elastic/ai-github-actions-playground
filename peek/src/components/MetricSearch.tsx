@@ -16,7 +16,7 @@ import { COMPONENT_HEIGHTS } from "../types/tokens";
 
 import { getTypeColor } from "./fieldTypeColor";
 import { classifyFieldVisual, getFieldVisualIcon } from "./explore/fieldVisuals";
-import { metricNamespaceOf } from "./explore/exploreUtils";
+import { HIDDEN_NAMESPACE, metricNamespaceOf } from "./explore/exploreUtils";
 
 function getMetricBadge(metricType: MetricTypeClassification): {
   label: string;
@@ -49,7 +49,6 @@ export default function MetricSearch({
   onNamespaceChange,
   onSelect,
 }: Props) {
-  const HIDDEN_NAMESPACE = "metrics";
   // Only show numeric (gauge/counter) fields for metric search
   const metricFields = useMemo(
     () =>

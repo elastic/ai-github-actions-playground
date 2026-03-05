@@ -8,6 +8,12 @@ const FILTER_OPS = ["==", "!=", "LIKE"] as const;
 const VALID_FILTER_OPS = new Set<ExplorerFilter["op"]>(FILTER_OPS);
 export const HIDDEN_DIMENSION_FIELDS = new Set(["_metrics_name_hash", "_metrics_names_hash"]);
 
+/**
+ * Namespace hidden from the metric explorer UI (the top-level "metrics"
+ * namespace is an implementation detail, not a user-facing category).
+ */
+export const HIDDEN_NAMESPACE = "metrics";
+
 const ExplorerFilterSchema = z.object({
   field: z.string(),
   op: z.enum(FILTER_OPS),
