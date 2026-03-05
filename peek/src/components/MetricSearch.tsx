@@ -16,7 +16,7 @@ import { COMPONENT_HEIGHTS } from "../types/tokens";
 
 import { getTypeColor } from "./fieldTypeColor";
 import { classifyFieldVisual, getFieldVisualIcon } from "./explore/fieldVisuals";
-import { metricNamespaceOf } from "./explore/exploreUtils";
+import { HIDDEN_NAMESPACE, metricNamespaceOf } from "./explore/exploreUtils";
 
 function getMetricBadge(metricType: MetricTypeClassification): {
   label: string;
@@ -50,10 +50,19 @@ export default function MetricSearch({
   onSelect,
 }: Props) {
   // Only show numeric (gauge/counter) fields for metric search
-  const metricFields = useMemo(() => fields.filter((f) => f.metricType !== "unknown"), [fields]);
+  const metricFields = useMemo(
+    () =>
+      fields.filter(
+        (f) => f.metricType !== "unknown" && metricNamespaceOf(f.name) !== HIDDEN_NAMESPACE,
+      ),
+    [fields],
+  );
   const namespaceLabelId = useId();
   const namespaces = useMemo(
-    () => Array.from(new Set(metricFields.map((f) => metricNamespaceOf(f.name)))).sort(),
+    () =>
+      Array.from(new Set(metricFields.map((f) => metricNamespaceOf(f.name))))
+        .filter((namespace) => namespace !== HIDDEN_NAMESPACE)
+        .sort(),
     [metricFields],
   );
   const scopedMetricFields = useMemo(() => {

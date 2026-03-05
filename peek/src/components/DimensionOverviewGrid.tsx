@@ -12,17 +12,25 @@ import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import { useTheme } from "@mui/material/styles";
 import { EChart } from "@perses-dev/components";
 
-import type { FieldInfo, ElasticsearchClient, MetricType } from "../services/es";
-import { buildDimensionOverviewQuery, isDimensionField } from "../services/es";
+import type { AggregationType, FieldInfo, ElasticsearchClient, MetricType } from "../services/es";
+import { buildDimensionOverviewQuery, buildOverviewQuery, isDimensionField } from "../services/es";
 import type { EsqlResponse, TimeRange } from "../types";
 import { useBatchedOverviewQueries, hasOverviewData } from "../hooks/useBatchedOverviewQueries";
+import { usePageSlotInsights } from "../hooks/usePageSlotInsights";
+import { INSIGHT_GUARDRAIL } from "../hooks/insightPromptUtils";
 
+import { InsightSlotProvider } from "./InsightSlotContext";
+import InsightSlot from "./InsightSlot";
 import { useEChartTheme } from "./visualizations/useEChartTheme";
 import EmptyState from "./EmptyState";
 import OverviewFailedItemsSection from "./OverviewFailedItemsSection";
 import type { FailedItem } from "./OverviewFailedItemsSection";
-import { normalizeDimensionBucketLabel } from "./DimensionOverviewGrid.utils";
+import {
+  getDimensionSeriesCount,
+  normalizeDimensionBucketLabel,
+} from "./DimensionOverviewGrid.utils";
 import { classifyFieldVisual, getFieldVisualIcon } from "./explore/fieldVisuals";
+import { isHiddenDimensionField } from "./explore/exploreUtils";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -32,6 +40,7 @@ interface Props {
   fields: FieldInfo[];
   metricField: string;
   metricType: MetricType;
+  aggregation: AggregationType;
   metricNamespace: string | null;
   indexPattern: string;
   timeRange: TimeRange;
@@ -46,6 +55,38 @@ interface Props {
 // ---------------------------------------------------------------------------
 
 const MAX_SERIES = 5;
+const NO_DIMENSIONS_ITEM_NAME = "__no_dimensions__";
+const DIMENSION_CARD_SLOT_PREFIX = "metrics-dimension-card";
+const NO_DIMENSIONS_SLOT_SUFFIX = "__no_dimensions__";
+const DIMENSION_CARD_SYSTEM_PROMPT =
+  "You are a metrics observability assistant. " +
+  "Generate one concise, high-signal insight per metric dimension card slot. " +
+  "For each dimension card, focus on whether split-by is likely useful and why. " +
+  "Use plain language and avoid repeating obvious labels." +
+  INSIGHT_GUARDRAIL;
+
+function dimensionCardSlotId(metricField: string, dimensionField: string): string {
+  return `${DIMENSION_CARD_SLOT_PREFIX}:${metricField}:${dimensionField}`;
+}
+
+function getTopDimensionValues(data: EsqlResponse, limit = 5): string[] {
+  const dateIdx = data.columns.findIndex(
+    (c) => c.type === "date" || c.type === "date_nanos" || c.name === "@timestamp",
+  );
+  const metricIdx = data.columns.findIndex((c) => c.name === "metric");
+  const dimIdx = data.columns.findIndex((_, i) => i !== dateIdx && i !== metricIdx);
+  if (dimIdx < 0) return [];
+
+  const counts = new Map<string, number>();
+  for (const row of data.values) {
+    const dimVal = normalizeDimensionBucketLabel(row[dimIdx]);
+    counts.set(dimVal, (counts.get(dimVal) ?? 0) + 1);
+  }
+  return Array.from(counts.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, limit)
+    .map(([value]) => value);
+}
 
 // ---------------------------------------------------------------------------
 // Multi-series sparkline option builder
@@ -136,6 +177,7 @@ export default function DimensionOverviewGrid({
   fields,
   metricField,
   metricType,
+  aggregation,
   metricNamespace,
   indexPattern,
   timeRange,
@@ -149,7 +191,7 @@ export default function DimensionOverviewGrid({
 
   // Discover dimension fields — same logic as DimensionSidebar
   const dimensionFields = useMemo(() => {
-    const base = fields.filter(isDimensionField);
+    const base = fields.filter((f) => isDimensionField(f) && !isHiddenDimensionField(f.name));
     if (metricNamespace === null) return base;
     const scoped = base.filter(
       (f) => f.name === metricNamespace || f.name.startsWith(`${metricNamespace}.`),
@@ -160,6 +202,7 @@ export default function DimensionOverviewGrid({
   const scopeKey = [
     metricField,
     metricType,
+    aggregation,
     indexPattern,
     timeRange.from,
     timeRange.to,
@@ -172,10 +215,11 @@ export default function DimensionOverviewGrid({
         indexPattern,
         metricField,
         metricType,
+        aggregation,
         dimensionField: field.name,
         timeRange,
       }),
-    [indexPattern, metricField, metricType, timeRange],
+    [indexPattern, metricField, metricType, aggregation, timeRange],
   );
 
   const { results, retryFailed } = useBatchedOverviewQueries({
@@ -185,10 +229,44 @@ export default function DimensionOverviewGrid({
     buildQuery,
     timeRange,
   });
+  const noDimensionsItems = useMemo(
+    () => (dimensionFields.length > 0 ? [{ name: NO_DIMENSIONS_ITEM_NAME }] : []),
+    [dimensionFields.length],
+  );
+  const { results: noDimensionsResults } = useBatchedOverviewQueries({
+    items: noDimensionsItems,
+    client,
+    scopeKey: `${scopeKey}|no-dimensions`,
+    buildQuery: () =>
+      buildOverviewQuery({
+        indexPattern,
+        metricField,
+        metricType,
+        aggregation,
+        timeRange,
+      }),
+    timeRange,
+  });
+  const noDimensionsResult = noDimensionsResults[NO_DIMENSIONS_ITEM_NAME];
+  const noDimensionsHasData = hasOverviewData(noDimensionsResult);
 
   const dimsWithData = useMemo(() => {
     return dimensionFields.filter((f) => hasOverviewData(results[f.name]));
   }, [dimensionFields, results]);
+
+  const { multiSeriesDims, singleSeriesDims } = useMemo(() => {
+    const multi: FieldInfo[] = [];
+    const single: FieldInfo[] = [];
+    for (const f of dimsWithData) {
+      const result = results[f.name];
+      if (result?.data) {
+        const count = getDimensionSeriesCount(result.data);
+        if (count > 1) multi.push(f);
+        else single.push(f);
+      }
+    }
+    return { multiSeriesDims: multi, singleSeriesDims: single };
+  }, [dimsWithData, results]);
 
   const failedDims = useMemo(() => {
     return dimensionFields.filter((f) => results[f.name]?.status === "error");
@@ -215,9 +293,150 @@ export default function DimensionOverviewGrid({
     [onSelectDimension],
   );
 
+  const renderDimensionCard = (field: FieldInfo) => {
+    const result = results[field.name];
+    const fieldVisual = classifyFieldVisual(field.name, field.metricType);
+    const displayName =
+      metricNamespace && field.name.startsWith(`${metricNamespace}.`)
+        ? field.name.slice(metricNamespace.length + 1)
+        : field.name;
+
+    return (
+      <Paper
+        key={field.name}
+        variant="outlined"
+        sx={{
+          minHeight: 180,
+          transition: "border-color 0.15s",
+          "&:hover": {
+            borderColor: "border.strong",
+          },
+        }}
+      >
+        <ButtonBase
+          aria-label={`Group by ${field.name}`}
+          onClick={() => handleCardClick(field.name)}
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "stretch",
+            width: "100%",
+            height: "100%",
+            p: 1,
+            transition: "background-color 0.15s",
+            "&.Mui-focusVisible": {
+              boxShadow: `0 0 0 2px ${theme.palette.primary.main}`,
+            },
+          }}
+        >
+          {/* Card header */}
+          <Box sx={{ display: "flex", gap: 0.5, alignItems: "center", mb: 0.5 }}>
+            {getFieldVisualIcon(fieldVisual, 12)}
+            <Typography
+              variant="caption"
+              noWrap
+              sx={{ flex: 1, fontWeight: 600 }}
+              title={field.name}
+            >
+              {displayName}
+            </Typography>
+            <Chip
+              label={field.type}
+              size="small"
+              variant="outlined"
+              sx={{
+                height: 16,
+                fontSize: "0.6rem",
+              }}
+            />
+          </Box>
+
+          {/* Multi-series sparkline */}
+          <Box sx={{ flex: 1, minHeight: 120 }}>
+            {result?.data ? (
+              <EChart
+                option={buildMultiSeriesSparkline(
+                  result.data,
+                  echartsTheme,
+                  theme.palette.text.primary,
+                )}
+                theme={echartsTheme}
+                sx={{ width: "100%", height: "100%", minHeight: 120 }}
+              />
+            ) : (
+              <Skeleton variant="rounded" height="100%" />
+            )}
+          </Box>
+        </ButtonBase>
+      </Paper>
+    );
+  };
+
   const shortMetric = metricField.includes(".")
     ? metricField.split(".").slice(-2).join(".")
     : metricField;
+
+  const noDimensionsSlotId = useMemo(
+    () => dimensionCardSlotId(metricField, NO_DIMENSIONS_SLOT_SUFFIX),
+    [metricField],
+  );
+  const dimensionCardSlots = useMemo(
+    () => [
+      {
+        slotId: noDimensionsSlotId,
+        label: `No dimensions card for metric ${metricField}`,
+      },
+      ...dimsWithData.map((field) => ({
+        slotId: dimensionCardSlotId(metricField, field.name),
+        label: `Dimension card for ${field.name} on metric ${metricField}`,
+      })),
+    ],
+    [noDimensionsSlotId, metricField, dimsWithData],
+  );
+  const dimensionCardContext = useMemo(
+    () =>
+      JSON.stringify({
+        metricField,
+        metricType,
+        metricNamespace,
+        indexPattern,
+        noDimensionsCard: {
+          slotId: noDimensionsSlotId,
+          hasData: noDimensionsHasData,
+          rowCount: noDimensionsResult?.data?.values.length ?? 0,
+        },
+        dimensionCards: dimsWithData.map((field) => {
+          const data = results[field.name]?.data;
+          return {
+            slotId: dimensionCardSlotId(metricField, field.name),
+            dimensionField: field.name,
+            fieldType: field.type,
+            seriesCount: data ? getDimensionSeriesCount(data) : 0,
+            rowCount: data?.values.length ?? 0,
+            topValues: data ? getTopDimensionValues(data) : [],
+          };
+        }),
+      }),
+    [
+      metricField,
+      metricType,
+      metricNamespace,
+      indexPattern,
+      noDimensionsSlotId,
+      noDimensionsHasData,
+      noDimensionsResult,
+      dimsWithData,
+      results,
+    ],
+  );
+  const dimensionCardInsights = usePageSlotInsights({
+    context: dimensionCardContext,
+    systemPrompt: DIMENSION_CARD_SYSTEM_PROMPT,
+    // Keep insights stable across data refreshes; only re-run when card identity changes.
+    cacheKey: `dimension-card-slots::${metricField}::${metricType}::${aggregation}`,
+    slots: dimensionCardSlots,
+    enabled: Boolean(noDimensionsHasData || dimsWithData.length > 0),
+  });
 
   if (dimensionFields.length === 0) {
     return (
@@ -267,78 +486,56 @@ export default function DimensionOverviewGrid({
         </Button>
       </Box>
 
-      {/* Grid of mini charts */}
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-          gap: 1,
-        }}
+      <InsightSlotProvider
+        summary={dimensionCardInsights.summary}
+        insights={dimensionCardInsights.insights}
+        loading={dimensionCardInsights.loading}
+        error={dimensionCardInsights.error}
+        refresh={dimensionCardInsights.refresh}
       >
-        {dimsWithData.map((field) => {
-          const result = results[field.name];
-          const fieldVisual = classifyFieldVisual(field.name, field.metricType);
-          const displayName =
-            metricNamespace && field.name.startsWith(`${metricNamespace}.`)
-              ? field.name.slice(metricNamespace.length + 1)
-              : field.name;
-
-          return (
+        <Box sx={{ mb: 2 }}>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ display: "block", mb: 1, textTransform: "uppercase", fontWeight: 600 }}
+          >
+            No dimensions
+          </Typography>
+          <InsightSlot slotId={noDimensionsSlotId}>
             <Paper
-              key={field.name}
               variant="outlined"
               sx={{
                 minHeight: 180,
                 transition: "border-color 0.15s",
-                "&:hover": {
-                  borderColor: "border.strong",
-                },
+                "&:hover": { borderColor: "border.strong" },
               }}
             >
               <ButtonBase
-                aria-label={`Group by ${field.name}`}
-                onClick={() => handleCardClick(field.name)}
+                aria-label="View metric without dimensions"
+                onClick={onViewUngrouped}
                 sx={{
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "stretch",
                   width: "100%",
                   height: "100%",
-                  p: 1,
-                  transition: "background-color 0.15s",
+                  p: 1.5,
+                  textAlign: "left",
                   "&.Mui-focusVisible": {
                     boxShadow: `0 0 0 2px ${theme.palette.primary.main}`,
                   },
                 }}
               >
-                {/* Card header */}
-                <Box sx={{ display: "flex", gap: 0.5, alignItems: "center", mb: 0.5 }}>
-                  {getFieldVisualIcon(fieldVisual, 12)}
-                  <Typography
-                    variant="caption"
-                    noWrap
-                    sx={{ flex: 1, fontWeight: 600 }}
-                    title={field.name}
-                  >
-                    {displayName}
-                  </Typography>
-                  <Chip
-                    label={field.type}
-                    size="small"
-                    variant="outlined"
-                    sx={{
-                      height: 16,
-                      fontSize: "0.6rem",
-                    }}
-                  />
-                </Box>
-
-                {/* Multi-series sparkline */}
+                <Typography variant="caption" sx={{ mb: 0.5, fontWeight: 600 }}>
+                  No dimensions
+                </Typography>
                 <Box sx={{ flex: 1, minHeight: 120 }}>
-                  {result?.data ? (
+                  {noDimensionsResult?.status === "loading" ? (
+                    <Skeleton variant="rounded" height="100%" />
+                  ) : noDimensionsHasData && noDimensionsResult?.data ? (
                     <EChart
                       option={buildMultiSeriesSparkline(
-                        result.data,
+                        noDimensionsResult.data,
                         echartsTheme,
                         theme.palette.text.primary,
                       )}
@@ -346,23 +543,85 @@ export default function DimensionOverviewGrid({
                       sx={{ width: "100%", height: "100%", minHeight: 120 }}
                     />
                   ) : (
-                    <Skeleton variant="rounded" height="100%" />
+                    <Typography variant="caption" color="text.secondary">
+                      View this metric as a single ungrouped time series.
+                    </Typography>
                   )}
                 </Box>
               </ButtonBase>
             </Paper>
-          );
-        })}
+          </InsightSlot>
+        </Box>
 
-        {/* Loading placeholders */}
-        {isLoading &&
-          dimsWithData.length === 0 &&
-          dimensionFields.slice(0, 6).map((field) => (
+        {/* Dimensions with multiple series — higher cardinality, typically more interesting */}
+        {multiSeriesDims.length > 0 && (
+          <Box sx={{ mb: 2 }}>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ display: "block", mb: 1, textTransform: "uppercase", fontWeight: 600 }}
+            >
+              Multiple series ({multiSeriesDims.length})
+            </Typography>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+                gap: 1,
+              }}
+            >
+              {multiSeriesDims.map((field) => (
+                <InsightSlot key={field.name} slotId={dimensionCardSlotId(metricField, field.name)}>
+                  {renderDimensionCard(field)}
+                </InsightSlot>
+              ))}
+            </Box>
+          </Box>
+        )}
+
+        {/* Dimensions with one series — lower cardinality */}
+        {singleSeriesDims.length > 0 && (
+          <Box>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ display: "block", mb: 1, textTransform: "uppercase", fontWeight: 600 }}
+            >
+              Single series ({singleSeriesDims.length})
+            </Typography>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+                gap: 1,
+              }}
+            >
+              {singleSeriesDims.map((field) => (
+                <InsightSlot key={field.name} slotId={dimensionCardSlotId(metricField, field.name)}>
+                  {renderDimensionCard(field)}
+                </InsightSlot>
+              ))}
+            </Box>
+          </Box>
+        )}
+      </InsightSlotProvider>
+
+      {/* Loading placeholders — show when no data yet */}
+      {isLoading && dimsWithData.length === 0 && (
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+            gap: 1,
+          }}
+        >
+          {dimensionFields.slice(0, 6).map((field) => (
             <Paper key={`loading-${field.name}`} variant="outlined" sx={{ minHeight: 180, p: 1 }}>
               <Skeleton variant="rounded" height="100%" />
             </Paper>
           ))}
-      </Box>
+        </Box>
+      )}
 
       {/* Failed dimensions expandable section */}
       {!isLoading && (

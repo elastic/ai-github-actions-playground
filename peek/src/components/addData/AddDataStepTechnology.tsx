@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import InputAdornment from "@mui/material/InputAdornment";
@@ -65,6 +66,7 @@ interface AddDataStepTechnologyProps {
   onClearTechnology: () => void;
   technologySearch: string;
   onTechnologySearchChange: (search: string) => void;
+  canCreateApiKeys: boolean | null;
 }
 
 export default function AddDataStepTechnology({
@@ -73,6 +75,7 @@ export default function AddDataStepTechnology({
   onClearTechnology,
   technologySearch,
   onTechnologySearchChange,
+  canCreateApiKeys,
 }: AddDataStepTechnologyProps) {
   const [selectedHeroCategory, setSelectedHeroCategory] = useState<HeroCategoryId | null>(null);
   const [cloudSaasFilter, setCloudSaasFilter] = useState<CloudSaasFilter>("all");
@@ -128,6 +131,13 @@ export default function AddDataStepTechnology({
       <Box>
         <Typography variant="h6">What do you want to monitor?</Typography>
       </Box>
+
+      {canCreateApiKeys === false && (
+        <Alert severity="warning">
+          Your current credentials cannot create API keys for onboarding. You can still continue by
+          providing an existing Elasticsearch API key during setup.
+        </Alert>
+      )}
 
       <TextField
         placeholder="Search technologies (e.g., PostgreSQL, Kubernetes...)"

@@ -130,6 +130,7 @@ export interface OverviewQuery {
   indexPattern: string;
   metricField: string;
   metricType: MetricType;
+  aggregation?: AggregationType;
   timeRange: TimeRange;
   bucketCount?: number;
 }
@@ -144,7 +145,7 @@ const TIMESTAMP_RANGE_CLAUSE = buildTimeRangeClause("@timestamp", "?_tstart", "?
 export function buildOverviewQuery(q: OverviewQuery): ExplorerQueryResult {
   const indexPattern = validateEsqlIndexPattern(q.indexPattern);
   const buckets = q.bucketCount ?? OVERVIEW_BUCKET_COUNT;
-  const agg = getDefaultAggregation(q.metricType);
+  const agg = q.aggregation ?? getDefaultAggregation(q.metricType);
   const aggExpr = buildAggExpression(agg, q.metricField, q.metricType);
   const whereClauses: string[] = [TIMESTAMP_RANGE_CLAUSE];
   if (q.metricType === "counter") {
@@ -169,6 +170,7 @@ export interface DimensionOverviewQuery {
   indexPattern: string;
   metricField: string;
   metricType: MetricType;
+  aggregation?: AggregationType;
   dimensionField: string;
   timeRange: TimeRange;
   bucketCount?: number;
@@ -184,7 +186,7 @@ export function buildDimensionOverviewQuery(q: DimensionOverviewQuery): Explorer
   const bucketSize = Math.max(1, buckets);
   const maxSeries = Math.max(0, q.maxSeries ?? DEFAULT_DIMENSION_OVERVIEW_MAX_SERIES);
   const maxRows = buckets * maxSeries;
-  const agg = getDefaultAggregation(q.metricType);
+  const agg = q.aggregation ?? getDefaultAggregation(q.metricType);
   const aggExpr = buildAggExpression(agg, q.metricField, q.metricType);
   const escapedMetric = escapeEsqlIdentifier(q.metricField);
   const escapedDim = escapeEsqlIdentifier(q.dimensionField);

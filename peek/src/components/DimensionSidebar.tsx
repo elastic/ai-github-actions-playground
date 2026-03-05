@@ -27,6 +27,7 @@ import { getFieldValues, isDimensionField } from "../services/es";
 
 import EmptyState from "./EmptyState";
 import { classifyFieldVisual, getFieldVisualIcon } from "./explore/fieldVisuals";
+import { isHiddenDimensionField } from "./explore/exploreUtils";
 
 interface Props {
   fields: FieldInfo[];
@@ -58,7 +59,9 @@ export default function DimensionSidebar({
   const abortRef = useRef<AbortController | null>(null);
 
   // Filter to only non-metric, non-timestamp dimension fields
-  const baseDimensionFields = fields.filter(isDimensionField);
+  const baseDimensionFields = fields.filter(
+    (f) => isDimensionField(f) && !isHiddenDimensionField(f.name),
+  );
   const scopedDimensionFields =
     metricNamespace === null
       ? baseDimensionFields

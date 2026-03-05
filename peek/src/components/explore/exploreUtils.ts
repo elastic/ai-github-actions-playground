@@ -6,6 +6,16 @@ import { EXPLORER_AGGREGATIONS } from "../../services/es";
 
 const FILTER_OPS = ["==", "!=", "LIKE"] as const;
 const VALID_FILTER_OPS = new Set<ExplorerFilter["op"]>(FILTER_OPS);
+export const HIDDEN_DIMENSION_FIELDS: ReadonlySet<string> = new Set([
+  "_metrics_name_hash",
+  "_metrics_names_hash",
+]);
+
+/**
+ * Namespace hidden from the metric explorer UI (the top-level "metrics"
+ * namespace is an implementation detail, not a user-facing category).
+ */
+export const HIDDEN_NAMESPACE = "metrics";
 
 const ExplorerFilterSchema = z.object({
   field: z.string(),
@@ -84,4 +94,8 @@ export function metricNamespaceOf(metricName: string): string {
   if (dot > 0) return metricName.slice(0, dot);
   const underscore = metricName.indexOf("_");
   return underscore > 0 ? metricName.slice(0, underscore) : metricName;
+}
+
+export function isHiddenDimensionField(fieldName: string): boolean {
+  return HIDDEN_DIMENSION_FIELDS.has(fieldName);
 }

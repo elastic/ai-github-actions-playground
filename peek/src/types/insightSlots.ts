@@ -14,6 +14,8 @@ export interface SlotInsight {
   text: string;
   /** Optional severity hint. */
   severity?: "info" | "warning" | "critical";
+  /** For metrics: suggested dimension field to group by (e.g. host.name). */
+  suggestedDimension?: string;
 }
 
 /** Top-level response shape returned by the LLM for one page of slot insights. */

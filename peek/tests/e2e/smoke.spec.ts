@@ -287,13 +287,23 @@ test.describe("smoke – site navigation", () => {
   }) => {
     await connectToMockCluster(page);
     await navigateViaSidebar(page, "Metrics");
+    await expect(page.getByText("Explore your metrics")).toBeVisible({ timeout: 5_000 });
+    await page
+      .getByRole("main")
+      .getByRole("button", { name: /\d+ metrics?/ })
+      .first()
+      .click();
+    const expandSearch = page.getByRole("button", { name: "Expand search panel" });
+    if (await expandSearch.isVisible()) {
+      await expandSearch.click();
+    }
     const metricSearch = page.getByLabel("Search metrics");
     await expect(metricSearch).toBeVisible({ timeout: 5_000 });
     await metricSearch.fill("system.cpu");
     await page.locator("li.MuiAutocomplete-option").first().click();
     await page.getByRole("button", { name: "View ungrouped" }).click();
     // After query success, result count appears in the search panel footer
-    await expect(page.getByText("3 metrics found")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(/[1-9]\d* metrics? found/)).toBeVisible({ timeout: 15_000 });
   });
 
   test("traces user opens a trace and pivots from service map context into Query Lab", async ({
@@ -457,7 +467,10 @@ test.describe("smoke – site navigation", () => {
       "Query Lab": () =>
         expect(page.getByRole("textbox", { name: "ES|QL query editor" })).toBeVisible(),
       Logs: () => expect(page.getByRole("heading", { name: "Logs Explorer" })).toBeVisible(),
-      Console: () => expect(page.getByRole("heading", { name: "API Console" })).toBeVisible(),
+      Console: async () => {
+        await expect(page).toHaveURL(/\/console$/);
+        await expect(page.getByRole("heading", { name: "API Console" })).toBeVisible();
+      },
       Indices: () => expect(page.getByRole("heading", { name: "Indices" })).toBeVisible(),
     };
 

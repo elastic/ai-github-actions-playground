@@ -42,9 +42,13 @@ export interface SignalSearchPanelProps {
   searchLoading: boolean;
   onSearch: () => void;
   searchResultCount: number | null;
+  /** Whether to render Search buttons (default: true) */
+  showSearchButtons?: boolean;
 
   collapsed: boolean;
   onToggleCollapsed: () => void;
+  /** Whether to show query summary text in collapsed header */
+  showCollapsedQuerySummary?: boolean;
 
   /** Count of active filters for the collapsed header chip */
   activeFilterCount: number;
@@ -81,8 +85,10 @@ export default function SignalSearchPanel({
   searchLoading,
   onSearch,
   searchResultCount,
+  showSearchButtons = true,
   collapsed,
   onToggleCollapsed,
+  showCollapsedQuerySummary = true,
   activeFilterCount,
   onResetFilters,
   renderFilterControls,
@@ -149,14 +155,16 @@ export default function SignalSearchPanel({
 
         {collapsed && (
           <>
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              noWrap
-              sx={{ flex: 1, minWidth: 0, fontStyle: "italic" }}
-            >
-              {explanation ?? effectiveQuery}
-            </Typography>
+            {showCollapsedQuerySummary && (
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                noWrap
+                sx={{ flex: 1, minWidth: 0, fontStyle: "italic" }}
+              >
+                {explanation ?? effectiveQuery}
+              </Typography>
+            )}
 
             {activeFilterCount > 0 && (
               <Chip
@@ -165,18 +173,20 @@ export default function SignalSearchPanel({
               />
             )}
 
-            <Button
-              variant="contained"
-              size="small"
-              sx={{ flexShrink: 0, minHeight: TOOLBAR_CONTROL_HEIGHT }}
-              startIcon={
-                searchLoading ? <CircularProgress size={14} color="inherit" /> : <PlayArrowIcon />
-              }
-              onClick={onSearch}
-              disabled={searchLoading || !effectiveQuery.trim()}
-            >
-              Search
-            </Button>
+            {showSearchButtons && (
+              <Button
+                variant="contained"
+                size="small"
+                sx={{ flexShrink: 0, minHeight: TOOLBAR_CONTROL_HEIGHT }}
+                startIcon={
+                  searchLoading ? <CircularProgress size={14} color="inherit" /> : <PlayArrowIcon />
+                }
+                onClick={onSearch}
+                disabled={searchLoading || !effectiveQuery.trim()}
+              >
+                Search
+              </Button>
+            )}
 
             {searchResultCount !== null && (
               <Typography variant="caption" color="text.secondary" noWrap sx={{ flexShrink: 0 }}>
@@ -380,18 +390,24 @@ export default function SignalSearchPanel({
             )}
 
             <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-              <Button
-                variant="contained"
-                size="small"
-                sx={{ minHeight: TOOLBAR_CONTROL_HEIGHT }}
-                startIcon={
-                  searchLoading ? <CircularProgress size={14} color="inherit" /> : <PlayArrowIcon />
-                }
-                onClick={onSearch}
-                disabled={searchLoading || !effectiveQuery.trim()}
-              >
-                Search {resultNoun.charAt(0).toUpperCase() + resultNoun.slice(1)}
-              </Button>
+              {showSearchButtons && (
+                <Button
+                  variant="contained"
+                  size="small"
+                  sx={{ minHeight: TOOLBAR_CONTROL_HEIGHT }}
+                  startIcon={
+                    searchLoading ? (
+                      <CircularProgress size={14} color="inherit" />
+                    ) : (
+                      <PlayArrowIcon />
+                    )
+                  }
+                  onClick={onSearch}
+                  disabled={searchLoading || !effectiveQuery.trim()}
+                >
+                  Search {resultNoun.charAt(0).toUpperCase() + resultNoun.slice(1)}
+                </Button>
+              )}
               {searchResultCount !== null && (
                 <Typography variant="caption" color="text.secondary">
                   {searchResultCount} {resultLabel(searchResultCount)} found

@@ -9,6 +9,8 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
+import type { SlotInsight } from "../types/insightSlots";
+
 import { useSlotInsight, useInsightSlotContext } from "./InsightSlotHooks";
 import { severityGlow, severityColor, pulseSx, popoverMarkdownSx } from "./insightSlotSx";
 
@@ -17,6 +19,8 @@ export interface InsightSlotProps {
   slotId: string;
   /** The component(s) this slot decorates. */
   children: React.ReactNode;
+  /** Optional action buttons (e.g. "Group by host.name") rendered before refresh/dismiss. */
+  renderActions?: (insight: SlotInsight) => React.ReactNode;
 }
 
 /**
@@ -31,7 +35,7 @@ export interface InsightSlotProps {
  * When no insight is present, or the slot has been dismissed, children are
  * rendered unchanged.
  */
-export default function InsightSlot({ slotId, children }: InsightSlotProps) {
+export default function InsightSlot({ slotId, children, renderActions }: InsightSlotProps) {
   const insight = useSlotInsight(slotId);
   const { loading, refresh } = useInsightSlotContext();
 
@@ -79,6 +83,7 @@ export default function InsightSlot({ slotId, children }: InsightSlotProps) {
   }
 
   const severity = insight.severity ?? "info";
+  const actions = renderActions?.(insight);
 
   return (
     <Box
@@ -146,6 +151,8 @@ export default function InsightSlot({ slotId, children }: InsightSlotProps) {
         <Box sx={popoverMarkdownSx}>
           <ReactMarkdown remarkPlugins={[remarkGfm]}>{insight.text}</ReactMarkdown>
         </Box>
+
+        {actions && <Box sx={{ mt: 1 }}>{actions}</Box>}
 
         <Box sx={{ display: "flex", gap: 0.5, justifyContent: "flex-end", mt: 1 }}>
           <Tooltip title="Refresh insight">
