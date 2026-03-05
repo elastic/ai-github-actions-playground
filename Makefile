@@ -4,6 +4,7 @@ PEEK_DIR := peek
 BASE ?= main
 
 .PHONY: all help setup serve serve-proxy serve-background serve-explore explore-down build lint lint-full format format-full ci check clean preview test test-unit test-unit-full test-unit-coverage test-integration test-e2e test-e2e-preview docker-build docker-run electron-dev electron-build electron-dist
+.PHONY: lint-fast lint-fast-full format-fast format-fast-full
 .PHONY: otel-up otel-down otel-logs otel-cloud-up otel-cloud-down otel-cloud-logs otel-profiling-up otel-profiling-down otel-profiling-logs profiling-seed fleet-harness-up fleet-harness-down fleet-harness-logs
 .PHONY: seed-es screenshot-all screenshot-section test-e2e-live otel-capture otel-capture-down otel-replay-up otel-replay otel-replay-down seed-k8s
 
@@ -23,8 +24,12 @@ help:
 	@echo "  preview          - Build then preview locally"
 	@echo "  lint             - Prettier + ESLint on changed files + full TypeScript type check (fast default)"
 	@echo "  lint-full        - Prettier + ESLint + TypeScript type check on all files"
+	@echo "  lint-fast        - oxfmt + oxlint on changed files + tsgo type check (native-speed)"
+	@echo "  lint-fast-full   - oxfmt + oxlint + tsgo type check on all files (native-speed)"
 	@echo "  format           - Auto-format changed files with Prettier"
 	@echo "  format-full      - Auto-format all files with Prettier"
+	@echo "  format-fast      - Auto-format changed files with oxfmt (native-speed)"
+	@echo "  format-fast-full - Auto-format all files with oxfmt (native-speed)"
 	@echo "  ci               - npm ci + lint + unit tests + build (strict lockfile)"
 	@echo "  check            - Alias for ci"
 	@echo "  test             - Run all tests (unit, integration, e2e)"
@@ -208,6 +213,56 @@ format:
 format-full:
 	@echo "Formatting code with Prettier..."
 	@cd $(PEEK_DIR) && npx prettier --write src
+	@echo ""
+	@echo "✓ Formatting complete."
+
+lint-fast:
+	@echo "Detecting changed files against '$(BASE)'..."
+	@CHANGED=$$(cd $(PEEK_DIR) && git diff --name-only --diff-filter=ACMR --relative $(BASE) -- 'src' | grep -E '\.(ts|tsx|js|jsx)$$' || true); \
+	cd $(PEEK_DIR) && npx tsgo --noEmit & _TSC_PID=$$!; \
+	if [ -n "$$CHANGED" ]; then \
+		echo "Running oxfmt + oxlint on changed files (tsgo in parallel)..."; \
+		(cd $(PEEK_DIR) && echo "$$CHANGED" | tr '\n' '\0' | xargs -0 npx oxfmt --check) && \
+		(cd $(PEEK_DIR) && echo "$$CHANGED" | tr '\n' '\0' | xargs -0 npx oxlint); \
+		_LINT_EXIT=$$?; \
+	else \
+		echo "No changed source files found — skipping oxfmt and oxlint."; \
+		_LINT_EXIT=0; \
+	fi; \
+	wait $$_TSC_PID; _TSC_EXIT=$$?; \
+	[ $$_LINT_EXIT -eq 0 ] && [ $$_TSC_EXIT -eq 0 ]
+	@echo ""
+	@echo "✓ All checks passed."
+
+lint-fast-full:
+	@echo "Running oxfmt, oxlint, and tsgo in parallel..."
+	@cd $(PEEK_DIR) && { \
+		npx oxfmt --check src 2>&1 & _PID1=$$!; \
+		npx oxlint src 2>&1 & _PID2=$$!; \
+		npx tsgo --noEmit 2>&1 & _PID3=$$!; \
+		_FAIL=0; \
+		wait $$_PID1 || _FAIL=1; \
+		wait $$_PID2 || _FAIL=1; \
+		wait $$_PID3 || _FAIL=1; \
+		[ $$_FAIL -eq 0 ]; \
+	}
+	@echo ""
+	@echo "✓ All checks passed."
+
+format-fast:
+	@echo "Detecting changed files against '$(BASE)'..."
+	@CHANGED=$$(cd $(PEEK_DIR) && git diff --name-only --diff-filter=ACMR --relative $(BASE) -- 'src' | grep -E '\.(ts|tsx|js|jsx|json|css|scss|md|markdown|html|yml|yaml)$$' || true); \
+	if [ -n "$$CHANGED" ]; then \
+		echo "Formatting changed files with oxfmt..."; \
+		(cd $(PEEK_DIR) && echo "$$CHANGED" | tr '\n' '\0' | xargs -0 npx oxfmt --write); \
+		echo "✓ Formatting complete."; \
+	else \
+		echo "No changed source files to format."; \
+	fi
+
+format-fast-full:
+	@echo "Formatting code with oxfmt..."
+	@cd $(PEEK_DIR) && npx oxfmt --write src
 	@echo ""
 	@echo "✓ Formatting complete."
 

@@ -1,0 +1,20 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "import", "react", "jsx-a11y"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn",
+    "perf": "warn"
+  },
+  "rules": {
+    "react/react-in-jsx-scope": "off",
+    "react-hooks/exhaustive-deps": "warn",
+    "typescript/no-explicit-any": "error",
+    "typescript/consistent-type-imports": "error",
+    "import/no-duplicates": "error",
+    "no-debugger": "error",
+    "no-console": "off",
+    "jsx-a11y/prefer-tag-over-role": "warn"
+  },
+  "ignorePatterns": ["dist", "*.generated.d.ts", "eslint-plugin-peek/**"]
+}
