@@ -50,6 +50,12 @@ vi.mock("../../src/components/traces/traceUtils", () => ({
 
 const MOCK_CONNECTION: ElasticsearchConnection = {
   url: "http://localhost:9200",
+  apiKey: "test-api-key",
+};
+
+const MOCK_CONNECTION_WITH_AUTH: ElasticsearchConnection = {
+  url: "http://localhost:9200",
+  apiKey: "different-api-key",
 };
 
 // ---------------------------------------------------------------------------
@@ -210,6 +216,52 @@ describe("useServiceDashboardQueries", () => {
     expect(result.current.error).toBeNull();
     // 5 primary queries + 1 dependent trace-spans query
     expect(mockExecute).toHaveBeenCalledTimes(6);
+  });
+
+  it("refetches queries when connection fingerprint changes (auth change)", async () => {
+    mockAllQueries();
+
+    const wrapper = createWrapper();
+    const { result, rerender } = renderHook(
+      (props: {
+        connection: ElasticsearchConnection | null;
+        serviceName: string;
+        timeFrom: string;
+        timeTo: string;
+      }) => useServiceDashboardQueries(props),
+      {
+        wrapper,
+        initialProps: {
+          connection: MOCK_CONNECTION,
+          serviceName: "my-service",
+          timeFrom: "now-1h",
+          timeTo: "now",
+        },
+      },
+    );
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    const callsAfterFirstRender = mockExecute.mock.calls.length;
+    expect(callsAfterFirstRender).toBeGreaterThan(0);
+
+    // Re-render with a different apiKey — the connection fingerprint changes,
+    // so React Query should treat this as new queries and re-execute them.
+    rerender({
+      connection: MOCK_CONNECTION_WITH_AUTH,
+      serviceName: "my-service",
+      timeFrom: "now-1h",
+      timeTo: "now",
+    });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    // New queries should have been executed due to the fingerprint change
+    expect(mockExecute.mock.calls.length).toBeGreaterThan(callsAfterFirstRender);
   });
 
   it("fetches trace spans as a dependent query after traces return", async () => {
