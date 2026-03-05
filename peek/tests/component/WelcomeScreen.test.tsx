@@ -71,7 +71,7 @@ describe("WelcomeScreen", () => {
         new Response(JSON.stringify({ cluster_name: "demo" }), { status: 200 }),
       )
       .mockResolvedValueOnce(
-        new Response(JSON.stringify({ cluster: { manage_data_stream: true } }), { status: 200 }),
+        new Response(JSON.stringify({ cluster: { manage: true } }), { status: 200 }),
       );
 
     const user = userEvent.setup();

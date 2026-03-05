@@ -583,7 +583,7 @@ describe("isElasticsearchError", () => {
 describe("getCapabilities", () => {
   it("returns canManageDataStreams: true when cluster privilege is granted", async () => {
     const fetchSpy = mockFetchOnce(
-      { cluster: { manage_data_stream: true, read_security: true } },
+      { cluster: { manage: true, read_security: true } },
       { status: 200 },
     );
     vi.stubGlobal("fetch", fetchSpy);
@@ -597,7 +597,7 @@ describe("getCapabilities", () => {
   });
 
   it("returns canManageDataStreams: false when cluster privilege is denied", async () => {
-    const fetchSpy = mockFetchOnce({ cluster: { manage_data_stream: false } }, { status: 200 });
+    const fetchSpy = mockFetchOnce({ cluster: { manage: false } }, { status: 200 });
     vi.stubGlobal("fetch", fetchSpy);
 
     const client = makeClient({ apiKey: "key" });
@@ -684,7 +684,7 @@ describe("getCapabilities", () => {
   });
 
   it("POSTs to /_security/user/_has_privileges with the expected body", async () => {
-    const fetchSpy = mockFetchOnce({ cluster: { manage_data_stream: false } }, { status: 200 });
+    const fetchSpy = mockFetchOnce({ cluster: { manage: false } }, { status: 200 });
     vi.stubGlobal("fetch", fetchSpy);
 
     const client = makeClient();
@@ -695,7 +695,7 @@ describe("getCapabilities", () => {
     expect(init.method).toBe("POST");
     expect(JSON.parse(init.body as string)).toEqual({
       cluster: [
-        "manage_data_stream",
+        "manage",
         "read_security",
         "manage_security",
         "manage_own_api_key",

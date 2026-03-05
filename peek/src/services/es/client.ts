@@ -571,7 +571,7 @@ export class ElasticsearchClient {
         method: "POST",
         body: JSON.stringify({
           cluster: [
-            "manage_data_stream",
+            "manage",
             "read_security",
             "manage_security",
             "manage_own_api_key",
@@ -587,7 +587,7 @@ export class ElasticsearchClient {
         response.cluster?.["manage_own_api_key"] || response.cluster?.["manage_api_key"],
       );
       return {
-        canManageDataStreams: response.cluster?.["manage_data_stream"] ?? false,
+        canManageDataStreams: response.cluster?.["manage"] ?? false,
         canCreateApiKeys,
         canReadSecurityUsers: canReadSecurity,
         canReadSecurityRoles: canReadSecurity,
