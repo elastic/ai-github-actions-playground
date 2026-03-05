@@ -32,6 +32,21 @@ interface PipelineDetailPanelProps {
   pipelinesExist: boolean;
 }
 
+function stableStringify(value: unknown): string {
+  if (Array.isArray(value)) {
+    return `[${value.map((entry) => stableStringify(entry)).join(",")}]`;
+  }
+  if (value && typeof value === "object") {
+    const entries = Object.entries(value as Record<string, unknown>).sort(([a], [b]) =>
+      a.localeCompare(b),
+    );
+    return `{${entries
+      .map(([key, entry]) => `${JSON.stringify(key)}:${stableStringify(entry)}`)
+      .join(",")}}`;
+  }
+  return JSON.stringify(value);
+}
+
 export default function PipelineDetailPanel({
   selectedPipeline,
   connection,
@@ -45,12 +60,13 @@ export default function PipelineDetailPanel({
   const processors = selectedPipeline?.pipeline.processors ?? [];
 
   const processorKeys = useMemo(() => {
-    const typeCounts = new Map<string, number>();
+    const identityCounts = new Map<string, number>();
     return processors.map((processor) => {
-      const [type] = Object.entries(processor)[0] ?? ["unknown"];
-      const occurrence = typeCounts.get(type) ?? 0;
-      typeCounts.set(type, occurrence + 1);
-      return `${selectedPipeline?.name}:${type}:${occurrence}`;
+      const [type, config] = Object.entries(processor)[0] ?? ["unknown", {}];
+      const identity = `${type}:${stableStringify(config)}`;
+      const occurrence = identityCounts.get(identity) ?? 0;
+      identityCounts.set(identity, occurrence + 1);
+      return `${selectedPipeline?.name}:${identity}:${occurrence}`;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- processors reference is stable when pipeline.processors is unchanged
   }, [selectedPipeline?.pipeline.processors, selectedPipeline?.name]);
