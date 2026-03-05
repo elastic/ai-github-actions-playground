@@ -134,6 +134,10 @@ jobs:
 
         ### AI Insight banner
 
+        **Note:** The AI Insight banner requires a configured LLM connection
+        and may not appear in CI test environments. Do not file a bug if the
+        banner is missing.
+
         If there is an AI Insight banner at the top of the page:
         - Does it show a summary of the service performance data?
         - Is the insight text readable (not truncated or overflowing)?

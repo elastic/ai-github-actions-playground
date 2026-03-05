@@ -77,6 +77,9 @@ jobs:
           related cluster health metrics?
         - Are the numeric values formatted readably?
         - Is there an AI Insight banner? Is the content relevant and readable?
+          **Note:** The AI Insight banner requires a configured LLM
+          connection and may not appear in CI test environments. Do not
+          file a bug if the banner is missing.
 
         ---
 
