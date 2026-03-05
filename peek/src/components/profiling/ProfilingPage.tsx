@@ -336,7 +336,7 @@ export default function ProfilingPage() {
               size="small"
               variant="outlined"
               onClick={handleOpenInQueryLab}
-              disabled={viewMode === "topFunctions"}
+              disabled={viewMode === "topFunctions" || !hasRunCurrentView}
             >
               Open in Query Lab
             </Button>

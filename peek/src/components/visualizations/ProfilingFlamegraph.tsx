@@ -1,6 +1,7 @@
 import { useMemo, useCallback, useState, useRef, useEffect } from "react";
 import Box from "@mui/material/Box";
 import Breadcrumbs from "@mui/material/Breadcrumbs";
+import Chip from "@mui/material/Chip";
 import IconButton from "@mui/material/IconButton";
 import InputAdornment from "@mui/material/InputAdornment";
 import Link from "@mui/material/Link";
@@ -9,6 +10,8 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useTheme } from "@mui/material/styles";
 import ClearIcon from "@mui/icons-material/Clear";
+import FilterListIcon from "@mui/icons-material/FilterList";
+import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import SearchIcon from "@mui/icons-material/Search";
 import ZoomOutMapIcon from "@mui/icons-material/ZoomOutMap";
 import { EChart } from "@perses-dev/components";
@@ -119,6 +122,12 @@ function getFlameColor(name: string, frameType: FrameType): string {
 
 const MIN_LABEL_WIDTH = 30;
 const TEXT_PADDING = 6;
+/** Approximate character width for font-size 11px. Used for manual truncation. */
+const APPROX_CHAR_WIDTH = 6.5;
+/** Frames below this fraction of total samples are considered "small". */
+const SMALL_FRAME_THRESHOLD = 0.001;
+/** Regex for names that represent unknown/unresolved symbols. */
+const UNKNOWN_NAME_RE = /^(\(unknown\)|<unknown>|unknown|\?|<\?>)$/i;
 
 export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
   const muiTheme = useTheme();
@@ -126,6 +135,8 @@ export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
   const instanceRef = useRef<EChartInstance | undefined>(undefined);
   const [zoomPath, setZoomPath] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [hideSmallFrames, setHideSmallFrames] = useState(false);
+  const [hideUnknownFrames, setHideUnknownFrames] = useState(false);
   const [prevTree, setPrevTree] = useState(tree);
   if (prevTree !== tree) {
     setPrevTree(tree);
@@ -136,10 +147,44 @@ export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
 
   const option = useMemo(() => {
     if (visibleTree.value === 0) return null;
-    const rects = flattenTree(visibleTree, 0, 0, zoomPath);
-    const maxDepth = rects.reduce((max, r) => Math.max(max, r.depth), 0);
+    let rects = flattenTree(visibleTree, 0, 0, zoomPath);
     const totalSamples = visibleTree.value;
     const lowerSearch = searchTerm.toLowerCase();
+
+    if (hideSmallFrames) {
+      rects = rects.filter((r) => r.width / totalSamples >= SMALL_FRAME_THRESHOLD);
+    }
+    if (hideUnknownFrames) {
+      rects = rects.filter((r) => !UNKNOWN_NAME_RE.test(r.name));
+    }
+    if (rects.length === 0) {
+      return {
+        xAxis: {
+          type: "value" as const,
+          max: totalSamples,
+          show: false,
+        },
+        yAxis: {
+          type: "value" as const,
+          max: 1,
+          inverse: true,
+          show: false,
+        },
+        grid: { left: 0, right: 0, top: 0, bottom: 0 },
+        graphic: {
+          type: "text",
+          left: "center",
+          top: "middle",
+          style: {
+            text: "No frames to display - filters may be hiding results.",
+            fill: muiTheme.palette.text.secondary,
+            fontSize: 12,
+          },
+        },
+        series: [],
+      };
+    }
+    const maxDepth = rects.reduce((max, r) => Math.max(max, r.depth), 0);
 
     return {
       tooltip: {
@@ -198,10 +243,18 @@ export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
               textContent: {
                 type: "text" as const,
                 style: {
-                  text: w > MIN_LABEL_WIDTH ? String(name) : "",
+                  text: (() => {
+                    if (w <= MIN_LABEL_WIDTH) return "";
+                    const available = Math.max(w - TEXT_PADDING, 0);
+                    const maxChars = Math.floor(available / APPROX_CHAR_WIDTH);
+                    const label = String(name);
+                    if (maxChars <= 1) return "";
+                    if (label.length <= maxChars) return label;
+                    return label.slice(0, maxChars - 1) + "…";
+                  })(),
                   fill: "#fff",
                   fontSize: 11,
-                  truncate: { outerWidth: Math.max(w - TEXT_PADDING, 0) },
+                  fontFamily: "monospace",
                   opacity: isDimmed ? DIMMED_OPACITY : 1,
                 },
               },
@@ -220,8 +273,12 @@ export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
     visibleTree,
     muiTheme.palette.background.paper,
     muiTheme.palette.primary.main,
+    muiTheme.palette.text,
+    muiTheme.palette.text.secondary,
     searchTerm,
     zoomPath,
+    hideSmallFrames,
+    hideUnknownFrames,
   ]);
 
   const handleClick = useCallback((params: { data: unknown }) => {
@@ -254,7 +311,7 @@ export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
     };
   }, [handleClick, option]);
 
-  if (tree.value === 0 || !option) {
+  if (tree.value === 0) {
     return (
       <Box sx={{ p: 3 }}>
         <Typography variant="body2" color="text.secondary">
@@ -306,6 +363,30 @@ export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
           }}
           sx={{ width: 240 }}
         />
+        <Tooltip title="Hide frames with fewer than 0.1% of total samples">
+          <Chip
+            icon={<FilterListIcon fontSize="small" />}
+            label="Hide small"
+            size="small"
+            variant={hideSmallFrames ? "filled" : "outlined"}
+            color={hideSmallFrames ? "primary" : "default"}
+            aria-pressed={hideSmallFrames}
+            onClick={() => setHideSmallFrames((v) => !v)}
+            sx={{ cursor: "pointer" }}
+          />
+        </Tooltip>
+        <Tooltip title="Hide frames with unresolved or unknown symbol names">
+          <Chip
+            icon={<HelpOutlineIcon fontSize="small" />}
+            label="Hide unknown"
+            size="small"
+            variant={hideUnknownFrames ? "filled" : "outlined"}
+            color={hideUnknownFrames ? "primary" : "default"}
+            aria-pressed={hideUnknownFrames}
+            onClick={() => setHideUnknownFrames((v) => !v)}
+            sx={{ cursor: "pointer" }}
+          />
+        </Tooltip>
         {zoomPath.length > 0 && (
           <Tooltip title="Reset zoom to show the full flamegraph">
             <IconButton size="small" onClick={handleResetZoom} aria-label="Reset zoom">
@@ -380,12 +461,14 @@ export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
 
       {/* Chart */}
       <Box sx={{ flex: 1, minHeight: 0 }}>
-        <EChart
-          option={option as Record<string, unknown>}
-          theme={theme}
-          _instance={instanceRef}
-          sx={{ width: "100%", height: "100%", minHeight: 120 }}
-        />
+        {option ? (
+          <EChart
+            option={option as Record<string, unknown>}
+            theme={theme}
+            _instance={instanceRef}
+            sx={{ width: "100%", height: "100%", minHeight: 120 }}
+          />
+        ) : null}
       </Box>
     </Box>
   );

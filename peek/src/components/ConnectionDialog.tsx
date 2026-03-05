@@ -518,7 +518,7 @@ export default function ConnectionDialog() {
           </Collapse>
         </Box>
       </DialogContent>
-      <DialogActions sx={{ pb: 2, px: 3 }}>
+      <DialogActions disableSpacing sx={{ flexWrap: "wrap", gap: 1, pb: 2, px: 3 }}>
         {connected && (
           <Button onClick={handleDisconnect} color="warning" disabled={testing}>
             Disconnect
