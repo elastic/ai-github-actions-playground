@@ -251,6 +251,7 @@ export class ElasticsearchClient {
     let lastError: ElasticsearchError | undefined;
     const signal = options?.signal;
 
+    /* eslint-disable no-await-in-loop -- sequential retry with backoff */
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       let response: Response;
       try {
@@ -285,6 +286,7 @@ export class ElasticsearchClient {
       const backoff = INITIAL_BACKOFF_MS * Math.pow(2, attempt);
       await sleepWithJitter(backoff, signal);
     }
+    /* eslint-enable no-await-in-loop */
 
     // Should never reach here, but satisfy TypeScript
     throw (

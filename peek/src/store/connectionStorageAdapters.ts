@@ -184,20 +184,22 @@ export const electronStorage = createElectronStorage<PersistedConnectionState>({
       state.connection?.otlpApiKey ?? "",
     );
     await api.storeCredential(name + PASSWORD_SESSION_SUFFIX, state.connection?.password ?? "");
-    for (const profile of state.connectionProfiles ?? []) {
-      await api.storeCredential(
-        name + PROFILE_SESSION_PREFIX + profile.id + API_KEY_SESSION_SUFFIX,
-        profile.connection.apiKey ?? "",
-      );
-      await api.storeCredential(
-        name + PROFILE_SESSION_PREFIX + profile.id + OTLP_API_KEY_SESSION_SUFFIX,
-        profile.connection.otlpApiKey ?? "",
-      );
-      await api.storeCredential(
-        name + PROFILE_SESSION_PREFIX + profile.id + PASSWORD_SESSION_SUFFIX,
-        profile.connection.password ?? "",
-      );
-    }
+    await Promise.all(
+      (state.connectionProfiles ?? []).flatMap((profile) => [
+        api.storeCredential(
+          name + PROFILE_SESSION_PREFIX + profile.id + API_KEY_SESSION_SUFFIX,
+          profile.connection.apiKey ?? "",
+        ),
+        api.storeCredential(
+          name + PROFILE_SESSION_PREFIX + profile.id + OTLP_API_KEY_SESSION_SUFFIX,
+          profile.connection.otlpApiKey ?? "",
+        ),
+        api.storeCredential(
+          name + PROFILE_SESSION_PREFIX + profile.id + PASSWORD_SESSION_SUFFIX,
+          profile.connection.password ?? "",
+        ),
+      ]),
+    );
   },
   stripSecrets: (state) => {
     const profiles = state.connectionProfiles ?? [];
@@ -212,17 +214,19 @@ export const electronStorage = createElectronStorage<PersistedConnectionState>({
     if (localRaw) {
       try {
         const stored = JSON.parse(localRaw) as { state: PersistedConnectionState };
-        for (const profile of stored.state.connectionProfiles ?? []) {
-          await api.deleteCredential(
-            name + PROFILE_SESSION_PREFIX + profile.id + API_KEY_SESSION_SUFFIX,
-          );
-          await api.deleteCredential(
-            name + PROFILE_SESSION_PREFIX + profile.id + OTLP_API_KEY_SESSION_SUFFIX,
-          );
-          await api.deleteCredential(
-            name + PROFILE_SESSION_PREFIX + profile.id + PASSWORD_SESSION_SUFFIX,
-          );
-        }
+        await Promise.all(
+          (stored.state.connectionProfiles ?? []).flatMap((profile) => [
+            api.deleteCredential(
+              name + PROFILE_SESSION_PREFIX + profile.id + API_KEY_SESSION_SUFFIX,
+            ),
+            api.deleteCredential(
+              name + PROFILE_SESSION_PREFIX + profile.id + OTLP_API_KEY_SESSION_SUFFIX,
+            ),
+            api.deleteCredential(
+              name + PROFILE_SESSION_PREFIX + profile.id + PASSWORD_SESSION_SUFFIX,
+            ),
+          ]),
+        );
       } catch {
         /* ignore parse errors during cleanup */
       }
