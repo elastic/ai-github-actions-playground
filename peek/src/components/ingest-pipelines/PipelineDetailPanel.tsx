@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -41,6 +41,19 @@ export default function PipelineDetailPanel({
   const [verbose, setVerbose] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [expandedProcessors, setExpandedProcessors] = useState<Set<string>>(new Set());
+
+  const processors = selectedPipeline?.pipeline.processors ?? [];
+
+  const processorKeys = useMemo(() => {
+    const typeCounts = new Map<string, number>();
+    return processors.map((processor) => {
+      const [type] = Object.entries(processor)[0] ?? ["unknown"];
+      const occurrence = typeCounts.get(type) ?? 0;
+      typeCounts.set(type, occurrence + 1);
+      return `${selectedPipeline?.name}:${type}:${occurrence}`;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- processors reference is stable when pipeline.processors is unchanged
+  }, [selectedPipeline?.pipeline.processors, selectedPipeline?.name]);
 
   const {
     simulating,
@@ -145,7 +158,7 @@ export default function PipelineDetailPanel({
           <Typography variant="caption" color="text.secondary" gutterBottom display="block">
             Processors
           </Typography>
-          {(selectedPipeline.pipeline.processors ?? []).length === 0 ? (
+          {processors.length === 0 ? (
             <EmptyState
               size="small"
               heading="No processors"
@@ -153,90 +166,84 @@ export default function PipelineDetailPanel({
             />
           ) : (
             <Stack spacing={1} data-testid="pipeline-processors-list">
-              {(() => {
-                const processors = selectedPipeline.pipeline.processors ?? [];
-                const typeCounts = new Map<string, number>();
-                return processors.map((processor) => {
-                  const [type, config] = Object.entries(processor)[0] ?? ["unknown", {}];
-                  const configJson = JSON.stringify(config, null, 2);
-                  const typeOccurrence = typeCounts.get(type) ?? 0;
-                  typeCounts.set(type, typeOccurrence + 1);
-                  const processorKey = `${selectedPipeline.name}:${type}:${typeOccurrence}`;
-                  const isExpanded = expandedProcessors.has(processorKey);
-                  return (
+              {processors.map((processor, index) => {
+                const [type, config] = Object.entries(processor)[0] ?? ["unknown", {}];
+                const configJson = JSON.stringify(config, null, 2);
+                const processorKey = processorKeys[index]!;
+                const isExpanded = expandedProcessors.has(processorKey);
+                return (
+                  <Box
+                    key={processorKey}
+                    component="fieldset"
+                    sx={{
+                      m: 0,
+                      p: 1,
+                      border: 1,
+                      borderColor: "border.subtle",
+                      borderRadius: 1,
+                    }}
+                  >
+                    <Typography
+                      component="legend"
+                      variant="caption"
+                      sx={{ px: 0.5, bgcolor: "background.paper" }}
+                    >
+                      {type}
+                    </Typography>
                     <Box
-                      key={processorKey}
-                      component="fieldset"
                       sx={{
-                        m: 0,
-                        p: 1,
-                        border: 1,
-                        borderColor: "border.subtle",
-                        borderRadius: 1,
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
                       }}
                     >
-                      <Typography
-                        component="legend"
-                        variant="caption"
-                        sx={{ px: 0.5, bgcolor: "background.paper" }}
+                      <Button
+                        size="small"
+                        onClick={() =>
+                          setExpandedProcessors((prev) => {
+                            const next = new Set(prev);
+                            if (next.has(processorKey)) next.delete(processorKey);
+                            else next.add(processorKey);
+                            return next;
+                          })
+                        }
+                        endIcon={isExpanded ? <ExpandLess /> : <ExpandMore />}
+                        sx={{ textTransform: "none" }}
                       >
-                        {type}
-                      </Typography>
-                      <Box
+                        {isExpanded ? "Hide config" : "Show config"}
+                      </Button>
+                      <Tooltip title="Copy JSON">
+                        <IconButton
+                          size="small"
+                          onClick={() => void navigator.clipboard.writeText(configJson)}
+                          aria-label={`Copy ${type} config`}
+                        >
+                          <ContentCopyIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+                    <Collapse in={isExpanded} unmountOnExit>
+                      <Typography
+                        component="pre"
+                        variant="body2"
                         sx={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
+                          m: 0,
+                          mt: 0.5,
+                          p: 1,
+                          borderRadius: 1,
+                          bgcolor: "action.hover",
+                          wordBreak: "break-word",
+                          whiteSpace: "pre-wrap",
+                          fontSize: "0.75rem",
+                          fontFamily: "monospace",
                         }}
                       >
-                        <Button
-                          size="small"
-                          onClick={() =>
-                            setExpandedProcessors((prev) => {
-                              const next = new Set(prev);
-                              if (next.has(processorKey)) next.delete(processorKey);
-                              else next.add(processorKey);
-                              return next;
-                            })
-                          }
-                          endIcon={isExpanded ? <ExpandLess /> : <ExpandMore />}
-                          sx={{ textTransform: "none" }}
-                        >
-                          {isExpanded ? "Hide config" : "Show config"}
-                        </Button>
-                        <Tooltip title="Copy JSON">
-                          <IconButton
-                            size="small"
-                            onClick={() => void navigator.clipboard.writeText(configJson)}
-                            aria-label={`Copy ${type} config`}
-                          >
-                            <ContentCopyIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      </Box>
-                      <Collapse in={isExpanded} unmountOnExit>
-                        <Typography
-                          component="pre"
-                          variant="body2"
-                          sx={{
-                            m: 0,
-                            mt: 0.5,
-                            p: 1,
-                            borderRadius: 1,
-                            bgcolor: "action.hover",
-                            wordBreak: "break-word",
-                            whiteSpace: "pre-wrap",
-                            fontSize: "0.75rem",
-                            fontFamily: "monospace",
-                          }}
-                        >
-                          {configJson}
-                        </Typography>
-                      </Collapse>
-                    </Box>
-                  );
-                });
-              })()}
+                        {configJson}
+                      </Typography>
+                    </Collapse>
+                  </Box>
+                );
+              })}
             </Stack>
           )}
         </Box>
