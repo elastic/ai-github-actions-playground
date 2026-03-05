@@ -296,8 +296,12 @@ export default function DataStreamsPage() {
                   variant="outlined"
                   onClick={streamsResult.refresh}
                   disabled={loadingStreams}
+                  startIcon={
+                    loadingStreams ? <CircularProgress size={14} aria-hidden="true" /> : undefined
+                  }
+                  aria-label={loadingStreams ? "Refreshing data streams" : "Refresh data streams"}
                 >
-                  {loadingStreams ? <CircularProgress size={16} /> : "Refresh"}
+                  {loadingStreams ? "Refreshing..." : "Refresh"}
                 </Button>
                 <Button
                   size="small"
@@ -497,8 +501,13 @@ export default function DataStreamsPage() {
                         selected={stream.name === selectedName}
                         onClick={() => setSelectedName(stream.name)}
                         tabIndex={0}
+                        aria-label={`Select data stream ${stream.name}`}
                         onKeyDown={(event) => {
-                          if (event.key === "Enter" || event.key === " ") {
+                          if (
+                            event.key === "Enter" ||
+                            event.key === " " ||
+                            event.key === "Spacebar"
+                          ) {
                             event.preventDefault();
                             setSelectedName(stream.name);
                           }

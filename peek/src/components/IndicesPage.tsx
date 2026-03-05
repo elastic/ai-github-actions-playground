@@ -243,7 +243,11 @@ export default function IndicesPage() {
       "Use only facts from provided context; do not invent data. " +
       "When indices are degraded or unhealthy, suggest investigation steps. " +
       INSIGHT_GUARDRAIL,
-    cacheKey: `indices-slots::${indexMetrics.total}::${indexMetrics.green}::${indexMetrics.yellow}::${indexMetrics.red}::${displayedIndex ?? ""}`,
+    cacheKey:
+      `indices-slots::${indexMetrics.total}` +
+      `::${indexMetrics.green}::${indexMetrics.yellow}::${indexMetrics.red}` +
+      `::${indexMetrics.totalDocs}::${indexMetrics.totalSizeBytes}` +
+      `::${displayedIndex ?? ""}`,
     slots: INDICES_INSIGHT_SLOTS,
     enabled: indices.length > 0,
   });
@@ -398,6 +402,9 @@ export default function IndicesPage() {
         )}
 
         {error && <Alert severity="error">{error}</Alert>}
+        {slotInsights.error && (
+          <Alert severity="warning">AI insights unavailable: {slotInsights.error}</Alert>
+        )}
 
         <Box sx={{ display: "flex", flex: 1, gap: 1, minHeight: 0 }}>
           <InsightSlot slotId={INDICES_INSIGHT_SLOT_IDS.indexList}>

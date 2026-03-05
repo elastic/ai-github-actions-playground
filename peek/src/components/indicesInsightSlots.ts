@@ -1,7 +1,6 @@
 import type { InsightSlotDefinition } from "../types/insightSlots";
 
 export const INDICES_INSIGHT_SLOT_IDS = {
-  indexSearch: "indices-search",
   totalIndicesCard: "indices-total-indices-card",
   healthyCard: "indices-healthy-card",
   degradedCard: "indices-degraded-card",
@@ -12,11 +11,7 @@ export const INDICES_INSIGHT_SLOT_IDS = {
   indexDetail: "indices-detail",
 } as const;
 
-export const INDICES_INSIGHT_SLOTS: InsightSlotDefinition[] = [
-  {
-    slotId: INDICES_INSIGHT_SLOT_IDS.indexSearch,
-    label: "Indices search and filter controls",
-  },
+export const INDICES_INSIGHT_SLOTS: readonly InsightSlotDefinition[] = [
   {
     slotId: INDICES_INSIGHT_SLOT_IDS.totalIndicesCard,
     label: "KPI card: total number of indices",
@@ -43,7 +38,7 @@ export const INDICES_INSIGHT_SLOTS: InsightSlotDefinition[] = [
   },
   {
     slotId: INDICES_INSIGHT_SLOT_IDS.indexList,
-    label: "Index list table with name, health, docs, and size",
+    label: "Index list panel (search, filters, table)",
   },
   {
     slotId: INDICES_INSIGHT_SLOT_IDS.indexDetail,

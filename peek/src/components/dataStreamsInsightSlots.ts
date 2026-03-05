@@ -1,7 +1,6 @@
 import type { InsightSlotDefinition } from "../types/insightSlots";
 
 export const DATA_STREAMS_INSIGHT_SLOT_IDS = {
-  streamSearch: "data-streams-search",
   totalStreamsCard: "data-streams-total-streams-card",
   healthyCard: "data-streams-healthy-card",
   degradedCard: "data-streams-degraded-card",
@@ -11,11 +10,7 @@ export const DATA_STREAMS_INSIGHT_SLOT_IDS = {
   streamDetail: "data-streams-detail",
 } as const;
 
-export const DATA_STREAMS_INSIGHT_SLOTS: InsightSlotDefinition[] = [
-  {
-    slotId: DATA_STREAMS_INSIGHT_SLOT_IDS.streamSearch,
-    label: "Data streams search and filter controls",
-  },
+export const DATA_STREAMS_INSIGHT_SLOTS: readonly InsightSlotDefinition[] = [
   {
     slotId: DATA_STREAMS_INSIGHT_SLOT_IDS.totalStreamsCard,
     label: "KPI card: total number of data streams",
@@ -38,7 +33,7 @@ export const DATA_STREAMS_INSIGHT_SLOTS: InsightSlotDefinition[] = [
   },
   {
     slotId: DATA_STREAMS_INSIGHT_SLOT_IDS.streamList,
-    label: "Data stream list table with name, status, and backing index count",
+    label: "Data stream list panel (search, filters, table)",
   },
   {
     slotId: DATA_STREAMS_INSIGHT_SLOT_IDS.streamDetail,
