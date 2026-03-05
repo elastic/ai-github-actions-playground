@@ -104,8 +104,16 @@ export default function NodesPage() {
           {rows.length === 0 && !loading ? (
             <EmptyState
               icon={<MemoryIcon sx={{ fontSize: 28 }} />}
-              heading="No nodes found"
-              description="No node metadata is currently available."
+              heading={
+                partialErrors.includes("nodes") && partialErrors.includes("node stats")
+                  ? "Node data unavailable"
+                  : "No nodes found"
+              }
+              description={
+                partialErrors.includes("nodes") && partialErrors.includes("node stats")
+                  ? "Node APIs are unavailable for this cluster or current permissions."
+                  : "No node metadata is currently available."
+              }
             />
           ) : (
             <TableContainer sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
