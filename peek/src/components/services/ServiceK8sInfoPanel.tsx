@@ -37,8 +37,8 @@ export default function ServiceK8sInfoPanel({ rows }: ServiceK8sInfoPanelProps) 
           </TableRow>
         </TableHead>
         <TableBody>
-          {rows.map((row, idx) => (
-            <TableRow key={`${row.namespace}-${row.pod}-${row.node}-${idx}`} hover>
+          {rows.map((row) => (
+            <TableRow key={`${row.namespace}-${row.pod}-${row.node}`} hover>
               <TableCell>
                 {row.pod ? (
                   <Link

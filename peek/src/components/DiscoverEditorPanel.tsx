@@ -121,11 +121,8 @@ export default function DiscoverEditorPanel(p: DiscoverEditorPanelProps) {
                 open={Boolean(p.historyAnchor)}
                 onClose={() => p.setHistoryAnchor(null)}
               >
-                {p.queryHistory.map((historyQuery, idx) => (
-                  <MenuItem
-                    key={`${historyQuery}-${idx}`}
-                    onClick={() => p.handleSelectHistory(historyQuery)}
-                  >
+                {p.queryHistory.map((historyQuery) => (
+                  <MenuItem key={historyQuery} onClick={() => p.handleSelectHistory(historyQuery)}>
                     {historyQuery}
                   </MenuItem>
                 ))}

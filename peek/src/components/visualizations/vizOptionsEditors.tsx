@@ -128,24 +128,27 @@ function ThresholdEditor({
         />
       </Box>
 
-      {steps.map((step, idx) => (
-        <Box key={idx} sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+      {[...steps.entries()].map(([stepIdx, step]) => (
+        <Box
+          key={`${step.value}-${step.color}-${stepIdx}`}
+          sx={{ display: "flex", gap: 1, alignItems: "center" }}
+        >
           <TextField
             size="small"
             type="number"
             label="Value ≥"
             value={step.value}
-            onChange={(e) => handleStepValueChange(idx, e.target.value)}
+            onChange={(e) => handleStepValueChange(stepIdx, e.target.value)}
             sx={{ width: 90 }}
           />
           <ThresholdColorSelect
             value={step.color}
-            onChange={(c) => handleStepColorChange(idx, c)}
+            onChange={(c) => handleStepColorChange(stepIdx, c)}
           />
           <IconButton
             size="small"
-            aria-label={`remove threshold step ${idx + 1}`}
-            onClick={() => handleRemoveStep(idx)}
+            aria-label={`remove threshold step ${stepIdx + 1}`}
+            onClick={() => handleRemoveStep(stepIdx)}
           >
             <DeleteIcon fontSize="inherit" />
           </IconButton>

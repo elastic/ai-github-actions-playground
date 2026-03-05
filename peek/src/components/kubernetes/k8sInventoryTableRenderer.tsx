@@ -16,7 +16,7 @@ export function renderTable<T>(
   sortDirection: K8sSortDirection,
   handleSort: (field: string) => void,
   ariaLabel: string,
-  rowKey: (row: T, index: number) => string,
+  rowKey: (row: T) => string,
 ) {
   return (
     <Table size="medium" aria-label={ariaLabel}>
@@ -40,8 +40,8 @@ export function renderTable<T>(
         </TableRow>
       </TableHead>
       <TableBody>
-        {rows.map((row, index) => (
-          <TableRow key={rowKey(row, index)} hover>
+        {rows.map((row) => (
+          <TableRow key={rowKey(row)} hover>
             {columns.map((col) => (
               <TableCell key={col.key} align={col.align ?? "left"}>
                 <Typography variant="body2">{col.render(row)}</Typography>

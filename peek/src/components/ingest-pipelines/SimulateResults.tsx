@@ -14,12 +14,13 @@ interface SimulateResultsProps {
 }
 
 export default function SimulateResults({ simulateResult }: SimulateResultsProps) {
-  const [expandedDocs, setExpandedDocs] = useState<Set<number>>(new Set());
+  const [expandedDocs, setExpandedDocs] = useState<Set<string>>(new Set());
   const [prevResult, setPrevResult] = useState(simulateResult);
   if (simulateResult !== prevResult) {
     setPrevResult(simulateResult);
     setExpandedDocs(new Set());
   }
+  const seenDocKeys = new Map<string, number>();
 
   return (
     <Box>
@@ -28,21 +29,26 @@ export default function SimulateResults({ simulateResult }: SimulateResultsProps
         {(simulateResult.docs?.length ?? 0) !== 1 ? "s" : ""}
       </Typography>
       <Box data-testid="simulate-result" sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-        {simulateResult.docs?.map((docResult, idx) => {
+        {(simulateResult.docs ?? []).map((docResult, docIdx) => {
+          const docBaseKey = JSON.stringify(docResult.doc ?? {});
+          const docOccurrence = seenDocKeys.get(docBaseKey) ?? 0;
+          seenDocKeys.set(docBaseKey, docOccurrence + 1);
+          const docKey = `${docBaseKey}-${docOccurrence}`;
           const isError = !!docResult.doc?.error;
-          const isExpanded = expandedDocs.has(idx);
+          const isExpanded = expandedDocs.has(docKey);
           const hasTrace = (docResult.processor_results?.length ?? 0) > 0;
+          const seenProcessorKeys = new Map<string, number>();
           return (
-            <Paper key={idx} variant="outlined" sx={{ p: 1 }}>
+            <Paper key={docKey} variant="outlined" sx={{ p: 1 }}>
               <Stack direction="row" spacing={1} alignItems="center">
                 <Chip
                   size="small"
                   label={isError ? "Error" : "OK"}
                   color={isError ? "error" : "success"}
-                  data-testid={`doc-result-status-${idx}`}
+                  data-testid={`doc-result-status-${docIdx}`}
                 />
                 <Typography variant="body2" sx={{ flex: 1 }}>
-                  Doc {idx + 1}
+                  Doc {docIdx + 1}
                   {isError &&
                     docResult.doc?.error &&
                     ` — ${docResult.doc.error.type}: ${docResult.doc.error.reason}`}
@@ -52,13 +58,13 @@ export default function SimulateResults({ simulateResult }: SimulateResultsProps
                   onClick={() => {
                     setExpandedDocs((prev) => {
                       const next = new Set(prev);
-                      if (next.has(idx)) next.delete(idx);
-                      else next.add(idx);
+                      if (next.has(docKey)) next.delete(docKey);
+                      else next.add(docKey);
                       return next;
                     });
                   }}
                   aria-expanded={isExpanded}
-                  aria-label={`${isExpanded ? "Collapse" : "Expand"} Doc ${idx + 1}`}
+                  aria-label={`${isExpanded ? "Collapse" : "Expand"} Doc ${docIdx + 1}`}
                 >
                   {isExpanded ? "Collapse" : "Expand"}
                 </Button>
@@ -101,31 +107,41 @@ export default function SimulateResults({ simulateResult }: SimulateResultsProps
                         Processor trace
                       </Typography>
                       <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-                        {docResult.processor_results?.map((pr, prIdx) => (
-                          <Stack key={prIdx} direction="row" spacing={1} alignItems="center">
-                            <Chip
-                              size="small"
-                              data-testid={`processor-trace-status-${idx}-${prIdx}`}
-                              label={
-                                pr.status === "success"
-                                  ? "OK"
-                                  : pr.status === "error"
-                                    ? "Error"
-                                    : "Unknown"
-                              }
-                              color={
-                                pr.status === "success"
-                                  ? "success"
-                                  : pr.status === "error"
-                                    ? "error"
-                                    : "default"
-                              }
-                            />
-                            <Typography variant="body2">
-                              {pr.processor_type ?? "processor"}
-                            </Typography>
-                          </Stack>
-                        ))}
+                        {(docResult.processor_results ?? []).map((pr, prIdx) => {
+                          const processorBaseKey = `${docKey}-${JSON.stringify(pr)}`;
+                          const processorOccurrence = seenProcessorKeys.get(processorBaseKey) ?? 0;
+                          seenProcessorKeys.set(processorBaseKey, processorOccurrence + 1);
+                          return (
+                            <Stack
+                              key={`${processorBaseKey}-${processorOccurrence}`}
+                              direction="row"
+                              spacing={1}
+                              alignItems="center"
+                            >
+                              <Chip
+                                size="small"
+                                data-testid={`processor-trace-status-${docIdx}-${prIdx}`}
+                                label={
+                                  pr.status === "success"
+                                    ? "OK"
+                                    : pr.status === "error"
+                                      ? "Error"
+                                      : "Unknown"
+                                }
+                                color={
+                                  pr.status === "success"
+                                    ? "success"
+                                    : pr.status === "error"
+                                      ? "error"
+                                      : "default"
+                                }
+                              />
+                              <Typography variant="body2">
+                                {pr.processor_type ?? "processor"}
+                              </Typography>
+                            </Stack>
+                          );
+                        })}
                       </Box>
                     </Box>
                   )}
