@@ -89,19 +89,41 @@ export type TelemetrySignal = "logs" | "metrics" | "traces";
 
 const SIGNAL_PREFIXES: TelemetrySignal[] = ["logs", "metrics", "traces"];
 
+/** For host onboarding (Linux/Windows/macOS), we care about hostmetricsreceiver streams. */
+export const HOST_METRICS_INDEX_PATTERN = "metrics-hostmetricsreceiver*";
+
+/**
+ * Index pattern for a signal type. For host onboarding, metrics uses hostmetricsreceiver streams.
+ */
+export function getIngestionIndexPattern(
+  signalType: TelemetrySignal,
+  hostOnboarding: boolean,
+): string {
+  if (signalType === "metrics" && hostOnboarding) {
+    return HOST_METRICS_INDEX_PATTERN;
+  }
+  return `${signalType}-*`;
+}
+
 /**
  * Detect which telemetry signals have data streams present in the cluster.
- * Returns the set of signal types whose `{signal}-*` data streams exist.
+ * Returns the set of signal types whose data streams exist.
+ * @param hostOnboarding - When true (Linux/Windows/macOS hosts), "metrics" requires metrics-hostmetricsreceiver* streams.
  */
 export async function detectTelemetrySignals(
   client: ElasticsearchClient,
   signal?: AbortSignal,
+  hostOnboarding = false,
 ): Promise<Set<TelemetrySignal>> {
   const res = await client.getDataStreams(undefined, signal);
   const found = new Set<TelemetrySignal>();
   for (const ds of res.data_streams ?? []) {
     for (const prefix of SIGNAL_PREFIXES) {
-      if (ds.name.startsWith(`${prefix}-`)) {
+      const matches =
+        prefix === "metrics" && hostOnboarding
+          ? ds.name.startsWith("metrics-hostmetricsreceiver")
+          : ds.name.startsWith(`${prefix}-`);
+      if (matches) {
         found.add(prefix);
         break;
       }
@@ -336,27 +358,8 @@ docker compose up -d`;
     label: "Linux",
     quickstartUrl:
       "https://www.elastic.co/docs/solutions/observability/get-started/quickstart-monitor-hosts-with-opentelemetry",
-    command: ({
-      esUrl,
-      version,
-      apiKey,
-      endpointType,
-      otlpUrl,
-      runMode = "run_once",
-      linuxPackageFormat = "deb",
-    }) => {
+    command: ({ esUrl, version, apiKey, endpointType, otlpUrl, linuxPackageFormat = "deb" }) => {
       const isOtlp = endpointType === "managed_otlp";
-      const packageExt = linuxPackageFormat === "rpm" ? "rpm" : "deb";
-      const autoInstallSnippet =
-        linuxPackageFormat === "auto"
-          ? `if command -v dpkg &>/dev/null; then
-  sudo dpkg -i "$PKG_FILE"
-else
-  sudo rpm -Uvh "$PKG_FILE"
-fi`
-          : linuxPackageFormat === "rpm"
-            ? 'sudo rpm -Uvh "$PKG_FILE"'
-            : 'sudo dpkg -i "$PKG_FILE"';
       const sampleConfig = isOtlp
         ? "otel_samples/managed_otlp/platformlogs_hostmetrics.yml"
         : "otel_samples/platformlogs_hostmetrics.yml";
@@ -365,29 +368,40 @@ fi`
 ELASTIC_API_KEY="${apiKey}"`
         : `ELASTIC_ENDPOINT="${esUrl}"
 ELASTIC_API_KEY="${apiKey}"`;
-      const runOnceCredentialLines = isOtlp
-        ? `export ELASTIC_OTLP_ENDPOINT="${otlpUrl}"
+
+      // Run once: use generic tar.gz (no package manager)
+      if (linuxPackageFormat === "auto") {
+        const runOnceCredentialLines = isOtlp
+          ? `export ELASTIC_OTLP_ENDPOINT="${otlpUrl}"
 export ELASTIC_API_KEY="${apiKey}"`
-        : `export ELASTIC_ENDPOINT="${esUrl}"
+          : `export ELASTIC_ENDPOINT="${esUrl}"
 export ELASTIC_API_KEY="${apiKey}"`;
-      const runModeCredentials =
-        runMode === "systemd"
-          ? `sudo install -d -m 0755 /etc/elastic
+        return `# 1. Detect architecture, then download and extract the EDOT Collector (generic tar.gz)
+AGENT_ARCH="$(uname -m | sed -E 's/^(x86_64|amd64)$/x86_64/; s/^(aarch64|arm64)$/arm64/')"
+curl -L -O ${ARTIFACTS_BASE}/elastic-agent-${version}-linux-\${AGENT_ARCH}.tar.gz
+tar xzvf elastic-agent-${version}-linux-\${AGENT_ARCH}.tar.gz
+cd elastic-agent-${version}-linux-\${AGENT_ARCH}
+
+# 2. Set your credentials
+${runOnceCredentialLines}
+export STORAGE_DIR="$(pwd)/data/otel"
+mkdir -p "$STORAGE_DIR"
+cp ${sampleConfig} otel.yml
+
+# 3. Start the EDOT Collector
+sudo -E ./elastic-agent otel --config otel.yml`;
+      }
+
+      // deb/rpm: package manager install with systemd
+      const packageExt = linuxPackageFormat === "rpm" ? "rpm" : "deb";
+      const installSnippet =
+        linuxPackageFormat === "rpm" ? 'sudo rpm -Uvh "$PKG_FILE"' : 'sudo dpkg -i "$PKG_FILE"';
+      const runModeCredentials = `sudo install -d -m 0755 /etc/elastic
 cat <<EOF | sudo tee /etc/elastic/elastic-agent-otel.env > /dev/null
 ${envLines}
 STORAGE_DIR="$AGENT_DIR/data/otel"
-EOF`
-          : runMode === "shell_profile"
-            ? `cat <<EOF >> ~/.profile
-export ${envLines.replaceAll("\n", "\nexport ")}
-export STORAGE_DIR="$AGENT_DIR/data/otel"
-EOF
-source ~/.profile`
-            : `${runOnceCredentialLines}
-export STORAGE_DIR="$AGENT_DIR/data/otel"`;
-      const runModeStart =
-        runMode === "systemd"
-          ? `cat <<EOF | sudo tee /etc/systemd/system/elastic-agent-otel.service > /dev/null
+EOF`;
+      const runModeStart = `cat <<EOF | sudo tee /etc/systemd/system/elastic-agent-otel.service > /dev/null
 [Unit]
 Description=Elastic EDOT Collector
 After=network-online.target
@@ -405,15 +419,13 @@ RestartSec=5
 WantedBy=multi-user.target
 EOF
 sudo systemctl daemon-reload
-sudo systemctl enable --now elastic-agent-otel.service`
-          : 'sudo -E "$AGENT_DIR/elastic-agent" otel --config "$AGENT_DIR/otel.yml"';
+sudo systemctl enable --now elastic-agent-otel.service`;
       return `# 1. Detect architecture, then install the EDOT Collector package
 AGENT_ARCH="$(uname -m | sed -E 's/^(x86_64|amd64)$/x86_64/; s/^(aarch64|arm64)$/arm64/')"
 AGENT_DIR="/opt/Elastic/Agent"
-PKG_EXT="${linuxPackageFormat === "auto" ? "$(command -v dpkg &>/dev/null && echo deb || echo rpm)" : packageExt}"
-PKG_FILE="elastic-agent-${version}-linux-\${AGENT_ARCH}.\${PKG_EXT}"
+PKG_FILE="elastic-agent-${version}-linux-\${AGENT_ARCH}.${packageExt}"
 curl -L -O ${ARTIFACTS_BASE}/\${PKG_FILE}
-${autoInstallSnippet}
+${installSnippet}
 sudo cp "$AGENT_DIR/${sampleConfig}" "$AGENT_DIR/otel.yml"
 
 # 2. Set your credentials

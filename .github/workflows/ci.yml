@@ -13,8 +13,9 @@ on:
       - "peek/playwright.config.ts"
       - "peek/index.html"
       - "peek/public/**"
-      - "peek/eslint*"
       - "peek/eslint-plugin-peek/**"
+      - "peek/.oxlintrc.json"
+      - "peek/.oxfmtrc.json"
       - "Makefile"
       - ".github/workflows/ci.yml"
   push:
@@ -29,8 +30,9 @@ on:
       - "peek/playwright.config.ts"
       - "peek/index.html"
       - "peek/public/**"
-      - "peek/eslint*"
       - "peek/eslint-plugin-peek/**"
+      - "peek/.oxlintrc.json"
+      - "peek/.oxfmtrc.json"
       - "Makefile"
       - ".github/workflows/ci.yml"
 
@@ -67,15 +69,6 @@ jobs:
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
           ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
-
-      - name: Restore ESLint cache
-        uses: actions/cache@v4
-        with:
-          path: peek/.eslintcache
-          key: eslint-${{ runner.os }}-${{ github.ref }}-${{ github.run_number }}
-          restore-keys: |
-            eslint-${{ runner.os }}-${{ github.ref }}-
-            eslint-${{ runner.os }}-
 
       - name: Lint and typecheck (changed files only)
         if: github.event_name == 'pull_request'

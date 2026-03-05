@@ -47,7 +47,10 @@ export function parseFrameIds(frameIdsString: string): string[] {
   if (!frameIdsString) return [];
   // EDOT OTel exporter uses comma-separated frame IDs
   if (frameIdsString.includes(",")) {
-    return frameIdsString.split(",").filter((id) => id.length > 0);
+    return frameIdsString
+      .split(",")
+      .map((id) => id.trim())
+      .filter((id) => id.length > 0);
   }
   // Legacy hex format: underscore-separated 32-char hex IDs.
   // Detect by checking if the string (minus underscores) is purely hex.

@@ -33,11 +33,14 @@ export interface NodeRow {
   docCount: number | null;
 }
 
+const COMPACT_NUMBER_FORMATTER = new Intl.NumberFormat(undefined, {
+  notation: "compact",
+  maximumFractionDigits: 1,
+});
+
 export function formatCompactNumber(value: number | null): string {
   if (value === null) return "Unavailable";
-  return new Intl.NumberFormat(undefined, { notation: "compact", maximumFractionDigits: 1 }).format(
-    value,
-  );
+  return COMPACT_NUMBER_FORMATTER.format(value);
 }
 
 export function formatPercent(value: number | null): string {

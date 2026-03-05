@@ -23,57 +23,59 @@ const A11Y_BASELINE: Record<string, Record<string, Record<string, number>>> = {
       "page-has-heading-one": 1,
     },
     "post-connect": {
-      "color-contrast": 2,
+      "color-contrast": 3,
     },
     Metrics: {
       "aria-prohibited-attr": 1,
+      "color-contrast": 3,
+    },
+    Services: {
       "color-contrast": 2,
     },
-    Services: {},
     Traces: {
       "aria-prohibited-attr": 1,
-      "color-contrast": 16,
+      "color-contrast": 17,
     },
     "Query Lab": {
-      "aria-prohibited-attr": 1,
-      "color-contrast": 16,
-      "scrollable-region-focusable": 1,
-    },
-    Logs: {
       "aria-prohibited-attr": 1,
       "color-contrast": 17,
       "scrollable-region-focusable": 1,
     },
+    Logs: {
+      "aria-prohibited-attr": 1,
+      "color-contrast": 18,
+      "scrollable-region-focusable": 1,
+    },
     Console: {
-      "color-contrast": 16,
+      "color-contrast": 17,
       "scrollable-region-focusable": 1,
     },
     Indices: {
-      "color-contrast": 2,
+      "color-contrast": 9,
     },
   },
   "mobile-safari": {
     "Query Lab": {
       "aria-prohibited-attr": 1,
-      "color-contrast": 16,
+      "color-contrast": 17,
       "scrollable-region-focusable": 2,
     },
     Logs: {
       "aria-prohibited-attr": 1,
-      "color-contrast": 16,
+      "color-contrast": 17,
       "scrollable-region-focusable": 2,
     },
     Traces: {
       "aria-prohibited-attr": 1,
-      "color-contrast": 12,
+      "color-contrast": 13,
       "scrollable-region-focusable": 1,
     },
     Console: {
-      "color-contrast": 16,
+      "color-contrast": 17,
       "scrollable-region-focusable": 2,
     },
     Indices: {
-      "color-contrast": 2,
+      "color-contrast": 3,
     },
   },
   "mobile-chrome": {

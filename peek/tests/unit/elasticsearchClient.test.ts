@@ -641,6 +641,20 @@ describe("getCapabilities", () => {
     expect(caps.canReadApiKeys).toBe(false);
   });
 
+  it("falls back to minimal capabilities on a generic 400 Bad Request from _has_privileges", async () => {
+    const fetchSpy = mockFetchOnce({ error: { reason: "Bad Request" } }, { status: 400 });
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const client = makeClient({ apiKey: "key" });
+    const caps = await client.getCapabilities();
+
+    expect(caps.canManageDataStreams).toBe(false);
+    expect(caps.canCreateApiKeys).toBe(false);
+    expect(caps.canReadSecurityUsers).toBe(false);
+    expect(caps.canReadSecurityRoles).toBe(false);
+    expect(caps.canReadApiKeys).toBe(false);
+  });
+
   it("returns optimistic capabilities when the _has_privileges endpoint returns 404", async () => {
     const fetchSpy = mockFetchOnce({}, { status: 404 });
     vi.stubGlobal("fetch", fetchSpy);
