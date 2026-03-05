@@ -71,14 +71,7 @@ export default function AppHeader({
         redoDashboardChange: s.redoDashboardChange,
       })),
     );
-  const { connected, connection, connectionProfiles, activeProfileId } = useConnectionStore(
-    useShallow((s) => ({
-      connected: s.connected,
-      connection: s.connection,
-      connectionProfiles: s.connectionProfiles,
-      activeProfileId: s.activeProfileId,
-    })),
-  );
+  const connected = useConnectionStore((s) => s.connected);
   const setEditingPanelId = useUIStore((s) => s.setEditingPanelId);
   const setCommandPaletteOpen = useCommandPaletteStore((s) => s.setCommandPaletteOpen);
 
@@ -91,21 +84,8 @@ export default function AppHeader({
   const isNarrow = useMediaQuery(theme.breakpoints.down("md"));
   const showTimeControls = connected && (Boolean(activePage?.showTimeControls) || isDashboardView);
 
-  // Derive a short nickname for the connected cluster:
-  // prefer the saved profile name, fall back to the first subdomain segment of the URL.
-  const activeProfile = connectionProfiles.find((p) => p.id === activeProfileId);
-  const clusterNickname: string | null = (() => {
-    if (activeProfile?.name) return activeProfile.name;
-    if (!connection?.url) return null;
-    try {
-      const host = new URL(connection.url).hostname;
-      if (/^\d{1,3}(\.\d{1,3}){3}$/.test(host)) return host; // bare IP
-      return host.split(".")[0] ?? null;
-    } catch {
-      return null;
-    }
-  })();
-  const headerTitle = connected && clusterNickname ? `Peek @ ${clusterNickname}` : "Peek";
+  // Header shows "Peek" only; ConnectionProfileSwitcher chip shows the active profile name.
+  const headerTitle = "Peek";
 
   const refreshInterval = dashboard.refreshInterval ?? DEFAULT_REFRESH_INTERVAL;
   const timeRangeRef = useRef(dashboard.timeRange);
