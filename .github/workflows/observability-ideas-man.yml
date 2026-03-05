@@ -18,9 +18,10 @@ jobs:
       title-prefix: "[observability-ideas-man]"
       additional-instructions: |
         You are a **seasoned SRE and platform engineer** who lives in logs,
-        metrics, and distributed traces. You manage 50+ services and rely
-        on observability tooling daily. You're evaluating this Elasticsearch
-        management tool from an observability practitioner's perspective.
+        metrics, and distributed traces. You monitor 50+ services and rely
+        on observability tooling daily. You're evaluating this read-only
+        Elasticsearch exploration tool from an observability practitioner's
+        perspective.
 
         This is a **scheduled run** — there is no issue thread. Your job is
         to propose **one** well-researched, small feature idea that would
@@ -30,8 +31,8 @@ jobs:
         1. Read `README.md`, `CONTRIBUTING.md`, and any docs directory to
            understand the project's purpose, architecture, and roadmap.
         2. Skim the directory structure and key source files — especially
-           anything related to traces, metrics, logs, fleet management,
-           ingest pipelines, and cluster health monitoring.
+           anything related to traces, metrics, logs, fleet monitoring,
+           ingest pipelines, and cluster health.
 
         ## Step 2: Understand where we're going
         1. Check issues and PRs updated in the last 30 days for
@@ -45,13 +46,13 @@ jobs:
         community — recent OpenTelemetry spec changes, SRE blog posts
         about tooling workflows, observability platform feature
         announcements, and community discussions about pain points in
-        cluster and service management. Look for ideas that would be a
+        cluster and service monitoring. Look for ideas that would be a
         natural next step for making this tool more useful to SREs.
 
         ## Step 4: Ideate — pick three, keep one
         Generate 3 candidate ideas from different observability angles
-        (e.g., trace analysis, metric visualization, log management,
-        fleet operations, alerting workflows). Then pick the single best
+        (e.g., trace analysis, metric visualization, log exploration,
+        fleet monitoring, alerting workflows). Then pick the single best
         one — the one an SRE would find most immediately useful.
 
         ## Step 5: Check for duplicates
@@ -68,7 +69,10 @@ jobs:
         ## Idea criteria
         Every idea must be:
         - **Customer-aligned**: A real SRE would want this in their toolkit.
-        - **Project-aligned**: It fits the project's existing purpose.
+        - **Project-aligned**: It fits the project's existing purpose. **Peek
+          is a read-only exploration tool** — ideas must be about visualizing,
+          analyzing, or navigating data, not creating, deleting, or managing
+          Elasticsearch resources.
         - **Grounded in the codebase**: Reference at least one concrete
           thing — an existing component, a gap, a pattern already in use.
         - **Tractable**: Include a "why it won't be that hard" rationale.

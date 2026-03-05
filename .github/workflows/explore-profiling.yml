@@ -158,6 +158,10 @@ jobs:
 
         ## Output rules
 
+        - **Complete ALL required exploration phases before filing an issue.**
+          Do not stop after finding your first problem — continue through
+          every required check listed above, collecting all findings.
+          Treat example scenarios as illustrative, not an exhaustive checklist.
         - **Your job is UI defects, not data analysis.** Do not report on
           what the profiling data contains, how many stack trace IDs appear,
           which functions are present, or what the data implies about
@@ -165,11 +169,14 @@ jobs:
         - **Be specific and concise.** A good issue says: page, action taken,
           what was expected, what actually happened, screenshot. Not a
           narrative describing the data you see.
-        - **Silence is better than noise.** Only file an issue for a genuine
-          UI/UX defect.
-        - If everything works, do **not** open an issue.
-        - If you find problems, create **one** issue. Prefix the title with
-          `[explore-profiling]` (after the automatically added `[gemini-cli]`
-          prefix).
+        - **Silence is better than noise.** Only file an issue for genuine
+          UI/UX defects. If everything works, do **not** open an issue.
+        - Include any **axe-core color-contrast violations** found during
+          exploration in the same issue, with page/location and screenshot.
+        - Create **one** issue that lists **every** finding from your
+          exploration. Use a numbered list — for each item include: the
+          page/location, what you tried, what you expected, what actually
+          happened, and a screenshot. A thorough issue typically has 3-10
+          findings.
     secrets:
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
