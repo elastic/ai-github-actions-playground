@@ -11,6 +11,7 @@ import Typography from "@mui/material/Typography";
 import { useTheme } from "@mui/material/styles";
 import ClearIcon from "@mui/icons-material/Clear";
 import FilterListIcon from "@mui/icons-material/FilterList";
+import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import SearchIcon from "@mui/icons-material/Search";
 import ZoomOutMapIcon from "@mui/icons-material/ZoomOutMap";
 import { EChart } from "@perses-dev/components";
@@ -147,7 +148,6 @@ export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
   const option = useMemo(() => {
     if (visibleTree.value === 0) return null;
     let rects = flattenTree(visibleTree, 0, 0, zoomPath);
-    const maxDepth = rects.reduce((max, r) => Math.max(max, r.depth), 0);
     const totalSamples = visibleTree.value;
     const lowerSearch = searchTerm.toLowerCase();
 
@@ -157,6 +157,9 @@ export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
     if (hideUnknownFrames) {
       rects = rects.filter((r) => !UNKNOWN_NAME_RE.test(r.name));
     }
+
+    if (rects.length === 0) return null;
+    const maxDepth = rects.reduce((max, r) => Math.max(max, r.depth), 0);
 
     return {
       tooltip: {
@@ -226,6 +229,7 @@ export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
                   })(),
                   fill: "#fff",
                   fontSize: 11,
+                  fontFamily: "monospace",
                   opacity: isDimmed ? DIMMED_OPACITY : 1,
                 },
               },
@@ -280,7 +284,7 @@ export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
     };
   }, [handleClick, option]);
 
-  if (tree.value === 0 || !option) {
+  if (tree.value === 0) {
     return (
       <Box sx={{ p: 3 }}>
         <Typography variant="body2" color="text.secondary">
@@ -289,6 +293,8 @@ export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
       </Box>
     );
   }
+
+  const filtersActive = hideSmallFrames || hideUnknownFrames;
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", width: "100%", height: "100%" }}>
@@ -346,6 +352,7 @@ export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
         </Tooltip>
         <Tooltip title="Hide frames with unresolved or unknown symbol names">
           <Chip
+            icon={<HelpOutlineIcon fontSize="small" />}
             label="Hide unknown"
             size="small"
             variant={hideUnknownFrames ? "filled" : "outlined"}
@@ -429,12 +436,20 @@ export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
 
       {/* Chart */}
       <Box sx={{ flex: 1, minHeight: 0 }}>
-        <EChart
-          option={option as Record<string, unknown>}
-          theme={theme}
-          _instance={instanceRef}
-          sx={{ width: "100%", height: "100%", minHeight: 120 }}
-        />
+        {!option && filtersActive ? (
+          <Box sx={{ p: 3 }}>
+            <Typography variant="body2" color="text.secondary">
+              No frames to display — active filters are hiding all results.
+            </Typography>
+          </Box>
+        ) : option ? (
+          <EChart
+            option={option as Record<string, unknown>}
+            theme={theme}
+            _instance={instanceRef}
+            sx={{ width: "100%", height: "100%", minHeight: 120 }}
+          />
+        ) : null}
       </Box>
     </Box>
   );
