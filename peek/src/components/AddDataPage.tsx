@@ -148,7 +148,10 @@ export default function AddDataPage() {
       : (selectedSignals[0] ?? "no expected signals");
 
   // ---- Rich ingestion verification (two-tier: data stream + cardinality) ----
-  const verification = useRichIngestionVerification(selectedSignals);
+  const hostOnboarding = new Set(["linux-host", "windows-host", "macos-host"]).has(
+    selectedTechnology?.id ?? "",
+  );
+  const verification = useRichIngestionVerification(selectedSignals, hostOnboarding);
   const { status: verifyStatus, startPolling } = verification;
   const verifiedSignals = useMemo(
     () => new Set(verification.deltas.filter((d) => d.signalDetected).map((d) => d.signal)),

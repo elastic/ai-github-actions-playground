@@ -17,7 +17,7 @@ export interface UsePageSlotInsightsOptions {
   /** Stable cache key (e.g. "cluster-overview-slots::<hash>") */
   cacheKey: string;
   /** Slot definitions so the LLM knows which slots to populate */
-  slots: InsightSlotDefinition[];
+  slots: readonly InsightSlotDefinition[];
   /** Whether to fetch insights (default: true) */
   enabled?: boolean;
 }
