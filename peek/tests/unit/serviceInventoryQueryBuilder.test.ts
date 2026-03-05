@@ -70,7 +70,7 @@ describe("serviceInventoryQueryBuilder", () => {
 
     it("computes error_rate from error_count and request_count", () => {
       const query = buildServiceInventoryQuery(DEFAULT_SERVICE_INVENTORY_FILTERS);
-      expect(query).toContain("EVAL error_rate = error_count / request_count");
+      expect(query).toContain("EVAL error_rate = error_count * 1.0 / request_count");
     });
 
     it("classifies errors using OTel status code values", () => {
@@ -104,7 +104,7 @@ describe("serviceInventoryQueryBuilder", () => {
       expect(query).toContain("request_count = COUNT(*)");
       expect(query).toContain("avg_latency_ms = AVG(duration_ms)");
       expect(query).toContain("error_count = SUM(is_error)");
-      expect(query).toContain("EVAL error_rate = error_count / request_count");
+      expect(query).toContain("EVAL error_rate = error_count * 1.0 / request_count");
       expect(query).toContain("BY service.name");
       expect(query).toContain("BUCKET(@timestamp");
       expect(query).toContain("SORT bucket");

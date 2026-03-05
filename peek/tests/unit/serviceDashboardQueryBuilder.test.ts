@@ -28,7 +28,7 @@ describe("serviceDashboardQueryBuilder", () => {
       expect(query).toContain("avg_latency_ms = AVG(duration_ms)");
       expect(query).toContain("error_count = SUM(is_error)");
       expect(query).toContain("BY route_key");
-      expect(query).toContain("EVAL error_rate = error_count / request_count");
+      expect(query).toContain("EVAL error_rate = error_count * 1.0 / request_count");
       expect(query).toContain("SORT request_count DESC");
       expect(query).not.toContain("LIMIT");
     });
@@ -134,7 +134,7 @@ describe("serviceDashboardQueryBuilder", () => {
       expect(query).toContain("request_count = COUNT(*)");
       expect(query).toContain("error_count = SUM(is_error)");
       expect(query).toContain("BY version_key");
-      expect(query).toContain("EVAL error_rate = error_count / request_count");
+      expect(query).toContain("EVAL error_rate = error_count * 1.0 / request_count");
       expect(query).toContain("SORT last_seen DESC");
     });
 
@@ -182,7 +182,7 @@ describe("serviceDashboardQueryBuilder", () => {
       expect(query).toContain("error_count = SUM(is_error)");
       expect(query).toContain("BY route_key");
       expect(query).toContain("BUCKET(@timestamp");
-      expect(query).toContain("EVAL error_rate = error_count / request_count");
+      expect(query).toContain("EVAL error_rate = error_count * 1.0 / request_count");
       expect(query).toContain("SORT bucket");
     });
 

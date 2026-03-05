@@ -77,8 +77,6 @@ export default function TraceResultsView({
   selectedTraceId,
   onSelectTrace,
   rawQuery,
-  detailLoading,
-  selectedTraceSpans,
   onServiceMapNodeClick,
   driftRadarLoading,
   driftRadarBaselineLoading,
@@ -211,24 +209,18 @@ export default function TraceResultsView({
         )}
         {searchResult && effectiveViewMode === "serviceMap" && (
           <Box sx={{ height: "100%" }}>
-            {traceRows.length === 0 ? (
+            {searchSpansLoading ? (
+              <Box sx={{ p: 2 }}>
+                <ContentSkeleton variant="chart" />
+              </Box>
+            ) : searchSpans.length === 0 ? (
               <EmptyState
                 icon={<AccountTreeIcon sx={{ mb: 0.5, color: "text.secondary", fontSize: 48 }} />}
                 heading="No traces matched the current query."
                 description="Adjust your query or widen the time range."
               />
-            ) : !selectedTraceId ? (
-              <EmptyState
-                icon={<AccountTreeIcon sx={{ mb: 0.5, color: "text.secondary", fontSize: 48 }} />}
-                heading="Select a trace in List or Scatter view to see its service map"
-                description="Choose a trace from List or Scatter view to render service relationships."
-              />
-            ) : detailLoading ? (
-              <Box sx={{ p: 2 }}>
-                <ContentSkeleton variant="chart" />
-              </Box>
             ) : (
-              <TraceServiceMap spans={selectedTraceSpans} onNodeClick={onServiceMapNodeClick} />
+              <TraceServiceMap spans={searchSpans} onNodeClick={onServiceMapNodeClick} />
             )}
           </Box>
         )}

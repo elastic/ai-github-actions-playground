@@ -27,4 +27,18 @@ describe("EmptyState", () => {
 
     expect(screen.queryByRole("link", { name: /add data/i })).not.toBeInTheDocument();
   });
+
+  it("renders the full description text without truncation", () => {
+    const longDescription =
+      "Pick a namespace to see an overview of all its metrics, or search for a specific metric field.";
+    render(
+      <MemoryRouter>
+        <EmptyState heading="Explore your metrics" description={longDescription} />
+      </MemoryRouter>,
+    );
+
+    const descEl = screen.getByText(longDescription);
+    expect(descEl).toBeInTheDocument();
+    expect(descEl).not.toHaveStyle({ overflow: "hidden" });
+  });
 });

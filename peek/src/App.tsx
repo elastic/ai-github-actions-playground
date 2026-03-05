@@ -1,5 +1,13 @@
 import { useMemo, useState, useEffect, Suspense } from "react";
-import { Routes, Route, Navigate, useMatch, useLocation, matchPath } from "react-router-dom";
+import {
+  Routes,
+  Route,
+  Navigate,
+  useMatch,
+  useLocation,
+  useNavigate,
+  matchPath,
+} from "react-router-dom";
 import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import Box from "@mui/material/Box";
@@ -40,6 +48,7 @@ export default function App() {
   const setConnectionDialogOpen = useUIStore((s) => s.setConnectionDialogOpen);
   const connected = useConnectionStore((s) => s.connected);
   const resetState = useResetAllStores();
+  const navigate = useNavigate();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
@@ -257,6 +266,7 @@ export default function App() {
           open={resetDialogOpen}
           onConfirm={() => {
             resetState();
+            navigate("/dashboards", { replace: true });
             setResetDialogOpen(false);
           }}
           onCancel={() => setResetDialogOpen(false)}
