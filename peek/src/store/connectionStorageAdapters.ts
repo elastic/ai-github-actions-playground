@@ -230,7 +230,16 @@ export const electronStorage = createElectronStorage<PersistedConnectionState>({
     if (localRaw) {
       let stored: { state: PersistedConnectionState } | null = null;
       try {
-        stored = JSON.parse(localRaw) as { state: PersistedConnectionState };
+        const parsed = JSON.parse(localRaw) as unknown;
+        if (
+          parsed &&
+          typeof parsed === "object" &&
+          "state" in parsed &&
+          parsed.state &&
+          typeof parsed.state === "object"
+        ) {
+          stored = parsed as { state: PersistedConnectionState };
+        }
       } catch {
         /* ignore parse errors during cleanup */
       }
