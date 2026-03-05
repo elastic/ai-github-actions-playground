@@ -1,3 +1,4 @@
+// eslint-disable-next-line import/no-unassigned-import -- type augmentation requires side-effect import
 import "@mui/material/styles";
 
 declare module "@mui/material/styles" {

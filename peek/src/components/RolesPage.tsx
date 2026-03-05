@@ -75,8 +75,8 @@ export default function RolesPage() {
   );
 
   const copyQuery = useCallback(async () => {
-    const copied = await copyToClipboard("GET /_security/role");
-    if (!copied) return;
+    const didCopy = await copyToClipboard("GET /_security/role");
+    if (!didCopy) return;
     setCopied(true);
     scheduleCopyFeedbackReset();
   }, [scheduleCopyFeedbackReset]);
