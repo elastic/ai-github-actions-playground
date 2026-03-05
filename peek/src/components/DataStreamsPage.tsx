@@ -121,9 +121,9 @@ function compareStreams(
   return dir === "asc" ? cmp : -cmp;
 }
 
-function streamGroupName(streamName: string): string {
-  const head = streamName.split("-")[0];
-  return head || streamName;
+function streamGroupName(streamName: string): string | null {
+  const [head, ...rest] = streamName.split("-");
+  return rest.length > 0 && head ? head : null;
 }
 
 function parseCount(value: string | null | undefined): number {
@@ -251,7 +251,7 @@ export default function DataStreamsPage() {
   ]);
 
   const groupedRows = useMemo(() => {
-    const grouped = new Map<string, typeof filteredStreams>();
+    const grouped = new Map<string | null, typeof filteredStreams>();
     for (const stream of filteredStreams) {
       const group = streamGroupName(stream.name);
       const groupStreams = grouped.get(group) ?? [];
@@ -260,14 +260,18 @@ export default function DataStreamsPage() {
     }
 
     const rows: GroupedStreamRow[] = [];
-    for (const groupName of [...grouped.keys()].sort()) {
-      rows.push({ kind: "group", key: `group:${groupName}`, depth: 0, name: groupName });
-      if (expandedGroups[groupName] === false) continue;
-      for (const stream of grouped.get(groupName) ?? []) {
+    for (const groupName of [...grouped.keys()].sort((a, b) => (a ?? "").localeCompare(b ?? ""))) {
+      const groupStreams = grouped.get(groupName) ?? [];
+      const showGroupHeader = groupName !== null && groupStreams.length > 1;
+      if (showGroupHeader) {
+        rows.push({ kind: "group", key: `group:${groupName}`, depth: 0, name: groupName });
+      }
+      if (showGroupHeader && expandedGroups[groupName] === false) continue;
+      for (const stream of groupStreams) {
         rows.push({
           kind: "stream",
           key: `stream:${stream.name}`,
-          depth: 1,
+          depth: showGroupHeader ? 1 : 0,
           name: stream.name,
           stream,
         });

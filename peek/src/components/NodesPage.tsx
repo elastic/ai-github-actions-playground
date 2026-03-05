@@ -11,6 +11,7 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
+import MemoryIcon from "@mui/icons-material/Memory";
 
 import { useClusterOverview } from "../hooks/useClusterOverview";
 
@@ -97,6 +98,7 @@ export default function NodesPage() {
       <Paper variant="outlined" sx={{ display: "flex", flex: 1, minHeight: 0, overflow: "hidden" }}>
         {rows.length === 0 && !loading ? (
           <EmptyState
+            icon={<MemoryIcon sx={{ fontSize: 28 }} />}
             heading="No nodes found"
             description="No node metadata is currently available."
           />
