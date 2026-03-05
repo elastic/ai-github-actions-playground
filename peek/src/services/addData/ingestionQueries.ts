@@ -295,7 +295,7 @@ export function computeIngestionDelta(
       baseDataStream &&
       latestTimestampIsRecent &&
       docsPerSecondDelta > 0 &&
-      (newHostsDetected > 0 || newServicesDetected > 0);
+      (newHostsDetected > 0 || newServicesDetected > 0 || newAgentsDetected > 0);
     const signalDetected = dataStreamAppeared || isDataFlowing || stableInfraGrowth;
 
     return {

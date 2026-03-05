@@ -407,7 +407,7 @@ sudo cp "$AGENT_DIR/${sampleConfig}" "$AGENT_DIR/otel.yml"
 
 # 2. Set your credentials
 ${runModeCredentials}
-sudo mkdir -p "$STORAGE_DIR"
+sudo mkdir -p "$AGENT_DIR/data/otel"
 
 # 3. Start the EDOT Collector
 ${runModeStart}`;

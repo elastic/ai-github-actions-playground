@@ -74,9 +74,10 @@ export default function CollectorCredentials({
             <ToggleButtonGroup
               value={outputMode}
               exclusive
+              disabled
               size="small"
               fullWidth
-              aria-label="Detected transport"
+              aria-label="Detected transport (read only)"
               sx={{ maxWidth: 320, bgcolor: "transparent" }}
             >
               <ToggleButton value="elasticsearch">_BULK</ToggleButton>

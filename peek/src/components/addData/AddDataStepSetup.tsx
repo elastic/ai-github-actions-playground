@@ -12,11 +12,11 @@ import { COMPONENT_HEIGHTS } from "../../types/tokens";
 import type { OtelReceiverDefinition } from "../../services/addData/otelReceiverCatalog";
 import type { AwsDeployTarget } from "../../services/addData/awsDeployCatalog";
 import type { ApmLanguageDefinition } from "../../services/addData/apmCatalog";
-import type {
-  FluentBitOutputMode,
-  ThirdPartyCollectorId,
+import type { FluentBitOutputMode } from "../../services/addData/fluentBitConfig";
+import {
+  getCollectorOutputConfigs,
+  isThirdPartyCollectorId,
 } from "../../services/addData/fluentBitConfig";
-import { getCollectorOutputConfigs } from "../../services/addData/fluentBitConfig";
 import type { IngestionVerificationState } from "../../hooks/useRichIngestionVerification";
 
 import { TECHNOLOGY_ICONS } from "./addDataTechnologyConstants";
@@ -126,7 +126,10 @@ export default function AddDataStepSetup(p: AddDataStepSetupProps) {
   const MIN_INSTALL_VISIBLE_MS = 3000;
 
   const guideType = p.selectedTechnology?.guideType;
-  const collectorId = p.selectedTechnology?.id as ThirdPartyCollectorId | undefined;
+  const collectorId =
+    guideType === "fluent_bit" && isThirdPartyCollectorId(p.selectedTechnology?.id)
+      ? p.selectedTechnology.id
+      : undefined;
   const collectorOutputModes =
     guideType === "fluent_bit" && collectorId ? getCollectorOutputConfigs(collectorId) : [];
   const showConfigureSection =
@@ -274,7 +277,7 @@ export default function AddDataStepSetup(p: AddDataStepSetupProps) {
   const tech = p.selectedTechnology;
   const gt = tech.guideType;
   const gd = GUIDE_TYPE_DEFINITIONS[gt];
-  const cid = tech.id as ThirdPartyCollectorId;
+  const cid = isThirdPartyCollectorId(tech.id) ? tech.id : undefined;
   const configureSectionTitleResolved =
     awsFlowEnabled && p.selectedAwsTarget
       ? p.selectedAwsTarget.targetId === "firehose"
@@ -330,14 +333,16 @@ export default function AddDataStepSetup(p: AddDataStepSetupProps) {
       );
       break;
     case "fluent_bit":
-      configureContent = (
-        <FluentBitConfigure
-          collectorId={cid}
-          technologyLabel={tech.technology}
-          outputMode={p.fluentBitOutputMode}
-          onOutputModeChange={p.onFluentBitOutputModeChange}
-        />
-      );
+      if (cid) {
+        configureContent = (
+          <FluentBitConfigure
+            collectorId={cid}
+            technologyLabel={tech.technology}
+            outputMode={p.fluentBitOutputMode}
+            onOutputModeChange={p.onFluentBitOutputModeChange}
+          />
+        );
+      }
       break;
     default: {
       const _exhaustiveCheck: never = gt;
@@ -405,15 +410,17 @@ export default function AddDataStepSetup(p: AddDataStepSetupProps) {
       );
       break;
     case "fluent_bit":
-      installContent = (
-        <FluentBitInstall
-          collectorId={cid}
-          technologyLabel={tech.technology}
-          outputMode={p.fluentBitOutputMode}
-          esUrl={p.esUrl}
-          apiKey={p.apiKey}
-        />
-      );
+      if (cid) {
+        installContent = (
+          <FluentBitInstall
+            collectorId={cid}
+            technologyLabel={tech.technology}
+            outputMode={p.fluentBitOutputMode}
+            esUrl={p.esUrl}
+            apiKey={p.apiKey}
+          />
+        );
+      }
       break;
     default: {
       const _exhaustiveCheck: never = gt;

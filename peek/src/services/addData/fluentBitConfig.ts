@@ -26,6 +26,16 @@ const OUTPUT_CONFIGS_ALL: readonly FluentBitOutputConfig[] = [
 
 const OUTPUT_CONFIGS_ES_ONLY: readonly FluentBitOutputConfig[] = [OUTPUT_CONFIGS_ALL[0]!];
 
+export function isThirdPartyCollectorId(id: string | undefined): id is ThirdPartyCollectorId {
+  return (
+    id === "fluent-bit" ||
+    id === "vector" ||
+    id === "fluentd" ||
+    id === "filebeat" ||
+    id === "logstash"
+  );
+}
+
 export function getCollectorOutputConfigs(
   collectorId: ThirdPartyCollectorId,
 ): readonly FluentBitOutputConfig[] {
@@ -66,8 +76,9 @@ include = ["/var/log/*.log"]
 type = "opentelemetry"
 inputs = ["host_logs"]
 endpoint = "${parsed.origin}"
-auth.strategy = "bearer"
-auth.token = "ApiKey ${opts.apiKey}"
+
+[sinks.elastic_otlp.request.headers]
+Authorization = "ApiKey ${opts.apiKey}"
 `;
     }
     return `[sources.host_logs]
@@ -79,9 +90,9 @@ type = "elasticsearch"
 inputs = ["host_logs"]
 endpoints = ["${parsed.origin}"]
 mode = "bulk"
-auth.strategy = "basic"
-auth.user = "elastic"
-auth.password = "API_KEY_${opts.apiKey}"
+
+[sinks.elastic_es.request.headers]
+Authorization = "ApiKey ${opts.apiKey}"
 `;
   }
 
