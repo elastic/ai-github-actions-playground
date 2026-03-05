@@ -275,7 +275,7 @@ export default function DataStreamsPage() {
       "Use only facts from provided context; do not invent data. " +
       "When streams are degraded or unhealthy, suggest investigation steps. " +
       INSIGHT_GUARDRAIL,
-    cacheKey: `data-streams-slots::${streamMetrics.total}::${streamMetrics.green}::${streamMetrics.yellow}::${streamMetrics.red}::${streamMetrics.totalIndices}::${displayedName ?? ""}`,
+    cacheKey: `data-streams-slots::${streamMetrics.total}::${streamMetrics.green}::${streamMetrics.yellow}::${streamMetrics.red}::${streamMetrics.totalIndices}::${filteredStreams.length}::${displayedName ?? ""}`,
     slots: DATA_STREAMS_INSIGHT_SLOTS,
     enabled: dataStreams.length > 0,
   });

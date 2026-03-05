@@ -144,7 +144,7 @@ export default function IndicesPage() {
     });
     return [...filtered].sort((a, b) => compareIndices(a, b, sortField, sortDirection));
   }, [indices, showSystemIndices, deferredSearch, sortField, sortDirection]);
-  const hasAnyIndices = indices.some(() => true);
+  const hasAnyIndices = indices.length > 0;
   const emptyIndicesDescription = !hasAnyIndices
     ? "No indices exist in this cluster."
     : showSystemIndices
