@@ -11,6 +11,7 @@ import {
   detectTelemetrySignals,
 } from "../../src/utils/addDataUtils";
 import type { UserCapabilities, ElasticsearchClient } from "../../src/services/es";
+import { ADD_DATA_TECHNOLOGY_CATALOG } from "../../src/services/addData/catalog";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { resetAllStores } from "../fixtures/test-utils";
 
@@ -390,10 +391,26 @@ describe("AddDataPage", () => {
 
     // Technology-specific recommended next steps from Kubernetes catalog entry
     expect(screen.getByRole("button", { name: "Explore metrics" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Open Logs" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Open Query Lab" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Open traces" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Add another source" })).toBeInTheDocument();
   }, 30_000);
+
+  it("ensures every log-emitting technology has an Open Logs next step", () => {
+    const missing = ADD_DATA_TECHNOLOGY_CATALOG.filter((entry) =>
+      entry.expectedSignals.includes("logs"),
+    )
+      .filter(
+        (entry) =>
+          !entry.recommendedNextSteps.some(
+            (step) => step.label === "Open Logs" && step.path === "/logs",
+          ),
+      )
+      .map((entry) => entry.id);
+
+    expect(missing).toEqual([]);
+  });
 
   it("resets state when clicking 'Add another source'", async () => {
     mockGetDataStreams.mockResolvedValueOnce({ data_streams: [] }).mockResolvedValue({
