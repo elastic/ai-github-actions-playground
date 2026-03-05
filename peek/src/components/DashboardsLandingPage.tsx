@@ -300,7 +300,6 @@ export default function DashboardsLandingPage() {
                 </Tooltip>
               )}
               <Button
-                size="small"
                 variant="outlined"
                 startIcon={<FileUploadIcon />}
                 onClick={() => handleImport("dashboard")}
@@ -309,7 +308,6 @@ export default function DashboardsLandingPage() {
                 Import Dashboard
               </Button>
               <Button
-                size="small"
                 variant="outlined"
                 startIcon={<FileDownloadIcon />}
                 onClick={handleExportWorkspace}
@@ -317,7 +315,6 @@ export default function DashboardsLandingPage() {
                 Export All
               </Button>
               <Button
-                size="small"
                 variant="outlined"
                 startIcon={<FileUploadIcon />}
                 onClick={() => handleImport("workspace")}
@@ -325,15 +322,11 @@ export default function DashboardsLandingPage() {
               >
                 Import Workspace
               </Button>
-              <Button
-                size="small"
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={handleCreate}
-              >
+              <Button variant="contained" startIcon={<AddIcon />} onClick={handleCreate}>
                 New Dashboard
               </Button>
               <AskAiButton
+                size="medium"
                 label="Create with AI"
                 prompt="Create a dashboard from a plain-language description. Include panel ideas, the metric or log signal each panel should track, and suggested ES|QL queries."
               />
@@ -392,7 +385,7 @@ export default function DashboardsLandingPage() {
           </Select>
         </FormControl>
         {hasActiveFilters && (
-          <Button size="small" variant="outlined" onClick={resetFilters} startIcon={<ClearIcon />}>
+          <Button variant="outlined" onClick={resetFilters} startIcon={<ClearIcon />}>
             Reset filters
           </Button>
         )}

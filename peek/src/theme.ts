@@ -101,6 +101,16 @@ const baseOptions: ThemeOptions = {
         }),
       },
     },
+    MuiInputLabel: {
+      styleOverrides: {
+        outlined: ({ theme }) => ({
+          "&.MuiInputLabel-shrink": {
+            backgroundColor: theme.palette.background.default,
+            paddingInline: "4px",
+          },
+        }),
+      },
+    },
     MuiOutlinedInput: {
       styleOverrides: {
         root: {

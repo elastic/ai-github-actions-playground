@@ -270,6 +270,7 @@ export default function AppHeader({
                 value={refreshInterval}
                 options={REFRESH_INTERVAL_PRESETS}
                 onChange={setRefreshInterval}
+                size="medium"
               />
 
               {isDashboardView && (
@@ -310,12 +311,7 @@ export default function AppHeader({
                       </IconButton>
                     </span>
                   </Tooltip>
-                  <Button
-                    size="small"
-                    variant="contained"
-                    startIcon={<AddIcon />}
-                    onClick={handleAddPanel}
-                  >
+                  <Button variant="contained" startIcon={<AddIcon />} onClick={handleAddPanel}>
                     Add Panel
                   </Button>
                 </>
