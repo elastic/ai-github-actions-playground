@@ -83,7 +83,7 @@ export default function OtelReceiverConfigure({
           />
         )}
       </Stack>
-      <CollectorAlternatives idPrefix="receiver" onSwitchToTechnology={onSwitchToTechnology} />
+      <CollectorAlternatives idPrefix="receiver" />
     </>
   );
 }

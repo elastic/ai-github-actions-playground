@@ -308,7 +308,6 @@ export default function AddDataStepSetup(p: AddDataStepSetupProps) {
           onExistingCollectorConfigChange={p.onExistingCollectorConfigChange}
           useExistingConfig={p.useExistingConfig}
           onUseExistingConfigChange={p.onUseExistingConfigChange}
-          onSwitchToTechnology={p.onSwitchToTechnology}
         />
       ) : (
         <Typography variant="body2" color="text.secondary">
