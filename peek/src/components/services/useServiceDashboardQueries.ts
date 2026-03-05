@@ -40,6 +40,22 @@ function isServiceDashboardQuery(queryKey: readonly unknown[]): boolean {
   return typeof queryKey[0] === "string" && queryKey[0].startsWith(KEY_PREFIX);
 }
 
+function isCurrentServiceDashboardQuery(
+  queryKey: readonly unknown[],
+  connectionUrl: string | null,
+  serviceName: string,
+  timeFrom: string,
+  timeTo: string,
+): boolean {
+  return (
+    isServiceDashboardQuery(queryKey) &&
+    queryKey[1] === connectionUrl &&
+    queryKey[2] === serviceName &&
+    queryKey[3] === timeFrom &&
+    queryKey[4] === timeTo
+  );
+}
+
 export function useServiceDashboardQueries({
   connection,
   serviceName,
@@ -47,24 +63,31 @@ export function useServiceDashboardQueries({
   timeTo,
 }: UseServiceDashboardQueriesParams) {
   const queryClient = useQueryClient();
+  const connectionUrl = connection?.url ?? null;
+  const normalizedServiceName = serviceName.trim();
 
   // Track the params that were active when handleReset was called.  When the
   // search params change, the mismatch automatically re-enables queries without
   // a setState-inside-useEffect.
   const [resetKey, setResetKey] = useState<string | null>(null);
-  const paramsKey = `${serviceName}|${timeFrom}|${timeTo}`;
+  const paramsKey = `${connectionUrl ?? ""}|${normalizedServiceName}|${timeFrom}|${timeTo}`;
   const disabled = resetKey === paramsKey;
 
-  const connectionUrl = connection?.url ?? null;
-  const canFetch = !disabled && Boolean(connection) && serviceName.trim().length > 0;
+  const canFetch = !disabled && Boolean(connection) && normalizedServiceName.length > 0;
   const filters = useMemo(
-    () => ({ serviceName, timeFrom, timeTo }),
-    [serviceName, timeFrom, timeTo],
+    () => ({ serviceName: normalizedServiceName, timeFrom, timeTo }),
+    [normalizedServiceName, timeFrom, timeTo],
   );
 
   // --- Routes ---
   const routesQuery = useQuery<EsqlResponse | null>({
-    queryKey: [`${KEY_PREFIX}routes`, connectionUrl, serviceName, timeFrom, timeTo] as const,
+    queryKey: [
+      `${KEY_PREFIX}routes`,
+      connectionUrl,
+      normalizedServiceName,
+      timeFrom,
+      timeTo,
+    ] as const,
     queryFn: async ({ signal }) => {
       if (!connection) return null;
       const query = buildServiceRoutesQuery(filters);
@@ -77,7 +100,13 @@ export function useServiceDashboardQueries({
 
   // --- Traces ---
   const tracesQuery = useQuery<EsqlResponse | null>({
-    queryKey: [`${KEY_PREFIX}traces`, connectionUrl, serviceName, timeFrom, timeTo] as const,
+    queryKey: [
+      `${KEY_PREFIX}traces`,
+      connectionUrl,
+      normalizedServiceName,
+      timeFrom,
+      timeTo,
+    ] as const,
     queryFn: async ({ signal }) => {
       if (!connection) return null;
       const query = buildServiceRecentTracesQuery(filters);
@@ -107,7 +136,7 @@ export function useServiceDashboardQueries({
     queryKey: [
       `${KEY_PREFIX}trace-spans`,
       connectionUrl,
-      serviceName,
+      normalizedServiceName,
       timeFrom,
       timeTo,
       traceIds,
@@ -124,7 +153,13 @@ export function useServiceDashboardQueries({
 
   // --- Deployments ---
   const deploymentsQuery = useQuery<EsqlResponse | null>({
-    queryKey: [`${KEY_PREFIX}deployments`, connectionUrl, serviceName, timeFrom, timeTo] as const,
+    queryKey: [
+      `${KEY_PREFIX}deployments`,
+      connectionUrl,
+      normalizedServiceName,
+      timeFrom,
+      timeTo,
+    ] as const,
     queryFn: async ({ signal }) => {
       if (!connection) return null;
       const query = buildServiceDeploymentsQuery(filters);
@@ -137,7 +172,13 @@ export function useServiceDashboardQueries({
 
   // --- Sparkline ---
   const sparklineQuery = useQuery<EsqlResponse | null>({
-    queryKey: [`${KEY_PREFIX}sparkline`, connectionUrl, serviceName, timeFrom, timeTo] as const,
+    queryKey: [
+      `${KEY_PREFIX}sparkline`,
+      connectionUrl,
+      normalizedServiceName,
+      timeFrom,
+      timeTo,
+    ] as const,
     queryFn: async ({ signal }) => {
       if (!connection) return null;
       const query = buildServiceRouteSparklineQuery(filters);
@@ -150,7 +191,13 @@ export function useServiceDashboardQueries({
 
   // --- K8s Context ---
   const k8sContextQuery = useQuery<EsqlResponse | null>({
-    queryKey: [`${KEY_PREFIX}k8s-context`, connectionUrl, serviceName, timeFrom, timeTo] as const,
+    queryKey: [
+      `${KEY_PREFIX}k8s-context`,
+      connectionUrl,
+      normalizedServiceName,
+      timeFrom,
+      timeTo,
+    ] as const,
     queryFn: async ({ signal }) => {
       if (!connection) return null;
       const query = buildServiceK8sContextQuery(filters);
@@ -212,17 +259,31 @@ export function useServiceDashboardQueries({
   const handleSearch = useCallback(() => {
     setResetKey(null);
     void queryClient.invalidateQueries({
-      predicate: (query) => isServiceDashboardQuery(query.queryKey),
+      predicate: (query) =>
+        isCurrentServiceDashboardQuery(
+          query.queryKey,
+          connectionUrl,
+          normalizedServiceName,
+          timeFrom,
+          timeTo,
+        ),
     });
-  }, [queryClient]);
+  }, [queryClient, connectionUrl, normalizedServiceName, timeFrom, timeTo]);
 
   const handleReset = useCallback(() => {
     if (loading) return;
     setResetKey(paramsKey);
     queryClient.removeQueries({
-      predicate: (query) => isServiceDashboardQuery(query.queryKey),
+      predicate: (query) =>
+        isCurrentServiceDashboardQuery(
+          query.queryKey,
+          connectionUrl,
+          normalizedServiceName,
+          timeFrom,
+          timeTo,
+        ),
     });
-  }, [loading, queryClient, paramsKey]);
+  }, [loading, queryClient, paramsKey, connectionUrl, normalizedServiceName, timeFrom, timeTo]);
 
   return {
     clearLatestQueries,

@@ -111,13 +111,15 @@ const SAMPLE_K8S: EsqlResponse = {
 };
 
 function mockAllQueries() {
-  mockExecute
-    .mockResolvedValueOnce(SAMPLE_ROUTES)
-    .mockResolvedValueOnce(SAMPLE_TRACES)
-    .mockResolvedValueOnce(SAMPLE_DEPLOYMENTS)
-    .mockResolvedValueOnce(SAMPLE_SPARKLINE)
-    .mockResolvedValueOnce(SAMPLE_K8S)
-    .mockResolvedValueOnce(SAMPLE_TRACE_SPANS);
+  mockExecute.mockImplementation(({ query }: { query: string }) => {
+    if (query.includes("FROM routes")) return Promise.resolve(SAMPLE_ROUTES);
+    if (query.includes("FROM traces")) return Promise.resolve(SAMPLE_TRACES);
+    if (query.includes("FROM deployments")) return Promise.resolve(SAMPLE_DEPLOYMENTS);
+    if (query.includes("FROM sparkline")) return Promise.resolve(SAMPLE_SPARKLINE);
+    if (query.includes("FROM k8s")) return Promise.resolve(SAMPLE_K8S);
+    if (query.includes("FROM spans")) return Promise.resolve(SAMPLE_TRACE_SPANS);
+    return Promise.reject(new Error(`Unexpected query: ${query}`));
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -333,6 +335,7 @@ describe("useServiceDashboardQueries", () => {
     );
 
     await waitFor(() => {
+      expect(result.current.loading).toBe(false);
       expect(result.current.routesResult).toEqual(SAMPLE_ROUTES);
     });
 
@@ -404,6 +407,7 @@ describe("useServiceDashboardQueries", () => {
     );
 
     await waitFor(() => {
+      expect(result.current.loading).toBe(false);
       expect(result.current.routesResult).toEqual(SAMPLE_ROUTES);
     });
 
