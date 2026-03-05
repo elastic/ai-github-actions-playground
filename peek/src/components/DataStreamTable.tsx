@@ -67,7 +67,7 @@ export default function DataStreamTable({
             fullWidth
             placeholder="Search streams"
             value={search}
-            onChange={(e) => void setSearch(e.target.value)}
+            onChange={(e) => setSearch(e.target.value)}
             inputProps={{ "aria-label": "Search streams" }}
           />
           <FormControlLabel
@@ -131,7 +131,7 @@ export default function DataStreamTable({
                   tabIndex={0}
                   aria-label={`Select data stream ${stream.name}`}
                   onKeyDown={(event) => {
-                    if (event.key === "Enter" || event.key === " " || event.key === "Spacebar") {
+                    if (event.key === "Enter" || event.key === " ") {
                       event.preventDefault();
                       setSelectedName(stream.name);
                     }

@@ -26,12 +26,17 @@ export function toFieldRows(fieldCaps: FieldCapsResponse) {
 // ---------------------------------------------------------------------------
 
 export const OVERVIEW_CARD_DEFS = [
-  { slotId: DATA_STREAMS_INSIGHT_SLOT_IDS.totalStreamsCard, title: "Total Streams" },
-  { slotId: DATA_STREAMS_INSIGHT_SLOT_IDS.healthyCard, title: "Healthy" },
-  { slotId: DATA_STREAMS_INSIGHT_SLOT_IDS.degradedCard, title: "Degraded" },
-  { slotId: DATA_STREAMS_INSIGHT_SLOT_IDS.unhealthyCard, title: "Unhealthy" },
-  { slotId: DATA_STREAMS_INSIGHT_SLOT_IDS.backingIndicesCard, title: "Backing Indices" },
+  { slotId: DATA_STREAMS_INSIGHT_SLOT_IDS.totalStreamsCard, key: "total", title: "Total Streams" },
+  { slotId: DATA_STREAMS_INSIGHT_SLOT_IDS.healthyCard, key: "healthy", title: "Healthy" },
+  { slotId: DATA_STREAMS_INSIGHT_SLOT_IDS.degradedCard, key: "degraded", title: "Degraded" },
+  { slotId: DATA_STREAMS_INSIGHT_SLOT_IDS.unhealthyCard, key: "unhealthy", title: "Unhealthy" },
+  {
+    slotId: DATA_STREAMS_INSIGHT_SLOT_IDS.backingIndicesCard,
+    key: "backingIndices",
+    title: "Backing Indices",
+  },
 ] as const;
+export type OverviewCardKey = (typeof OVERVIEW_CARD_DEFS)[number]["key"];
 
 export type StreamMetrics = {
   total: number;
@@ -41,20 +46,21 @@ export type StreamMetrics = {
   totalIndices: number;
 };
 
-export function getCardValue(title: string, m: StreamMetrics): { value: number; color?: string } {
-  switch (title) {
-    case "Total Streams":
+export function getCardValue(
+  key: OverviewCardKey,
+  m: StreamMetrics,
+): { value: number; color?: string } {
+  switch (key) {
+    case "total":
       return { value: m.total };
-    case "Healthy":
+    case "healthy":
       return { value: m.green, color: "success.main" };
-    case "Degraded":
+    case "degraded":
       return { value: m.yellow, color: m.yellow > 0 ? "warning.main" : "text.primary" };
-    case "Unhealthy":
+    case "unhealthy":
       return { value: m.red, color: m.red > 0 ? "error.main" : "text.primary" };
-    case "Backing Indices":
+    case "backingIndices":
       return { value: m.totalIndices };
-    default:
-      return { value: 0 };
   }
 }
 

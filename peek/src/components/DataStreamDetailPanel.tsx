@@ -128,6 +128,7 @@ export default function DataStreamDetailPanel({
                     <Stack
                       key={`${field.name}:${field.type}`}
                       component="button"
+                      type="button"
                       direction="row"
                       spacing={1}
                       onClick={() => setSelectedField({ name: field.name, type: field.type })}

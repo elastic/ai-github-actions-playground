@@ -149,8 +149,7 @@ export function useLogsPageState() {
     if (buckets.length === 0) return [];
     const counts = buckets.map((b) => b.count);
     const mean = counts.reduce((sum, value) => sum + value, 0) / counts.length;
-    const variance =
-      counts.reduce((sum, value) => sum + (value - mean) ** 2, 0) / Math.max(1, counts.length);
+    const variance = counts.reduce((sum, value) => sum + (value - mean) ** 2, 0) / counts.length;
     const deviation = Math.sqrt(variance);
     const threshold = mean + deviation * 2;
     const canDetectAnomaly = buckets.length > 1 && deviation > 0;

@@ -108,7 +108,7 @@ export default function DataStreamsPage() {
         {!loadingStreams && dataStreams.length > 0 && (
           <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
             {OVERVIEW_CARD_DEFS.map((card) => {
-              const { value, color } = getCardValue(card.title, streamMetrics);
+              const { value, color } = getCardValue(card.key, streamMetrics);
               return (
                 <Box key={card.slotId} sx={{ flex: 1, minWidth: 100 }}>
                   <InsightSlot slotId={card.slotId}>
