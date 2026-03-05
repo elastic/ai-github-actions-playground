@@ -11,6 +11,7 @@ import { TRACE_TIME_RANGE_OPTIONS, resolveTraceTimeRangeToMs } from "../timePres
 import TimeSeriesChart from "../visualizations/TimeSeriesChart";
 import BarChart from "../visualizations/BarChart";
 import TraceScatterChart from "../visualizations/TraceScatterChart";
+
 import {
   sliceForMetric,
   extractTimeRangeFromTimeseries,
