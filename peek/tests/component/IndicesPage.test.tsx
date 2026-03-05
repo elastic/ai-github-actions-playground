@@ -148,6 +148,13 @@ function renderPage(initialEntries: string[] = ["/"]) {
   );
 }
 
+async function selectIndex(user: ReturnType<typeof userEvent.setup>, name: string) {
+  const tableEl = await screen.findByRole("table", { name: /index list/i });
+  const indexCell = await within(tableEl).findByText(name);
+  await user.click(indexCell);
+  await screen.findByTestId("index-meta-health");
+}
+
 describe("IndicesPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -266,24 +273,22 @@ describe("IndicesPage", () => {
     expect(within(tableEl).getByText("Size")).toBeInTheDocument();
   });
 
-  it("clears the detail panel when search excludes the selected index", async () => {
+  it("shows an empty state when search excludes all indices", async () => {
     const user = userEvent.setup();
     renderPage();
-    // Wait for detail panel to load with first index
-    await screen.findByTestId("index-meta-health");
+    await screen.findByText("logs-app");
 
-    // Type a search that matches nothing
     await user.type(screen.getByRole("textbox", { name: /search indices/i }), "non-existent");
 
-    // Detail panel should show the empty state
-    expect(screen.queryByTestId("index-meta-health")).not.toBeInTheDocument();
-    expect(screen.getByText(/no index selected/i)).toBeInTheDocument();
+    expect(await screen.findByText("No indices found")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /open in query lab/i })).toBeDisabled();
   });
 
   it("shows overview metadata for the selected index", async () => {
+    const user = userEvent.setup();
     renderPage();
-    // Wait for detail panel to load
-    expect(await screen.findByTestId("index-meta-health")).toBeInTheDocument();
+    await selectIndex(user, "logs-app");
+    expect(screen.getByTestId("index-meta-health")).toBeInTheDocument();
     expect(screen.getByTestId("index-meta-status")).toHaveTextContent("open");
     expect(screen.getByTestId("index-meta-pri")).toHaveTextContent("1");
     expect(screen.getByTestId("index-meta-rep")).toHaveTextContent("0");
@@ -307,7 +312,7 @@ describe("IndicesPage", () => {
   it("switches to the Mappings tab and shows field list", async () => {
     const user = userEvent.setup();
     renderPage();
-    await screen.findByTestId("index-meta-health"); // wait for detail load
+    await selectIndex(user, "logs-app");
 
     await user.click(screen.getByRole("tab", { name: /mappings/i }));
     expect(await screen.findByText("@timestamp")).toBeInTheDocument();
@@ -318,7 +323,7 @@ describe("IndicesPage", () => {
   it("switches to the Settings tab and shows settings rows", async () => {
     const user = userEvent.setup();
     renderPage();
-    await screen.findByTestId("index-meta-health");
+    await selectIndex(user, "logs-app");
 
     await user.click(screen.getByRole("tab", { name: /settings/i }));
     expect(await screen.findByText(/index\.number_of_shards/i)).toBeInTheDocument();
@@ -327,7 +332,7 @@ describe("IndicesPage", () => {
   it("switches to the Stats tab and shows disk usage", async () => {
     const user = userEvent.setup();
     renderPage();
-    await screen.findByTestId("index-meta-health");
+    await selectIndex(user, "logs-app");
 
     await user.click(screen.getByRole("tab", { name: /stats/i }));
     expect(await screen.findByTestId("index-stats-store-total")).toHaveTextContent("1.0 MB");
@@ -344,8 +349,7 @@ describe("IndicesPage", () => {
 
   it("has no accessibility violations on initial render", async () => {
     const { container } = renderPage();
-    // Wait for the detail panel to load (both list and detail are visible)
-    await screen.findByTestId("index-meta-health");
+    await screen.findByRole("table", { name: /index list/i });
 
     const results = await axe(container);
     expect(results).toHaveNoViolations();
@@ -366,7 +370,7 @@ describe("IndicesPage", () => {
     });
 
     renderPage();
-    await screen.findByTestId("index-meta-health");
+    await selectIndex(user, "logs-app");
 
     await user.click(screen.getByRole("tab", { name: /disk usage/i }));
     // Should show the analyze button (lazy load since it's expensive)
@@ -383,9 +387,9 @@ describe("IndicesPage", () => {
   it("navigates to Console with a mapping draft when Inspect in Console is clicked", async () => {
     const user = userEvent.setup();
     renderPage();
-    await screen.findByTestId("index-meta-health");
+    await selectIndex(user, "logs-app");
 
-    await user.click(screen.getByRole("button", { name: /inspect in console/i }));
+    await user.click(screen.getByRole("button", { name: /inspect in console/i, hidden: true }));
 
     expect(useApiConsoleStore.getState().consoleDraft).toEqual({
       method: "GET",
