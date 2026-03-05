@@ -66,8 +66,14 @@ export function useTracesOrchestrator() {
   const [selectedTraceTimestamp, setSelectedTraceTimestamp] = useState<string | null>(null);
   const [selectedRootSpanId, setSelectedRootSpanId] = useState<string | null>(null);
 
-  // Sync selectedTraceId with URL query parameter
-  const [urlTraceId, setUrlTraceId] = useQueryState("traceId", parseAsString);
+  // Sync selectedTraceId with URL query parameter.
+  // Use history: "push" so that selecting a trace creates a new browser
+  // history entry — pressing Back returns to the trace list instead of
+  // navigating away from the Traces page entirely.
+  const [urlTraceId, setUrlTraceId] = useQueryState(
+    "traceId",
+    parseAsString.withOptions({ history: "push" }),
+  );
 
   // Drift Radar state
   const [driftRadarSpans, setDriftRadarSpans] = useState<Span[]>([]);

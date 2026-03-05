@@ -58,11 +58,11 @@ export default function ExplorePage() {
   const location = useLocation();
   const [urlState, setUrlState] = useQueryStates(explorerSearchParsers, {
     urlKeys: exploreSearchUrlKeys,
-    history: "replace",
+    history: "push",
   });
   const [urlFilters, setUrlFilters] = useQueryState(
     "filters",
-    parseAsString.withOptions({ history: "replace" }),
+    parseAsString.withOptions({ history: "push" }),
   );
   const [initialSearch] = useState(() => location.search);
   const [initialUrlState] = useState(() => urlState);
