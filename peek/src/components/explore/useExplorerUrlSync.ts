@@ -97,7 +97,8 @@ export function useExplorerUrlSync({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Sync URL state
+  // Sync URL state. Debounced to avoid pushing one history entry per
+  // keystroke when the user types in the index-pattern field.
   useEffect(() => {
     if (!hasHydratedFromUrlRef.current) return;
     if (skipInitialUrlSyncRef.current) {
@@ -105,27 +106,29 @@ export function useExplorerUrlSync({
       return;
     }
     let cancelled = false;
-    const syncUrlState = async () => {
+    const timer = setTimeout(() => {
       if (cancelled) return;
-      try {
-        await Promise.all([
-          setUrlState({
-            indexPattern: indexPattern || null,
-            selectedMetric: selectedMetric || null,
-            aggregation,
-            groupBy: groupBy || null,
-            from: timeRange.from,
-            to: timeRange.to,
-          }),
-          setUrlFilters(encodeFilters(filters)),
-        ]);
-      } catch (err: unknown) {
-        if (!cancelled) console.error("URL sync failed:", err);
-      }
-    };
-    void syncUrlState();
+      void (async () => {
+        try {
+          await Promise.all([
+            setUrlState({
+              indexPattern: indexPattern || null,
+              selectedMetric: selectedMetric || null,
+              aggregation,
+              groupBy: groupBy || null,
+              from: timeRange.from,
+              to: timeRange.to,
+            }),
+            setUrlFilters(encodeFilters(filters)),
+          ]);
+        } catch (err: unknown) {
+          if (!cancelled) console.error("URL sync failed:", err);
+        }
+      })();
+    }, 300);
     return () => {
       cancelled = true;
+      clearTimeout(timer);
     };
   }, [
     indexPattern,
