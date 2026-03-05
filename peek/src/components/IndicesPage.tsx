@@ -144,6 +144,12 @@ export default function IndicesPage() {
     });
     return [...filtered].sort((a, b) => compareIndices(a, b, sortField, sortDirection));
   }, [indices, showSystemIndices, deferredSearch, sortField, sortDirection]);
+  const hasAnyIndices = indices.some(() => true);
+  const emptyIndicesDescription = !hasAnyIndices
+    ? "No indices exist in this cluster."
+    : showSystemIndices
+      ? "No indices match the current search filter."
+      : "Toggle 'Show system indices' above to include system indices.";
 
   const handleSort = useCallback(
     (field: IndexSortField) => {
@@ -545,11 +551,7 @@ export default function IndicesPage() {
                             size="small"
                             icon={<StorageIcon sx={{ fontSize: 28 }} />}
                             heading="No indices found"
-                            description={
-                              showSystemIndices
-                                ? "No indices match the current search filter."
-                                : "Toggle 'Show system indices' above to include system indices."
-                            }
+                            description={emptyIndicesDescription}
                           />
                         </TableCell>
                       </TableRow>

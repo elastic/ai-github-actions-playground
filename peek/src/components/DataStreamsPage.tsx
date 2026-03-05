@@ -181,19 +181,22 @@ export default function DataStreamsPage() {
     return [...filtered].sort((a, b) => compareStreams(a, b, streamSortField, streamSortDirection));
   }, [dataStreams, deferredSearch, showSystemStreams, streamSortField, streamSortDirection]);
 
-  const streamMetrics = useMemo(() => {
-    const green = dataStreams.filter((s) => s.status.toUpperCase() === "GREEN").length;
-    const yellow = dataStreams.filter((s) => s.status.toUpperCase() === "YELLOW").length;
-    const red = dataStreams.filter((s) => s.status.toUpperCase() === "RED").length;
-    const totalIndices = dataStreams.reduce((sum, s) => sum + s.indices.length, 0);
-    return {
-      total: dataStreams.length,
-      green,
-      yellow,
-      red,
-      totalIndices,
-    };
-  }, [dataStreams]);
+  const streamMetrics = useMemo(
+    () =>
+      dataStreams.reduce(
+        (acc, stream) => {
+          const status = stream.status.toUpperCase();
+          if (status === "GREEN") acc.green += 1;
+          else if (status === "YELLOW") acc.yellow += 1;
+          else if (status === "RED") acc.red += 1;
+          acc.totalIndices += stream.indices.length;
+          acc.total += 1;
+          return acc;
+        },
+        { total: 0, green: 0, yellow: 0, red: 0, totalIndices: 0 },
+      ),
+    [dataStreams],
+  );
 
   const handleStreamSort = useCallback(
     (field: StreamSortField) => {
