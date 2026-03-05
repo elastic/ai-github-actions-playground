@@ -24,6 +24,7 @@ const PULSE_ICON_SX = {
 
 interface IngestionVerificationPanelProps {
   technologyName: string;
+  isAwsDeploymentVerification?: boolean;
   signalExpectation: string;
   expectedSignals: readonly TelemetrySignal[];
   verification: IngestionVerificationState;
@@ -34,6 +35,7 @@ interface IngestionVerificationPanelProps {
 
 export default function IngestionVerificationPanel({
   technologyName,
+  isAwsDeploymentVerification = false,
   signalExpectation,
   expectedSignals,
   verification,
@@ -42,7 +44,6 @@ export default function IngestionVerificationPanel({
   autoStart = true,
 }: IngestionVerificationPanelProps) {
   const { status, deltas, overallDetected, error } = verification;
-  const isAwsDeploymentVerification = technologyName === "Amazon Web Services";
   const isPolling = status === "polling" || status === "capturing_baseline";
   const isActive = isPolling || status === "detected";
   useEffect(() => {

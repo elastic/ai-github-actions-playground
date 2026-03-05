@@ -131,7 +131,7 @@ export default function AddDataPage() {
   const apiKey = effectiveApiKey || "<YOUR_API_KEY>";
   const hasApiKey = Boolean(effectiveApiKey);
   const hasEndpoint =
-    endpointType === "managed_otlp" ? Boolean(derivedOtlpUrl) : Boolean(connection?.url);
+    endpointType === "managed_otlp" ? Boolean(effectiveDerivedOtlpUrl) : Boolean(connection?.url);
   const prefilledCount = [apiKeyValue, hasEndpoint, clusterVersion].filter(Boolean).length;
 
   const selectedSignals = (selectedTechnology?.expectedSignals ?? []) as readonly TelemetrySignal[];

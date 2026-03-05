@@ -537,6 +537,7 @@ export default function AddDataStepSetup(p: AddDataStepSetupProps) {
         <Box sx={stepLaneSx}>
           <IngestionVerificationPanel
             technologyName={displayTechnologyName}
+            isAwsDeploymentVerification={awsFlowEnabled}
             signalExpectation={formattedSignalExpectation}
             expectedSignals={p.selectedSignals}
             verification={p.verification}

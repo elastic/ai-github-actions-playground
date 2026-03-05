@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import ButtonBase from "@mui/material/ButtonBase";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
@@ -22,7 +23,7 @@ export default function FluentBitConfigure({
   outputMode,
   onOutputModeChange,
 }: FluentBitConfigureProps) {
-  const supportedOutputs = getCollectorOutputConfigs(collectorId);
+  const supportedOutputs = useMemo(() => getCollectorOutputConfigs(collectorId), [collectorId]);
   return (
     <>
       <Typography variant="body2" sx={{ fontWeight: 600 }}>

@@ -72,7 +72,7 @@ export default function QuickCommandPanel({
         </ButtonBase>
       ) : (
         <Box component="pre" sx={CODE_BLOCK_SX}>
-          {showFull ? command : preview}
+          {command}
         </Box>
       )}
       {!showFull && canExpand && (

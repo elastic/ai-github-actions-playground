@@ -48,6 +48,7 @@ export default function EdotCollectorConfigure({
       <Stack spacing={1}>
         <ButtonBase
           onClick={onSelectRecommended}
+          aria-pressed={recommendedSelected}
           sx={{ display: "block", borderRadius: 1, textAlign: "left" }}
         >
           <Paper

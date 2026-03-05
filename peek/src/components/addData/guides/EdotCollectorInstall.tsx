@@ -85,6 +85,12 @@ export default function EdotCollectorInstall({
     scheduleCopyFeedbackReset();
   }, [fullCommand, scheduleCopyFeedbackReset]);
 
+  const redactApiKey = useCallback(
+    (cmd: string) =>
+      apiKeyValue?.length ? cmd.split(apiKeyValue).join("<REDACTED_API_KEY>") : cmd,
+    [apiKeyValue],
+  );
+
   const handleCopyStep = useCallback(
     async (index: number) => {
       const step = commandSteps[index];
@@ -150,10 +156,7 @@ export default function EdotCollectorInstall({
                   {copied ? "Copied!" : "Copy all steps"}
                 </Button>
                 {commandSteps.map((step, index) => {
-                  const safeCommand =
-                    apiKeyValue && apiKeyValue.length > 0
-                      ? step.command.split(apiKeyValue).join("<REDACTED_API_KEY>")
-                      : step.command;
+                  const safeCommand = redactApiKey(step.command);
                   return (
                     <Paper key={index} variant="outlined" sx={{ p: 1.5 }}>
                       <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
@@ -205,10 +208,7 @@ export default function EdotCollectorInstall({
                   {copied ? "Copied!" : "Copy all steps"}
                 </Button>
                 {commandSteps.map((step, index) => {
-                  const safeCommand =
-                    apiKeyValue && apiKeyValue.length > 0
-                      ? step.command.split(apiKeyValue).join("<REDACTED_API_KEY>")
-                      : step.command;
+                  const safeCommand = redactApiKey(step.command);
                   return (
                     <Paper key={index} variant="outlined" sx={{ p: 1.5 }}>
                       <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>

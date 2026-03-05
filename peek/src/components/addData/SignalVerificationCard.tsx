@@ -174,11 +174,9 @@ export default function SignalVerificationCard({ delta, isPolling }: SignalVerif
               )}
             </Box>
           )}
-          {!relativeLatest && (
-            <Typography variant="caption" color="text.secondary">
-              Last: never
-            </Typography>
-          )}
+          <Typography variant="caption" color="text.secondary">
+            Last: {relativeLatest ?? "never"}
+          </Typography>
           {detected && (
             <Button
               size="small"

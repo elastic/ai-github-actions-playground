@@ -18,6 +18,38 @@ export interface AwsDeployConfigureProps {
   onSelectTarget: (target: AwsDeployTarget) => void;
 }
 
+interface TargetCardProps {
+  target: AwsDeployTarget;
+  isSelected: boolean;
+  onSelect: () => void;
+  recommended?: boolean;
+}
+
+function TargetCard({ target, isSelected, onSelect, recommended }: TargetCardProps) {
+  return (
+    <ButtonBase onClick={onSelect} sx={{ display: "block", borderRadius: 1, textAlign: "left" }}>
+      <Paper
+        variant="outlined"
+        sx={{
+          p: 1.5,
+          borderWidth: isSelected ? 2 : 1,
+          borderColor: isSelected ? "primary.main" : undefined,
+        }}
+      >
+        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.5 }}>
+          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+            {target.label}
+          </Typography>
+          {recommended && <Chip size="small" color="primary" label="Recommended" />}
+        </Stack>
+        <Typography variant="caption" color="text.secondary">
+          {target.summary}
+        </Typography>
+      </Paper>
+    </ButtonBase>
+  );
+}
+
 export default function AwsDeployConfigure({
   selectedTarget,
   onSelectTarget,
@@ -32,30 +64,12 @@ export default function AwsDeployConfigure({
 
   return (
     <Stack spacing={1}>
-      <ButtonBase
-        onClick={() => onSelectTarget(firehoseTarget)}
-        sx={{ display: "block", borderRadius: 1, textAlign: "left" }}
-      >
-        <Paper
-          variant="outlined"
-          sx={{
-            p: 1.5,
-            borderWidth: selectedTarget?.targetId === firehoseTarget.targetId ? 2 : 1,
-            borderColor:
-              selectedTarget?.targetId === firehoseTarget.targetId ? "primary.main" : undefined,
-          }}
-        >
-          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.5 }}>
-            <Typography variant="body2" sx={{ fontWeight: 600 }}>
-              {firehoseTarget.label}
-            </Typography>
-            <Chip size="small" color="primary" label="Recommended" />
-          </Stack>
-          <Typography variant="caption" color="text.secondary">
-            {firehoseTarget.summary}
-          </Typography>
-        </Paper>
-      </ButtonBase>
+      <TargetCard
+        target={firehoseTarget}
+        isSelected={selectedTarget?.targetId === firehoseTarget.targetId}
+        onSelect={() => onSelectTarget(firehoseTarget)}
+        recommended
+      />
 
       {advancedTargets.length > 0 && (
         <ExpandableAlternatives
@@ -63,32 +77,14 @@ export default function AwsDeployConfigure({
           label="Show other options"
           expandedLabel="Hide other options"
         >
-          {advancedTargets.map((target) => {
-            const isSelected = selectedTarget?.targetId === target.targetId;
-            return (
-              <ButtonBase
-                key={target.targetId}
-                onClick={() => onSelectTarget(target)}
-                sx={{ display: "block", borderRadius: 1, textAlign: "left" }}
-              >
-                <Paper
-                  variant="outlined"
-                  sx={{
-                    p: 1.5,
-                    borderWidth: isSelected ? 2 : 1,
-                    borderColor: isSelected ? "primary.main" : undefined,
-                  }}
-                >
-                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                    {target.label}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {target.summary}
-                  </Typography>
-                </Paper>
-              </ButtonBase>
-            );
-          })}
+          {advancedTargets.map((target) => (
+            <TargetCard
+              key={target.targetId}
+              target={target}
+              isSelected={selectedTarget?.targetId === target.targetId}
+              onSelect={() => onSelectTarget(target)}
+            />
+          ))}
         </ExpandableAlternatives>
       )}
     </Stack>
