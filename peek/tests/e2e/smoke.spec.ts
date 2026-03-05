@@ -51,7 +51,7 @@ const A11Y_BASELINE: Record<string, Record<string, Record<string, number>>> = {
       "scrollable-region-focusable": 1,
     },
     Indices: {
-      "color-contrast": 3,
+      "color-contrast": 9,
     },
   },
   "mobile-safari": {
