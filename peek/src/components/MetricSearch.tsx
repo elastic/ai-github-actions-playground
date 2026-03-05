@@ -12,6 +12,7 @@ import MenuItem from "@mui/material/MenuItem";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 
 import type { FieldInfo, MetricTypeClassification } from "../services/es";
+import { COMPONENT_HEIGHTS } from "../types/tokens";
 
 import { getTypeColor } from "./fieldTypeColor";
 import { classifyFieldVisual, getFieldVisualIcon } from "./explore/fieldVisuals";
@@ -76,6 +77,7 @@ export default function MetricSearch({
           }
           label="Namespace"
           onChange={(e) => onNamespaceChange((e.target.value as string) || null)}
+          sx={{ height: COMPONENT_HEIGHTS.input }}
         >
           <MenuItem value="">All namespaces</MenuItem>
           {namespaces.map((namespace) => (
@@ -117,6 +119,7 @@ export default function MetricSearch({
             {...params}
             label="Search metrics"
             placeholder="Type to search for a metric field..."
+            sx={{ "& .MuiOutlinedInput-root": { height: COMPONENT_HEIGHTS.input } }}
             slotProps={{
               input: {
                 ...params.InputProps,

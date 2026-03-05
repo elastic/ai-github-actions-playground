@@ -18,6 +18,7 @@ import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import type { Extension } from "@codemirror/state";
 import type { EditorView } from "@codemirror/view";
 
+import { COMPONENT_HEIGHTS } from "../../types/tokens";
 import SignalSearchPanel from "../SignalSearchPanel";
 
 import type { LogsFilterChip } from "./logsQueryBuilder";
@@ -140,6 +141,7 @@ export default function LogsSearchPanel({
                     setActiveStep(1);
                   }}
                   disabled={!guidedInput.trim()}
+                  sx={{ minHeight: COMPONENT_HEIGHTS.input }}
                 >
                   Apply
                 </Button>
@@ -184,6 +186,7 @@ export default function LogsSearchPanel({
                     onUseCaseServicePivot({ serviceName: pivotService.trim() || undefined, topN });
                     setActiveStep(2);
                   }}
+                  sx={{ minHeight: COMPONENT_HEIGHTS.input }}
                 >
                   Run pivot
                 </Button>
@@ -266,6 +269,7 @@ export default function LogsSearchPanel({
                   onAddFilter({ field: "service.name", value });
                   setServiceFilterInput("");
                 }}
+                sx={{ minHeight: COMPONENT_HEIGHTS.input }}
               >
                 Add service filter
               </Button>
@@ -285,6 +289,7 @@ export default function LogsSearchPanel({
                   onAddFilter({ field: "host.name", value });
                   setHostFilterInput("");
                 }}
+                sx={{ minHeight: COMPONENT_HEIGHTS.input }}
               >
                 Add host filter
               </Button>
@@ -313,6 +318,7 @@ export default function LogsSearchPanel({
                   onAddFilter({ field: "log.level", value });
                   setLevelFilterInput("");
                 }}
+                sx={{ minHeight: COMPONENT_HEIGHTS.input }}
               >
                 Add level filter
               </Button>
