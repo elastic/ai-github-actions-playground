@@ -232,13 +232,15 @@ export default function QueryProfilePanel({ profile }: QueryProfilePanelProps) {
       <Collapse in={expanded}>
         {knownShape ? (
           (profile.drivers ?? []).length > 0 ? (
-            (profile.drivers ?? []).map((driver, idx) => (
-              <DriverRow
-                key={`${driver.description ?? ""}-${driver.cluster_name ?? ""}-${driver.node_name ?? ""}-${String(driver.millis ?? "")}-${String(driver.operators?.length ?? "")}`}
-                driver={driver}
-                index={idx}
-              />
-            ))
+            (() => {
+              const seenDriverKeys = new Map<string, number>();
+              return (profile.drivers ?? []).map((driver, idx) => {
+                const baseKey = JSON.stringify(driver);
+                const occurrence = seenDriverKeys.get(baseKey) ?? 0;
+                seenDriverKeys.set(baseKey, occurrence + 1);
+                return <DriverRow key={`${baseKey}-${occurrence}`} driver={driver} index={idx} />;
+              });
+            })()
           ) : (
             <Typography variant="caption" color="text.secondary" sx={{ display: "block", p: 1.5 }}>
               Profile returned no driver details.

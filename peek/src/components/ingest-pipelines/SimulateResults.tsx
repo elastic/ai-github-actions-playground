@@ -14,12 +14,13 @@ interface SimulateResultsProps {
 }
 
 export default function SimulateResults({ simulateResult }: SimulateResultsProps) {
-  const [expandedDocs, setExpandedDocs] = useState<Set<number>>(new Set());
+  const [expandedDocs, setExpandedDocs] = useState<Set<string>>(new Set());
   const [prevResult, setPrevResult] = useState(simulateResult);
   if (simulateResult !== prevResult) {
     setPrevResult(simulateResult);
     setExpandedDocs(new Set());
   }
+  const seenDocKeys = new Map<string, number>();
 
   return (
     <Box>
@@ -28,12 +29,17 @@ export default function SimulateResults({ simulateResult }: SimulateResultsProps
         {(simulateResult.docs?.length ?? 0) !== 1 ? "s" : ""}
       </Typography>
       <Box data-testid="simulate-result" sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-        {[...(simulateResult.docs ?? []).entries()].map(([docIdx, docResult]) => {
+        {(simulateResult.docs ?? []).map((docResult, docIdx) => {
+          const docBaseKey = JSON.stringify(docResult.doc ?? {});
+          const docOccurrence = seenDocKeys.get(docBaseKey) ?? 0;
+          seenDocKeys.set(docBaseKey, docOccurrence + 1);
+          const docKey = `${docBaseKey}-${docOccurrence}`;
           const isError = !!docResult.doc?.error;
-          const isExpanded = expandedDocs.has(docIdx);
+          const isExpanded = expandedDocs.has(docKey);
           const hasTrace = (docResult.processor_results?.length ?? 0) > 0;
+          const seenProcessorKeys = new Map<string, number>();
           return (
-            <Paper key={docIdx} variant="outlined" sx={{ p: 1 }}>
+            <Paper key={docKey} variant="outlined" sx={{ p: 1 }}>
               <Stack direction="row" spacing={1} alignItems="center">
                 <Chip
                   size="small"
@@ -52,8 +58,8 @@ export default function SimulateResults({ simulateResult }: SimulateResultsProps
                   onClick={() => {
                     setExpandedDocs((prev) => {
                       const next = new Set(prev);
-                      if (next.has(docIdx)) next.delete(docIdx);
-                      else next.add(docIdx);
+                      if (next.has(docKey)) next.delete(docKey);
+                      else next.add(docKey);
                       return next;
                     });
                   }}
@@ -101,31 +107,41 @@ export default function SimulateResults({ simulateResult }: SimulateResultsProps
                         Processor trace
                       </Typography>
                       <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-                        {[...(docResult.processor_results ?? []).entries()].map(([prIdx, pr]) => (
-                          <Stack key={prIdx} direction="row" spacing={1} alignItems="center">
-                            <Chip
-                              size="small"
-                              data-testid={`processor-trace-status-${docIdx}-${prIdx}`}
-                              label={
-                                pr.status === "success"
-                                  ? "OK"
-                                  : pr.status === "error"
-                                    ? "Error"
-                                    : "Unknown"
-                              }
-                              color={
-                                pr.status === "success"
-                                  ? "success"
-                                  : pr.status === "error"
-                                    ? "error"
-                                    : "default"
-                              }
-                            />
-                            <Typography variant="body2">
-                              {pr.processor_type ?? "processor"}
-                            </Typography>
-                          </Stack>
-                        ))}
+                        {(docResult.processor_results ?? []).map((pr, prIdx) => {
+                          const processorBaseKey = `${docKey}-${JSON.stringify(pr)}`;
+                          const processorOccurrence = seenProcessorKeys.get(processorBaseKey) ?? 0;
+                          seenProcessorKeys.set(processorBaseKey, processorOccurrence + 1);
+                          return (
+                            <Stack
+                              key={`${processorBaseKey}-${processorOccurrence}`}
+                              direction="row"
+                              spacing={1}
+                              alignItems="center"
+                            >
+                              <Chip
+                                size="small"
+                                data-testid={`processor-trace-status-${docIdx}-${prIdx}`}
+                                label={
+                                  pr.status === "success"
+                                    ? "OK"
+                                    : pr.status === "error"
+                                      ? "Error"
+                                      : "Unknown"
+                                }
+                                color={
+                                  pr.status === "success"
+                                    ? "success"
+                                    : pr.status === "error"
+                                      ? "error"
+                                      : "default"
+                                }
+                              />
+                              <Typography variant="body2">
+                                {pr.processor_type ?? "processor"}
+                              </Typography>
+                            </Stack>
+                          );
+                        })}
                       </Box>
                     </Box>
                   )}
