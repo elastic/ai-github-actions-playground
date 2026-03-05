@@ -235,7 +235,11 @@ export default function QueryProfilePanel({ profile }: QueryProfilePanelProps) {
             (() => {
               const seenDriverKeys = new Map<string, number>();
               return (profile.drivers ?? []).map((driver, idx) => {
-                const baseKey = `${driver.description ?? ""}|${driver.cluster_name ?? ""}|${driver.node_name ?? ""}`;
+                const baseKey = JSON.stringify([
+                  driver.description ?? "",
+                  driver.cluster_name ?? "",
+                  driver.node_name ?? "",
+                ]);
                 const occurrence = seenDriverKeys.get(baseKey) ?? 0;
                 seenDriverKeys.set(baseKey, occurrence + 1);
                 return <DriverRow key={`${baseKey}-${occurrence}`} driver={driver} index={idx} />;

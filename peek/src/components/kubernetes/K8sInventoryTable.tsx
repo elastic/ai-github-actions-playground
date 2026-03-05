@@ -78,7 +78,7 @@ export default function K8sInventoryTable({
         sortDirection,
         handleSort,
         "Pod inventory",
-        (r) => `${r.clusterName}-${r.namespace}-${r.podName}-${r.nodeName}`,
+        (r) => JSON.stringify([r.clusterName, r.namespace, r.podName, r.nodeName]),
       );
     default: {
       const _exhaustive: never = activeTab;
