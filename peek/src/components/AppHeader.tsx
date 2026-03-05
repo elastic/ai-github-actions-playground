@@ -125,7 +125,6 @@ export default function AppHeader({
             gap: 1,
             alignItems: "center",
             minWidth: 0,
-            overflow: "hidden",
           }}
         >
           {showMobileNavToggle && (
@@ -161,7 +160,16 @@ export default function AppHeader({
             Peek
           </Typography>
           {!isNarrow && isDashboardView ? (
-            <Box sx={{ display: "flex", gap: 0.5, alignItems: "center", overflow: "hidden" }}>
+            <Box
+              sx={{
+                display: "flex",
+                flexShrink: 1,
+                gap: 0.5,
+                alignItems: "center",
+                minWidth: 0,
+                overflow: "hidden",
+              }}
+            >
               <Chip
                 label="Dashboards"
                 size="small"
@@ -194,7 +202,9 @@ export default function AppHeader({
             />
           ) : null}
 
-          <ConnectionProfileSwitcher />
+          <Box sx={{ flexShrink: 0 }}>
+            <ConnectionProfileSwitcher />
+          </Box>
         </Box>
 
         {/* Center: search / command palette. flexShrink:0 keeps it stable. */}
