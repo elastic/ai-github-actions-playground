@@ -127,8 +127,13 @@ export default function AppHeader({
           }}
         >
           {showMobileNavToggle && (
-            <IconButton aria-label="Open navigation menu" size="small" onClick={onToggleMobileNav}>
-              <MenuIcon />
+            <IconButton
+              aria-label="Open navigation menu"
+              size="small"
+              onClick={onToggleMobileNav}
+              sx={{ width: COMPONENT_HEIGHTS.touchTarget, height: COMPONENT_HEIGHTS.touchTarget }}
+            >
+              <MenuIcon fontSize="small" />
             </IconButton>
           )}
           <Box
