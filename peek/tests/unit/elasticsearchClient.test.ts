@@ -659,7 +659,7 @@ describe("getCapabilities", () => {
     expect(caps.canReadIngestPipelines).toBe(true);
   });
 
-  it("re-throws on a generic 400 Bad Request from _has_privileges (not a security-disabled signature)", async () => {
+  it("falls back to optimistic capabilities on a generic 400 from _has_privileges", async () => {
     const fetchSpy = mockFetchOnce({ error: { reason: "Bad Request" } }, { status: 400 });
     vi.stubGlobal("fetch", fetchSpy);
 
