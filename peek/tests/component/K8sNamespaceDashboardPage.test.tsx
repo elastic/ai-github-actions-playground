@@ -15,9 +15,10 @@ const NAMESPACE_RESPONSE = {
     { name: "pod_count", type: "long" },
     { name: "avg_cpu", type: "double" },
     { name: "avg_memory", type: "double" },
+    { name: "cluster_name", type: "keyword" },
     { name: "namespace_name", type: "keyword" },
   ],
-  values: [[20, 0.5, 536870912, "kube-system"]],
+  values: [[20, 0.5, 536870912, "prod-cluster", "kube-system"]],
 };
 
 const POD_RESPONSE = {
@@ -25,21 +26,22 @@ const POD_RESPONSE = {
     { name: "avg_cpu", type: "double" },
     { name: "avg_memory", type: "long" },
     { name: "restarts", type: "long" },
+    { name: "cluster_name", type: "keyword" },
     { name: "pod_name", type: "keyword" },
     { name: "namespace_name", type: "keyword" },
     { name: "node_name", type: "keyword" },
   ],
   values: [
-    [0.1, 134217728, 0, "nginx-abc123", "kube-system", "node-1"],
-    [0.3, 268435456, 2, "api-xyz789", "kube-system", "node-2"],
+    [0.1, 134217728, 0, "prod-cluster", "nginx-abc123", "kube-system", "node-1"],
+    [0.3, 268435456, 2, "prod-cluster", "api-xyz789", "kube-system", "node-2"],
   ],
 };
 
 const EMPTY_RESPONSE = { columns: [], values: [] };
 
 function responseForQuery(query: string) {
-  if (/BY namespace_name = /.test(query) && !query.includes("node_name")) return NAMESPACE_RESPONSE;
-  if (/BY pod_name = /.test(query)) return POD_RESPONSE;
+  if (/namespace_name = /.test(query) && !query.includes("node_name")) return NAMESPACE_RESPONSE;
+  if (/pod_name = /.test(query)) return POD_RESPONSE;
   return EMPTY_RESPONSE;
 }
 

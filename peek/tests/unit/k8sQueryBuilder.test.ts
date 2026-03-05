@@ -87,7 +87,8 @@ describe("k8sQueryBuilder", () => {
       const query = buildNamespaceInventoryQuery(DEFAULT_FILTERS);
       expect(query).toContain("FROM metrics-*");
       expect(query).toContain("pod_count = COUNT_DISTINCT(k8s.pod.name)");
-      expect(query).toContain("BY namespace_name = k8s.namespace.name");
+      expect(query).toContain("cluster_name = k8s.cluster.name");
+      expect(query).toContain("namespace_name = k8s.namespace.name");
       expect(query).toContain("LIMIT 200");
     });
 
@@ -107,37 +108,43 @@ describe("k8sQueryBuilder", () => {
       const query = buildWorkloadInventoryQuery("deployment", DEFAULT_FILTERS);
       expect(query).toContain("FROM metrics-*");
       expect(query).toContain("k8s.deployment.name IS NOT NULL");
-      expect(query).toContain("BY workload_name = k8s.deployment.name");
+      expect(query).toContain('workload_kind = "deployment"');
+      expect(query).toContain("workload_name = k8s.deployment.name");
     });
 
     it("generates a query for statefulsets", () => {
       const query = buildWorkloadInventoryQuery("statefulset", DEFAULT_FILTERS);
       expect(query).toContain("k8s.statefulset.name IS NOT NULL");
-      expect(query).toContain("BY workload_name = k8s.statefulset.name");
+      expect(query).toContain('workload_kind = "statefulset"');
+      expect(query).toContain("workload_name = k8s.statefulset.name");
     });
 
     it("generates a query for daemonsets", () => {
       const query = buildWorkloadInventoryQuery("daemonset", DEFAULT_FILTERS);
       expect(query).toContain("k8s.daemonset.name IS NOT NULL");
-      expect(query).toContain("BY workload_name = k8s.daemonset.name");
+      expect(query).toContain('workload_kind = "daemonset"');
+      expect(query).toContain("workload_name = k8s.daemonset.name");
     });
 
     it("generates a query for jobs", () => {
       const query = buildWorkloadInventoryQuery("job", DEFAULT_FILTERS);
       expect(query).toContain("k8s.job.name IS NOT NULL");
-      expect(query).toContain("BY workload_name = k8s.job.name");
+      expect(query).toContain('workload_kind = "job"');
+      expect(query).toContain("workload_name = k8s.job.name");
     });
 
     it("generates a query for cronjobs", () => {
       const query = buildWorkloadInventoryQuery("cronjob", DEFAULT_FILTERS);
       expect(query).toContain("k8s.cronjob.name IS NOT NULL");
-      expect(query).toContain("BY workload_name = k8s.cronjob.name");
+      expect(query).toContain('workload_kind = "cronjob"');
+      expect(query).toContain("workload_name = k8s.cronjob.name");
     });
 
     it("generates a query for replicasets", () => {
       const query = buildWorkloadInventoryQuery("replicaset", DEFAULT_FILTERS);
       expect(query).toContain("k8s.replicaset.name IS NOT NULL");
-      expect(query).toContain("BY workload_name = k8s.replicaset.name");
+      expect(query).toContain('workload_kind = "replicaset"');
+      expect(query).toContain("workload_name = k8s.replicaset.name");
     });
   });
 
@@ -187,7 +194,7 @@ describe("k8sQueryBuilder", () => {
       expect(query).toContain("avg_cpu = AVG(k8s.pod.cpu.utilization)");
       expect(query).toContain("restarts = SUM(k8s.container.restarts)");
       expect(query).toContain(
-        "BY pod_name = k8s.pod.name, namespace_name = k8s.namespace.name, node_name = k8s.node.name",
+        "cluster_name = k8s.cluster.name, pod_name = k8s.pod.name, namespace_name = k8s.namespace.name, node_name = k8s.node.name",
       );
       expect(query).toContain("SORT avg_cpu DESC");
       expect(query).toContain("LIMIT 500");
@@ -319,16 +326,18 @@ describe("k8sHelpers", () => {
           { name: "pod_count", type: "long" },
           { name: "avg_cpu", type: "double" },
           { name: "avg_memory", type: "long" },
+          { name: "cluster_name", type: "keyword" },
           { name: "namespace_name", type: "keyword" },
         ],
         values: [
-          [20, 0.5, 536870912, "kube-system"],
-          [15, 0.3, 268435456, "default"],
+          [20, 0.5, 536870912, "prod-cluster", "kube-system"],
+          [15, 0.3, 268435456, "prod-cluster", "default"],
         ],
       });
 
       expect(result).toHaveLength(2);
       expect(result[0]).toEqual({
+        clusterName: "prod-cluster",
         namespace: "kube-system",
         podCount: 20,
         avgCpu: 0.5,
@@ -344,17 +353,21 @@ describe("k8sHelpers", () => {
           { name: "pod_count", type: "long" },
           { name: "avg_cpu", type: "double" },
           { name: "avg_memory", type: "long" },
+          { name: "cluster_name", type: "keyword" },
+          { name: "namespace_name", type: "keyword" },
           { name: "workload_kind", type: "keyword" },
           { name: "workload_name", type: "keyword" },
         ],
         values: [
-          [3, 0.4, 524288000, "deployment", "nginx-deploy"],
-          [2, 0.2, 262144000, "statefulset", "redis-deploy"],
+          [3, 0.4, 524288000, "prod-cluster", "default", "deployment", "nginx-deploy"],
+          [2, 0.2, 262144000, "prod-cluster", "default", "statefulset", "redis-deploy"],
         ],
       });
 
       expect(result).toHaveLength(2);
       expect(result[0]).toEqual({
+        clusterName: "prod-cluster",
+        namespace: "default",
         workloadName: "nginx-deploy",
         workloadKind: "deployment",
         podCount: 3,
@@ -371,15 +384,17 @@ describe("k8sHelpers", () => {
           { name: "avg_cpu", type: "double" },
           { name: "avg_memory", type: "long" },
           { name: "restarts", type: "long" },
+          { name: "cluster_name", type: "keyword" },
           { name: "pod_name", type: "keyword" },
           { name: "namespace_name", type: "keyword" },
           { name: "node_name", type: "keyword" },
         ],
-        values: [[0.6, 512000000, 2, "web-abc123", "default", "node-1"]],
+        values: [[0.6, 512000000, 2, "prod-cluster", "web-abc123", "default", "node-1"]],
       });
 
       expect(result).toHaveLength(1);
       expect(result[0]).toEqual({
+        clusterName: "prod-cluster",
         podName: "web-abc123",
         namespace: "default",
         nodeName: "node-1",
@@ -503,7 +518,7 @@ describe("custom K8sFieldMapping", () => {
     const query = buildPodInventoryQuery(DEFAULT_FILTERS, CUSTOM_MAPPING);
     expect(query).toContain("AVG(custom.cpu)");
     expect(query).toContain(
-      "BY pod_name = custom.pod, namespace_name = custom.namespace, node_name = custom.node",
+      "cluster_name = custom.cluster, pod_name = custom.pod, namespace_name = custom.namespace, node_name = custom.node",
     );
   });
 
@@ -537,13 +552,15 @@ describe("custom K8sFieldMapping", () => {
         { name: "avg_cpu", type: "double" },
         { name: "avg_memory", type: "long" },
         { name: "restarts", type: "long" },
+        { name: "cluster_name", type: "keyword" },
         { name: "pod_name", type: "keyword" },
         { name: "namespace_name", type: "keyword" },
         { name: "node_name", type: "keyword" },
       ],
-      values: [[0.1, 512, 0, "custom-pod", "custom-ns", "custom-node"]],
+      values: [[0.1, 512, 0, "custom-cluster", "custom-pod", "custom-ns", "custom-node"]],
     });
     expect(podResult[0]!.podName).toBe("custom-pod");
+    expect(podResult[0]!.clusterName).toBe("custom-cluster");
     expect(podResult[0]!.namespace).toBe("custom-ns");
   });
 });
