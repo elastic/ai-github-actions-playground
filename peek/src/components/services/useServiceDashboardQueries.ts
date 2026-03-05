@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { useEsqlQuery } from "../../hooks/useEsqlQuery";
 import type { EsqlResponse, ElasticsearchConnection } from "../../types";
 import { buildColumnAccessor } from "../../services/es/columnUtils";
+import { createPersesEsqlDatasource } from "../../services/perses/esqlDatasource";
 import { parseSpansFromEsql, type Span } from "../traces/traceUtils";
 import {
   buildTraceSpansForTraceIdsQuery,
@@ -26,6 +26,52 @@ interface UseServiceDashboardQueriesParams {
   timeTo: string;
 }
 
+/** Shared query key prefix for all service-dashboard queries. */
+const KEY_PREFIX = "service-dashboard-" as const;
+
+/**
+ * Derive a stable fingerprint from the connection that covers auth-relevant
+ * fields.  If only the URL is keyed, credential or proxy changes are invisible
+ * to React Query and stale cached data is returned.
+ */
+function getConnectionFingerprint(connection: ElasticsearchConnection | null): string | null {
+  if (!connection) return null;
+  return [
+    connection.url,
+    connection.apiKey ?? "",
+    connection.username ?? "",
+    connection.password ?? "",
+    connection.proxyUrl ?? "",
+  ].join("|");
+}
+
+/** Shared options for all service-dashboard queries. */
+const QUERY_OPTIONS = {
+  retry: false,
+  refetchOnWindowFocus: false,
+  refetchOnReconnect: false,
+} as const;
+
+function isServiceDashboardQuery(queryKey: readonly unknown[]): boolean {
+  return typeof queryKey[0] === "string" && queryKey[0].startsWith(KEY_PREFIX);
+}
+
+function isCurrentServiceDashboardQuery(
+  queryKey: readonly unknown[],
+  connectionFingerprint: string | null,
+  serviceName: string,
+  timeFrom: string,
+  timeTo: string,
+): boolean {
+  return (
+    isServiceDashboardQuery(queryKey) &&
+    queryKey[1] === connectionFingerprint &&
+    queryKey[2] === serviceName &&
+    queryKey[3] === timeFrom &&
+    queryKey[4] === timeTo
+  );
+}
+
 export function useServiceDashboardQueries({
   connection,
   serviceName,
@@ -33,333 +79,248 @@ export function useServiceDashboardQueries({
   timeTo,
 }: UseServiceDashboardQueriesParams) {
   const queryClient = useQueryClient();
+  const connectionFingerprint = getConnectionFingerprint(connection);
+  const normalizedServiceName = serviceName.trim();
 
-  const [routesSession] = useState(0);
-  const routesQueryKey = useMemo(
-    () => ["service-dashboard-routes", serviceName, routesSession] as const,
-    [serviceName, routesSession],
+  // Track the params that were active when handleReset was called.  When the
+  // search params change, the mismatch automatically re-enables queries without
+  // a setState-inside-useEffect.
+  const [resetKey, setResetKey] = useState<string | null>(null);
+  const paramsKey = `${connectionFingerprint ?? ""}|${normalizedServiceName}|${timeFrom}|${timeTo}`;
+  const disabled = resetKey === paramsKey;
+
+  const canFetch = !disabled && Boolean(connection) && normalizedServiceName.length > 0;
+  const filters = useMemo(
+    () => ({ serviceName: normalizedServiceName, timeFrom, timeTo }),
+    [normalizedServiceName, timeFrom, timeTo],
   );
-  const { data: routesResult = null } = useQuery<EsqlResponse | null>({
-    queryKey: routesQueryKey,
-    queryFn: () => null,
-    enabled: false,
+
+  // --- Routes ---
+  const routesQuery = useQuery<EsqlResponse | null>({
+    queryKey: [
+      `${KEY_PREFIX}routes`,
+      connectionFingerprint,
+      normalizedServiceName,
+      timeFrom,
+      timeTo,
+    ] as const,
+    queryFn: async ({ signal }) => {
+      if (!connection) return null;
+      const query = buildServiceRoutesQuery(filters);
+      return createPersesEsqlDatasource(connection).execute({ query: query.trim() }, signal);
+    },
+    enabled: canFetch,
     initialData: null,
+    ...QUERY_OPTIONS,
   });
-  const setRoutesResult = useCallback(
-    (result: EsqlResponse | null) => queryClient.setQueryData(routesQueryKey, result),
-    [queryClient, routesQueryKey],
-  );
 
-  const [tracesSession] = useState(0);
-  const tracesQueryKey = useMemo(
-    () => ["service-dashboard-traces", serviceName, tracesSession] as const,
-    [serviceName, tracesSession],
-  );
-  const { data: tracesResult = null } = useQuery<EsqlResponse | null>({
-    queryKey: tracesQueryKey,
-    queryFn: () => null,
-    enabled: false,
+  // --- Traces ---
+  const tracesQuery = useQuery<EsqlResponse | null>({
+    queryKey: [
+      `${KEY_PREFIX}traces`,
+      connectionFingerprint,
+      normalizedServiceName,
+      timeFrom,
+      timeTo,
+    ] as const,
+    queryFn: async ({ signal }) => {
+      if (!connection) return null;
+      const query = buildServiceRecentTracesQuery(filters);
+      return createPersesEsqlDatasource(connection).execute({ query: query.trim() }, signal);
+    },
+    enabled: canFetch,
     initialData: null,
+    ...QUERY_OPTIONS,
   });
-  const setTracesResult = useCallback(
-    (result: EsqlResponse | null) => queryClient.setQueryData(tracesQueryKey, result),
-    [queryClient, tracesQueryKey],
-  );
 
-  const [deploymentsSession] = useState(0);
-  const deploymentsQueryKey = useMemo(
-    () => ["service-dashboard-deployments", serviceName, deploymentsSession] as const,
-    [serviceName, deploymentsSession],
-  );
-  const { data: deploymentsResult = null } = useQuery<EsqlResponse | null>({
-    queryKey: deploymentsQueryKey,
-    queryFn: () => null,
-    enabled: false,
+  // Derive trace IDs from the traces result for the dependent trace-spans query.
+  const traceIds = useMemo(() => {
+    const data = tracesQuery.data;
+    if (!data) return [];
+    const get = buildColumnAccessor(data.columns);
+    return Array.from(
+      new Set(
+        data.values
+          .map((row) => String(get(row, DEFAULT_FIELD_MAPPING.traceId) ?? ""))
+          .filter((id) => id.length > 0),
+      ),
+    );
+  }, [tracesQuery.data]);
+
+  // --- Trace Spans (dependent on traces) ---
+  const traceSpansQuery = useQuery<EsqlResponse | null>({
+    queryKey: [
+      `${KEY_PREFIX}trace-spans`,
+      connectionFingerprint,
+      normalizedServiceName,
+      timeFrom,
+      timeTo,
+      traceIds,
+    ] as const,
+    queryFn: async ({ signal }) => {
+      if (!connection || traceIds.length === 0) return null;
+      const query = buildTraceSpansForTraceIdsQuery(traceIds);
+      return createPersesEsqlDatasource(connection).execute({ query: query.trim() }, signal);
+    },
+    enabled: canFetch && traceIds.length > 0,
     initialData: null,
+    ...QUERY_OPTIONS,
   });
-  const setDeploymentsResult = useCallback(
-    (result: EsqlResponse | null) => queryClient.setQueryData(deploymentsQueryKey, result),
-    [queryClient, deploymentsQueryKey],
-  );
 
-  const [k8sContextSession] = useState(0);
-  const k8sContextQueryKey = useMemo(
-    () => ["service-dashboard-k8s-context", serviceName, k8sContextSession] as const,
-    [serviceName, k8sContextSession],
-  );
-  const { data: k8sContextResult = null } = useQuery<EsqlResponse | null>({
-    queryKey: k8sContextQueryKey,
-    queryFn: () => null,
-    enabled: false,
+  // --- Deployments ---
+  const deploymentsQuery = useQuery<EsqlResponse | null>({
+    queryKey: [
+      `${KEY_PREFIX}deployments`,
+      connectionFingerprint,
+      normalizedServiceName,
+      timeFrom,
+      timeTo,
+    ] as const,
+    queryFn: async ({ signal }) => {
+      if (!connection) return null;
+      const query = buildServiceDeploymentsQuery(filters);
+      return createPersesEsqlDatasource(connection).execute({ query: query.trim() }, signal);
+    },
+    enabled: canFetch,
     initialData: null,
-  });
-  const setK8sContextResult = useCallback(
-    (result: EsqlResponse | null) => queryClient.setQueryData(k8sContextQueryKey, result),
-    [queryClient, k8sContextQueryKey],
-  );
-
-  const latestRoutesQueryRef = useRef<string | null>(null);
-  const latestTracesQueryRef = useRef<string | null>(null);
-  const latestTraceSpansQueryRef = useRef<string | null>(null);
-  const latestDeploymentsQueryRef = useRef<string | null>(null);
-  const latestSparklineQueryRef = useRef<string | null>(null);
-  const latestK8sContextQueryRef = useRef<string | null>(null);
-  const [routeSparklineData, setRouteSparklineData] = useState<Record<string, RouteSparklineData>>(
-    {},
-  );
-  const [traceExplorerSpans, setTraceExplorerSpans] = useState<Span[]>([]);
-
-  const {
-    runQuery: runRoutesQuery,
-    loading: routesLoading,
-    error: routesError,
-    clearError: clearRoutesError,
-  } = useEsqlQuery({
-    connection,
-    onSuccess: useCallback(
-      (data: EsqlResponse, executedQuery: string) => {
-        if (executedQuery !== latestRoutesQueryRef.current) return;
-        setRoutesResult(data);
-      },
-      [setRoutesResult],
-    ),
-    onFailure: useCallback(
-      (failedQuery: string) => {
-        if (failedQuery !== latestRoutesQueryRef.current) return;
-        setRoutesResult(null);
-      },
-      [setRoutesResult],
-    ),
+    ...QUERY_OPTIONS,
   });
 
-  const {
-    runQuery: runTraceSpansQuery,
-    loading: traceSpansLoading,
-    error: traceSpansError,
-    clearError: clearTraceSpansError,
-  } = useEsqlQuery({
-    connection,
-    onSuccess: useCallback((data: EsqlResponse, executedQuery: string) => {
-      if (executedQuery !== latestTraceSpansQueryRef.current) return;
-      setTraceExplorerSpans(parseSpansFromEsql(data.columns, data.values, DEFAULT_FIELD_MAPPING));
-    }, []),
-    onFailure: useCallback((failedQuery: string) => {
-      if (failedQuery !== latestTraceSpansQueryRef.current) return;
-      setTraceExplorerSpans([]);
-    }, []),
+  // --- Sparkline ---
+  const sparklineQuery = useQuery<EsqlResponse | null>({
+    queryKey: [
+      `${KEY_PREFIX}sparkline`,
+      connectionFingerprint,
+      normalizedServiceName,
+      timeFrom,
+      timeTo,
+    ] as const,
+    queryFn: async ({ signal }) => {
+      if (!connection) return null;
+      const query = buildServiceRouteSparklineQuery(filters);
+      return createPersesEsqlDatasource(connection).execute({ query: query.trim() }, signal);
+    },
+    enabled: canFetch,
+    initialData: null,
+    ...QUERY_OPTIONS,
   });
 
-  const {
-    runQuery: runTracesQuery,
-    loading: tracesLoading,
-    error: tracesError,
-    clearError: clearTracesError,
-  } = useEsqlQuery({
-    connection,
-    onSuccess: useCallback(
-      (data: EsqlResponse, executedQuery: string) => {
-        if (executedQuery !== latestTracesQueryRef.current) return;
-        setTracesResult(data);
-        const get = buildColumnAccessor(data.columns);
-        const traceIds = Array.from(
-          new Set(
-            data.values
-              .map((row) => String(get(row, DEFAULT_FIELD_MAPPING.traceId) ?? ""))
-              .filter((id) => id.length > 0),
-          ),
-        );
-        if (traceIds.length === 0) {
-          latestTraceSpansQueryRef.current = null;
-          setTraceExplorerSpans([]);
-          return;
-        }
-        const traceSpansQuery = buildTraceSpansForTraceIdsQuery(traceIds);
-        latestTraceSpansQueryRef.current = traceSpansQuery.trim();
-        runTraceSpansQuery(traceSpansQuery);
-      },
-      [runTraceSpansQuery, setTracesResult],
-    ),
-    onFailure: useCallback(
-      (failedQuery: string) => {
-        if (failedQuery !== latestTracesQueryRef.current) return;
-        setTracesResult(null);
-        latestTraceSpansQueryRef.current = null;
-        setTraceExplorerSpans([]);
-      },
-      [setTracesResult],
-    ),
+  // --- K8s Context ---
+  const k8sContextQuery = useQuery<EsqlResponse | null>({
+    queryKey: [
+      `${KEY_PREFIX}k8s-context`,
+      connectionFingerprint,
+      normalizedServiceName,
+      timeFrom,
+      timeTo,
+    ] as const,
+    queryFn: async ({ signal }) => {
+      if (!connection) return null;
+      const query = buildServiceK8sContextQuery(filters);
+      return createPersesEsqlDatasource(connection).execute({ query: query.trim() }, signal);
+    },
+    enabled: canFetch,
+    initialData: null,
+    ...QUERY_OPTIONS,
   });
 
-  const {
-    runQuery: runDeploymentsQuery,
-    loading: deploymentsLoading,
-    error: deploymentsError,
-    clearError: clearDeploymentsError,
-  } = useEsqlQuery({
-    connection,
-    onSuccess: useCallback(
-      (data: EsqlResponse, executedQuery: string) => {
-        if (executedQuery !== latestDeploymentsQueryRef.current) return;
-        setDeploymentsResult(data);
-      },
-      [setDeploymentsResult],
-    ),
-    onFailure: useCallback(
-      (failedQuery: string) => {
-        if (failedQuery !== latestDeploymentsQueryRef.current) return;
-        setDeploymentsResult(null);
-      },
-      [setDeploymentsResult],
-    ),
-  });
+  // --- Derived data ---
+  const traceExplorerSpans = useMemo<Span[]>(() => {
+    const data = traceSpansQuery.data;
+    if (!data) return [];
+    return parseSpansFromEsql(data.columns, data.values, DEFAULT_FIELD_MAPPING);
+  }, [traceSpansQuery.data]);
 
-  const {
-    runQuery: runSparklineQuery,
-    loading: sparklineLoading,
-    error: sparklineError,
-    clearError: clearSparklineError,
-  } = useEsqlQuery({
-    connection,
-    onSuccess: useCallback((data: EsqlResponse, executedQuery: string) => {
-      if (executedQuery !== latestSparklineQueryRef.current) return;
-      setRouteSparklineData(parseRouteSparklineData(data));
-    }, []),
-    onFailure: useCallback((failedQuery: string) => {
-      if (failedQuery !== latestSparklineQueryRef.current) return;
-      setRouteSparklineData({});
-    }, []),
-  });
+  const routeSparklineData = useMemo<Record<string, RouteSparklineData>>(() => {
+    const data = sparklineQuery.data;
+    if (!data) return {};
+    return parseRouteSparklineData(data);
+  }, [sparklineQuery.data]);
 
-  const {
-    runQuery: runK8sContextQuery,
-    loading: k8sContextLoading,
-    error: k8sContextError,
-    clearError: clearK8sContextError,
-  } = useEsqlQuery({
-    connection,
-    onSuccess: useCallback(
-      (data: EsqlResponse, executedQuery: string) => {
-        if (executedQuery !== latestK8sContextQueryRef.current) return;
-        setK8sContextResult(data);
-      },
-      [setK8sContextResult],
-    ),
-    onFailure: useCallback(
-      (failedQuery: string) => {
-        if (failedQuery !== latestK8sContextQueryRef.current) return;
-        setK8sContextResult(null);
-      },
-      [setK8sContextResult],
-    ),
-  });
-
+  // --- Aggregated states ---
   const loading =
-    routesLoading ||
-    tracesLoading ||
-    traceSpansLoading ||
-    deploymentsLoading ||
-    sparklineLoading ||
-    k8sContextLoading;
-  const error =
-    routesError ||
-    tracesError ||
-    traceSpansError ||
-    deploymentsError ||
-    sparklineError ||
-    k8sContextError;
+    routesQuery.isFetching ||
+    tracesQuery.isFetching ||
+    traceSpansQuery.isFetching ||
+    deploymentsQuery.isFetching ||
+    sparklineQuery.isFetching ||
+    k8sContextQuery.isFetching;
 
+  const error = useMemo(() => {
+    const errors = [
+      routesQuery.error,
+      tracesQuery.error,
+      traceSpansQuery.error,
+      deploymentsQuery.error,
+      sparklineQuery.error,
+      k8sContextQuery.error,
+    ];
+    const first = errors.find((e) => e != null);
+    if (!first) return null;
+    return first instanceof Error ? first.message : String(first);
+  }, [
+    routesQuery.error,
+    tracesQuery.error,
+    traceSpansQuery.error,
+    deploymentsQuery.error,
+    sparklineQuery.error,
+    k8sContextQuery.error,
+  ]);
+
+  // --- Actions ---
   const clearLatestQueries = useCallback(() => {
-    latestRoutesQueryRef.current = null;
-    latestTracesQueryRef.current = null;
-    latestTraceSpansQueryRef.current = null;
-    latestDeploymentsQueryRef.current = null;
-    latestSparklineQueryRef.current = null;
-    latestK8sContextQueryRef.current = null;
+    // No-op: React Query handles staleness via query key changes.
   }, []);
 
   const handleSearch = useCallback(() => {
-    const filters = { serviceName, timeFrom, timeTo };
-    const routesQuery = buildServiceRoutesQuery(filters);
-    latestRoutesQueryRef.current = routesQuery.trim();
-    runRoutesQuery(routesQuery);
-    const tracesQuery = buildServiceRecentTracesQuery(filters);
-    latestTracesQueryRef.current = tracesQuery.trim();
-    latestTraceSpansQueryRef.current = null;
-    clearTraceSpansError();
-    setTraceExplorerSpans([]);
-    runTracesQuery(tracesQuery);
-    const deploymentsQuery = buildServiceDeploymentsQuery(filters);
-    latestDeploymentsQueryRef.current = deploymentsQuery.trim();
-    runDeploymentsQuery(deploymentsQuery);
-    const sparklineQuery = buildServiceRouteSparklineQuery(filters);
-    latestSparklineQueryRef.current = sparklineQuery.trim();
-    setRouteSparklineData({});
-    runSparklineQuery(sparklineQuery);
-    const k8sContextQuery = buildServiceK8sContextQuery(filters);
-    latestK8sContextQueryRef.current = k8sContextQuery.trim();
-    runK8sContextQuery(k8sContextQuery);
+    setResetKey(null);
+    void queryClient.invalidateQueries({
+      predicate: (query) =>
+        isCurrentServiceDashboardQuery(
+          query.queryKey,
+          connectionFingerprint,
+          normalizedServiceName,
+          timeFrom,
+          timeTo,
+        ),
+    });
+  }, [queryClient, connectionFingerprint, normalizedServiceName, timeFrom, timeTo]);
+
+  const handleReset = useCallback(() => {
+    if (loading) return;
+    setResetKey(paramsKey);
+    queryClient.removeQueries({
+      predicate: (query) =>
+        isCurrentServiceDashboardQuery(
+          query.queryKey,
+          connectionFingerprint,
+          normalizedServiceName,
+          timeFrom,
+          timeTo,
+        ),
+    });
   }, [
-    runRoutesQuery,
-    runTracesQuery,
-    runDeploymentsQuery,
-    runSparklineQuery,
-    runK8sContextQuery,
-    clearTraceSpansError,
-    serviceName,
+    loading,
+    queryClient,
+    paramsKey,
+    connectionFingerprint,
+    normalizedServiceName,
     timeFrom,
     timeTo,
   ]);
 
-  const handleReset = useCallback(() => {
-    if (loading) return;
-    clearLatestQueries();
-    clearRoutesError();
-    clearTracesError();
-    clearTraceSpansError();
-    clearDeploymentsError();
-    clearSparklineError();
-    clearK8sContextError();
-    setRoutesResult(null);
-    setTracesResult(null);
-    setTraceExplorerSpans([]);
-    setDeploymentsResult(null);
-    setRouteSparklineData({});
-    setK8sContextResult(null);
-  }, [
-    clearLatestQueries,
-    clearRoutesError,
-    clearTracesError,
-    clearTraceSpansError,
-    clearDeploymentsError,
-    clearSparklineError,
-    clearK8sContextError,
-    loading,
-    setRoutesResult,
-    setTracesResult,
-    setDeploymentsResult,
-    setK8sContextResult,
-  ]);
-
-  useEffect(() => {
-    if (!connection || !serviceName.trim()) return;
-    const timer = window.setTimeout(() => {
-      handleSearch();
-    }, 0);
-    return () => window.clearTimeout(timer);
-  }, [connection, handleSearch, serviceName]);
-
   return {
     clearLatestQueries,
-    deploymentsResult,
+    deploymentsResult: deploymentsQuery.data ?? null,
     error,
     handleReset,
     handleSearch,
-    k8sContextResult,
+    k8sContextResult: k8sContextQuery.data ?? null,
     loading,
     routeSparklineData,
-    traceExplorerLoading: traceSpansLoading,
+    traceExplorerLoading: traceSpansQuery.isFetching,
     traceExplorerSpans,
-    routesResult,
-    tracesResult,
+    routesResult: routesQuery.data ?? null,
+    tracesResult: tracesQuery.data ?? null,
   };
 }
