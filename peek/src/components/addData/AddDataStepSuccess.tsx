@@ -27,9 +27,15 @@ export default function AddDataStepSuccess({
 }: AddDataStepSuccessProps) {
   const navigate = useNavigate();
 
-  const hasVerifiedSignals = foundSignals.size > 0;
+  // Only count signals that are both detected AND expected for this technology.
+  // This prevents false positives — e.g. pre-existing logs data streams should
+  // not appear as "verified" for an APM agent that only expects traces + metrics.
+  const relevantFoundSignals = new Set(
+    Array.from(foundSignals).filter((s) => selectedSignals.includes(s)),
+  );
+  const hasVerifiedSignals = relevantFoundSignals.size > 0;
   const outcomeSignals: TelemetrySignal[] = hasVerifiedSignals
-    ? (Array.from(foundSignals).sort() as TelemetrySignal[])
+    ? (Array.from(relevantFoundSignals).sort() as TelemetrySignal[])
     : Array.from(selectedSignals);
 
   const outcomeCtas = useMemo(() => {

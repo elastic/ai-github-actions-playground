@@ -323,6 +323,7 @@ export default function AddDataStepSetup(p: AddDataStepSetupProps) {
         expectedSignals={p.selectedSignals}
         verification={p.verification}
         connectionAvailable={p.connectionAvailable}
+        troubleshootingDocsUrl={p.selectedApmLanguage?.docsUrl}
       />
 
       {/* Navigation */}

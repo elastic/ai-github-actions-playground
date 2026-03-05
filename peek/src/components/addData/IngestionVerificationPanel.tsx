@@ -30,6 +30,7 @@ interface IngestionVerificationPanelProps {
   expectedSignals: readonly TelemetrySignal[];
   verification: IngestionVerificationState;
   connectionAvailable: boolean;
+  troubleshootingDocsUrl?: string;
 }
 
 export default function IngestionVerificationPanel({
@@ -38,6 +39,7 @@ export default function IngestionVerificationPanel({
   expectedSignals,
   verification,
   connectionAvailable,
+  troubleshootingDocsUrl,
 }: IngestionVerificationPanelProps) {
   const { status, deltas, overallDetected, error } = verification;
   const isPolling = status === "polling" || status === "capturing_baseline";
@@ -129,7 +131,10 @@ export default function IngestionVerificationPanel({
             No new data detected yet. Make sure the collector is running — we&apos;ll keep checking
             automatically.{" "}
             <Link
-              href="https://www.elastic.co/docs/solutions/observability/get-started/opentelemetry"
+              href={
+                troubleshootingDocsUrl ??
+                "https://www.elastic.co/docs/solutions/observability/get-started/opentelemetry"
+              }
               target="_blank"
               rel="noopener noreferrer"
             >
