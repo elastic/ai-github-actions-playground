@@ -90,14 +90,13 @@ jobs:
 
         ### Overview cards
 
-        Once search results load, four summary cards appear at the top:
-        - **Total Services** (count of discovered services)
-        - **Total Requests** (aggregate request count)
-        - **Avg Latency** (weighted average across all services)
-        - **Error Rate** (aggregate error rate)
+        Once search results load, summary cards appear at the top showing
+        aggregate metrics (service count, request volume, latency, error
+        rate, etc.).
 
-        Verify that all four cards are populated with values.
-        Are the values formatted readably (e.g., "12.3 ms" not "12345 µs")?
+        Verify that the cards are populated with values and that the values
+        are formatted in human-readable units (e.g., milliseconds not raw
+        microseconds, percentages not raw decimals).
 
         ### Time range and search
 
@@ -110,17 +109,9 @@ jobs:
 
         ### Service inventory table
 
-        The table lists discovered services with these columns:
-        - **Service Name**
-        - **Requests** (total request count)
-        - **Requests trend** (sparkline, if data available)
-        - **Avg Latency** (formatted as ms or µs)
-        - **Latency trend** (sparkline, if data available)
-        - **Error Rate** (formatted as a percentage)
-        - **Error rate trend** (sparkline, if data available)
-        - **Language** (e.g., "python", "node", "java")
-        - **Environment** (e.g., "production", "staging")
-        - **Actions**
+        The table lists discovered services with columns for service name,
+        performance metrics (requests, latency, error rate), trend
+        sparklines, and service metadata (language, environment).
 
         Interactions to try:
         - Sort by **Avg Latency** descending. Are the slowest services at
@@ -160,19 +151,18 @@ jobs:
 
         ### Summary cards
 
-        The top of the Service Dashboard shows summary cards:
-        - Total requests
-        - Average latency
-        - Error rate
-        - Top error (if any)
+        The top of the Service Dashboard shows summary cards with key
+        performance metrics for the selected service (request volume,
+        latency, error rate, etc.).
 
-        Are the values consistent with what was shown in the inventory table?
+        Do the values look reasonable compared to what the inventory table
+        showed?
 
         ### Routes table
 
-        A **Top Routes** table lists the most-used HTTP routes/operations:
-        - Columns: route/operation name, request count, avg latency, error rate
-        - Sort by **Request count** descending. Are the busiest routes at top?
+        A routes table lists the most-used HTTP routes/operations with
+        performance metrics per route.
+        - Sort by request count descending. Are the busiest routes at top?
         - Sort by **Avg Latency** descending. Are the slowest routes at top?
         - Sort by **Error rate** descending. Are the most error-prone routes listed?
         - Click a column header twice — does sort direction toggle?
@@ -180,12 +170,11 @@ jobs:
 
         ### Recent Traces table
 
-        A **Recent Traces** section shows the latest trace entries for the service:
-        - Are columns (trace ID, root span, duration, status, timestamp) visible?
-        - Click a trace row — does it navigate to the Traces page filtered
-          to that service?
-        - Is there a "View all traces" or "Open in Traces" button? Click it —
-          does it navigate to Traces with the service filter pre-populated?
+        A recent traces section shows the latest trace entries for the service.
+        - Are the key trace details (ID, duration, status, timestamp) visible?
+        - Click a trace row — does it navigate to a trace detail view?
+        - Is there a way to view all traces for this service? If so, does
+          it navigate to Traces with the service filter pre-populated?
 
         ### Performance charts
 
@@ -200,8 +189,7 @@ jobs:
 
         ### Back navigation
 
-        - Click "Back to Services" or use the breadcrumb. Does it return
-          to the Service Performance page?
+        - Use the back link or breadcrumb to return to the service list.
         - Does the inventory table still show the same data on return?
 
         ---
@@ -265,5 +253,10 @@ jobs:
           page/location, what you tried, what you expected, what actually
           happened, and a screenshot. A thorough issue typically has 3-10
           findings.
+        - **Prompt accuracy**: If the UI differs from what this prompt
+          describes (e.g., a title, label, or layout has changed) but the
+          UI itself is fine, do NOT file that as a bug. Instead, add a
+          **"Prompt Suggestions"** section at the end of your issue listing
+          what this prompt should say instead to match the current UI.
     secrets:
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
