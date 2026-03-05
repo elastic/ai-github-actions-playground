@@ -134,10 +134,10 @@ export default function AddDataStepTechnology({
         value={technologySearch}
         onChange={(e) => {
           onTechnologySearchChange(e.target.value);
+          onClearTechnology();
           if (e.target.value.trim().length > 0) {
             setSelectedHeroCategory(null);
             setCloudSaasFilter("all");
-            onClearTechnology();
           }
         }}
         fullWidth

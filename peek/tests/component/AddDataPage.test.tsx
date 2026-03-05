@@ -318,7 +318,7 @@ describe("AddDataPage", () => {
     ).toBeInTheDocument();
     expect(screen.getAllByText(/AGENT_ARCH="\$\(uname -m \| sed -E/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/aarch64\|arm64/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/linux-\$\{AGENT_ARCH\}\.deb/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/linux-\$\{AGENT_ARCH\}\.\$\{PKG_EXT\}/i).length).toBeGreaterThan(0);
     await user.click(screen.getByRole("button", { name: /Show full command/i }));
     expect(
       screen.getAllByText(
@@ -475,8 +475,12 @@ describe("AddDataPage", () => {
       screen.getByPlaceholderText("Search technologies (e.g., PostgreSQL, Kubernetes...)"),
     );
 
-    // Continue button should be disabled (selection cleared)
-    expect(screen.getByRole("button", { name: /^Continue$/i })).toBeDisabled();
+    // Technology selection should be cleared — re-search and Java card should appear as not selected
+    await user.type(
+      screen.getByPlaceholderText("Search technologies (e.g., PostgreSQL, Kubernetes...)"),
+      "java",
+    );
+    expect(screen.getByRole("button", { name: /^Java/i, pressed: false })).toBeInTheDocument();
   }, 15_000);
 
   it("filters verified signals to only expected signals for APM technologies", async () => {
@@ -500,6 +504,11 @@ describe("AddDataPage", () => {
   }, 30_000);
 
   it("shows Open Services CTA for APM technologies in Step 3", async () => {
+    // Baseline call sees no data streams; subsequent polls see APM traces stream.
+    mockGetDataStreams.mockResolvedValueOnce({ data_streams: [] }).mockResolvedValue({
+      data_streams: [{ name: "traces-apm-default" }],
+    });
+
     const user = userEvent.setup();
     renderPage();
 
@@ -510,6 +519,14 @@ describe("AddDataPage", () => {
     );
     const javaCard = screen.getByRole("button", { name: /^Java/i, pressed: false });
     await user.click(javaCard);
+
+    // Wait for verification to detect the trace data stream and enable Continue.
+    await waitFor(
+      () => {
+        expect(screen.getByRole("button", { name: /^Continue$/i })).toBeEnabled();
+      },
+      { timeout: 10_000 },
+    );
 
     // Now on Step 2 → Step 3
     await user.click(screen.getByRole("button", { name: /^Continue$/i }));

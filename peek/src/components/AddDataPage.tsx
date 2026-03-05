@@ -154,7 +154,9 @@ export default function AddDataPage() {
     () => new Set(verification.deltas.filter((d) => d.signalDetected).map((d) => d.signal)),
     [verification.deltas],
   );
-  const canContinueToNextSteps = verification.overallDetected;
+  // APM guides can always advance to Step 3 (verification is informational for APM)
+  const canContinueToNextSteps =
+    selectedTechnology?.guideType === "apm" || verification.overallDetected;
   const lastAutoStartedApiKeyRef = useRef<string | null>(null);
 
   // Auto-start polling when API key is generated
