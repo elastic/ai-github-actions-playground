@@ -313,7 +313,10 @@ export function useTracesOrchestrator() {
     (updates: Partial<TraceFilters>) => {
       updateFilters(updates);
       const updatedFilters = useTracesStore.getState().filters;
-      runTraceQueries(buildTraceSearchQuery(updatedFilters, DEFAULT_FIELD_MAPPING, { limit: 500 }), updatedFilters);
+      runTraceQueries(
+        buildTraceSearchQuery(updatedFilters, DEFAULT_FIELD_MAPPING, { limit: 500 }),
+        updatedFilters,
+      );
       runDriftRadarQueries(updatedFilters);
     },
     [updateFilters, runTraceQueries, runDriftRadarQueries],
@@ -332,12 +335,18 @@ export function useTracesOrchestrator() {
   // Auto-execute search when navigating from another page with pendingSearch flag
   useEffect(() => {
     const { pendingSearch } = useTracesStore.getState();
-    if (pendingSearch) {
-      useTracesStore.getState().setPendingSearch(false);
-      const { filters: latestFilters } = useTracesStore.getState();
-      runTraceQueries(buildTraceSearchQuery(latestFilters, DEFAULT_FIELD_MAPPING, { limit: 500 }), latestFilters);
+    if (!pendingSearch) return;
+    useTracesStore.getState().setPendingSearch(false);
+    const { filters: latestFilters } = useTracesStore.getState();
+    // Defer to avoid calling setState synchronously within an effect
+    const id = setTimeout(() => {
+      runTraceQueries(
+        buildTraceSearchQuery(latestFilters, DEFAULT_FIELD_MAPPING, { limit: 500 }),
+        latestFilters,
+      );
       runDriftRadarQueries(latestFilters);
-    }
+    }, 0);
+    return () => clearTimeout(id);
   }, [runTraceQueries, runDriftRadarQueries]);
 
   const handleSelectTrace = useCallback(
@@ -386,7 +395,10 @@ export function useTracesOrchestrator() {
         : [...state.filters.services, serviceName];
       state.updateFilters({ services });
       const updatedFilters = useTracesStore.getState().filters;
-      runTraceQueries(buildTraceSearchQuery(updatedFilters, DEFAULT_FIELD_MAPPING, { limit: 500 }), updatedFilters);
+      runTraceQueries(
+        buildTraceSearchQuery(updatedFilters, DEFAULT_FIELD_MAPPING, { limit: 500 }),
+        updatedFilters,
+      );
       runDriftRadarQueries(updatedFilters);
     },
     [runTraceQueries, runDriftRadarQueries],
@@ -453,7 +465,10 @@ export function useTracesOrchestrator() {
     (key: string, value: string) => {
       useTracesStore.getState().addTagFilter(key, value, false);
       const updatedFilters = useTracesStore.getState().filters;
-      runTraceQueries(buildTraceSearchQuery(updatedFilters, DEFAULT_FIELD_MAPPING, { limit: 500 }), updatedFilters);
+      runTraceQueries(
+        buildTraceSearchQuery(updatedFilters, DEFAULT_FIELD_MAPPING, { limit: 500 }),
+        updatedFilters,
+      );
       runDriftRadarQueries(updatedFilters);
     },
     [runTraceQueries, runDriftRadarQueries],
@@ -463,7 +478,10 @@ export function useTracesOrchestrator() {
     (key: string, value: string) => {
       useTracesStore.getState().addTagFilter(key, value, true);
       const updatedFilters = useTracesStore.getState().filters;
-      runTraceQueries(buildTraceSearchQuery(updatedFilters, DEFAULT_FIELD_MAPPING, { limit: 500 }), updatedFilters);
+      runTraceQueries(
+        buildTraceSearchQuery(updatedFilters, DEFAULT_FIELD_MAPPING, { limit: 500 }),
+        updatedFilters,
+      );
       runDriftRadarQueries(updatedFilters);
     },
     [runTraceQueries, runDriftRadarQueries],
