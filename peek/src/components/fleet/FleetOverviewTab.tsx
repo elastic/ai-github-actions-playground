@@ -123,6 +123,7 @@ export default function FleetOverviewTab({
         <EmptyState
           icon={<DevicesIcon sx={{ fontSize: 32 }} />}
           heading="No Fleet Server status available"
+          wrapDescription
           description={
             agentInventoryTotal > 0
               ? `${agentInventoryTotal} agent${agentInventoryTotal !== 1 ? "s" : ""} found via Elastic Agent logs; switch to the Agents tab to view them.`

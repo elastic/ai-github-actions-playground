@@ -12,6 +12,7 @@ interface EmptyStateProps {
   action?: React.ReactNode;
   size?: "small" | "medium";
   verticalAlign?: "center" | "start";
+  wrapDescription?: boolean;
   /** When set, renders an "Add data" button pointing to the given href. */
   addDataHref?: string;
 }
@@ -23,6 +24,7 @@ export default function EmptyState({
   action,
   size = "medium",
   verticalAlign = "center",
+  wrapDescription = false,
   addDataHref,
 }: EmptyStateProps) {
   const iconSize = size === "small" ? 28 : 40;
@@ -61,7 +63,12 @@ export default function EmptyState({
         {heading}
       </Typography>
       {description && (
-        <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 320 }}>
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          noWrap={!wrapDescription}
+          sx={{ maxWidth: 320 }}
+        >
           {description}
         </Typography>
       )}
