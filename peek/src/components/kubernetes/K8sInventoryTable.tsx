@@ -58,7 +58,7 @@ export default function K8sInventoryTable({
         sortDirection,
         handleSort,
         "Namespace inventory",
-        (r) => `${r.clusterName}-${r.namespace}`,
+        (r) => JSON.stringify([r.clusterName, r.namespace]),
       );
     case "workloads":
       return renderTable(
@@ -68,7 +68,7 @@ export default function K8sInventoryTable({
         sortDirection,
         handleSort,
         "Workload inventory",
-        (r) => `${r.clusterName}-${r.namespace}-${r.workloadKind}-${r.workloadName}`,
+        (r) => JSON.stringify([r.clusterName, r.namespace, r.workloadKind, r.workloadName]),
       );
     case "pods":
       return renderTable(
