@@ -270,6 +270,7 @@ export class ElasticsearchClient {
       const esError: ElasticsearchError = {
         status: response.status,
         message:
+          (typeof body?.error === "string" ? body.error : undefined) ??
           body?.error?.reason ??
           body?.error?.root_cause?.[0]?.reason ??
           body?.message ??

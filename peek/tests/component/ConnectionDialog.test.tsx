@@ -62,43 +62,39 @@ describe("ConnectionDialog", () => {
     expect(screen.getByRole("button", { name: /connect & save/i })).toBeDisabled();
   });
 
-  it("enables Connect button after entering a URL and API key", async () => {
+  it("enables Connect button after entering a URL", async () => {
     const user = userEvent.setup();
     render(<ConnectionDialog />);
 
     const urlField = screen.getByLabelText(/elasticsearch url/i);
     await user.type(urlField, "https://localhost:9200");
 
-    // Still disabled without credentials
-    expect(screen.getByRole("button", { name: /^connect$/i })).toBeDisabled();
-
-    await user.type(screen.getByLabelText(/^api key$/i), "my-api-key");
-
+    // Enabled with just a URL (supports unsecured clusters)
     const connectButton = screen.getByRole("button", { name: /^connect$/i });
     expect(connectButton).toBeEnabled();
   });
 
-  it("keeps buttons disabled when URL is entered but API key is empty", async () => {
+  it("enables buttons when URL is entered without any credentials (unsecured cluster)", async () => {
     const user = userEvent.setup();
     render(<ConnectionDialog />);
 
     await user.type(screen.getByLabelText(/elasticsearch url/i), "https://localhost:9200");
 
-    expect(screen.getByRole("button", { name: /^connect$/i })).toBeDisabled();
-    expect(screen.getByRole("button", { name: /^test$/i })).toBeDisabled();
-    expect(screen.getByRole("button", { name: /connect & save/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /^connect$/i })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /^test$/i })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /connect & save/i })).toBeEnabled();
   });
 
-  it("keeps buttons disabled when URL is entered but username/password are empty", async () => {
+  it("enables buttons when URL is entered without username/password (unsecured cluster)", async () => {
     const user = userEvent.setup();
     render(<ConnectionDialog />);
 
     await user.type(screen.getByLabelText(/elasticsearch url/i), "https://localhost:9200");
     await user.click(screen.getByRole("tab", { name: /username/i }));
 
-    expect(screen.getByRole("button", { name: /^connect$/i })).toBeDisabled();
-    expect(screen.getByRole("button", { name: /^test$/i })).toBeDisabled();
-    expect(screen.getByRole("button", { name: /connect & save/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /^connect$/i })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /^test$/i })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /connect & save/i })).toBeEnabled();
   });
 
   it("enables buttons when URL and username/password are provided", async () => {
@@ -124,6 +120,25 @@ describe("ConnectionDialog", () => {
 
     await user.type(screen.getByLabelText(/elasticsearch url/i), "https://localhost:9200");
     await user.type(screen.getByLabelText(/^api key$/i), "test-api-key");
+    await user.click(screen.getByRole("button", { name: /^connect$/i }));
+
+    expect(fetchCapabilitiesForConnectionMock).toHaveBeenCalledTimes(1);
+    expect(useConnectionStore.getState().connected).toBe(true);
+    expect(useUIStore.getState().connectionDialogOpen).toBe(false);
+  });
+
+  it("connects to an unsecured cluster with only a URL", async () => {
+    const user = userEvent.setup();
+    fetchCapabilitiesForConnectionMock.mockResolvedValue({
+      canManageDataStreams: false,
+      canCreateApiKeys: false,
+      canReadSecurityUsers: false,
+      canReadSecurityRoles: false,
+      canReadApiKeys: false,
+    });
+    render(<ConnectionDialog />);
+
+    await user.type(screen.getByLabelText(/elasticsearch url/i), "http://localhost:9200");
     await user.click(screen.getByRole("button", { name: /^connect$/i }));
 
     expect(fetchCapabilitiesForConnectionMock).toHaveBeenCalledTimes(1);
@@ -177,18 +192,16 @@ describe("ConnectionDialog", () => {
     expect(useConnectionStore.getState().connected).toBe(true);
   });
 
-  it("does not connect and save from Enter when credentials are missing", async () => {
+  it("does not connect and save from Enter when URL is missing", async () => {
     const user = userEvent.setup();
     fetchCapabilitiesForConnectionMock.mockResolvedValue({
       canManageDataStreams: true,
     });
     render(<ConnectionDialog />);
 
-    await user.type(screen.getByLabelText(/elasticsearch url/i), "https://dev.example.com");
     await user.type(screen.getByLabelText(/^api key$/i), "dev-key");
-    await user.click(screen.getByRole("button", { name: /^connect & save$/i }));
-    await user.clear(screen.getByLabelText(/^api key$/i));
-    await user.type(screen.getByLabelText(/profile name/i), "Dev Cluster{enter}");
+    // Buttons remain disabled without URL
+    expect(screen.getByRole("button", { name: /^connect & save$/i })).toBeDisabled();
 
     expect(fetchCapabilitiesForConnectionMock).not.toHaveBeenCalled();
     expect(useConnectionStore.getState().connectionProfiles).toHaveLength(0);

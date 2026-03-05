@@ -220,10 +220,8 @@ export default function ConnectionDialog() {
   const isDuplicateProfileName = profileName.trim()
     ? connectionProfiles.some((p) => p.name === profileName.trim())
     : false;
-  const hasCredentials =
-    authType === "apiKey" ? Boolean(apiKey.trim()) : Boolean(username.trim() && password.trim());
   const hasUrl = Boolean(url.trim());
-  const canAttemptConnection = !testing && hasUrl && hasCredentials;
+  const canAttemptConnection = !testing && hasUrl;
   const canConfirmConnectAndSave =
     canAttemptConnection && Boolean(profileName.trim()) && !isDuplicateProfileName;
   const likelyServerless = isLikelyServerlessUrl(url);

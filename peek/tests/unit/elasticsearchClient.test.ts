@@ -641,6 +641,28 @@ describe("getCapabilities", () => {
     expect(caps.canReadApiKeys).toBe(false);
   });
 
+  it("falls back to minimal capabilities when the 400 body uses a string error (unsecured cluster)", async () => {
+    // Unsecured ES clusters return {"error":"no handler found ...","status":400}
+    // where body.error is a plain string, not an object with a reason field.
+    const fetchSpy = mockFetchOnce(
+      {
+        error: "no handler found for uri [/_security/user/_has_privileges] and method [POST]",
+        status: 400,
+      },
+      { status: 400 },
+    );
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const client = makeClient();
+    const caps = await client.getCapabilities();
+
+    expect(caps.canManageDataStreams).toBe(false);
+    expect(caps.canCreateApiKeys).toBe(false);
+    expect(caps.canReadSecurityUsers).toBe(false);
+    expect(caps.canReadSecurityRoles).toBe(false);
+    expect(caps.canReadApiKeys).toBe(false);
+  });
+
   it("returns optimistic capabilities when the _has_privileges endpoint returns 404", async () => {
     const fetchSpy = mockFetchOnce({}, { status: 404 });
     vi.stubGlobal("fetch", fetchSpy);
