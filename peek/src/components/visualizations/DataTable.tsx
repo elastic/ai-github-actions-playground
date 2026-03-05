@@ -30,6 +30,12 @@ interface Props {
   currentSort?: SortState | null;
   onSortChange?: (columnName: string, direction: SortDirection | null) => void;
   onCellClick?: (params: { columnName: string; value: string }) => void;
+  /** Set of document _id values pinned as expected results. */
+  pinnedDocIds?: Set<string>;
+  /** Toggle a document _id in the golden set. */
+  onTogglePinDoc?: (id: string) => void;
+  /** Column index of the `_id` field inside each row, or -1 when absent. */
+  idColumnIndex?: number;
 }
 
 export default memo(function DataTable({
@@ -40,6 +46,9 @@ export default memo(function DataTable({
   currentSort,
   onSortChange,
   onCellClick,
+  pinnedDocIds,
+  onTogglePinDoc,
+  idColumnIndex,
 }: Props) {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
@@ -190,6 +199,7 @@ export default memo(function DataTable({
   }
 
   const hiddenCount = emptyColumnIndices.size;
+  const showPinColumn = idColumnIndex != null && idColumnIndex >= 0 && onTogglePinDoc !== undefined;
 
   return (
     <Box
@@ -236,6 +246,7 @@ export default memo(function DataTable({
               setMenuAnchor(event.currentTarget);
               setMenuColumnIndex(colIdx);
             }}
+            showPinColumn={showPinColumn}
           />
           <DataTableBody
             data={data}
@@ -249,6 +260,9 @@ export default memo(function DataTable({
             onRowClick={handleRowClick}
             selectedRowIndex={selectedRowIndex}
             onCellClick={onCellClick}
+            pinnedDocIds={pinnedDocIds}
+            onTogglePinDoc={onTogglePinDoc}
+            idColumnIndex={idColumnIndex}
           />
         </Table>
         {data.values.length === 0 && (

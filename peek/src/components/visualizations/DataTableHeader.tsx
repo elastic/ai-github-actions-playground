@@ -20,6 +20,8 @@ interface DataTableHeaderProps {
   pinnedLeftOffsets: Map<number, number>;
   onSortToggle: (columnName: string) => void;
   onOpenMenu: (event: React.MouseEvent<HTMLButtonElement>, colIdx: number) => void;
+  /** When true, render a narrow empty header cell for the pin-expected column. */
+  showPinColumn?: boolean;
 }
 
 export default function DataTableHeader({
@@ -30,10 +32,14 @@ export default function DataTableHeader({
   pinnedLeftOffsets,
   onSortToggle,
   onOpenMenu,
+  showPinColumn,
 }: DataTableHeaderProps) {
   return (
     <TableHead>
       <TableRow>
+        {showPinColumn && (
+          <TableCell padding="checkbox" sx={{ width: 36, minWidth: 36, maxWidth: 36 }} />
+        )}
         {orderedVisibleColumnIndices.map((colIdx) => {
           const col = data.columns[colIdx];
           if (!col) return null;

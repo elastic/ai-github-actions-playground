@@ -8,6 +8,42 @@ import { isNumericType } from "./visualizations/chartUtils";
 // continue to work without import changes.
 export { splitEsqlPipeline, formatEsqlQuery };
 
+/**
+ * Finds the column index of the `_id` metadata field in the result columns.
+ * Returns -1 when the column is not present.
+ */
+export function findIdColumnIndex(columns: EsqlColumn[]): number {
+  return columns.findIndex((col) => col.name === "_id");
+}
+
+/**
+ * Computes a lightweight Recall metric for the golden-set relevance tracker.
+ *
+ * @param expectedDocIds  Set of document `_id` values the user pinned as expected.
+ * @param values          The 2-D row data from an ES|QL response.
+ * @param idColumnIndex   Index of the `_id` column inside each row.
+ * @returns `{ found, total }` where `total` is the size of `expectedDocIds`
+ *          and `found` is how many of those IDs appear in the result rows.
+ */
+export function computeRecall(
+  expectedDocIds: Set<string>,
+  values: unknown[][],
+  idColumnIndex: number,
+): { found: number; total: number } {
+  const total = expectedDocIds.size;
+  if (total === 0 || idColumnIndex < 0) return { found: 0, total };
+  const resultIds = new Set<string>();
+  for (const row of values) {
+    const cell = row[idColumnIndex];
+    if (cell != null) resultIds.add(String(cell));
+  }
+  let found = 0;
+  for (const id of expectedDocIds) {
+    if (resultIds.has(id)) found += 1;
+  }
+  return { found, total };
+}
+
 export function filterEsqlResult(
   result: EsqlResponse | null,
   selectedFields: Set<string>,

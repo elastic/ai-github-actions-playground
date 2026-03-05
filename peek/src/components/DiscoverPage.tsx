@@ -5,8 +5,10 @@ import Alert from "@mui/material/Alert";
 import Paper from "@mui/material/Paper";
 import Skeleton from "@mui/material/Skeleton";
 import Chip from "@mui/material/Chip";
+import Tooltip from "@mui/material/Tooltip";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import TableChartIcon from "@mui/icons-material/TableChart";
+import BookmarkIcon from "@mui/icons-material/Bookmark";
 
 import QueryProfilePanel from "./QueryProfilePanel";
 import PartialResultPanel from "./PartialResultPanel";
@@ -88,6 +90,25 @@ export default function DiscoverPage({ mode = "query-lab" }: DiscoverPageProps) 
       {o.result && o.lastRunDurationMs !== null && (
         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center" }}>
           <Chip size="small" label={`took ${o.lastRunDurationMs} ms`} />
+          {o.recall !== null && (
+            <Tooltip title="Recall: expected documents found in current results. Pin rows via the bookmark icon when an _id column is present.">
+              <Chip
+                size="small"
+                icon={<BookmarkIcon />}
+                label={`Recall ${o.recall.found}/${o.recall.total}`}
+                color={o.recall.found === o.recall.total ? "success" : "warning"}
+                variant="outlined"
+              />
+            </Tooltip>
+          )}
+          {o.expectedDocIds.size > 0 && (
+            <Chip
+              size="small"
+              label="Clear golden set"
+              onDelete={o.clearExpectedDocs}
+              variant="outlined"
+            />
+          )}
         </Box>
       )}
       {o.result && o.lastRunIsPartial && o.lastRunPartialMetadata !== null && (
@@ -172,6 +193,9 @@ export default function DiscoverPage({ mode = "query-lab" }: DiscoverPageProps) 
               onRemoveColumn={o.toggleField}
               currentSort={o.currentSort}
               onSortChange={o.handleSortChange}
+              pinnedDocIds={o.expectedDocIds}
+              onTogglePinDoc={o.toggleExpectedDoc}
+              idColumnIndex={o.idColumnIndex}
             />
           )}
           {o.filteredResult && o.filteredResult.columns.length === 0 && o.result && (

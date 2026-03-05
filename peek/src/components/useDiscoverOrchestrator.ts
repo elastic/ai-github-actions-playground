@@ -12,6 +12,7 @@ import { useThemeStore } from "../store/useThemeStore";
 import { useUIStore } from "../store/useUIStore";
 import { useSearchPanelUIStore } from "../store/useSearchPanelUIStore";
 import { useQueryStore } from "../store/useQueryStore";
+import { useGoldenSetStore } from "../store/useGoldenSetStore";
 import type { EsqlColumn, EsqlResponse } from "../types";
 import { DEFAULT_REFRESH_INTERVAL } from "../types";
 import type { EsqlQueryParams } from "../services/es";
@@ -25,6 +26,8 @@ import {
   toCsv,
   applyEsqlSort,
   buildColumnInsightsQuery,
+  findIdColumnIndex,
+  computeRecall,
 } from "./discoverUtils";
 import type { SortState } from "./visualizations/DataTable";
 import { createEsqlQueryEditorExtensions } from "./queryEditorExtensions";
@@ -349,6 +352,28 @@ export function useDiscoverOrchestrator(mode: "query-lab" | "logs") {
   }, [selectedFields, setSelectedFields, visibleColumns]);
   const hasPendingRunChanges = effectiveQuery.trim() !== lastExecutedQuery.trim();
 
+  // --- Golden set relevance tracker ---
+  const expectedDocIds = useGoldenSetStore((s) => s.expectedDocIds);
+  const toggleExpectedDoc = useGoldenSetStore((s) => s.toggleExpectedDoc);
+  const clearExpectedDocs = useGoldenSetStore((s) => s.clearExpectedDocs);
+
+  // Find the `_id` column index in the *unfiltered* result (the raw response
+  // always contains every column returned by ES|QL).  We need this index to
+  // map into `filteredResult.values` rows, which are reindexed to only include
+  // the selected fields.  So we compute the position of `_id` inside the
+  // *filtered* column list instead.
+  const idColumnIndex = useMemo(
+    () => (filteredResult ? findIdColumnIndex(filteredResult.columns) : -1),
+    [filteredResult],
+  );
+
+  const recall = useMemo(() => {
+    if (!result || expectedDocIds.size === 0) return null;
+    const rawIdIdx = findIdColumnIndex(result.columns);
+    if (rawIdIdx < 0) return null;
+    return computeRecall(expectedDocIds, result.values, rawIdIdx);
+  }, [result, expectedDocIds]);
+
   return {
     // Mode
     isLogsExplorer,
@@ -418,5 +443,12 @@ export function useDiscoverOrchestrator(mode: "query-lab" | "logs") {
     expandedInsight,
     insightsCache,
     handleToggleInsight,
+
+    // Golden set relevance tracker
+    expectedDocIds,
+    toggleExpectedDoc,
+    clearExpectedDocs,
+    idColumnIndex,
+    recall,
   };
 }
