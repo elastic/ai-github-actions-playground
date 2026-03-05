@@ -61,7 +61,11 @@ export function generateFluentBitConfig(opts: {
     Refresh_Interval  5
     Read_from_Head    True`;
 
-  const destinationUrl = opts.outputMode === "otlp" ? (opts.otlpUrl ?? opts.esUrl) : opts.esUrl;
+  const normalizedOtlpUrl = opts.otlpUrl?.trim();
+  const destinationUrl =
+    opts.outputMode === "otlp" && normalizedOtlpUrl?.match(/^https?:\/\//)
+      ? normalizedOtlpUrl
+      : opts.esUrl;
   const parsed = new URL(destinationUrl);
   const isHttps = parsed.protocol === "https:";
   const host = parsed.hostname;
