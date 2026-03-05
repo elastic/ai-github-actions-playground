@@ -1,25 +1,25 @@
 import { useId, useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Typography from "@mui/material/Typography";
+import Collapse from "@mui/material/Collapse";
 import CircularProgress from "@mui/material/CircularProgress";
 import Paper from "@mui/material/Paper";
 import Tooltip from "@mui/material/Tooltip";
+import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
-import Collapse from "@mui/material/Collapse";
 import { alpha } from "@mui/material/styles";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
-import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
-import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
-import CodeMirror from "@uiw/react-codemirror";
 import type { EditorView } from "@codemirror/view";
 import type { Extension } from "@codemirror/state";
+import CodeMirror from "@uiw/react-codemirror";
 
 import { COMPONENT_HEIGHTS } from "../../types/tokens";
 import PageHeader from "../PageHeader";
 import ResizableEditorContainer from "../ResizableEditorContainer";
 import QueryAnnotationOverlay, { useQueryExplanation } from "../QueryAnnotationOverlay";
+
+import EditorToolbar, { EditorExplainPanel } from "./EditorToolbar";
 
 export interface TraceEditorPanelProps {
   editorFocused: boolean;
@@ -185,109 +185,18 @@ export default function TraceEditorPanel({
                 editorFocused={editorFocused}
                 height={editorHeight}
               />
-              <Box
-                sx={{
-                  position: "absolute",
-                  zIndex: 4,
-                  bottom: 2,
-                  left: 36,
-                  display: "flex",
-                  gap: 0,
-                }}
-              >
-                <Tooltip title="Format query: uppercase keywords and normalize whitespace">
-                  <span>
-                    <IconButton
-                      size="small"
-                      aria-label="Format query"
-                      onClick={onFormat}
-                      disabled={!effectiveQuery.trim()}
-                      sx={{
-                        width: 24,
-                        height: 24,
-                        bgcolor: "transparent",
-                        color: "text.secondary",
-                        "&:hover": { bgcolor: "action.hover" },
-                      }}
-                    >
-                      <AutoFixHighIcon sx={{ fontSize: 16 }} />
-                    </IconButton>
-                  </span>
-                </Tooltip>
-                <Tooltip title="Explain this query">
-                  <span>
-                    <IconButton
-                      size="small"
-                      color={explainOpen ? "primary" : "default"}
-                      aria-label={explainOpen ? "Hide query explanation" : "Show query explanation"}
-                      aria-controls={explainPanelId}
-                      aria-expanded={explainOpen}
-                      onClick={() => setExplainOpen((v) => !v)}
-                      disabled={!effectiveQuery.trim()}
-                      sx={{
-                        width: 24,
-                        height: 24,
-                        bgcolor: "transparent",
-                        color: explainOpen ? "primary.main" : "text.secondary",
-                        "&:hover": { bgcolor: "action.hover" },
-                      }}
-                    >
-                      <AutoAwesomeIcon sx={{ fontSize: 16 }} />
-                    </IconButton>
-                  </span>
-                </Tooltip>
-              </Box>
-              <Tooltip title="Run query (Ctrl/Cmd+Enter)">
-                <span>
-                  <IconButton
-                    size="small"
-                    onClick={onRun}
-                    disabled={loading || !effectiveQuery.trim()}
-                    aria-label="Run query (Ctrl/Cmd+Enter)"
-                    sx={{
-                      position: "absolute",
-                      zIndex: 4,
-                      right: 8,
-                      bottom: 2,
-                      width: 24,
-                      height: 24,
-                      bgcolor: "transparent",
-                      color: "text.secondary",
-                      "&:hover": { bgcolor: "action.hover" },
-                    }}
-                  >
-                    {loading ? (
-                      <CircularProgress size={14} color="inherit" />
-                    ) : (
-                      <PlayArrowIcon sx={{ fontSize: 16 }} />
-                    )}
-                  </IconButton>
-                </span>
-              </Tooltip>
+              <EditorToolbar
+                onRun={onRun}
+                onFormat={onFormat}
+                loading={loading}
+                effectiveQuery={effectiveQuery}
+                explainOpen={explainOpen}
+                explainPanelId={explainPanelId}
+                onToggleExplain={() => setExplainOpen((v) => !v)}
+              />
             </Box>
           </ResizableEditorContainer>
-          <Collapse in={explainOpen}>
-            <Box
-              id={explainPanelId}
-              sx={{
-                py: 1,
-                px: 1.5,
-                borderTop: 1,
-                borderColor: "divider",
-                bgcolor: "action.hover",
-              }}
-            >
-              {explanation ? (
-                <Typography variant="body2" color="text.secondary" sx={{ fontStyle: "italic" }}>
-                  {explanation}
-                </Typography>
-              ) : (
-                <Typography variant="body2" color="text.disabled" sx={{ fontStyle: "italic" }}>
-                  Generating explanation… (requires an AI provider configured in Settings)
-                </Typography>
-              )}
-            </Box>
-          </Collapse>
+          <EditorExplainPanel id={explainPanelId} open={explainOpen} explanation={explanation} />
         </Box>
       </Collapse>
     </Paper>
