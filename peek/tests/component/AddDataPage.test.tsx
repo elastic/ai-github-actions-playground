@@ -401,7 +401,12 @@ describe("AddDataPage", () => {
     const missing = ADD_DATA_TECHNOLOGY_CATALOG.filter((entry) =>
       entry.expectedSignals.includes("logs"),
     )
-      .filter((entry) => !entry.recommendedNextSteps.some((step) => step.label === "Open Logs"))
+      .filter(
+        (entry) =>
+          !entry.recommendedNextSteps.some(
+            (step) => step.label === "Open Logs" && step.path === "/logs",
+          ),
+      )
       .map((entry) => entry.id);
 
     expect(missing).toEqual([]);
