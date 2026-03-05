@@ -247,12 +247,14 @@ describe("useServiceDashboardQueries", () => {
       values: [],
     };
 
-    mockExecute
-      .mockResolvedValueOnce(SAMPLE_ROUTES)
-      .mockResolvedValueOnce(emptyTraces)
-      .mockResolvedValueOnce(SAMPLE_DEPLOYMENTS)
-      .mockResolvedValueOnce(SAMPLE_SPARKLINE)
-      .mockResolvedValueOnce(SAMPLE_K8S);
+    mockExecute.mockImplementation(({ query }: { query: string }) => {
+      if (query.includes("FROM routes")) return Promise.resolve(SAMPLE_ROUTES);
+      if (query.includes("FROM traces")) return Promise.resolve(emptyTraces);
+      if (query.includes("FROM deployments")) return Promise.resolve(SAMPLE_DEPLOYMENTS);
+      if (query.includes("FROM sparkline")) return Promise.resolve(SAMPLE_SPARKLINE);
+      if (query.includes("FROM k8s")) return Promise.resolve(SAMPLE_K8S);
+      return Promise.reject(new Error(`Unexpected query: ${query}`));
+    });
 
     const { result } = renderHook(
       () =>
