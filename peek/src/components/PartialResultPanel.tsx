@@ -86,7 +86,17 @@ function ShardFailureList({ failures }: ShardFailureListProps) {
   return (
     <Box component="ul" sx={{ m: 0, pl: 2.5, listStyle: "disc" }}>
       {failures.map((f) => (
-        <Box component="li" key={`${f.index ?? ""}-${String(f.shard ?? "")}`} sx={{ mb: 0.5 }}>
+        <Box
+          component="li"
+          key={[
+            f.index ?? "",
+            String(f.shard ?? ""),
+            f.node ?? "",
+            f.reason?.type ?? "",
+            f.reason?.reason ?? "",
+          ].join("::")}
+          sx={{ mb: 0.5 }}
+        >
           <Typography variant="caption">
             {f.index !== undefined ? (
               <strong>{f.index}</strong>

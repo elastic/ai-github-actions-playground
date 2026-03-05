@@ -132,7 +132,7 @@ function DriverRow({ driver, index }: DriverRowProps) {
                   })
                   .map((op) => (
                     <TableRow
-                      key={`${op.operator ?? "op"}-${String(op.status?.elapsed_nanos ?? "")}-${String(op.status?.process_nanos ?? "")}`}
+                      key={`${op.operator ?? "op"}-${String(op.status?.elapsed_nanos ?? "")}-${String(op.status?.process_nanos ?? "")}-${String(op.status?.rows_processed ?? "")}-${String(op.status?.pages_processed ?? "")}-${String(op.status?.cpu_nanos ?? "")}`}
                       hover
                     >
                       <TableCell>
@@ -234,7 +234,7 @@ export default function QueryProfilePanel({ profile }: QueryProfilePanelProps) {
           (profile.drivers ?? []).length > 0 ? (
             (profile.drivers ?? []).map((driver, idx) => (
               <DriverRow
-                key={`${driver.description ?? ""}-${driver.cluster_name ?? ""}-${driver.node_name ?? ""}`}
+                key={`${driver.description ?? ""}-${driver.cluster_name ?? ""}-${driver.node_name ?? ""}-${String(driver.millis ?? "")}-${String(driver.operators?.length ?? "")}`}
                 driver={driver}
                 index={idx}
               />

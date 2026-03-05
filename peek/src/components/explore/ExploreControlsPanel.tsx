@@ -156,16 +156,24 @@ export default function ExploreControlsPanel({
           <Typography variant="caption" color="text.secondary" sx={{ mr: 0.5 }}>
             Filters:
           </Typography>
-          {filters.map((f, i) => (
-            <Chip
-              key={`${f.field}-${f.op}-${f.value}`}
-              label={`${f.field} ${f.op} "${f.value}"`}
-              size="small"
-              onDelete={() => onRemoveFilter(i)}
-              color="primary"
-              variant="outlined"
-            />
-          ))}
+          {(() => {
+            const seen = new Map<string, number>();
+            return filters.map((f, i) => {
+              const baseKey = `${f.field}-${f.op}-${f.value}`;
+              const occurrence = seen.get(baseKey) ?? 0;
+              seen.set(baseKey, occurrence + 1);
+              return (
+                <Chip
+                  key={`${baseKey}-${occurrence}`}
+                  label={`${f.field} ${f.op} "${f.value}"`}
+                  size="small"
+                  onDelete={() => onRemoveFilter(i)}
+                  color="primary"
+                  variant="outlined"
+                />
+              );
+            });
+          })()}
           <Button size="small" onClick={onClearFilters} sx={{ ml: 0.5 }}>
             Clear all
           </Button>

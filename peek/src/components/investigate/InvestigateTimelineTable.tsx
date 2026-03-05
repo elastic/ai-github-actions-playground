@@ -80,7 +80,17 @@ export default function InvestigateTimelineTable({
         </thead>
         <tbody>
           {events.map((event) => (
-            <tr key={`${event.timestamp}-${event.dataSource}`}>
+            <tr
+              key={[
+                event.timestamp,
+                event.dataSource,
+                event.category,
+                event.action,
+                event.outcome,
+                event.sourceIp,
+                event.message,
+              ].join("::")}
+            >
               <Box component="td" sx={{ whiteSpace: "nowrap" }}>
                 {formatTimestamp(event.timestamp)}
               </Box>

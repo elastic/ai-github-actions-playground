@@ -128,32 +128,40 @@ function ThresholdEditor({
         />
       </Box>
 
-      {steps.map((step, idx) => (
-        <Box
-          key={`${step.value}-${step.color}`}
-          sx={{ display: "flex", gap: 1, alignItems: "center" }}
-        >
-          <TextField
-            size="small"
-            type="number"
-            label="Value ≥"
-            value={step.value}
-            onChange={(e) => handleStepValueChange(idx, e.target.value)}
-            sx={{ width: 90 }}
-          />
-          <ThresholdColorSelect
-            value={step.color}
-            onChange={(c) => handleStepColorChange(idx, c)}
-          />
-          <IconButton
-            size="small"
-            aria-label={`remove threshold step ${idx + 1}`}
-            onClick={() => handleRemoveStep(idx)}
-          >
-            <DeleteIcon fontSize="inherit" />
-          </IconButton>
-        </Box>
-      ))}
+      {(() => {
+        const seen = new Map<string, number>();
+        return steps.map((step, idx) => {
+          const baseKey = `${step.value}-${step.color}`;
+          const occurrence = seen.get(baseKey) ?? 0;
+          seen.set(baseKey, occurrence + 1);
+          return (
+            <Box
+              key={`${baseKey}-${occurrence}`}
+              sx={{ display: "flex", gap: 1, alignItems: "center" }}
+            >
+              <TextField
+                size="small"
+                type="number"
+                label="Value ≥"
+                value={step.value}
+                onChange={(e) => handleStepValueChange(idx, e.target.value)}
+                sx={{ width: 90 }}
+              />
+              <ThresholdColorSelect
+                value={step.color}
+                onChange={(c) => handleStepColorChange(idx, c)}
+              />
+              <IconButton
+                size="small"
+                aria-label={`remove threshold step ${idx + 1}`}
+                onClick={() => handleRemoveStep(idx)}
+              >
+                <DeleteIcon fontSize="inherit" />
+              </IconButton>
+            </Box>
+          );
+        });
+      })()}
 
       <Button
         size="small"

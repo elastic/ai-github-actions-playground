@@ -98,21 +98,28 @@ export default function InvestigateEventTimeline({
         />
 
         {/* event tick marks */}
-        {eventTicks.map((pct) => (
-          <Box
-            key={pct}
-            sx={{
-              position: "absolute",
-              top: 24,
-              left: `${pct}%`,
-              width: 4,
-              height: 10,
-              borderRadius: "2px",
-              bgcolor: "action.disabled",
-              transform: "translateX(-2px)",
-            }}
-          />
-        ))}
+        {(() => {
+          const seen = new Map<number, number>();
+          return eventTicks.map((pct) => {
+            const occurrence = seen.get(pct) ?? 0;
+            seen.set(pct, occurrence + 1);
+            return (
+              <Box
+                key={`${pct}-${occurrence}`}
+                sx={{
+                  position: "absolute",
+                  top: 24,
+                  left: `${pct}%`,
+                  width: 4,
+                  height: 10,
+                  borderRadius: "2px",
+                  bgcolor: "action.disabled",
+                  transform: "translateX(-2px)",
+                }}
+              />
+            );
+          });
+        })()}
 
         <TimelineMarkersLayer markers={positionedMarkers} fmtTime={fmtTime} />
       </Box>

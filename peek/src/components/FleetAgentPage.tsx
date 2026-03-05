@@ -262,7 +262,7 @@ function AgentOverview({ agent, logs }: { agent: ElasticAgentInfo; logs: Elastic
           <Stack spacing={0.5}>
             {recentErrors.map((log) => (
               <Box
-                key={`${log.timestamp}-${log.component}`}
+                key={`${log.timestamp}-${log.component ?? ""}-${log.message}`}
                 sx={{ display: "flex", gap: 1, alignItems: "baseline" }}
               >
                 <Typography variant="caption" color="text.secondary" sx={{ flexShrink: 0 }}>
@@ -348,7 +348,7 @@ function AgentLogs({
       >
         {filtered.map((log) => (
           <Box
-            key={`${log.timestamp}-${log.message.slice(0, 80)}`}
+            key={`${log.timestamp}-${log.level}-${log.component ?? ""}-${log.message}`}
             sx={{
               display: "flex",
               gap: 1,
