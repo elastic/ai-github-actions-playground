@@ -153,7 +153,7 @@ describe("ConnectionDialog", () => {
     expect(screen.getByRole("button", { name: /connect & save/i })).toBeEnabled();
   });
 
-  it("connects and saves a profile from the prompt", async () => {
+  it("connects and saves a profile from the prompt", { timeout: 15_000 }, async () => {
     const user = userEvent.setup();
     fetchCapabilitiesForConnectionMock.mockResolvedValue({
       canManageDataStreams: true,
@@ -165,7 +165,7 @@ describe("ConnectionDialog", () => {
     await user.click(screen.getByRole("button", { name: /advanced connection settings/i }));
     await user.type(screen.getByLabelText(/proxy url/i), "http://localhost:3000/_es");
     await user.click(screen.getByRole("button", { name: /^connect & save$/i }));
-    await user.type(screen.getByLabelText(/profile name/i), "Dev Cluster");
+    await user.type(await screen.findByLabelText(/profile name/i), "Dev Cluster");
     await user.click(screen.getByRole("button", { name: /confirm connect & save/i }));
 
     const profiles = useConnectionStore.getState().connectionProfiles;

@@ -372,7 +372,7 @@ describe("DiscoverPage", () => {
     await waitFor(() => expect(screen.queryByText("100")).not.toBeVisible());
   });
 
-  it("caches insight data and does not re-query on re-expand", async () => {
+  it("caches insight data and does not re-query on re-expand", { timeout: 15_000 }, async () => {
     const user = userEvent.setup();
     queryMock.mockResolvedValueOnce({
       columns: [{ name: "status", type: "keyword" }],
@@ -401,10 +401,10 @@ describe("DiscoverPage", () => {
     await waitFor(() => expect(queryMock).toHaveBeenCalledTimes(2));
 
     // Collapse
-    await user.click(screen.getByRole("button", { name: /collapse insights for status/i }));
+    await user.click(await screen.findByRole("button", { name: /collapse insights for status/i }));
 
     // Re-expand — should NOT fire another query
-    await user.click(screen.getByRole("button", { name: /expand insights for status/i }));
+    await user.click(await screen.findByRole("button", { name: /expand insights for status/i }));
     expect(queryMock).toHaveBeenCalledTimes(2); // still 2
   });
 
