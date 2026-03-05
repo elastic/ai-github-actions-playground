@@ -23,7 +23,7 @@ export function findIdColumnIndex(columns: EsqlColumn[]): number {
  * @param values          The 2-D row data from an ES|QL response.
  * @param idColumnIndex   Index of the `_id` column inside each row.
  * @returns `{ found, total }` where `total` is the size of `expectedDocIds`
- *          and `found` is how many of those IDs appear in the result rows.
+ *          and `found` is how many unique expected IDs appear in the result rows.
  */
 export function computeRecall(
   expectedDocIds: Set<string>,
@@ -32,12 +32,14 @@ export function computeRecall(
 ): { found: number; total: number } {
   const total = expectedDocIds.size;
   if (total === 0 || idColumnIndex < 0) return { found: 0, total };
-  let found = 0;
+  const matchedIds = new Set<string>();
   for (const row of values) {
     const cell = row[idColumnIndex];
-    if (cell != null && expectedDocIds.has(String(cell))) found += 1;
+    if (cell == null) continue;
+    const id = String(cell);
+    if (expectedDocIds.has(id)) matchedIds.add(id);
   }
-  return { found, total };
+  return { found: matchedIds.size, total };
 }
 
 export function filterEsqlResult(

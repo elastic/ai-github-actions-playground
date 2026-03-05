@@ -361,11 +361,10 @@ export function useDiscoverOrchestrator(mode: "query-lab" | "logs") {
     })),
   );
 
-  // Find the `_id` column index in the *unfiltered* result (the raw response
-  // always contains every column returned by ES|QL).  We need this index to
-  // map into `filteredResult.values` rows, which are reindexed to only include
-  // the selected fields.  So we compute the position of `_id` inside the
-  // *filtered* column list instead.
+  // `result` (raw ES|QL response) is used for recall because it includes all
+  // returned columns, while `filteredResult` is the UI projection with only
+  // selected fields. We locate `_id` in `filteredResult.columns` so that index
+  // maps directly to `filteredResult.values` rows rendered in the table.
   const idColumnIndex = useMemo(
     () => (filteredResult ? findIdColumnIndex(filteredResult.columns) : -1),
     [filteredResult],
