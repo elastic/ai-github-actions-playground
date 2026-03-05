@@ -214,7 +214,7 @@ export const electronStorage = createElectronStorage<PersistedConnectionState>({
     if (localRaw) {
       try {
         const stored = JSON.parse(localRaw) as { state: PersistedConnectionState };
-        await Promise.all(
+        await Promise.allSettled(
           (stored.state.connectionProfiles ?? []).flatMap((profile) => [
             api.deleteCredential(
               name + PROFILE_SESSION_PREFIX + profile.id + API_KEY_SESSION_SUFFIX,
