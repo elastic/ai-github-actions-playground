@@ -267,7 +267,7 @@ test.describe("smoke – site navigation", () => {
     await connectToMockCluster(page);
     await navigateViaSidebar(page, "Add Data");
 
-    await expect(page.getByRole("heading", { name: /What are we observing/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /What do you want to monitor/i })).toBeVisible();
     const main = page.getByRole("main");
     await main.getByPlaceholder("Search technologies").fill("Kubernetes");
     await main
