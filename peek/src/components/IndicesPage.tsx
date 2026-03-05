@@ -494,8 +494,13 @@ export default function IndicesPage() {
                         selected={idx.index === selectedIndex}
                         onClick={() => void setSelectedIndex(idx.index)}
                         tabIndex={0}
+                        aria-label={`Select index ${idx.index}`}
                         onKeyDown={(event) => {
-                          if (event.key === "Enter" || event.key === " ") {
+                          if (
+                            event.key === "Enter" ||
+                            event.key === " " ||
+                            event.key === "Spacebar"
+                          ) {
                             event.preventDefault();
                             void setSelectedIndex(idx.index);
                           }
