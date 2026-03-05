@@ -246,9 +246,8 @@ export default function EdotCollectorInstall({
         )}
 
         <Alert severity="info" sx={{ mt: 1.5 }}>
-          {apiKeyValue
-            ? "API key, endpoint, and version are pre-filled. Copy and run the commands to complete setup."
-            : `Replace \`<YOUR_API_KEY>\` in the commands with your API key. ${prefilledCount > 1 ? "Endpoint and version are" : "The version is"} pre-filled.`}
+          API key, endpoint, and version are pre-filled. Copy and run the commands to complete
+          setup.
         </Alert>
       </Box>
     </Stack>

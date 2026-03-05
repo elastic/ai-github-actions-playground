@@ -96,7 +96,7 @@ export default function IngestionVerificationPanel({
       {/* Action row */}
       <Stack direction="row" spacing={1} alignItems="center">
         {isPolling && (
-          <Tooltip title='Verification checks for new "metrics-*", "logs-*", or "traces-*" streams, meaningful volume changes, and new hosts/agents sending data.'>
+          <Tooltip title='Verification checks for new streams, meaningful increase in docs/sec rate (not just a random batch), and new hosts/agents sending data.'>
             <Stack direction="row" spacing={0.5} alignItems="center">
               <RadioButtonCheckedIcon color="info" sx={PULSE_ICON_SX} />
               <Typography variant="body2" color="info.main">
