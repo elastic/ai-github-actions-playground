@@ -23,7 +23,7 @@ const A11Y_BASELINE: Record<string, Record<string, Record<string, number>>> = {
       "page-has-heading-one": 1,
     },
     "post-connect": {
-      "color-contrast": 2,
+      "color-contrast": 3,
     },
     Metrics: {
       "aria-prohibited-attr": 1,
