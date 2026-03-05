@@ -27,7 +27,11 @@ interface TargetCardProps {
 
 function TargetCard({ target, isSelected, onSelect, recommended }: TargetCardProps) {
   return (
-    <ButtonBase onClick={onSelect} sx={{ display: "block", borderRadius: 1, textAlign: "left" }}>
+    <ButtonBase
+      onClick={onSelect}
+      aria-pressed={isSelected}
+      sx={{ display: "block", borderRadius: 1, textAlign: "left" }}
+    >
       <Paper
         variant="outlined"
         sx={{
