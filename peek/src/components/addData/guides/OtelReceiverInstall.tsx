@@ -140,7 +140,7 @@ export default function OtelReceiverInstall({
             Could not merge into existing config: {mergeError}. Showing a standalone config instead.
           </Alert>
         )}
-        <Box component="pre" sx={{ ...CODE_BLOCK_SX, wordBreak: "break-all" }}>
+        <Box component="pre" sx={CODE_BLOCK_SX}>
           {fullConfig}
         </Box>
       </Paper>

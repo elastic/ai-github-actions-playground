@@ -417,6 +417,7 @@ export default function AddDataStepSetup(p: AddDataStepSetupProps) {
             technologyLabel={tech.technology}
             outputMode={p.fluentBitOutputMode}
             esUrl={p.esUrl}
+            otlpUrl={p.otlpUrl}
             apiKey={p.apiKey}
           />
         );

@@ -42,6 +42,17 @@ export default function CollectorCredentials({
   const scheduleCopyFeedbackReset = useCopyFeedbackTimeout(() => setCopiedApiKeyValue(null));
   const effectiveApiKey = apiKeyValue ?? manualApiKeyValue.trim();
   const copied = effectiveApiKey.length > 0 && copiedApiKeyValue === effectiveApiKey;
+  const handleCreateApiKey = useCallback(() => {
+    setShowApiKey(false);
+    onCreateApiKey();
+  }, [onCreateApiKey]);
+  const handleManualApiKeyValueChange = useCallback(
+    (value: string) => {
+      setShowApiKey(false);
+      onManualApiKeyValueChange(value);
+    },
+    [onManualApiKeyValueChange],
+  );
 
   const handleCopyApiKey = useCallback(async () => {
     if (!effectiveApiKey) return;
@@ -123,7 +134,7 @@ export default function CollectorCredentials({
           <Button
             size="small"
             variant="contained"
-            onClick={onCreateApiKey}
+            onClick={handleCreateApiKey}
             disabled={creatingApiKey}
             aria-busy={creatingApiKey}
             sx={{ alignSelf: "flex-start" }}
@@ -153,7 +164,7 @@ export default function CollectorCredentials({
           type="password"
           autoComplete="off"
           value={manualApiKeyValue}
-          onChange={(event) => onManualApiKeyValueChange(event.target.value)}
+          onChange={(event) => handleManualApiKeyValueChange(event.target.value)}
           placeholder="Base64 API key"
         />
       )}
@@ -184,7 +195,7 @@ export default function CollectorCredentials({
           <Button
             size="small"
             variant="text"
-            onClick={onCreateApiKey}
+            onClick={handleCreateApiKey}
             disabled={creatingApiKey}
             sx={{ alignSelf: "flex-start" }}
           >

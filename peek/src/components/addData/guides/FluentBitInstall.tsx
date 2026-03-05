@@ -22,6 +22,7 @@ export interface FluentBitInstallProps {
   technologyLabel: string;
   outputMode: FluentBitOutputMode;
   esUrl: string;
+  otlpUrl: string;
   apiKey: string;
 }
 
@@ -30,14 +31,15 @@ export default function FluentBitInstall({
   technologyLabel,
   outputMode,
   esUrl,
+  otlpUrl,
   apiKey,
 }: FluentBitInstallProps) {
   const [copiedSection, setCopiedSection] = useState<"config" | "install" | null>(null);
   const scheduleReset = useCopyFeedbackTimeout(() => setCopiedSection(null));
 
   const config = useMemo(
-    () => generateFluentBitConfig({ collectorId, outputMode, esUrl, apiKey }),
-    [collectorId, outputMode, esUrl, apiKey],
+    () => generateFluentBitConfig({ collectorId, outputMode, esUrl, otlpUrl, apiKey }),
+    [collectorId, outputMode, esUrl, otlpUrl, apiKey],
   );
 
   const installCommand = useMemo(() => generateFluentBitInstallCommand(collectorId), [collectorId]);

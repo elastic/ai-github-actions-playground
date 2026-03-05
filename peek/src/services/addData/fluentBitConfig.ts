@@ -50,6 +50,7 @@ export function generateFluentBitConfig(opts: {
   collectorId?: ThirdPartyCollectorId;
   outputMode: FluentBitOutputMode;
   esUrl: string;
+  otlpUrl?: string;
   apiKey: string;
 }): string {
   const collectorId = opts.collectorId ?? "fluent-bit";
@@ -60,7 +61,8 @@ export function generateFluentBitConfig(opts: {
     Refresh_Interval  5
     Read_from_Head    True`;
 
-  const parsed = new URL(opts.esUrl);
+  const destinationUrl = opts.outputMode === "otlp" ? (opts.otlpUrl ?? opts.esUrl) : opts.esUrl;
+  const parsed = new URL(destinationUrl);
   const isHttps = parsed.protocol === "https:";
   const host = parsed.hostname;
   const port = parsed.port || (isHttps ? "443" : "80");
