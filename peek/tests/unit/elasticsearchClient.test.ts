@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
-import { ElasticsearchClient, isElasticsearchError } from "../../src/services/es/client";
-import type { ElasticsearchConnection } from "../../src/services/es/client";
+import { ElasticsearchClient, isElasticsearchError } from "../../src/services/es";
+import type { ElasticsearchConnection } from "../../src/services/es";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -583,7 +583,7 @@ describe("isElasticsearchError", () => {
 describe("getCapabilities", () => {
   it("returns canManageDataStreams: true when cluster privilege is granted", async () => {
     const fetchSpy = mockFetchOnce(
-      { cluster: { manage: true, read_security: true } },
+      { cluster: { manage: true, read_security: true, read_pipeline: true } },
       { status: 200 },
     );
     vi.stubGlobal("fetch", fetchSpy);
@@ -594,6 +594,7 @@ describe("getCapabilities", () => {
     expect(caps.canManageDataStreams).toBe(true);
     expect(caps.canReadSecurityUsers).toBe(true);
     expect(caps.canReadSecurityRoles).toBe(true);
+    expect(caps.canReadIngestPipelines).toBe(true);
   });
 
   it("returns canManageDataStreams: false when cluster privilege is denied", async () => {
@@ -606,6 +607,7 @@ describe("getCapabilities", () => {
     expect(caps.canManageDataStreams).toBe(false);
     expect(caps.canReadSecurityUsers).toBe(false);
     expect(caps.canReadSecurityRoles).toBe(false);
+    expect(caps.canReadIngestPipelines).toBe(false);
   });
 
   it("falls back to minimal capabilities when the security API returns 403", async () => {
@@ -618,6 +620,21 @@ describe("getCapabilities", () => {
     expect(caps.canManageDataStreams).toBe(false);
     expect(caps.canReadSecurityUsers).toBe(false);
     expect(caps.canReadSecurityRoles).toBe(false);
+    expect(caps.canReadIngestPipelines).toBe(false);
+  });
+
+  it("returns canReadIngestPipelines: true when manage_ingest_pipelines privilege is granted", async () => {
+    const fetchSpy = mockFetchOnce(
+      { cluster: { manage: false, manage_ingest_pipelines: true } },
+      { status: 200 },
+    );
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const client = makeClient({ apiKey: "key" });
+    const caps = await client.getCapabilities();
+
+    expect(caps.canReadIngestPipelines).toBe(true);
+    expect(caps.canManageDataStreams).toBe(false);
   });
 
   it("falls back to optimistic capabilities when the security API returns 400 (no security plugin)", async () => {
@@ -639,6 +656,7 @@ describe("getCapabilities", () => {
     expect(caps.canReadSecurityUsers).toBe(true);
     expect(caps.canReadSecurityRoles).toBe(true);
     expect(caps.canReadApiKeys).toBe(true);
+    expect(caps.canReadIngestPipelines).toBe(true);
   });
 
   it("re-throws on a generic 400 Bad Request from _has_privileges (not a security-disabled signature)", async () => {
@@ -663,6 +681,7 @@ describe("getCapabilities", () => {
     expect(caps.canReadSecurityUsers).toBe(true);
     expect(caps.canReadSecurityRoles).toBe(true);
     expect(caps.canReadApiKeys).toBe(true);
+    expect(caps.canReadIngestPipelines).toBe(true);
   });
 
   it("re-throws on a network failure", async () => {
@@ -708,6 +727,8 @@ describe("getCapabilities", () => {
         "manage_security",
         "manage_own_api_key",
         "manage_api_key",
+        "read_pipeline",
+        "manage_ingest_pipelines",
       ],
     });
   });

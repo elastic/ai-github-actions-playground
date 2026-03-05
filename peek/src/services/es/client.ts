@@ -576,6 +576,8 @@ export class ElasticsearchClient {
             "manage_security",
             "manage_own_api_key",
             "manage_api_key",
+            "read_pipeline",
+            "manage_ingest_pipelines",
           ],
         }),
         signal,
@@ -586,12 +588,16 @@ export class ElasticsearchClient {
       const canCreateApiKeys = Boolean(
         response.cluster?.["manage_own_api_key"] || response.cluster?.["manage_api_key"],
       );
+      const canReadIngestPipelines = Boolean(
+        response.cluster?.["read_pipeline"] || response.cluster?.["manage_ingest_pipelines"],
+      );
       return {
         canManageDataStreams: response.cluster?.["manage"] ?? false,
         canCreateApiKeys,
         canReadSecurityUsers: canReadSecurity,
         canReadSecurityRoles: canReadSecurity,
         canReadApiKeys: canCreateApiKeys,
+        canReadIngestPipelines,
       };
     } catch (err: unknown) {
       if (isElasticsearchError(err)) {
@@ -606,6 +612,7 @@ export class ElasticsearchClient {
             canReadSecurityUsers: true,
             canReadSecurityRoles: true,
             canReadApiKeys: true,
+            canReadIngestPipelines: true,
           };
         }
         // 400: Security is disabled or the security plugin is not installed.
@@ -627,6 +634,7 @@ export class ElasticsearchClient {
               canReadSecurityUsers: true,
               canReadSecurityRoles: true,
               canReadApiKeys: true,
+              canReadIngestPipelines: true,
             };
           }
           throw err;
@@ -641,6 +649,7 @@ export class ElasticsearchClient {
             canReadSecurityUsers: false,
             canReadSecurityRoles: false,
             canReadApiKeys: false,
+            canReadIngestPipelines: false,
           };
         }
       }

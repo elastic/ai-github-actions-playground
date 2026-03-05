@@ -64,4 +64,6 @@ export interface UserCapabilities {
   canReadSecurityRoles: boolean;
   /** Whether the user can list/query API keys for audit. */
   canReadApiKeys: boolean;
+  /** Whether the user can read ingest pipeline definitions. */
+  canReadIngestPipelines: boolean;
 }

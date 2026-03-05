@@ -284,6 +284,7 @@ describe("CommandPalette", () => {
       canReadSecurityUsers: false,
       canReadSecurityRoles: false,
       canReadApiKeys: false,
+      canReadIngestPipelines: false,
     });
     useCommandPaletteStore.getState().setCommandPaletteOpen(true);
     renderPalette();
@@ -293,6 +294,8 @@ describe("CommandPalette", () => {
     expect(screen.queryByText("Roles")).not.toBeInTheDocument();
     // "API Keys" still appears once from Docs, but the nav command is hidden
     expect(screen.queryAllByText("API Keys")).toHaveLength(1); // docs only
+    // "Ingest Pipelines" still appears once from Docs, but the nav command is hidden
+    expect(screen.queryAllByText("Ingest Pipelines")).toHaveLength(1); // docs only
     // Unrestricted pages should still appear
     expect(screen.getAllByText("Query Lab").length).toBeGreaterThanOrEqual(1);
   });
@@ -305,6 +308,7 @@ describe("CommandPalette", () => {
       canReadSecurityUsers: true,
       canReadSecurityRoles: true,
       canReadApiKeys: true,
+      canReadIngestPipelines: true,
     });
     useCommandPaletteStore.getState().setCommandPaletteOpen(true);
     renderPalette();
@@ -313,6 +317,7 @@ describe("CommandPalette", () => {
     expect(screen.getAllByText("Users").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("Roles").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("API Keys").length).toBeGreaterThanOrEqual(2); // nav + docs
+    expect(screen.getAllByText("Ingest Pipelines").length).toBeGreaterThanOrEqual(2); // nav + docs
   });
 
   it("shows capability-restricted pages when capabilities are null (not yet fetched)", () => {

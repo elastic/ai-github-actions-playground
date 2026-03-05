@@ -29,6 +29,7 @@ const CAPS_OK = {
   canReadSecurityUsers: true,
   canReadSecurityRoles: true,
   canReadApiKeys: true,
+  canReadIngestPipelines: true,
 };
 const CAPS_NO_READ = {
   canManageDataStreams: false,
@@ -36,6 +37,7 @@ const CAPS_NO_READ = {
   canReadSecurityUsers: false,
   canReadSecurityRoles: false,
   canReadApiKeys: false,
+  canReadIngestPipelines: false,
 };
 
 const NOW = Date.now();

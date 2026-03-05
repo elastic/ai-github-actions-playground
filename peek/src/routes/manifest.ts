@@ -443,6 +443,7 @@ export const PAGE_MANIFEST = {
     path: "/ingest-pipelines",
     component: IngestPipelinesPage,
     requiresConnection: true,
+    requiredCapability: "canReadIngestPipelines",
     showTimeControls: false,
     skeletonVariant: "table",
     nav: {
