@@ -153,84 +153,90 @@ export default function PipelineDetailPanel({
             />
           ) : (
             <Stack spacing={1} data-testid="pipeline-processors-list">
-              {(selectedPipeline.pipeline.processors ?? []).map((processor, index) => {
-                const [type, config] = Object.entries(processor)[0] ?? ["unknown", {}];
-                const configJson = JSON.stringify(config, null, 2);
-                const processorKey = `${selectedPipeline.name}:${index}`;
-                const isExpanded = expandedProcessors.has(processorKey);
-                return (
-                  <Box
-                    key={index}
-                    component="fieldset"
-                    sx={{
-                      m: 0,
-                      p: 1,
-                      border: 1,
-                      borderColor: "border.subtle",
-                      borderRadius: 1,
-                    }}
-                  >
-                    <Typography
-                      component="legend"
-                      variant="caption"
-                      sx={{ px: 0.5, bgcolor: "background.paper" }}
-                    >
-                      {type}
-                    </Typography>
+              {(() => {
+                const processors = selectedPipeline.pipeline.processors ?? [];
+                const typeCounts = new Map<string, number>();
+                return processors.map((processor) => {
+                  const [type, config] = Object.entries(processor)[0] ?? ["unknown", {}];
+                  const configJson = JSON.stringify(config, null, 2);
+                  const typeOccurrence = typeCounts.get(type) ?? 0;
+                  typeCounts.set(type, typeOccurrence + 1);
+                  const processorKey = `${selectedPipeline.name}:${type}:${typeOccurrence}`;
+                  const isExpanded = expandedProcessors.has(processorKey);
+                  return (
                     <Box
+                      key={processorKey}
+                      component="fieldset"
                       sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
+                        m: 0,
+                        p: 1,
+                        border: 1,
+                        borderColor: "border.subtle",
+                        borderRadius: 1,
                       }}
                     >
-                      <Button
-                        size="small"
-                        onClick={() =>
-                          setExpandedProcessors((prev) => {
-                            const next = new Set(prev);
-                            if (next.has(processorKey)) next.delete(processorKey);
-                            else next.add(processorKey);
-                            return next;
-                          })
-                        }
-                        endIcon={isExpanded ? <ExpandLess /> : <ExpandMore />}
-                        sx={{ textTransform: "none" }}
-                      >
-                        {isExpanded ? "Hide config" : "Show config"}
-                      </Button>
-                      <Tooltip title="Copy JSON">
-                        <IconButton
-                          size="small"
-                          onClick={() => void navigator.clipboard.writeText(configJson)}
-                          aria-label={`Copy ${type} config`}
-                        >
-                          <ContentCopyIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
-                    <Collapse in={isExpanded} unmountOnExit>
                       <Typography
-                        component="pre"
-                        variant="body2"
+                        component="legend"
+                        variant="caption"
+                        sx={{ px: 0.5, bgcolor: "background.paper" }}
+                      >
+                        {type}
+                      </Typography>
+                      <Box
                         sx={{
-                          m: 0,
-                          mt: 0.5,
-                          p: 1,
-                          borderRadius: 1,
-                          bgcolor: "action.hover",
-                          wordBreak: "break-word",
-                          whiteSpace: "pre-wrap",
-                          fontSize: "0.75rem",
-                          fontFamily: "monospace",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
                         }}
                       >
-                        {configJson}
-                      </Typography>
-                    </Collapse>
-                  </Box>
-                );
-              })}
+                        <Button
+                          size="small"
+                          onClick={() =>
+                            setExpandedProcessors((prev) => {
+                              const next = new Set(prev);
+                              if (next.has(processorKey)) next.delete(processorKey);
+                              else next.add(processorKey);
+                              return next;
+                            })
+                          }
+                          endIcon={isExpanded ? <ExpandLess /> : <ExpandMore />}
+                          sx={{ textTransform: "none" }}
+                        >
+                          {isExpanded ? "Hide config" : "Show config"}
+                        </Button>
+                        <Tooltip title="Copy JSON">
+                          <IconButton
+                            size="small"
+                            onClick={() => void navigator.clipboard.writeText(configJson)}
+                            aria-label={`Copy ${type} config`}
+                          >
+                            <ContentCopyIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
+                      <Collapse in={isExpanded} unmountOnExit>
+                        <Typography
+                          component="pre"
+                          variant="body2"
+                          sx={{
+                            m: 0,
+                            mt: 0.5,
+                            p: 1,
+                            borderRadius: 1,
+                            bgcolor: "action.hover",
+                            wordBreak: "break-word",
+                            whiteSpace: "pre-wrap",
+                            fontSize: "0.75rem",
+                            fontFamily: "monospace",
+                          }}
+                        >
+                          {configJson}
+                        </Typography>
+                      </Collapse>
+                    </Box>
+                  );
+                });
+              })()}
             </Stack>
           )}
         </Box>
