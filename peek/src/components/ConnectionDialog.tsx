@@ -29,7 +29,7 @@ import type { ElasticsearchConnection } from "../types";
 
 import ConnectionProfilesList from "./ConnectionProfilesList";
 
-type AuthType = "apiKey" | "userpass";
+type AuthType = "apiKey" | "userpass" | "none";
 
 function deriveIngestUrlOrEmpty(url: string | undefined): string {
   return deriveOtlpEndpoint(url ?? "") ?? "";
@@ -85,7 +85,13 @@ export default function ConnectionDialog() {
     })),
   );
 
-  const initialAuthType: AuthType = savedConn?.username ? "userpass" : "apiKey";
+  const initialAuthType: AuthType = savedConn?.username
+    ? "userpass"
+    : savedConn?.apiKey
+      ? "apiKey"
+      : savedConn
+        ? "none"
+        : "apiKey";
 
   const [url, setUrl] = useState(savedConn?.url ?? "");
   const [authType, setAuthType] = useState<AuthType>(initialAuthType);
@@ -114,7 +120,15 @@ export default function ConnectionDialog() {
 
   useEffect(() => {
     setUrl(savedConn?.url ?? "");
-    setAuthType(savedConn?.username ? "userpass" : "apiKey");
+    setAuthType(
+      savedConn?.username
+        ? "userpass"
+        : savedConn?.apiKey
+          ? "apiKey"
+          : savedConn
+            ? "none"
+            : "apiKey",
+    );
     setApiKey(savedConn?.apiKey ?? "");
     setUsername(savedConn?.username ?? "");
     setPassword(savedConn?.password ?? "");
@@ -151,6 +165,17 @@ export default function ConnectionDialog() {
         otlpEndpoint: otlpEndpoint.trim(),
         otlpUseElasticAuth: nextOtlpUseElasticAuth,
         otlpApiKey: otlpApiKey.trim(),
+      };
+    }
+    if (authType === "none") {
+      return {
+        url: url.trim(),
+        proxyUrl: proxyUrl.trim(),
+        ingestUrl: effectiveIngestUrl,
+        otlpEnabled,
+        otlpEndpoint: otlpEndpoint.trim(),
+        otlpUseElasticAuth: false,
+        otlpApiKey: "",
       };
     }
     return {
@@ -221,7 +246,8 @@ export default function ConnectionDialog() {
     ? connectionProfiles.some((p) => p.name === profileName.trim())
     : false;
   const hasCredentials =
-    authType === "apiKey" ? Boolean(apiKey.trim()) : Boolean(username.trim() && password.trim());
+    authType === "none" ||
+    (authType === "apiKey" ? Boolean(apiKey.trim()) : Boolean(username.trim() && password.trim()));
   const hasUrl = Boolean(url.trim());
   const canAttemptConnection = !testing && hasUrl && hasCredentials;
   const canConfirmConnectAndSave =
@@ -272,7 +298,7 @@ export default function ConnectionDialog() {
       if (!profile) return;
       const conn = profile.connection;
       setUrl(conn.url);
-      setAuthType(conn.username ? "userpass" : "apiKey");
+      setAuthType(conn.username ? "userpass" : conn.apiKey ? "apiKey" : "none");
       setApiKey(conn.apiKey ?? "");
       setUsername(conn.username ?? "");
       setPassword(conn.password ?? "");
@@ -360,6 +386,7 @@ export default function ConnectionDialog() {
           >
             <Tab label="API Key" value="apiKey" />
             <Tab label="Username / Password" value="userpass" />
+            <Tab label="No Auth" value="none" />
           </Tabs>
           {authType === "apiKey" && (
             <TextField

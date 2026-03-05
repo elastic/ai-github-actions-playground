@@ -123,6 +123,10 @@ async function connectApp(page, opts) {
   await page.goto(opts.url, { waitUntil: "networkidle", timeout: opts.timeoutMs });
   await page.getByRole("button", { name: "Connect to Elasticsearch" }).click();
   await page.getByRole("textbox", { name: "Elasticsearch URL" }).fill(esUrl);
+  if (opts.live) {
+    // For live no-auth Elasticsearch (xpack.security.enabled=false), select "No Auth"
+    await page.getByRole("tab", { name: "No Auth" }).click();
+  }
   await page.getByRole("button", { name: "Connect", exact: true }).click();
 
   // Wait for the sidebar to confirm connection
