@@ -45,9 +45,9 @@ async function openExperience(page, experience, timeoutMs) {
 }
 
 /** Select a technology card by its display name. */
-async function selectTechnology(page, technologyName) {
+async function selectTechnology(page, technologyName, timeoutMs) {
   await page.locator("[aria-pressed]").filter({ hasText: technologyName }).first().click();
-  await waitForSettle(page);
+  await waitForSettle(page, timeoutMs);
 }
 
 /**
@@ -92,7 +92,7 @@ export async function captureAddDataScreenshots(page, outDir, timeoutMs = 30_000
   for (const tech of ADD_DATA_TECHNOLOGY_ENTRIES) {
     await resetToAddDataLanding(page, timeoutMs);
     await openExperience(page, tech.experience, timeoutMs);
-    await selectTechnology(page, tech.technology);
+    await selectTechnology(page, tech.technology, timeoutMs);
 
     await page.getByRole("button", { name: "Continue" }).click();
     await waitForSettle(page, timeoutMs);

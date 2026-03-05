@@ -36,6 +36,7 @@ import path from "node:path";
 import { DEFAULT_ES_URL, registerElasticsearchMocks } from "./elasticsearch-mocks.mjs";
 import { isIgnorableConsoleError } from "./ignorable-console-errors.mjs";
 import { PAGE_NAV_BUTTONS } from "./page-nav-buttons.mjs";
+import { waitForSettle } from "./screenshot-add-data-helpers.mjs";
 
 // ---------------------------------------------------------------------------
 // Section → page slug mapping
@@ -135,16 +136,6 @@ async function connectApp(page, opts) {
  * Capture screenshots of all pages in a section for one theme mode.
  * Returns list of { page, path } objects.
  */
-/**
- * Wait for the page to settle after a navigation click.
- * Uses networkidle (no requests for 500ms) instead of a fixed timeout —
- * this resolves almost instantly with mocked routes and adapts to real latency
- * in live mode.
- */
-async function waitForSettle(page, timeoutMs) {
-  await page.waitForLoadState("networkidle", { timeout: timeoutMs });
-}
-
 async function captureThemeScreenshots(browser, opts, pages, themeMode, outDir) {
   const errors = [];
   const captured = [];
