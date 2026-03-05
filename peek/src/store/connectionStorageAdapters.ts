@@ -244,7 +244,10 @@ export const electronStorage = createElectronStorage<PersistedConnectionState>({
         /* ignore parse errors during cleanup */
       }
       if (stored) {
-        const profileDeleteKeys = (stored.state.connectionProfiles ?? []).flatMap((profile) => [
+        const storedProfiles = Array.isArray(stored.state.connectionProfiles)
+          ? stored.state.connectionProfiles
+          : [];
+        const profileDeleteKeys = storedProfiles.flatMap((profile) => [
           name + PROFILE_SESSION_PREFIX + profile.id + API_KEY_SESSION_SUFFIX,
           name + PROFILE_SESSION_PREFIX + profile.id + OTLP_API_KEY_SESSION_SUFFIX,
           name + PROFILE_SESSION_PREFIX + profile.id + PASSWORD_SESSION_SUFFIX,
