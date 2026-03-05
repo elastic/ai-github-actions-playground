@@ -103,7 +103,7 @@ body { font-variant-numeric: tabular-nums lining-nums; }
 
 ### Type Scale
 
-Four levels. Each maps to exactly one MUI Typography `variant`.
+Six levels. Each maps to exactly one MUI Typography `variant`.
 
 ```
 Role              MUI variant    Size    Weight    Line-Height   Use

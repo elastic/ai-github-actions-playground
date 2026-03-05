@@ -398,7 +398,7 @@ export default function ConnectionDialog() {
                 setApiKey(e.target.value);
                 setActiveProfileId(null);
               }}
-              helperText="In browser mode, stored in session storage and cleared when the tab closes; in Electron, stored in the OS credential store."
+              helperText="In browser mode, credentials are stored in session storage and cleared when the tab closes; in Electron, credentials are stored in the OS credential store."
               slotProps={{
                 input: {
                   endAdornment: (
@@ -438,7 +438,7 @@ export default function ConnectionDialog() {
                   setPassword(e.target.value);
                   setActiveProfileId(null);
                 }}
-                helperText="In browser mode, stored in session storage and cleared when the tab closes; in Electron, stored in the OS credential store."
+                helperText="In browser mode, credentials are stored in session storage and cleared when the tab closes; in Electron, credentials are stored in the OS credential store."
                 slotProps={{
                   input: {
                     endAdornment: (
