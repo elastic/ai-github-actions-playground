@@ -557,7 +557,7 @@ export default function SpanDetailDrawer({
               ) : (
                 span.links.map((link: SpanLink, i: number) => (
                   <Box
-                    key={`${link.traceId}-${link.spanId}-${JSON.stringify(link.attributes)}`}
+                    key={`${link.traceId}-${link.spanId}-${i}`}
                     sx={{ mb: 1, border: 1, borderColor: "divider", borderRadius: 1 }}
                   >
                     <Typography
@@ -597,13 +597,9 @@ export default function SpanDetailDrawer({
                   No events
                 </Typography>
               ) : (
-                span.events.map((event) => (
+                span.events.map((event, eventIdx) => (
                   <Box
-                    key={[
-                      event.name ?? "",
-                      event.timestamp ?? "",
-                      JSON.stringify(event.attributes ?? {}),
-                    ].join("::")}
+                    key={`${event.name ?? ""}-${event.timestamp ?? ""}-${eventIdx}`}
                     sx={{ mb: 1, border: 1, borderColor: "divider", borderRadius: 1 }}
                   >
                     <Box sx={{ py: 0.5, px: 1, borderBottom: 1, borderColor: "divider" }}>

@@ -41,128 +41,123 @@ export default function DataTableBody({
 }: DataTableBodyProps) {
   return (
     <TableBody>
-      {(() => {
-        const rowKeyCounts = new Map<string, number>();
-        return [...visibleRows.entries()].map(([rowIdx, row]) => {
-          const baseKey = row.map((cell) => String(cell)).join("\u241F");
-          const occurrence = (rowKeyCounts.get(baseKey) ?? 0) + 1;
-          rowKeyCounts.set(baseKey, occurrence);
-          return (
-            <Tooltip
-              key={`${page}-${rowsPerPage}-${baseKey}-${occurrence}`}
-              title="Click to inspect row"
-              placement="left"
-              enterDelay={600}
+      {[...visibleRows.entries()].map(([rowIdx, row]) => {
+        const baseKey = row.map((cell) => String(cell)).join("\u241F");
+        return (
+          <Tooltip
+            key={`${page}-${rowsPerPage}-${baseKey}-${rowIdx}`}
+            title="Click to inspect row"
+            placement="left"
+            enterDelay={600}
+          >
+            <TableRow
+              hover
+              tabIndex={0}
+              data-row-index={rowIdx}
+              selected={selectedRowIndex === rowIdx}
+              onClick={() => onRowClick(row)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  onRowClick(row);
+                }
+              }}
+              sx={{ cursor: "pointer" }}
             >
-              <TableRow
-                hover
-                tabIndex={0}
-                data-row-index={rowIdx}
-                selected={selectedRowIndex === rowIdx}
-                onClick={() => onRowClick(row)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" || event.key === " ") {
-                    event.preventDefault();
-                    onRowClick(row);
-                  }
-                }}
-                sx={{ cursor: "pointer" }}
-              >
-                {orderedVisibleColumnIndices.map((colIdx) => {
-                  const col = data.columns[colIdx];
-                  if (!col) return null;
-                  const cell = row[colIdx];
-                  const numeric = isNumericType(col.type);
-                  const thresholds = options?.thresholds;
-                  const thresholdColumns = options?.thresholdColumns;
-                  const applyThreshold =
-                    numeric &&
-                    thresholds &&
-                    thresholds.steps.length > 0 &&
-                    cell != null &&
-                    (!thresholdColumns ||
-                      thresholdColumns.length === 0 ||
-                      thresholdColumns.includes(col.name));
-                  const thresholdColor = applyThreshold
-                    ? resolveThresholdColor(Number(cell), thresholds!)
-                    : undefined;
-                  const bgColor = thresholdColor
-                    ? `${THRESHOLD_PALETTE[thresholdColor]}26`
-                    : undefined;
-                  const isPinned = pinnedColumns.has(colIdx);
-                  const stickyLeft = isPinned ? (pinnedLeftOffsets.get(colIdx) ?? 0) : undefined;
-                  return (
-                    <TableCell
-                      key={colIdx}
-                      sx={{
-                        maxWidth: isPinned ? undefined : 400,
-                        textAlign: numeric ? "right" : "left",
-                        wordBreak: isPinned ? "normal" : "break-word",
-                        whiteSpace: isPinned ? "nowrap" : "normal",
-                        fontSize: "0.75rem",
-                        fontFamily: numeric ? "monospace" : "inherit",
-                        ...(bgColor ? { backgroundColor: bgColor } : {}),
-                        ...(isPinned
-                          ? {
-                              position: "sticky",
-                              zIndex: 1,
-                              left: stickyLeft,
-                              width: PINNED_COLUMN_MIN_WIDTH,
-                              minWidth: PINNED_COLUMN_MIN_WIDTH,
-                              maxWidth: PINNED_COLUMN_MIN_WIDTH,
-                              overflow: "hidden",
-                              borderRight: "1px solid",
-                              borderRightColor: "divider",
-                              backgroundColor: bgColor ?? "background.paper",
-                              textOverflow: "ellipsis",
-                            }
-                          : {}),
-                      }}
-                    >
-                      {cell == null ? (
-                        <Typography component="span" variant="caption" sx={{ opacity: 0.3 }}>
-                          null
-                        </Typography>
-                      ) : onCellClick ? (
-                        <ButtonBase
-                          component="span"
-                          disableRipple
-                          tabIndex={0}
-                          onClick={(event) => {
+              {orderedVisibleColumnIndices.map((colIdx) => {
+                const col = data.columns[colIdx];
+                if (!col) return null;
+                const cell = row[colIdx];
+                const numeric = isNumericType(col.type);
+                const thresholds = options?.thresholds;
+                const thresholdColumns = options?.thresholdColumns;
+                const applyThreshold =
+                  numeric &&
+                  thresholds &&
+                  thresholds.steps.length > 0 &&
+                  cell != null &&
+                  (!thresholdColumns ||
+                    thresholdColumns.length === 0 ||
+                    thresholdColumns.includes(col.name));
+                const thresholdColor = applyThreshold
+                  ? resolveThresholdColor(Number(cell), thresholds!)
+                  : undefined;
+                const bgColor = thresholdColor
+                  ? `${THRESHOLD_PALETTE[thresholdColor]}26`
+                  : undefined;
+                const isPinned = pinnedColumns.has(colIdx);
+                const stickyLeft = isPinned ? (pinnedLeftOffsets.get(colIdx) ?? 0) : undefined;
+                return (
+                  <TableCell
+                    key={colIdx}
+                    sx={{
+                      maxWidth: isPinned ? undefined : 400,
+                      textAlign: numeric ? "right" : "left",
+                      wordBreak: isPinned ? "normal" : "break-word",
+                      whiteSpace: isPinned ? "nowrap" : "normal",
+                      fontSize: "0.75rem",
+                      fontFamily: numeric ? "monospace" : "inherit",
+                      ...(bgColor ? { backgroundColor: bgColor } : {}),
+                      ...(isPinned
+                        ? {
+                            position: "sticky",
+                            zIndex: 1,
+                            left: stickyLeft,
+                            width: PINNED_COLUMN_MIN_WIDTH,
+                            minWidth: PINNED_COLUMN_MIN_WIDTH,
+                            maxWidth: PINNED_COLUMN_MIN_WIDTH,
+                            overflow: "hidden",
+                            borderRight: "1px solid",
+                            borderRightColor: "divider",
+                            backgroundColor: bgColor ?? "background.paper",
+                            textOverflow: "ellipsis",
+                          }
+                        : {}),
+                    }}
+                  >
+                    {cell == null ? (
+                      <Typography component="span" variant="caption" sx={{ opacity: 0.3 }}>
+                        null
+                      </Typography>
+                    ) : onCellClick ? (
+                      <ButtonBase
+                        component="span"
+                        disableRipple
+                        tabIndex={0}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onCellClick({ columnName: col.name, value: String(cell) });
+                        }}
+                        onKeyDown={(event) => {
+                          if (
+                            event.key === "Enter" ||
+                            event.key === " " ||
+                            event.key === "Spacebar"
+                          ) {
+                            event.preventDefault();
                             event.stopPropagation();
                             onCellClick({ columnName: col.name, value: String(cell) });
-                          }}
-                          onKeyDown={(event) => {
-                            if (
-                              event.key === "Enter" ||
-                              event.key === " " ||
-                              event.key === "Spacebar"
-                            ) {
-                              event.preventDefault();
-                              event.stopPropagation();
-                              onCellClick({ columnName: col.name, value: String(cell) });
-                            }
-                          }}
-                          sx={{
-                            display: "inline",
-                            p: 0,
-                            cursor: "pointer",
-                            textAlign: "inherit",
-                          }}
-                        >
-                          <TruncatedCell value={String(cell)} />
-                        </ButtonBase>
-                      ) : (
+                          }
+                        }}
+                        sx={{
+                          display: "inline",
+                          p: 0,
+                          cursor: "pointer",
+                          textAlign: "inherit",
+                        }}
+                      >
                         <TruncatedCell value={String(cell)} />
-                      )}
-                    </TableCell>
-                  );
-                })}
-              </TableRow>
-            </Tooltip>
-          );
-        });
-      })()}
+                      </ButtonBase>
+                    ) : (
+                      <TruncatedCell value={String(cell)} />
+                    )}
+                  </TableCell>
+                );
+              })}
+            </TableRow>
+          </Tooltip>
+        );
+      })}
     </TableBody>
   );
 }

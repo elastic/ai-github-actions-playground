@@ -169,24 +169,16 @@ export default function MetricsSearchPanel({
             <Typography variant="caption" color="text.secondary" sx={{ mr: 0.5 }}>
               Filters:
             </Typography>
-            {(() => {
-              const seen = new Map<string, number>();
-              return filters.map((f, i) => {
-                const baseKey = `${f.field}-${f.op}-${f.value}`;
-                const occurrence = seen.get(baseKey) ?? 0;
-                seen.set(baseKey, occurrence + 1);
-                return (
-                  <Chip
-                    key={`${baseKey}-${occurrence}`}
-                    label={`${f.field} ${f.op} "${f.value}"`}
-                    size="small"
-                    onDelete={() => onRemoveFilter(i)}
-                    color="primary"
-                    variant="outlined"
-                  />
-                );
-              });
-            })()}
+            {[...filters.entries()].map(([filterIdx, f]) => (
+              <Chip
+                key={`${f.field}-${f.op}-${f.value}-${filterIdx}`}
+                label={`${f.field} ${f.op} "${f.value}"`}
+                size="small"
+                onDelete={() => onRemoveFilter(filterIdx)}
+                color="primary"
+                variant="outlined"
+              />
+            ))}
             <Button size="small" onClick={onClearFilters} sx={{ ml: 0.5 }}>
               Clear all
             </Button>

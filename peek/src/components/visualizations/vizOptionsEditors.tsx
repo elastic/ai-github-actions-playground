@@ -128,40 +128,32 @@ function ThresholdEditor({
         />
       </Box>
 
-      {(() => {
-        const seen = new Map<string, number>();
-        return steps.map((step, idx) => {
-          const baseKey = `${step.value}-${step.color}`;
-          const occurrence = seen.get(baseKey) ?? 0;
-          seen.set(baseKey, occurrence + 1);
-          return (
-            <Box
-              key={`${baseKey}-${occurrence}`}
-              sx={{ display: "flex", gap: 1, alignItems: "center" }}
-            >
-              <TextField
-                size="small"
-                type="number"
-                label="Value ≥"
-                value={step.value}
-                onChange={(e) => handleStepValueChange(idx, e.target.value)}
-                sx={{ width: 90 }}
-              />
-              <ThresholdColorSelect
-                value={step.color}
-                onChange={(c) => handleStepColorChange(idx, c)}
-              />
-              <IconButton
-                size="small"
-                aria-label={`remove threshold step ${idx + 1}`}
-                onClick={() => handleRemoveStep(idx)}
-              >
-                <DeleteIcon fontSize="inherit" />
-              </IconButton>
-            </Box>
-          );
-        });
-      })()}
+      {[...steps.entries()].map(([stepIdx, step]) => (
+        <Box
+          key={`${step.value}-${step.color}-${stepIdx}`}
+          sx={{ display: "flex", gap: 1, alignItems: "center" }}
+        >
+          <TextField
+            size="small"
+            type="number"
+            label="Value ≥"
+            value={step.value}
+            onChange={(e) => handleStepValueChange(stepIdx, e.target.value)}
+            sx={{ width: 90 }}
+          />
+          <ThresholdColorSelect
+            value={step.color}
+            onChange={(c) => handleStepColorChange(stepIdx, c)}
+          />
+          <IconButton
+            size="small"
+            aria-label={`remove threshold step ${stepIdx + 1}`}
+            onClick={() => handleRemoveStep(stepIdx)}
+          >
+            <DeleteIcon fontSize="inherit" />
+          </IconButton>
+        </Box>
+      ))}
 
       <Button
         size="small"
