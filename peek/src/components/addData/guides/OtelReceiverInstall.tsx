@@ -18,6 +18,8 @@ import {
 } from "../../../services/addData/otelReceiverCatalog";
 import type { OtelReceiverDefinition } from "../../../services/addData/otelReceiverCatalog";
 
+import { CODE_BLOCK_SX } from "./sharedStyles";
+
 export interface OtelReceiverInstallProps {
   receiver: OtelReceiverDefinition;
   fieldValues: Record<string, string>;
@@ -108,11 +110,10 @@ export default function OtelReceiverInstall({
     setCopiedRun(true);
     scheduleCopyRunReset();
   }, [scheduleCopyRunReset]);
-
   return (
     <Stack spacing={1.5}>
       <Typography variant="body2" color="text.secondary">
-        Configure and run the EDOT Collector with the {receiver.label} receiver.
+        Use the options below to copy and run commands for the {receiver.label} receiver.
       </Typography>
 
       {/* Step 1: Save config */}
@@ -139,20 +140,7 @@ export default function OtelReceiverInstall({
             Could not merge into existing config: {mergeError}. Showing a standalone config instead.
           </Alert>
         )}
-        <Box
-          component="pre"
-          sx={{
-            overflow: "auto",
-            m: 0,
-            p: 1.5,
-            borderRadius: 1,
-            bgcolor: "background.default",
-            wordBreak: "break-all",
-            whiteSpace: "pre-wrap",
-            fontSize: "0.8rem",
-            fontFamily: "monospace",
-          }}
-        >
+        <Box component="pre" sx={CODE_BLOCK_SX}>
           {fullConfig}
         </Box>
       </Paper>
@@ -173,42 +161,22 @@ export default function OtelReceiverInstall({
             {copiedRun ? "Copied!" : "Copy"}
           </Button>
         </Stack>
-        <Box
-          component="pre"
-          sx={{
-            overflow: "auto",
-            m: 0,
-            p: 1.5,
-            borderRadius: 1,
-            bgcolor: "background.default",
-            whiteSpace: "pre-wrap",
-            fontSize: "0.8rem",
-            fontFamily: "monospace",
-          }}
-        >
+        <Box component="pre" sx={CODE_BLOCK_SX}>
           {RUN_COMMAND}
         </Box>
       </Paper>
 
-      {/* Step 3: Docs link */}
-      <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <Stack direction="row" spacing={1} alignItems="center">
-          <Chip label="3" size="small" color="primary" sx={{ minWidth: 28, fontWeight: 700 }} />
-          <Typography variant="body2" sx={{ flex: 1, fontWeight: 500 }}>
-            Review the {receiver.label} receiver documentation
-          </Typography>
-          <Button
-            size="small"
-            variant="outlined"
-            href="https://www.elastic.co/docs/solutions/observability/get-started/opentelemetry"
-            target="_blank"
-            rel="noopener noreferrer"
-            endIcon={<OpenInNewIcon fontSize="small" />}
-          >
-            Open docs
-          </Button>
-        </Stack>
-      </Paper>
+      <Button
+        size="small"
+        variant="outlined"
+        href="https://www.elastic.co/docs/solutions/observability/get-started/opentelemetry"
+        target="_blank"
+        rel="noopener noreferrer"
+        endIcon={<OpenInNewIcon fontSize="small" />}
+        sx={{ alignSelf: "flex-start" }}
+      >
+        OpenTelemetry docs
+      </Button>
     </Stack>
   );
 }

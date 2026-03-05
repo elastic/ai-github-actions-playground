@@ -1,15 +1,13 @@
 import { useState, useMemo } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import ButtonBase from "@mui/material/ButtonBase";
-import Collapse from "@mui/material/Collapse";
 import InputAdornment from "@mui/material/InputAdornment";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import SearchIcon from "@mui/icons-material/Search";
 
 import {
@@ -23,13 +21,42 @@ import { COMPONENT_HEIGHTS } from "../../types/tokens";
 
 import AddDataTechnologyResults from "./AddDataTechnologyResults";
 import ExperienceTile from "./ExperienceTile";
+import ExpandableAlternatives from "./guides/ExpandableAlternatives";
 import { EXPERIENCE_ICONS } from "./addDataTechnologyConstants";
 
-const PRIMARY_EXPERIENCES: readonly AddDataGuidedExperience[] = [
-  "cloud_providers",
-  "kubernetes",
-  "servers",
-  "saas_databases",
+type HeroCategoryId = "cloud_saas" | "kubernetes" | "servers" | "applications";
+type CloudSaasFilter = "all" | "cloud_providers" | "saas_databases";
+
+const HERO_CATEGORIES: ReadonlyArray<{
+  id: HeroCategoryId;
+  title: string;
+  description: string;
+  experience: AddDataGuidedExperience;
+}> = [
+  {
+    id: "cloud_saas",
+    title: "Cloud and SaaS",
+    description: "Monitor cloud services and managed databases.",
+    experience: "cloud_providers",
+  },
+  {
+    id: "kubernetes",
+    title: "Kubernetes",
+    description: "Collect cluster, node, and workload telemetry.",
+    experience: "kubernetes",
+  },
+  {
+    id: "servers",
+    title: "Laptops and Servers",
+    description: "Monitor Linux, Windows, or macOS hosts.",
+    experience: "servers",
+  },
+  {
+    id: "applications",
+    title: "Applications (APM Agents)",
+    description: "Instrument applications with Elastic APM agents.",
+    experience: "advanced",
+  },
 ];
 
 interface AddDataStepTechnologyProps {
@@ -38,7 +65,6 @@ interface AddDataStepTechnologyProps {
   onClearTechnology: () => void;
   technologySearch: string;
   onTechnologySearchChange: (search: string) => void;
-  onContinue: () => void;
 }
 
 export default function AddDataStepTechnology({
@@ -47,12 +73,9 @@ export default function AddDataStepTechnology({
   onClearTechnology,
   technologySearch,
   onTechnologySearchChange,
-  onContinue,
 }: AddDataStepTechnologyProps) {
-  const [selectedExperience, setSelectedExperience] = useState<AddDataGuidedExperience | null>(
-    null,
-  );
-  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [selectedHeroCategory, setSelectedHeroCategory] = useState<HeroCategoryId | null>(null);
+  const [cloudSaasFilter, setCloudSaasFilter] = useState<CloudSaasFilter>("all");
 
   const filteredTechnologies = useMemo(() => {
     const query = technologySearch.trim().toLowerCase();
@@ -67,30 +90,43 @@ export default function AddDataStepTechnology({
       );
     }
 
-    // If an experience is selected, filter to that experience
-    if (selectedExperience) {
-      return ADD_DATA_TECHNOLOGY_CATALOG.filter((tech) => tech.experience === selectedExperience);
+    // If a hero category is selected, filter to that category's technologies
+    if (selectedHeroCategory) {
+      if (selectedHeroCategory === "cloud_saas") {
+        if (cloudSaasFilter !== "all") {
+          return ADD_DATA_TECHNOLOGY_CATALOG.filter((tech) => tech.experience === cloudSaasFilter);
+        }
+        return ADD_DATA_TECHNOLOGY_CATALOG.filter(
+          (tech) => tech.experience === "cloud_providers" || tech.experience === "saas_databases",
+        );
+      }
+      if (selectedHeroCategory === "applications") {
+        return ADD_DATA_TECHNOLOGY_CATALOG.filter(
+          (tech) => tech.experience === "advanced" && tech.guideType === "apm",
+        );
+      }
+      const category = HERO_CATEGORIES.find((hero) => hero.id === selectedHeroCategory);
+      if (!category) return [];
+      return ADD_DATA_TECHNOLOGY_CATALOG.filter((tech) => tech.experience === category.experience);
     }
 
     return [];
-  }, [technologySearch, selectedExperience]);
+  }, [technologySearch, selectedHeroCategory, cloudSaasFilter]);
 
   const advancedTechnologies = useMemo(
-    () => ADD_DATA_TECHNOLOGY_CATALOG.filter((tech) => tech.experience === "advanced"),
+    () =>
+      ADD_DATA_TECHNOLOGY_CATALOG.filter(
+        (tech) => tech.experience === "advanced" && tech.guideType !== "apm",
+      ),
     [],
   );
 
-  const showExperienceTiles = !selectedExperience && technologySearch.trim().length === 0;
+  const showExperienceTiles = !selectedHeroCategory && technologySearch.trim().length === 0;
   const showSearchResults = technologySearch.trim().length > 0;
-  const handleSelectAndContinue = (tech: AddDataTechnologyCatalogEntry) => {
-    onSelectTechnology(tech);
-    onContinue();
-  };
-
   return (
     <Paper variant="outlined" sx={{ display: "flex", flexDirection: "column", gap: 2, p: 2 }}>
       <Box>
-        <Typography variant="h6">What are we observing? 🔭</Typography>
+        <Typography variant="h6">What do you want to monitor?</Typography>
       </Box>
 
       <TextField
@@ -98,10 +134,11 @@ export default function AddDataStepTechnology({
         value={technologySearch}
         onChange={(e) => {
           onTechnologySearchChange(e.target.value);
-          if (e.target.value.trim().length > 0) {
-            setSelectedExperience(null);
-          }
           onClearTechnology();
+          if (e.target.value.trim().length > 0) {
+            setSelectedHeroCategory(null);
+            setCloudSaasFilter("all");
+          }
         }}
         fullWidth
         size="small"
@@ -127,13 +164,17 @@ export default function AddDataStepTechnology({
               gap: 1.5,
             }}
           >
-            {PRIMARY_EXPERIENCES.map((exp) => (
+            {HERO_CATEGORIES.map((hero) => (
               <ExperienceTile
-                key={exp}
-                experience={exp}
+                key={hero.id}
+                experience={hero.experience}
+                title={hero.title}
+                description={hero.description}
+                icon={hero.id === "applications" ? <AutoAwesomeIcon /> : undefined}
                 onClick={() => {
-                  setSelectedExperience(exp);
-                  if (selectedTechnology && selectedTechnology.experience !== exp) {
+                  setSelectedHeroCategory(hero.id);
+                  setCloudSaasFilter("all");
+                  if (selectedTechnology) {
                     onClearTechnology();
                   }
                 }}
@@ -142,81 +183,80 @@ export default function AddDataStepTechnology({
           </Box>
 
           {/* Advanced section — collapsible */}
-          <Box>
-            <ButtonBase
-              onClick={() => setAdvancedOpen((prev) => !prev)}
-              aria-expanded={advancedOpen}
-              aria-controls="advanced-technologies-panel"
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                width: "100%",
-                py: 1,
-                px: 0.5,
-                borderRadius: 1,
-                "&:hover": { bgcolor: "action.hover" },
-              }}
-            >
-              <Stack direction="row" spacing={1} alignItems="center">
-                {EXPERIENCE_ICONS.advanced}
-                <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                  {ADD_DATA_EXPERIENCE_LABELS.advanced}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {ADD_DATA_EXPERIENCE_DESCRIPTIONS.advanced}
-                </Typography>
-              </Stack>
-              <ExpandMoreIcon
-                fontSize="small"
-                sx={{
-                  transform: advancedOpen ? "rotate(180deg)" : "rotate(0deg)",
-                  transition: "transform 0.2s",
-                }}
-              />
-            </ButtonBase>
-            <Collapse in={advancedOpen}>
-              <Box id="advanced-technologies-panel" role="region" sx={{ pt: 1 }}>
-                <AddDataTechnologyResults
-                  filteredTechnologies={advancedTechnologies}
-                  selectedTechnology={selectedTechnology}
-                  onSelectTechnology={handleSelectAndContinue}
-                />
-              </Box>
-            </Collapse>
-          </Box>
+          <ExpandableAlternatives
+            idPrefix="advanced"
+            label={ADD_DATA_EXPERIENCE_LABELS.advanced}
+            expandedLabel={`Hide ${ADD_DATA_EXPERIENCE_LABELS.advanced.toLowerCase()}`}
+            startIcon={EXPERIENCE_ICONS.advanced}
+          >
+            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
+              {ADD_DATA_EXPERIENCE_DESCRIPTIONS.advanced}
+            </Typography>
+            <AddDataTechnologyResults
+              filteredTechnologies={advancedTechnologies}
+              selectedTechnology={selectedTechnology}
+              onSelectTechnology={onSelectTechnology}
+            />
+          </ExpandableAlternatives>
         </>
       )}
 
       {/* Breadcrumb back to experience selection */}
-      {selectedExperience && !showSearchResults && (
+      {selectedHeroCategory && !showSearchResults && (
         <Button
           size="small"
           startIcon={<ArrowBackIcon fontSize="small" />}
           onClick={() => {
-            setSelectedExperience(null);
+            setSelectedHeroCategory(null);
+            setCloudSaasFilter("all");
             onClearTechnology();
           }}
           sx={{ alignSelf: "flex-start" }}
         >
-          {ADD_DATA_EXPERIENCE_LABELS[selectedExperience]}
+          {HERO_CATEGORIES.find((hero) => hero.id === selectedHeroCategory)?.title ?? "Back"}
         </Button>
+      )}
+
+      {selectedHeroCategory === "cloud_saas" && !showSearchResults && (
+        <Stack direction="row" spacing={1} alignItems="center">
+          <Typography variant="caption" color="text.secondary">
+            Show:
+          </Typography>
+          <Button
+            size="small"
+            aria-pressed={cloudSaasFilter === "all"}
+            variant={cloudSaasFilter === "all" ? "contained" : "outlined"}
+            onClick={() => setCloudSaasFilter("all")}
+          >
+            All
+          </Button>
+          <Button
+            size="small"
+            aria-pressed={cloudSaasFilter === "cloud_providers"}
+            variant={cloudSaasFilter === "cloud_providers" ? "contained" : "outlined"}
+            onClick={() => setCloudSaasFilter("cloud_providers")}
+          >
+            Cloud Providers
+          </Button>
+          <Button
+            size="small"
+            aria-pressed={cloudSaasFilter === "saas_databases"}
+            variant={cloudSaasFilter === "saas_databases" ? "contained" : "outlined"}
+            onClick={() => setCloudSaasFilter("saas_databases")}
+          >
+            SaaS & Databases
+          </Button>
+        </Stack>
       )}
 
       {/* Technology results for selected experience or search */}
-      {(selectedExperience || showSearchResults) && (
+      {(selectedHeroCategory || showSearchResults) && (
         <AddDataTechnologyResults
           filteredTechnologies={filteredTechnologies}
           selectedTechnology={selectedTechnology}
-          onSelectTechnology={handleSelectAndContinue}
+          onSelectTechnology={onSelectTechnology}
         />
       )}
-
-      <Stack direction="row" justifyContent="flex-end">
-        <Button variant="contained" onClick={onContinue} disabled={selectedTechnology === null}>
-          Continue
-        </Button>
-      </Stack>
     </Paper>
   );
 }

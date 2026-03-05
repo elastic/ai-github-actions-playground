@@ -333,6 +333,36 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     ],
   },
   {
+    id: "prometheus-scrape",
+    technology: "Scrape Prometheus Metrics with OTel",
+    experience: "advanced",
+    guideType: "edot_collector",
+    summary:
+      "Use EDOT Collector to scrape Prometheus metrics from targets and forward them to Elastic.",
+    defaultPlatform: "linux",
+    supportedEnvironments: ["kubernetes", "docker", "linux", "on_prem"],
+    expectedSignals: ["metrics"],
+    recommendedNextSteps: [
+      { id: "inspect-prometheus-metrics", label: "Explore metrics", path: "/explore" },
+      { id: "inspect-prometheus-query", label: "Open Query Lab", path: "/discover" },
+    ],
+  },
+  {
+    id: "prometheus-remote-write",
+    technology: "Prometheus Remote Write",
+    experience: "advanced",
+    guideType: "edot_collector",
+    summary:
+      "Send native Prometheus remote_write traffic through EDOT Collector to Elastic without scrape config changes.",
+    defaultPlatform: "linux",
+    supportedEnvironments: ["kubernetes", "docker", "linux", "on_prem"],
+    expectedSignals: ["metrics"],
+    recommendedNextSteps: [
+      { id: "inspect-prometheus-metrics", label: "Explore metrics", path: "/explore" },
+      { id: "inspect-prometheus-query", label: "Open Query Lab", path: "/discover" },
+    ],
+  },
+  {
     id: "fluent-bit",
     technology: "Fluent Bit",
     experience: "advanced",
@@ -343,6 +373,58 @@ export const ADD_DATA_TECHNOLOGY_CATALOG = [
     expectedSignals: ["logs"],
     recommendedNextSteps: [
       { id: "inspect-fluent-bit-logs", label: "Open Query Lab", path: "/discover" },
+    ],
+  },
+  {
+    id: "vector",
+    technology: "Vector",
+    experience: "advanced",
+    guideType: "fluent_bit",
+    summary: "Forward logs to Elasticsearch or OTLP endpoints using Vector.",
+    defaultPlatform: "linux",
+    supportedEnvironments: ["kubernetes", "docker", "linux", "on_prem"],
+    expectedSignals: ["logs"],
+    recommendedNextSteps: [
+      { id: "inspect-vector-logs", label: "Open Query Lab", path: "/discover" },
+    ],
+  },
+  {
+    id: "fluentd",
+    technology: "Fluentd",
+    experience: "advanced",
+    guideType: "fluent_bit",
+    summary: "Forward logs to Elasticsearch from Fluentd using the Elasticsearch output plugin.",
+    defaultPlatform: "linux",
+    supportedEnvironments: ["kubernetes", "docker", "linux", "on_prem"],
+    expectedSignals: ["logs"],
+    recommendedNextSteps: [
+      { id: "inspect-fluentd-logs", label: "Open Query Lab", path: "/discover" },
+    ],
+  },
+  {
+    id: "filebeat",
+    technology: "Filebeat",
+    experience: "advanced",
+    guideType: "fluent_bit",
+    summary: "Ship host and container logs directly to Elasticsearch with Filebeat.",
+    defaultPlatform: "linux",
+    supportedEnvironments: ["kubernetes", "docker", "linux", "on_prem"],
+    expectedSignals: ["logs"],
+    recommendedNextSteps: [
+      { id: "inspect-filebeat-logs", label: "Open Query Lab", path: "/discover" },
+    ],
+  },
+  {
+    id: "logstash",
+    technology: "Logstash",
+    experience: "advanced",
+    guideType: "fluent_bit",
+    summary: "Route logs through Logstash pipelines and index them into Elasticsearch.",
+    defaultPlatform: "linux",
+    supportedEnvironments: ["kubernetes", "docker", "linux", "on_prem"],
+    expectedSignals: ["logs"],
+    recommendedNextSteps: [
+      { id: "inspect-logstash-logs", label: "Open Query Lab", path: "/discover" },
     ],
   },
 ] as const satisfies readonly AddDataTechnologyCatalogEntry[];

@@ -7,6 +7,8 @@ import Typography from "@mui/material/Typography";
 
 import type { OtelReceiverDefinition } from "../../../services/addData/otelReceiverCatalog";
 
+import CollectorAlternatives from "./CollectorAlternatives";
+
 export interface OtelReceiverConfigureProps {
   receiver: OtelReceiverDefinition;
   fieldValues: Record<string, string>;
@@ -15,6 +17,7 @@ export interface OtelReceiverConfigureProps {
   onExistingCollectorConfigChange: (config: string) => void;
   useExistingConfig: boolean;
   onUseExistingConfigChange: (use: boolean) => void;
+  onSwitchToTechnology?: (technologyId: "fluent-bit" | "vector") => void;
 }
 
 export default function OtelReceiverConfigure({
@@ -25,6 +28,7 @@ export default function OtelReceiverConfigure({
   onExistingCollectorConfigChange,
   useExistingConfig,
   onUseExistingConfigChange,
+  onSwitchToTechnology,
 }: OtelReceiverConfigureProps) {
   const handleFieldChange = useCallback(
     (key: string, value: string) => {
@@ -81,6 +85,7 @@ export default function OtelReceiverConfigure({
           />
         )}
       </Stack>
+      <CollectorAlternatives idPrefix="receiver" onSwitchToTechnology={onSwitchToTechnology} />
     </>
   );
 }

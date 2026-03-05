@@ -99,6 +99,7 @@ export default function ServiceMiniDependencyGraph({
           borderColor: alpha(muiTheme.palette.common.white, 0.5),
           borderWidth: 1.5,
         },
+
         label: { color: "inherit", fontWeight: 500 },
       });
     });

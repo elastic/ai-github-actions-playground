@@ -100,7 +100,7 @@ export default function DiscoverEditorPanel(p: DiscoverEditorPanelProps) {
           ) : undefined
         }
         actions={
-          !p.collapsed ? (
+          p.collapsed ? null : (
             <>
               <Tooltip
                 title={hasQueryHistory ? "View previously executed queries" : "Run a query first"}
@@ -121,8 +121,11 @@ export default function DiscoverEditorPanel(p: DiscoverEditorPanelProps) {
                 open={Boolean(p.historyAnchor)}
                 onClose={() => p.setHistoryAnchor(null)}
               >
-                {p.queryHistory.map((historyQuery) => (
-                  <MenuItem key={historyQuery} onClick={() => p.handleSelectHistory(historyQuery)}>
+                {p.queryHistory.map((historyQuery, idx) => (
+                  <MenuItem
+                    key={`${historyQuery}-${idx}`}
+                    onClick={() => p.handleSelectHistory(historyQuery)}
+                  >
                     {historyQuery}
                   </MenuItem>
                 ))}
@@ -139,7 +142,7 @@ export default function DiscoverEditorPanel(p: DiscoverEditorPanelProps) {
                 ES|QL documentation
               </Typography>
             </>
-          ) : null
+          )
         }
       />
       <Collapse in={!p.collapsed} unmountOnExit>

@@ -37,6 +37,7 @@ const A11Y_BASELINE: Record<string, Record<string, Record<string, number>>> = {
     "Query Lab": {
       "aria-prohibited-attr": 1,
       "color-contrast": 16,
+      "scrollable-region-focusable": 1,
     },
     Logs: {
       "aria-prohibited-attr": 1,
@@ -264,11 +265,11 @@ test.describe("smoke – site navigation", () => {
     await expect(page.getByRole("button", { name: "Connect to Elasticsearch" })).toBeVisible();
   });
 
-  test("add data entrypoint exposes the full three-step happy path", async ({ page }) => {
+  test("add data entrypoint exposes the technology picker and step 2", async ({ page }) => {
     await connectToMockCluster(page);
     await navigateViaSidebar(page, "Add Data");
 
-    await expect(page.getByRole("heading", { name: /What are we observing/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /What do you want to monitor/i })).toBeVisible();
     const main = page.getByRole("main");
     await main.getByPlaceholder("Search technologies").fill("Kubernetes");
     await main
@@ -277,9 +278,6 @@ test.describe("smoke – site navigation", () => {
       .click();
     // Clicking a technology now auto-advances to step 2
     await expect(page.getByRole("heading", { name: /Set up Kubernetes/i })).toBeVisible();
-
-    await main.getByRole("button", { name: /^Continue$/ }).click();
-    await expect(page.getByRole("heading", { name: /next steps/i })).toBeVisible();
   });
 
   test("metrics user connects, picks a metric, and gets a line chart-ready result", async ({

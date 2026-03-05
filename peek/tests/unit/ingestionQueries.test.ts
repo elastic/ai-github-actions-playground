@@ -18,9 +18,13 @@ function makeSignal(
 ): PerSignalSnapshot {
   return {
     dataStreamExists: false,
+    hostNames: [],
+    serviceNames: [],
     hostCount: 0,
     agentCount: 0,
+    serviceCount: 0,
     docCount: 0,
+    docsPerSecond: 0,
     maxTimestamp: null,
     ...overrides,
   };
@@ -28,8 +32,11 @@ function makeSignal(
 
 describe("computeIngestionDelta", () => {
   it("detects a new data stream appearing (Tier 1)", () => {
+    const recentTimestamp = new Date(Date.now() - 5_000).toISOString();
     const baseline = makeSnapshot([makeSignal({ signal: "metrics" })]);
-    const current = makeSnapshot([makeSignal({ signal: "metrics", dataStreamExists: true })]);
+    const current = makeSnapshot([
+      makeSignal({ signal: "metrics", dataStreamExists: true, maxTimestamp: recentTimestamp }),
+    ]);
 
     const deltas = computeIngestionDelta(baseline, current);
     expect(deltas).toHaveLength(1);
@@ -46,11 +53,17 @@ describe("computeIngestionDelta", () => {
   });
 
   it("detects new hosts (Tier 2)", () => {
+    const recentTimestamp = new Date(Date.now() - 5_000).toISOString();
     const baseline = makeSnapshot([
       makeSignal({ signal: "metrics", dataStreamExists: true, hostCount: 3 }),
     ]);
     const current = makeSnapshot([
-      makeSignal({ signal: "metrics", dataStreamExists: true, hostCount: 5 }),
+      makeSignal({
+        signal: "metrics",
+        dataStreamExists: true,
+        hostCount: 5,
+        maxTimestamp: recentTimestamp,
+      }),
     ]);
 
     const deltas = computeIngestionDelta(baseline, current);
@@ -58,12 +71,43 @@ describe("computeIngestionDelta", () => {
     expect(deltas[0].currentHostCount).toBe(5);
   });
 
+  it("tracks sample new host and service names since baseline", () => {
+    const recentTimestamp = new Date(Date.now() - 5_000).toISOString();
+    const baseline = makeSnapshot([
+      makeSignal({
+        signal: "traces",
+        dataStreamExists: true,
+        hostNames: ["host-a"],
+        serviceNames: ["svc-a"],
+      }),
+    ]);
+    const current = makeSnapshot([
+      makeSignal({
+        signal: "traces",
+        dataStreamExists: true,
+        hostNames: ["host-a", "host-b"],
+        serviceNames: ["svc-a", "svc-b"],
+        maxTimestamp: recentTimestamp,
+      }),
+    ]);
+
+    const deltas = computeIngestionDelta(baseline, current);
+    expect(deltas[0].newHostNames).toEqual(["host-b"]);
+    expect(deltas[0].newServiceNames).toEqual(["svc-b"]);
+  });
+
   it("detects new agents (Tier 2)", () => {
+    const recentTimestamp = new Date(Date.now() - 5_000).toISOString();
     const baseline = makeSnapshot([
       makeSignal({ signal: "logs", dataStreamExists: true, agentCount: 1 }),
     ]);
     const current = makeSnapshot([
-      makeSignal({ signal: "logs", dataStreamExists: true, agentCount: 4 }),
+      makeSignal({
+        signal: "logs",
+        dataStreamExists: true,
+        agentCount: 4,
+        maxTimestamp: recentTimestamp,
+      }),
     ]);
 
     const deltas = computeIngestionDelta(baseline, current);
@@ -72,17 +116,26 @@ describe("computeIngestionDelta", () => {
   });
 
   it("detects document count growth", () => {
+    const recentTimestamp = new Date(Date.now() - 5_000).toISOString();
     const baseline = makeSnapshot([
-      makeSignal({ signal: "traces", dataStreamExists: true, docCount: 100 }),
+      makeSignal({ signal: "traces", dataStreamExists: true, docCount: 100, docsPerSecond: 1 }),
     ]);
     const current = makeSnapshot([
-      makeSignal({ signal: "traces", dataStreamExists: true, docCount: 250 }),
+      makeSignal({
+        signal: "traces",
+        dataStreamExists: true,
+        docCount: 250,
+        docsPerSecond: 3,
+        maxTimestamp: recentTimestamp,
+      }),
     ]);
 
     const deltas = computeIngestionDelta(baseline, current);
     expect(deltas[0].docCountDelta).toBe(150);
+    expect(deltas[0].docsPerSecondDelta).toBe(2);
     expect(deltas[0].isDataFlowing).toBe(true);
     expect(deltas[0].currentDocCount).toBe(250);
+    expect(deltas[0].currentDocsPerSecond).toBe(3);
   });
 
   it("clamps negative deltas to zero", () => {
@@ -113,15 +166,22 @@ describe("computeIngestionDelta", () => {
   });
 
   it("handles multiple signals independently", () => {
+    const recentTimestamp = new Date(Date.now() - 5_000).toISOString();
     const baseline = makeSnapshot([
-      makeSignal({ signal: "logs", docCount: 10 }),
+      makeSignal({ signal: "logs", dataStreamExists: true, docCount: 10, docsPerSecond: 0.5 }),
       makeSignal({ signal: "metrics", dataStreamExists: true, hostCount: 2 }),
       makeSignal({ signal: "traces" }),
     ]);
     const current = makeSnapshot([
-      makeSignal({ signal: "logs", docCount: 50 }),
+      makeSignal({
+        signal: "logs",
+        dataStreamExists: true,
+        docCount: 50,
+        docsPerSecond: 1.5,
+        maxTimestamp: recentTimestamp,
+      }),
       makeSignal({ signal: "metrics", dataStreamExists: true, hostCount: 2 }),
-      makeSignal({ signal: "traces", dataStreamExists: true }),
+      makeSignal({ signal: "traces", dataStreamExists: true, maxTimestamp: recentTimestamp }),
     ]);
 
     const deltas = computeIngestionDelta(baseline, current);
@@ -130,6 +190,7 @@ describe("computeIngestionDelta", () => {
     // logs: doc count growth
     expect(deltas[0].signal).toBe("logs");
     expect(deltas[0].docCountDelta).toBe(40);
+    expect(deltas[0].docsPerSecondDelta).toBe(1);
     expect(deltas[0].isDataFlowing).toBe(true);
     expect(deltas[0].dataStreamAppeared).toBe(false);
 
@@ -173,6 +234,7 @@ describe("computeIngestionDelta", () => {
   });
 
   it("handles missing baseline signal gracefully", () => {
+    const recentTimestamp = new Date(Date.now() - 5_000).toISOString();
     const baseline = makeSnapshot([]);
     const current = makeSnapshot([
       makeSignal({
@@ -180,6 +242,7 @@ describe("computeIngestionDelta", () => {
         dataStreamExists: true,
         hostCount: 3,
         docCount: 500,
+        maxTimestamp: recentTimestamp,
       }),
     ]);
 

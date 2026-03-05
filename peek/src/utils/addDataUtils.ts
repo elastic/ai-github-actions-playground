@@ -215,6 +215,19 @@ export function parseCommandSteps(command: string): CommandStep[] {
 // ---------------------------------------------------------------------------
 
 export type Platform = "kubernetes" | "docker" | "linux" | "macos" | "windows";
+export type HostRunMode = "run_once" | "systemd" | "shell_profile";
+export type LinuxPackageFormat = "deb" | "rpm" | "auto";
+
+/** Flattened Linux install choice: Run once | Install on Debian/Ubuntu | Install on Red Hat/CentOS. */
+export type LinuxInstallChoice = "run_once" | "deb" | "rpm";
+
+export function linuxChoiceToContext(choice: LinuxInstallChoice): {
+  runMode: HostRunMode;
+  linuxPackageFormat: LinuxPackageFormat;
+} {
+  if (choice === "run_once") return { runMode: "run_once", linuxPackageFormat: "auto" };
+  return { runMode: "systemd", linuxPackageFormat: choice };
+}
 
 const ARTIFACTS_BASE = "https://artifacts.elastic.co/downloads/beats/elastic-agent";
 
@@ -224,6 +237,8 @@ export interface CommandContext {
   apiKey: string;
   endpointType: EndpointType;
   otlpUrl: string;
+  runMode?: HostRunMode;
+  linuxPackageFormat?: LinuxPackageFormat;
 }
 
 export interface PlatformGuide {
@@ -321,24 +336,92 @@ docker compose up -d`;
     label: "Linux",
     quickstartUrl:
       "https://www.elastic.co/docs/solutions/observability/get-started/quickstart-monitor-hosts-with-opentelemetry",
-    command: ({ esUrl, version, apiKey, endpointType, otlpUrl }) => {
+    command: ({
+      esUrl,
+      version,
+      apiKey,
+      endpointType,
+      otlpUrl,
+      runMode = "run_once",
+      linuxPackageFormat = "deb",
+    }) => {
       const isOtlp = endpointType === "managed_otlp";
-      const credentialLines = isOtlp
-        ? `export OTEL_EXPORTER_OTLP_ENDPOINT="${otlpUrl}"
-export OTEL_EXPORTER_OTLP_HEADERS="Authorization=ApiKey ${apiKey}"`
+      const packageExt = linuxPackageFormat === "rpm" ? "rpm" : "deb";
+      const autoInstallSnippet =
+        linuxPackageFormat === "auto"
+          ? `if command -v dpkg &>/dev/null; then
+  sudo dpkg -i "$PKG_FILE"
+else
+  sudo rpm -Uvh "$PKG_FILE"
+fi`
+          : linuxPackageFormat === "rpm"
+            ? 'sudo rpm -Uvh "$PKG_FILE"'
+            : 'sudo dpkg -i "$PKG_FILE"';
+      const sampleConfig = isOtlp
+        ? "otel_samples/managed_otlp/platformlogs_hostmetrics.yml"
+        : "otel_samples/platformlogs_hostmetrics.yml";
+      const envLines = isOtlp
+        ? `ELASTIC_OTLP_ENDPOINT="${otlpUrl}"
+ELASTIC_API_KEY="${apiKey}"`
+        : `ELASTIC_ENDPOINT="${esUrl}"
+ELASTIC_API_KEY="${apiKey}"`;
+      const runOnceCredentialLines = isOtlp
+        ? `export ELASTIC_OTLP_ENDPOINT="${otlpUrl}"
+export ELASTIC_API_KEY="${apiKey}"`
         : `export ELASTIC_ENDPOINT="${esUrl}"
 export ELASTIC_API_KEY="${apiKey}"`;
-      return `# 1. Download and extract the EDOT Collector
-curl -L -O ${ARTIFACTS_BASE}/elastic-agent-${version}-linux-x86_64.tar.gz
-tar xzvf elastic-agent-${version}-linux-x86_64.tar.gz
-cd elastic-agent-${version}-linux-x86_64
+      const runModeCredentials =
+        runMode === "systemd"
+          ? `sudo install -d -m 0755 /etc/elastic
+cat <<EOF | sudo tee /etc/elastic/elastic-agent-otel.env > /dev/null
+${envLines}
+STORAGE_DIR="$AGENT_DIR/data/otel"
+EOF`
+          : runMode === "shell_profile"
+            ? `cat <<EOF >> ~/.profile
+export ${envLines.replaceAll("\n", "\nexport ")}
+export STORAGE_DIR="$AGENT_DIR/data/otel"
+EOF
+source ~/.profile`
+            : `${runOnceCredentialLines}
+export STORAGE_DIR="$AGENT_DIR/data/otel"`;
+      const runModeStart =
+        runMode === "systemd"
+          ? `cat <<EOF | sudo tee /etc/systemd/system/elastic-agent-otel.service > /dev/null
+[Unit]
+Description=Elastic EDOT Collector
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/elastic/elastic-agent-otel.env
+WorkingDirectory=$AGENT_DIR
+ExecStart=$AGENT_DIR/elastic-agent otel --config $AGENT_DIR/otel.yml
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+sudo systemctl daemon-reload
+sudo systemctl enable --now elastic-agent-otel.service`
+          : 'sudo -E "$AGENT_DIR/elastic-agent" otel --config "$AGENT_DIR/otel.yml"';
+      return `# 1. Detect architecture, then install the EDOT Collector package
+AGENT_ARCH="$(uname -m | sed -E 's/^(x86_64|amd64)$/x86_64/; s/^(aarch64|arm64)$/arm64/')"
+AGENT_DIR="/opt/Elastic/Agent"
+PKG_EXT="${linuxPackageFormat === "auto" ? "$(command -v dpkg &>/dev/null && echo deb || echo rpm)" : packageExt}"
+PKG_FILE="elastic-agent-${version}-linux-\${AGENT_ARCH}.\${PKG_EXT}"
+curl -L -O ${ARTIFACTS_BASE}/\${PKG_FILE}
+${autoInstallSnippet}
+sudo cp "$AGENT_DIR/${sampleConfig}" "$AGENT_DIR/otel.yml"
 
 # 2. Set your credentials
-${credentialLines}
-export STORAGE_DIR="$(pwd)/data/otel"
+${runModeCredentials}
+sudo mkdir -p "$AGENT_DIR/data/otel"
 
 # 3. Start the EDOT Collector
-sudo -E ./elastic-agent otel --config otel.yml`;
+${runModeStart}`;
     },
   },
   macos: {
@@ -352,17 +435,16 @@ sudo -E ./elastic-agent otel --config otel.yml`;
 export OTEL_EXPORTER_OTLP_HEADERS="Authorization=ApiKey ${apiKey}"`
         : `export ELASTIC_ENDPOINT="${esUrl}"
 export ELASTIC_API_KEY="${apiKey}"`;
-      return `# 1. Download and extract the EDOT Collector
-# For Apple Silicon (M1/M2/M3/M4):
-curl -L -O ${ARTIFACTS_BASE}/elastic-agent-${version}-darwin-aarch64.tar.gz
-tar xzvf elastic-agent-${version}-darwin-aarch64.tar.gz
-cd elastic-agent-${version}-darwin-aarch64
-
-# For Intel Macs, replace aarch64 with x86_64 above
+      return `# 1. Detect architecture, then download and extract the EDOT Collector
+AGENT_ARCH="$(uname -m | sed -E 's/^arm64$/aarch64/; s/^x86_64$/x86_64/')"
+curl -L -O ${ARTIFACTS_BASE}/elastic-agent-${version}-darwin-\${AGENT_ARCH}.tar.gz
+tar xzvf elastic-agent-${version}-darwin-\${AGENT_ARCH}.tar.gz
+cd elastic-agent-${version}-darwin-\${AGENT_ARCH}
 
 # 2. Set your credentials
 ${credentialLines}
 export STORAGE_DIR="$(pwd)/data/otel"
+mkdir -p "$STORAGE_DIR"
 
 # 3. Start the EDOT Collector
 sudo -E ./elastic-agent otel --config otel.yml`;
@@ -379,16 +461,18 @@ sudo -E ./elastic-agent otel --config otel.yml`;
 $env:OTEL_EXPORTER_OTLP_HEADERS = "Authorization=ApiKey ${apiKey}"`
         : `$env:ELASTIC_ENDPOINT = "${esUrl}"
 $env:ELASTIC_API_KEY = "${apiKey}"`;
-      return `# 1. Download the EDOT Collector
-# Download from: ${ARTIFACTS_BASE}/elastic-agent-${version}-windows-x86_64.zip
+      return `# 1. Detect architecture and download the EDOT Collector
+$agentArch = if ($env:PROCESSOR_ARCHITECTURE -eq "ARM64") { "arm64" } else { "x86_64" }
+# Download from: ${ARTIFACTS_BASE}/elastic-agent-${version}-windows-$agentArch.zip
 # Or use PowerShell:
-Invoke-WebRequest -Uri "${ARTIFACTS_BASE}/elastic-agent-${version}-windows-x86_64.zip" -OutFile elastic-agent.zip
+Invoke-WebRequest -Uri "${ARTIFACTS_BASE}/elastic-agent-${version}-windows-$agentArch.zip" -OutFile elastic-agent.zip
 Expand-Archive -Path elastic-agent.zip -DestinationPath .
-cd elastic-agent-${version}-windows-x86_64
+cd elastic-agent-${version}-windows-$agentArch
 
 # 2. Set your credentials
 ${credentialLines}
 $env:STORAGE_DIR = "$PWD\\data\\otel"
+New-Item -ItemType Directory -Path $env:STORAGE_DIR -Force | Out-Null
 
 # 3. Start the EDOT Collector
 .\\elastic-agent.exe otel --config otel.yml`;
