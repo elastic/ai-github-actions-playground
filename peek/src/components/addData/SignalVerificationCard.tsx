@@ -117,30 +117,32 @@ export default function SignalVerificationCard({ delta, isPolling }: SignalVerif
         >
           {/* Data stream */}
           <Box sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
-            {delta.dataStreamAppeared ? (
+            {delta.baselineDataStreamExists || delta.dataStreamAppeared ? (
               <CheckCircleIcon color="success" sx={{ fontSize: 14 }} />
             ) : (
               <RadioButtonUncheckedIcon color="disabled" sx={{ fontSize: 14 }} />
             )}
             <Typography variant="caption" color="text.secondary">
-              {delta.dataStreamAppeared ? "Stream exists" : "No stream yet"}
+              {delta.baselineDataStreamExists || delta.dataStreamAppeared
+                ? "Stream exists"
+                : "No stream yet"}
             </Typography>
           </Box>
 
-          {/* Doc count */}
+          {/* Doc rate (docs/sec) */}
           <Box sx={{ display: "flex", gap: 0.5, alignItems: "baseline" }}>
             <Typography
               variant="body2"
               sx={{ fontVariantNumeric: "tabular-nums", fontWeight: 600 }}
             >
-              {formatNumber(delta.currentDocCount)}
+              {formatRate(delta.currentDocsPerSecond)}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              docs
+              docs/sec
             </Typography>
-            {delta.docCountDelta > 0 && (
+            {delta.docsPerSecondDelta > 0 && (
               <Typography variant="caption" color="success.main" sx={{ fontWeight: 600 }}>
-                (+{formatNumber(delta.docCountDelta)}
+                (+{formatRate(delta.docsPerSecondDelta)}
                 {relativeLatest ? `, ${relativeLatest}` : ""})
               </Typography>
             )}
@@ -215,6 +217,14 @@ function StatusIcon({ detected, isPolling }: { detected: boolean; isPolling: boo
     );
   }
   return <RadioButtonUncheckedIcon color="disabled" fontSize="small" />;
+}
+
+function formatRate(docsPerSecond: number): string {
+  if (docsPerSecond === 0) return "0";
+  if (docsPerSecond < 0.01) return "<0.01";
+  if (docsPerSecond < 1) return docsPerSecond.toFixed(2);
+  if (docsPerSecond < 100) return docsPerSecond.toFixed(1);
+  return formatNumber(docsPerSecond);
 }
 
 function formatRelativeTime(isoTimestamp: string): string {

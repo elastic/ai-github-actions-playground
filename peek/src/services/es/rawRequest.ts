@@ -75,7 +75,15 @@ export async function executeRawRequest(
     timeoutController.abort(new DOMException("Request timed out", "AbortError"));
   }, RAW_REQUEST_TIMEOUT_MS);
   const signals: AbortSignal[] = [timeoutController.signal];
-  if (signal) signals.push(signal);
+  if (signal) {
+    try {
+      // Validate signal is acceptable to AbortSignal.any (can reject cross-realm/proxy values)
+      AbortSignal.any([signal]);
+      signals.push(signal);
+    } catch {
+      // Ignore invalid signal; use timeout only
+    }
+  }
   const combinedSignal = AbortSignal.any(signals);
   const rawBody = body && body.trim() ? body : undefined;
   const normalizedMethod = method.toUpperCase();

@@ -1,6 +1,10 @@
 import type { ElasticsearchClient } from "../es";
 import { gracefulSearch } from "../es/searchHelpers";
-import { detectTelemetrySignals, type TelemetrySignal } from "../../utils/addDataUtils";
+import {
+  detectTelemetrySignals,
+  getIngestionIndexPattern,
+  type TelemetrySignal,
+} from "../../utils/addDataUtils";
 
 // ---------------------------------------------------------------------------
 // Snapshot types
@@ -71,12 +75,12 @@ const DOC_RATE_LOOKBACK_GTE = "now-60s";
 
 async function queryHostAgentCardinality(
   client: ElasticsearchClient,
-  signalType: TelemetrySignal,
+  indexPattern: string,
   signal?: AbortSignal,
 ): Promise<{ hostCount: number; serviceCount: number; agentCount: number }> {
   const data = await gracefulSearch(
     client,
-    `${signalType}-*`,
+    indexPattern,
     {
       size: 0,
       // Use a longer window for infra cardinality to avoid short-lived host churn.
@@ -99,12 +103,12 @@ async function queryHostAgentCardinality(
 
 async function queryRecentEntityNames(
   client: ElasticsearchClient,
-  signalType: TelemetrySignal,
+  indexPattern: string,
   signal?: AbortSignal,
 ): Promise<{ hostNames: string[]; serviceNames: string[] }> {
   const data = await gracefulSearch(
     client,
-    `${signalType}-*`,
+    indexPattern,
     {
       size: 0,
       query: { range: { "@timestamp": { gte: HOST_SERVICE_LOOKBACK_GTE } } },
@@ -128,12 +132,12 @@ async function queryRecentEntityNames(
 
 async function queryDocCount(
   client: ElasticsearchClient,
-  signalType: TelemetrySignal,
+  indexPattern: string,
   signal?: AbortSignal,
 ): Promise<number> {
   const data = await gracefulSearch(
     client,
-    `${signalType}-*`,
+    indexPattern,
     {
       size: 0,
       track_total_hits: true,
@@ -148,12 +152,12 @@ async function queryDocCount(
 
 async function queryDocsPerSecond(
   client: ElasticsearchClient,
-  signalType: TelemetrySignal,
+  indexPattern: string,
   signal?: AbortSignal,
 ): Promise<number> {
   const data = await gracefulSearch(
     client,
-    `${signalType}-*`,
+    indexPattern,
     {
       size: 0,
       track_total_hits: true,
@@ -169,12 +173,12 @@ async function queryDocsPerSecond(
 
 async function queryLatestTimestamp(
   client: ElasticsearchClient,
-  signalType: TelemetrySignal,
+  indexPattern: string,
   signal?: AbortSignal,
 ): Promise<string | null> {
   const data = await gracefulSearch(
     client,
-    `${signalType}-*`,
+    indexPattern,
     {
       size: 0,
       aggs: { latest: { max: { field: "@timestamp" } } },
@@ -194,15 +198,17 @@ export async function captureIngestionSnapshot(
   expectedSignals: readonly TelemetrySignal[],
   dataStreamSignals: Set<TelemetrySignal>,
   signal?: AbortSignal,
+  hostOnboarding = false,
 ): Promise<IngestionSnapshot> {
   const signals = await Promise.all(
     expectedSignals.map(async (signalType): Promise<PerSignalSnapshot> => {
+      const indexPattern = getIngestionIndexPattern(signalType, hostOnboarding);
       const [cardinality, entityNames, docCount, docsPerSecond, maxTimestamp] = await Promise.all([
-        queryHostAgentCardinality(client, signalType, signal),
-        queryRecentEntityNames(client, signalType, signal),
-        queryDocCount(client, signalType, signal),
-        queryDocsPerSecond(client, signalType, signal),
-        queryLatestTimestamp(client, signalType, signal),
+        queryHostAgentCardinality(client, indexPattern, signal),
+        queryRecentEntityNames(client, indexPattern, signal),
+        queryDocCount(client, indexPattern, signal),
+        queryDocsPerSecond(client, indexPattern, signal),
+        queryLatestTimestamp(client, indexPattern, signal),
       ]);
       return {
         signal: signalType,
@@ -223,18 +229,21 @@ export async function captureIngestionSnapshot(
 
 /**
  * Convenience wrapper: detects data streams then captures the full snapshot.
+ * @param hostOnboarding - When true (Linux/Windows/macOS hosts), metrics uses hostmetricsreceiver streams.
  */
 export async function captureFullSnapshot(
   client: ElasticsearchClient,
   expectedSignals: readonly TelemetrySignal[],
   signal?: AbortSignal,
+  hostOnboarding = false,
 ): Promise<{ snapshot: IngestionSnapshot; dataStreamSignals: Set<TelemetrySignal> }> {
-  const dataStreamSignals = await detectTelemetrySignals(client, signal);
+  const dataStreamSignals = await detectTelemetrySignals(client, signal, hostOnboarding);
   const snapshot = await captureIngestionSnapshot(
     client,
     expectedSignals,
     dataStreamSignals,
     signal,
+    hostOnboarding,
   );
   return { snapshot, dataStreamSignals };
 }
@@ -288,13 +297,17 @@ export function computeIngestionDelta(
       !Number.isNaN(latestTimestampMs) &&
       !Number.isNaN(baselineCapturedAtMs) &&
       latestTimestampMs >= baselineCapturedAtMs;
-    // Only count stream appearance as onboarding evidence when data arrived since baseline capture.
-    const dataStreamAppeared = !baseDataStream && curr.dataStreamExists && dataArrivedSinceBaseline;
+    // Count stream appearance when data arrived since baseline (docs/sec requirement disabled for now).
+    const dataStreamAppeared =
+      !baseDataStream &&
+      curr.dataStreamExists &&
+      dataArrivedSinceBaseline &&
+      latestTimestampIsRecent;
     const isDataFlowing = baseDataStream && significantVolumeChange && latestTimestampIsRecent;
+    // New hosts/services/agents count as detected (docs/sec requirement disabled for now).
     const stableInfraGrowth =
       baseDataStream &&
       latestTimestampIsRecent &&
-      docsPerSecondDelta > 0 &&
       (newHostsDetected > 0 || newServicesDetected > 0 || newAgentsDetected > 0);
     const signalDetected = dataStreamAppeared || isDataFlowing || stableInfraGrowth;
 

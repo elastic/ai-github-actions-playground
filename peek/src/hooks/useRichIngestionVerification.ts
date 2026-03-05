@@ -43,6 +43,7 @@ export interface IngestionVerificationState {
 
 export function useRichIngestionVerification(
   expectedSignals: readonly TelemetrySignal[],
+  hostOnboarding = false,
 ): IngestionVerificationState {
   const connection = useConnectionStore((s) => s.connection);
   const queryClient = useQueryClient();
@@ -63,19 +64,26 @@ export function useRichIngestionVerification(
   // Stable reference to expectedSignals for query functions — kept current without
   // making queries re-run every time the array reference changes.
   const expectedSignalsRef = useRef(expectedSignals);
+  const hostOnboardingRef = useRef(hostOnboarding);
   useEffect(() => {
     expectedSignalsRef.current = expectedSignals;
-  }, [expectedSignals]);
+    hostOnboardingRef.current = hostOnboarding;
+  }, [expectedSignals, hostOnboarding]);
 
   // -----------------------------------------------------------------------
   // Baseline query — runs once when polling is enabled and baseline is null
   // -----------------------------------------------------------------------
   const baselineQuery = useQuery({
-    queryKey: ["ingestion-baseline", connection?.url],
+    queryKey: ["ingestion-baseline", connection?.url, hostOnboarding],
     queryFn: async ({ signal }) => {
       if (!connection) throw new Error("No active Elasticsearch connection");
       const client = new ElasticsearchClient(connection);
-      const result = await captureFullSnapshot(client, expectedSignalsRef.current, signal);
+      const result = await captureFullSnapshot(
+        client,
+        expectedSignalsRef.current,
+        signal,
+        hostOnboardingRef.current,
+      );
       if (!signal.aborted) setBaseline(result.snapshot);
       return result;
     },
@@ -89,11 +97,16 @@ export function useRichIngestionVerification(
   // Poll query — runs every 5s after baseline is captured
   // -----------------------------------------------------------------------
   const pollQuery = useQuery({
-    queryKey: ["ingestion-poll", connection?.url],
+    queryKey: ["ingestion-poll", connection?.url, hostOnboarding],
     queryFn: async ({ signal }) => {
       if (!connection) throw new Error("No active Elasticsearch connection");
       const client = new ElasticsearchClient(connection);
-      return captureFullSnapshot(client, expectedSignalsRef.current, signal);
+      return captureFullSnapshot(
+        client,
+        expectedSignalsRef.current,
+        signal,
+        hostOnboardingRef.current,
+      );
     },
     enabled: Boolean(connection && pollingEnabled && baseline),
     refetchInterval: () => POLL_INTERVAL_MS,

@@ -220,7 +220,7 @@ export default function AddDataStepSetup(p: AddDataStepSetupProps) {
   }, [showInstallSection]);
 
   useEffect(() => {
-    if (!hostOnboardingFlow || !showInstallSection || !p.verification.overallDetected) return;
+    if (!showInstallSection || !p.verification.overallDetected) return;
     const shownAt = installVisibleSinceRef.current ?? Date.now();
     const elapsed = Date.now() - shownAt;
     const waitRemaining = Math.max(0, MIN_INSTALL_VISIBLE_MS - elapsed);
@@ -241,7 +241,7 @@ export default function AddDataStepSetup(p: AddDataStepSetupProps) {
         installAutoCollapseTimeoutRef.current = null;
       }
     };
-  }, [hostOnboardingFlow, showInstallSection, p.verification.overallDetected]);
+  }, [showInstallSection, p.verification.overallDetected]);
 
   useEffect(() => {
     if (!showCredentialsSection) {

@@ -321,13 +321,15 @@ describe("AddDataPage", () => {
     ).toBeInTheDocument();
     expect(screen.getAllByText(/AGENT_ARCH="\$\(uname -m \| sed -E/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/aarch64\|arm64/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/linux-\$\{AGENT_ARCH\}\.\$\{PKG_EXT\}/i).length).toBeGreaterThan(0);
+    // Run once (default): uses generic tar.gz
+    expect(screen.getAllByText(/\.tar\.gz/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/tar xzvf/i).length).toBeGreaterThan(0);
     await user.click(screen.getByRole("button", { name: /Show full command/i }));
     expect(
-      screen.getAllByText(
-        /cp "\$AGENT_DIR\/otel_samples\/(managed_otlp\/)?platformlogs_hostmetrics\.yml" "\$AGENT_DIR\/otel\.yml"/i,
-      ).length,
+      screen.getAllByText(/cp .*otel_samples.*platformlogs_hostmetrics\.yml.*otel\.yml/i).length,
     ).toBeGreaterThan(0);
+
+    await user.click(screen.getByRole("button", { name: /Install on Debian\/Ubuntu \(\.deb\)/i }));
     expect(screen.getAllByText(/sudo dpkg -i "\$PKG_FILE"/i).length).toBeGreaterThan(0);
 
     await user.click(screen.getByRole("button", { name: /Install on Red Hat\/CentOS \(\.rpm\)/i }));
@@ -446,8 +448,7 @@ describe("AddDataPage", () => {
     expect(screen.queryByRole("button", { name: /^Continue$/i })).not.toBeInTheDocument();
   }, 30_000);
 
-  it("shows OTLP transport fallback when no ingest endpoint can be derived", async () => {
-    // Use a non-cloud URL so no OTLP endpoint can be derived
+  it("shows collector output and API key section for collector setup", async () => {
     useConnectionStore.getState().setConnection({
       url: "http://localhost:9200",
       apiKey: "testkey",
@@ -460,13 +461,9 @@ describe("AddDataPage", () => {
     await user.click(screen.getByRole("button", { name: /Linux Host/i }));
     await user.click(screen.getByRole("button", { name: /Monitor with OpenTelemetry Collector/i }));
 
-    // Transport reflects auto-detection in collector configuration.
     await waitFor(() => {
-      expect(
-        screen.getByText(/Sending data via Elasticsearch _bulk transport/i),
-      ).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /Bulk/i })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /OTLP/i })).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /_BULK/i })).toBeInTheDocument();
       expect(screen.getByDisplayValue("http://localhost:9200")).toBeInTheDocument();
     });
   }, 30_000);
@@ -675,6 +672,31 @@ describe("detectTelemetrySignals", () => {
     } as unknown as ElasticsearchClient;
     const signals = await detectTelemetrySignals(client);
     expect(signals.size).toBe(0);
+  });
+
+  it("for host onboarding, metrics requires hostmetricsreceiver streams", async () => {
+    const client = {
+      getDataStreams: vi.fn().mockResolvedValue({
+        data_streams: [
+          { name: "metrics-host.otel-default" },
+          { name: "metrics-hostmetricsreceiver.otel-default" },
+        ],
+      }),
+    } as unknown as ElasticsearchClient;
+    const signalsDefault = await detectTelemetrySignals(client, undefined, false);
+    const signalsHost = await detectTelemetrySignals(client, undefined, true);
+    expect(signalsDefault).toContain("metrics");
+    expect(signalsHost).toContain("metrics");
+  });
+
+  it("for host onboarding, metrics is absent without hostmetricsreceiver", async () => {
+    const client = {
+      getDataStreams: vi.fn().mockResolvedValue({
+        data_streams: [{ name: "metrics-host.otel-default" }],
+      }),
+    } as unknown as ElasticsearchClient;
+    const signals = await detectTelemetrySignals(client, undefined, true);
+    expect(signals.has("metrics")).toBe(false);
   });
 });
 
