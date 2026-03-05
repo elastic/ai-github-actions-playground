@@ -36,6 +36,11 @@ describe("profilingUtils", () => {
     expect(parseFrameIds("abc123,def456")).toEqual(["abc123", "def456"]);
   });
 
+  it("trims whitespace from comma-separated frame IDs", () => {
+    expect(parseFrameIds("abc123, def456")).toEqual(["abc123", "def456"]);
+    expect(parseFrameIds(" abc123 , def456 , ghi789 ")).toEqual(["abc123", "def456", "ghi789"]);
+  });
+
   it("filters empty entries from comma-separated format", () => {
     expect(parseFrameIds("abc123,,def456,")).toEqual(["abc123", "def456"]);
   });
