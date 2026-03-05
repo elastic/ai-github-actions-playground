@@ -159,6 +159,7 @@ export default function DataStreamsPage() {
   const streamsData = streamsResult.status === "success" ? streamsResult.data : undefined;
   const dataStreams = useMemo(() => streamsData ?? [], [streamsData]);
   const indexRows = indicesResult.status === "success" ? indicesResult.data : [];
+  const indicesMetricsError = indicesResult.status === "error" ? indicesResult.error : null;
   const fieldCaps = fieldCapsResult.status === "success" ? fieldCapsResult.data : null;
   const loadingFields = fieldCapsResult.status === "loading";
   const error =
@@ -244,7 +245,7 @@ export default function DataStreamsPage() {
     }
 
     const rows: GroupedStreamRow[] = [];
-    for (const groupName of [...grouped.keys()].sort((a, b) => (a ?? "").localeCompare(b ?? ""))) {
+    for (const groupName of grouped.keys()) {
       const groupStreams = grouped.get(groupName) ?? [];
       const showGroupHeader = groupName !== null && groupStreams.length > 1;
       if (showGroupHeader) {
@@ -502,6 +503,11 @@ export default function DataStreamsPage() {
         )}
 
         {error && <Alert severity="error">{error}</Alert>}
+        {indicesMetricsError && (
+          <Alert severity="warning">
+            Index metrics unavailable: {indicesMetricsError}. Docs/Size values may be incomplete.
+          </Alert>
+        )}
         {slotInsights.error && (
           <Alert severity="warning">AI insights unavailable: {slotInsights.error}</Alert>
         )}

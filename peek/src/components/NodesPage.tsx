@@ -40,6 +40,8 @@ export default function NodesPage() {
   const loading = result.status === "loading";
   const error = result.status === "error" ? result.error : null;
   const data = result.status === "success" ? result.data : null;
+  const nodeDataUnavailable =
+    partialErrors.includes("nodes") && partialErrors.includes("node stats");
 
   const rows = useMemo<NodeDetailRow[]>(() => {
     const infoNodes = data?.nodesInfo?.nodes ?? {};
@@ -103,16 +105,12 @@ export default function NodesPage() {
           variant="outlined"
           sx={{ display: "flex", flex: 1, minHeight: 0, overflow: "hidden" }}
         >
-          {rows.length === 0 && !loading && partialErrors.length === 0 ? (
+          {rows.length === 0 && !loading && (partialErrors.length === 0 || nodeDataUnavailable) ? (
             <EmptyState
               icon={<MemoryIcon sx={{ fontSize: 28 }} />}
-              heading={
-                partialErrors.includes("nodes") && partialErrors.includes("node stats")
-                  ? "Node data unavailable"
-                  : "No nodes found"
-              }
+              heading={nodeDataUnavailable ? "Node data unavailable" : "No nodes found"}
               description={
-                partialErrors.includes("nodes") && partialErrors.includes("node stats")
+                nodeDataUnavailable
                   ? "Node APIs are unavailable for this cluster or current permissions."
                   : "No node metadata is currently available."
               }
