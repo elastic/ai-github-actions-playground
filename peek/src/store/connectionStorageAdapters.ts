@@ -231,9 +231,11 @@ export const electronStorage = createElectronStorage<PersistedConnectionState>({
         /* ignore parse errors during cleanup */
       }
     }
-    await api.deleteCredential(name + API_KEY_SESSION_SUFFIX);
-    await api.deleteCredential(name + OTLP_API_KEY_SESSION_SUFFIX);
-    await api.deleteCredential(name + PASSWORD_SESSION_SUFFIX);
+    await Promise.allSettled([
+      api.deleteCredential(name + API_KEY_SESSION_SUFFIX),
+      api.deleteCredential(name + OTLP_API_KEY_SESSION_SUFFIX),
+      api.deleteCredential(name + PASSWORD_SESSION_SUFFIX),
+    ]);
   },
 });
 
