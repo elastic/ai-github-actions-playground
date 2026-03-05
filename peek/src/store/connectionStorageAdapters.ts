@@ -211,12 +211,11 @@ export const electronStorage = createElectronStorage<PersistedConnectionState>({
   },
   clearSecrets: async (name, localRaw) => {
     const api = window.electronAPI!;
-    const throwOnDeleteFailures = (
+    const collectDeleteFailures = (
       results: PromiseSettledResult<unknown>[],
       keys: string[],
-      message: string,
-    ) => {
-      const failures = results
+    ): Error[] =>
+      results
         .map((result, index) => ({ result, key: keys[index] }))
         .filter(
           (entry): entry is { result: PromiseRejectedResult; key: string } =>
@@ -226,10 +225,7 @@ export const electronStorage = createElectronStorage<PersistedConnectionState>({
           ({ result, key }) =>
             new Error(`Failed to delete credential "${key}": ${String(result.reason)}`),
         );
-      if (failures.length > 0) {
-        throw new AggregateError(failures, message);
-      }
-    };
+    const deletionFailures: Error[] = [];
 
     if (localRaw) {
       let stored: { state: PersistedConnectionState } | null = null;
@@ -247,11 +243,7 @@ export const electronStorage = createElectronStorage<PersistedConnectionState>({
         const profileDeleteResults = await Promise.allSettled(
           profileDeleteKeys.map((key) => api.deleteCredential(key)),
         );
-        throwOnDeleteFailures(
-          profileDeleteResults,
-          profileDeleteKeys,
-          "Failed to delete one or more profile credentials",
-        );
+        deletionFailures.push(...collectDeleteFailures(profileDeleteResults, profileDeleteKeys));
       }
     }
     const baseDeleteKeys = [
@@ -262,11 +254,10 @@ export const electronStorage = createElectronStorage<PersistedConnectionState>({
     const baseDeleteResults = await Promise.allSettled(
       baseDeleteKeys.map((key) => api.deleteCredential(key)),
     );
-    throwOnDeleteFailures(
-      baseDeleteResults,
-      baseDeleteKeys,
-      "Failed to delete one or more base credentials",
-    );
+    deletionFailures.push(...collectDeleteFailures(baseDeleteResults, baseDeleteKeys));
+    if (deletionFailures.length > 0) {
+      throw new AggregateError(deletionFailures, "Failed to delete one or more credentials");
+    }
   },
 });
 
