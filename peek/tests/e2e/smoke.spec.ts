@@ -240,6 +240,7 @@ async function connectToMockCluster(page: Page) {
   await page.goto("");
   await page.getByRole("button", { name: "Connect to Elasticsearch" }).click();
   await page.getByRole("textbox", { name: "Elasticsearch URL" }).fill(DEFAULT_ES_URL);
+  await page.getByRole("textbox", { name: "API Key" }).fill("test-api-key");
   await page.getByRole("button", { name: "Connect", exact: true }).click();
 
   // Wait for connection dialog to close
@@ -353,6 +354,9 @@ test.describe("smoke – site navigation", () => {
     const connectBtn = page.getByRole("button", { name: "Connect", exact: true });
     await expect(connectBtn).toBeDisabled();
     await page.getByRole("textbox", { name: "Elasticsearch URL" }).fill(DEFAULT_ES_URL);
+    // Connect still disabled — credentials are also required
+    await expect(connectBtn).toBeDisabled();
+    await page.getByRole("textbox", { name: "API Key" }).fill("test-api-key");
     await expect(connectBtn).toBeEnabled();
     await page.getByRole("button", { name: "Cancel" }).click();
 
