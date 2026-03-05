@@ -273,8 +273,11 @@ export default function ExplorePage() {
   const metricsQueryExplanation = useQueryExplanation(displayQuery);
 
   useEffect(() => {
-    setRawQuery(null);
-  }, [effectiveQuery, setRawQuery]);
+    if (!rawQuery) return;
+    if (formatEsqlQuery(rawQuery) === formatEsqlQuery(effectiveQuery)) {
+      setRawQuery(null);
+    }
+  }, [effectiveQuery, rawQuery, setRawQuery]);
 
   // Cmd/Ctrl+[ toggles the search panel collapse
   useEffect(() => {
