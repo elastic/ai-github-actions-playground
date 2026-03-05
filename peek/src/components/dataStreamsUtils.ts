@@ -85,9 +85,11 @@ export function compareStreams(
       cmp =
         (STREAM_STATUS_ORDER[a.status.toUpperCase()] ?? 99) -
         (STREAM_STATUS_ORDER[b.status.toUpperCase()] ?? 99);
+      if (cmp === 0) cmp = a.name.localeCompare(b.name);
       break;
     case "indices":
       cmp = a.indices.length - b.indices.length;
+      if (cmp === 0) cmp = a.name.localeCompare(b.name);
       break;
     default:
       cmp = 0;

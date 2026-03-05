@@ -46,6 +46,15 @@ export default function LogsResultsView({
   onViewModeChange,
   onOpenExtractDialog,
 }: LogsResultsViewProps) {
+  const traceColIdx = result?.columns.findIndex((c) => c.name === TRACE_ID_FIELD) ?? -1;
+  const firstTraceValue =
+    traceColIdx >= 0
+      ? (result?.values.find((row) => {
+          const traceCandidate = row[traceColIdx];
+          return traceCandidate != null && String(traceCandidate).trim() !== "";
+        })?.[traceColIdx] ?? null)
+      : null;
+
   return (
     <Paper
       variant="outlined"
@@ -120,38 +129,26 @@ export default function LogsResultsView({
               onCellFilter(columnName, value, false);
             }}
           />
-          {result.columns.some((col) => col.name === TRACE_ID_FIELD) &&
-            result.values.length > 0 && (
-              <Box
-                sx={{
-                  display: "flex",
-                  gap: 1,
-                  p: 1,
-                  borderTop: 1,
-                  borderColor: "divider",
-                }}
+          {firstTraceValue != null && (
+            <Box
+              sx={{
+                display: "flex",
+                gap: 1,
+                p: 1,
+                borderTop: 1,
+                borderColor: "divider",
+              }}
+            >
+              <Button
+                size="small"
+                variant="text"
+                startIcon={<OpenInNewIcon />}
+                onClick={() => onTracePivot(String(firstTraceValue))}
               >
-                <Button
-                  size="small"
-                  variant="text"
-                  startIcon={<OpenInNewIcon />}
-                  onClick={() => {
-                    const traceColIdx = result.columns.findIndex((c) => c.name === TRACE_ID_FIELD);
-                    if (traceColIdx < 0) return;
-                    const firstNonNull = result.values.find((row) => {
-                      const traceCandidate = row[traceColIdx];
-                      return traceCandidate != null && String(traceCandidate).trim() !== "";
-                    });
-                    const traceValue = firstNonNull?.[traceColIdx] ?? null;
-                    if (traceValue != null) {
-                      onTracePivot(String(traceValue));
-                    }
-                  }}
-                >
-                  Open first trace in Query Lab
-                </Button>
-              </Box>
-            )}
+                Open first trace in Query Lab
+              </Button>
+            </Box>
+          )}
         </>
       )}
 
@@ -171,7 +168,8 @@ export default function LogsResultsView({
             <ListItem key={group.pattern} disablePadding>
               <ListItemButton
                 onClick={() => {
-                  onSearchTextChange(`"${group.sample}"`);
+                  const escapedSample = group.sample.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+                  onSearchTextChange(`"${escapedSample}"`);
                   onViewModeChange("lines");
                 }}
               >
