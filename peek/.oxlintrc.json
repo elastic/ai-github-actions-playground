@@ -1,6 +1,7 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "plugins": ["typescript", "import", "react", "jsx-a11y"],
+  "jsPlugins": ["./eslint-plugin-peek/index.js"],
   "categories": {
     "correctness": "error",
     "suspicious": "warn",
@@ -14,7 +15,32 @@
     "import/no-duplicates": "error",
     "no-debugger": "error",
     "no-console": "off",
-    "jsx-a11y/prefer-tag-over-role": "warn"
+    "jsx-a11y/prefer-tag-over-role": "warn",
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          {
+            "regex": "^@mui/(material|icons-material|lab)$",
+            "message": "Import from the specific module path (e.g. '@mui/material/Button') instead of the barrel export."
+          },
+          {
+            "regex": "services/es/client$",
+            "message": "Import from the services/es barrel (services/es) or from hooks/ instead of services/es/client directly."
+          }
+        ]
+      }
+    ],
+    "eslint-plugin-peek/no-hardcoded-colors": "error",
+    "eslint-plugin-peek/consistent-typography-variants": "error",
+    "eslint-plugin-peek/no-direct-echarts-import": "error",
+    "eslint-plugin-peek/no-div-onclick": "error",
+    "eslint-plugin-peek/enforce-spacing-tokens": "error",
+    "eslint-plugin-peek/no-hardcoded-heights": "error",
+    "eslint-plugin-peek/max-component-lines": ["warn", { "max": 200 }],
+    "eslint-plugin-peek/enforce-empty-state": "error",
+    "eslint-plugin-peek/no-circular-progress": "error",
+    "eslint-plugin-peek/require-icon-button-aria-label": "error"
   },
   "ignorePatterns": ["dist", "*.generated.d.ts", "eslint-plugin-peek/**"]
 }
