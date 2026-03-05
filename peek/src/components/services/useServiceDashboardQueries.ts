@@ -29,6 +29,22 @@ interface UseServiceDashboardQueriesParams {
 /** Shared query key prefix for all service-dashboard queries. */
 const KEY_PREFIX = "service-dashboard-" as const;
 
+/**
+ * Derive a stable fingerprint from the connection that covers auth-relevant
+ * fields.  If only the URL is keyed, credential or proxy changes are invisible
+ * to React Query and stale cached data is returned.
+ */
+function getConnectionFingerprint(connection: ElasticsearchConnection | null): string | null {
+  if (!connection) return null;
+  return [
+    connection.url,
+    connection.apiKey ?? "",
+    connection.username ?? "",
+    connection.password ?? "",
+    connection.proxyUrl ?? "",
+  ].join("|");
+}
+
 /** Shared options for all service-dashboard queries. */
 const QUERY_OPTIONS = {
   retry: false,
@@ -42,14 +58,14 @@ function isServiceDashboardQuery(queryKey: readonly unknown[]): boolean {
 
 function isCurrentServiceDashboardQuery(
   queryKey: readonly unknown[],
-  connectionUrl: string | null,
+  connectionFingerprint: string | null,
   serviceName: string,
   timeFrom: string,
   timeTo: string,
 ): boolean {
   return (
     isServiceDashboardQuery(queryKey) &&
-    queryKey[1] === connectionUrl &&
+    queryKey[1] === connectionFingerprint &&
     queryKey[2] === serviceName &&
     queryKey[3] === timeFrom &&
     queryKey[4] === timeTo
@@ -63,14 +79,14 @@ export function useServiceDashboardQueries({
   timeTo,
 }: UseServiceDashboardQueriesParams) {
   const queryClient = useQueryClient();
-  const connectionUrl = connection?.url ?? null;
+  const connectionFingerprint = getConnectionFingerprint(connection);
   const normalizedServiceName = serviceName.trim();
 
   // Track the params that were active when handleReset was called.  When the
   // search params change, the mismatch automatically re-enables queries without
   // a setState-inside-useEffect.
   const [resetKey, setResetKey] = useState<string | null>(null);
-  const paramsKey = `${connectionUrl ?? ""}|${normalizedServiceName}|${timeFrom}|${timeTo}`;
+  const paramsKey = `${connectionFingerprint ?? ""}|${normalizedServiceName}|${timeFrom}|${timeTo}`;
   const disabled = resetKey === paramsKey;
 
   const canFetch = !disabled && Boolean(connection) && normalizedServiceName.length > 0;
@@ -83,7 +99,7 @@ export function useServiceDashboardQueries({
   const routesQuery = useQuery<EsqlResponse | null>({
     queryKey: [
       `${KEY_PREFIX}routes`,
-      connectionUrl,
+      connectionFingerprint,
       normalizedServiceName,
       timeFrom,
       timeTo,
@@ -102,7 +118,7 @@ export function useServiceDashboardQueries({
   const tracesQuery = useQuery<EsqlResponse | null>({
     queryKey: [
       `${KEY_PREFIX}traces`,
-      connectionUrl,
+      connectionFingerprint,
       normalizedServiceName,
       timeFrom,
       timeTo,
@@ -135,7 +151,7 @@ export function useServiceDashboardQueries({
   const traceSpansQuery = useQuery<EsqlResponse | null>({
     queryKey: [
       `${KEY_PREFIX}trace-spans`,
-      connectionUrl,
+      connectionFingerprint,
       normalizedServiceName,
       timeFrom,
       timeTo,
@@ -155,7 +171,7 @@ export function useServiceDashboardQueries({
   const deploymentsQuery = useQuery<EsqlResponse | null>({
     queryKey: [
       `${KEY_PREFIX}deployments`,
-      connectionUrl,
+      connectionFingerprint,
       normalizedServiceName,
       timeFrom,
       timeTo,
@@ -174,7 +190,7 @@ export function useServiceDashboardQueries({
   const sparklineQuery = useQuery<EsqlResponse | null>({
     queryKey: [
       `${KEY_PREFIX}sparkline`,
-      connectionUrl,
+      connectionFingerprint,
       normalizedServiceName,
       timeFrom,
       timeTo,
@@ -193,7 +209,7 @@ export function useServiceDashboardQueries({
   const k8sContextQuery = useQuery<EsqlResponse | null>({
     queryKey: [
       `${KEY_PREFIX}k8s-context`,
-      connectionUrl,
+      connectionFingerprint,
       normalizedServiceName,
       timeFrom,
       timeTo,
@@ -262,13 +278,13 @@ export function useServiceDashboardQueries({
       predicate: (query) =>
         isCurrentServiceDashboardQuery(
           query.queryKey,
-          connectionUrl,
+          connectionFingerprint,
           normalizedServiceName,
           timeFrom,
           timeTo,
         ),
     });
-  }, [queryClient, connectionUrl, normalizedServiceName, timeFrom, timeTo]);
+  }, [queryClient, connectionFingerprint, normalizedServiceName, timeFrom, timeTo]);
 
   const handleReset = useCallback(() => {
     if (loading) return;
@@ -277,13 +293,21 @@ export function useServiceDashboardQueries({
       predicate: (query) =>
         isCurrentServiceDashboardQuery(
           query.queryKey,
-          connectionUrl,
+          connectionFingerprint,
           normalizedServiceName,
           timeFrom,
           timeTo,
         ),
     });
-  }, [loading, queryClient, paramsKey, connectionUrl, normalizedServiceName, timeFrom, timeTo]);
+  }, [
+    loading,
+    queryClient,
+    paramsKey,
+    connectionFingerprint,
+    normalizedServiceName,
+    timeFrom,
+    timeTo,
+  ]);
 
   return {
     clearLatestQueries,

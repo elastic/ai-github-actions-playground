@@ -50,7 +50,6 @@ vi.mock("../../src/components/traces/traceUtils", () => ({
 
 const MOCK_CONNECTION: ElasticsearchConnection = {
   url: "http://localhost:9200",
-  auth: { type: "none" },
 };
 
 // ---------------------------------------------------------------------------
@@ -277,9 +276,12 @@ describe("useServiceDashboardQueries", () => {
   });
 
   it("aggregates loading state from all queries", async () => {
-    let resolveQuery!: (value: EsqlResponse) => void;
+    const resolvers: Array<(value: EsqlResponse) => void> = [];
     mockExecute.mockImplementation(
-      () => new Promise<EsqlResponse>((resolve) => (resolveQuery = resolve)),
+      () =>
+        new Promise<EsqlResponse>((resolve) => {
+          resolvers.push(resolve);
+        }),
     );
 
     const { result } = renderHook(
@@ -293,12 +295,38 @@ describe("useServiceDashboardQueries", () => {
       { wrapper: createWrapper() },
     );
 
+    // All 5 primary queries should be in-flight
     await waitFor(() => {
       expect(result.current.loading).toBe(true);
+      expect(resolvers.length).toBe(5);
     });
 
+    // Resolve all but the last primary query — loading should remain true
+    // Use empty traces so the dependent trace-spans query is not triggered
+    const emptyTraces: EsqlResponse = {
+      columns: [
+        { name: "trace.id", type: "keyword" },
+        { name: "span.name", type: "keyword" },
+      ],
+      values: [],
+    };
     await act(async () => {
-      resolveQuery(SAMPLE_ROUTES);
+      resolvers[0]!(SAMPLE_ROUTES); // routes
+      resolvers[1]!(emptyTraces); // traces (empty so no dependent query fires)
+      resolvers[2]!(SAMPLE_DEPLOYMENTS); // deployments
+      resolvers[3]!(SAMPLE_SPARKLINE); // sparkline
+    });
+
+    // One primary query (k8s) still pending — loading should remain true
+    expect(result.current.loading).toBe(true);
+
+    // Resolve the final primary query — loading should become false
+    await act(async () => {
+      resolvers[4]!(SAMPLE_K8S);
+    });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
     });
   });
 
