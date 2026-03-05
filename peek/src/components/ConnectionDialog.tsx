@@ -220,11 +220,17 @@ export default function ConnectionDialog() {
   const isDuplicateProfileName = profileName.trim()
     ? connectionProfiles.some((p) => p.name === profileName.trim())
     : false;
+  const hasCredentials =
+    authType === "apiKey" ? Boolean(apiKey.trim()) : Boolean(username.trim() && password.trim());
+  const hasUrl = Boolean(url.trim());
+  const canAttemptConnection = !testing && hasUrl && hasCredentials;
+  const canConfirmConnectAndSave =
+    canAttemptConnection && Boolean(profileName.trim()) && !isDuplicateProfileName;
   const likelyServerless = isLikelyServerlessUrl(url);
 
   const handleConnectAndSave = useCallback(async () => {
     const trimmed = profileName.trim();
-    if (!trimmed) return;
+    if (!canConfirmConnectAndSave) return;
     const conn = buildConnection();
     setTesting(true);
     setResult(null);
@@ -249,6 +255,7 @@ export default function ConnectionDialog() {
     }
   }, [
     profileName,
+    canConfirmConnectAndSave,
     buildConnection,
     saveConnectionProfile,
     savePin,
@@ -509,7 +516,7 @@ export default function ConnectionDialog() {
                   size="small"
                   variant="contained"
                   onClick={() => void handleConnectAndSave()}
-                  disabled={testing || !url.trim() || !profileName.trim() || isDuplicateProfileName}
+                  disabled={!canConfirmConnectAndSave}
                 >
                   {testing ? <CircularProgress size={18} /> : "Confirm Connect & Save"}
                 </Button>
@@ -526,17 +533,17 @@ export default function ConnectionDialog() {
         )}
         <Box sx={{ flex: 1 }} />
         <Button onClick={() => setOpen(false)}>Cancel</Button>
-        <Button onClick={handleTest} disabled={testing || !url.trim()}>
+        <Button onClick={handleTest} disabled={!canAttemptConnection}>
           {testing ? <CircularProgress size={20} /> : "Test"}
         </Button>
         <Button
           variant="outlined"
           onClick={() => setSavePromptOpen((v) => !v)}
-          disabled={testing || !url.trim()}
+          disabled={!canAttemptConnection}
         >
           Connect & Save
         </Button>
-        <Button variant="contained" onClick={handleConnect} disabled={testing || !url.trim()}>
+        <Button variant="contained" onClick={handleConnect} disabled={!canAttemptConnection}>
           {testing ? <CircularProgress size={20} /> : "Connect"}
         </Button>
       </DialogActions>
