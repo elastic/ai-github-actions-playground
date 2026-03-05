@@ -255,6 +255,74 @@ describe("AddDataPage", () => {
       expect(screen.getByText(/Could not derive an OTLP endpoint/)).toBeInTheDocument();
     });
   }, 30_000);
+
+  it("clears technology selection when search input is cleared", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    // Search for "java" to show the Java APM tile
+    await user.type(
+      screen.getByPlaceholderText("Search technologies (e.g., PostgreSQL, Kubernetes...)"),
+      "java",
+    );
+    expect(screen.getByText("Java")).toBeInTheDocument();
+
+    // Select the Java technology card (handleSelectAndContinue auto-advances to Step 2)
+    const javaCard = screen.getByRole("button", { name: /^Java/i, pressed: false });
+    await user.click(javaCard);
+
+    // We're now on Step 2 — go back to Step 1
+    await user.click(screen.getByRole("button", { name: /^Back$/i }));
+
+    // Clear the search input
+    await user.clear(
+      screen.getByPlaceholderText("Search technologies (e.g., PostgreSQL, Kubernetes...)"),
+    );
+
+    // Continue button should be disabled (selection cleared)
+    expect(screen.getByRole("button", { name: /^Continue$/i })).toBeDisabled();
+  }, 15_000);
+
+  it("filters verified signals to only expected signals for APM technologies", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    // Search for Java to find APM tile, select it (auto-advances to Step 2)
+    await user.type(
+      screen.getByPlaceholderText("Search technologies (e.g., PostgreSQL, Kubernetes...)"),
+      "java",
+    );
+    const javaCard = screen.getByRole("button", { name: /^Java/i, pressed: false });
+    await user.click(javaCard);
+
+    // Now on Step 2 — advance to Step 3
+    await user.click(screen.getByRole("button", { name: /^Continue$/i }));
+
+    // Step 3: with no foundSignals, should show expected signals (traces, metrics) — not logs
+    expect(screen.getByText(/Expected signals: Traces, Metrics\./)).toBeInTheDocument();
+    expect(screen.queryByText(/Logs/)).not.toBeInTheDocument();
+  }, 30_000);
+
+  it("shows Open Services CTA for APM technologies in Step 3", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    // Search for Java to find APM tile, select it (auto-advances to Step 2)
+    await user.type(
+      screen.getByPlaceholderText("Search technologies (e.g., PostgreSQL, Kubernetes...)"),
+      "java",
+    );
+    const javaCard = screen.getByRole("button", { name: /^Java/i, pressed: false });
+    await user.click(javaCard);
+
+    // Now on Step 2 → Step 3
+    await user.click(screen.getByRole("button", { name: /^Continue$/i }));
+
+    // Step 3 should show Open Services CTA
+    expect(screen.getByRole("button", { name: "Open Services" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Open traces" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Explore metrics" })).toBeInTheDocument();
+  }, 30_000);
 });
 
 describe("probeOtlpEndpoint", () => {

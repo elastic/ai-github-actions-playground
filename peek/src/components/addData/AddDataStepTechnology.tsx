@@ -19,6 +19,7 @@ import {
   type AddDataGuidedExperience,
   type AddDataTechnologyCatalogEntry,
 } from "../../services/addData/catalog";
+import { COMPONENT_HEIGHTS } from "../../types/tokens";
 
 import AddDataTechnologyResults from "./AddDataTechnologyResults";
 import ExperienceTile from "./ExperienceTile";
@@ -99,8 +100,8 @@ export default function AddDataStepTechnology({
           onTechnologySearchChange(e.target.value);
           if (e.target.value.trim().length > 0) {
             setSelectedExperience(null);
-            onClearTechnology();
           }
+          onClearTechnology();
         }}
         fullWidth
         size="small"
@@ -111,6 +112,7 @@ export default function AddDataStepTechnology({
                 <SearchIcon fontSize="small" color="action" />
               </InputAdornment>
             ),
+            sx: { height: COMPONENT_HEIGHTS.input },
           },
         }}
       />

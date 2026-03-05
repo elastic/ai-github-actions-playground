@@ -97,7 +97,7 @@ function makeThemeInitScript(themeMode) {
   return `
     (function() {
       try {
-        const key = "elastic-peek-ui";
+        const key = "elastic-peek-theme";
         const existing = JSON.parse(localStorage.getItem(key) || "{}");
         existing.state = existing.state || {};
         existing.state.themeMode = "${themeMode}";
