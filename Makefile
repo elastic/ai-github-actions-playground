@@ -24,7 +24,7 @@ help:
 	@echo "  lint             - oxfmt + oxlint on changed files + tsgo type check"
 	@echo "  lint-full        - oxfmt + oxlint + tsgo type check on all files"
 	@echo "  format           - Auto-format changed files with oxfmt"
-	@echo "  format-full      - Auto-format all files with oxfmt"
+	@echo "  format-full      - Auto-format src/ with oxfmt"
 	@echo "  ci               - npm ci + lint + unit tests + build (strict lockfile)"
 	@echo "  check            - Alias for ci"
 	@echo "  test             - Run all tests (unit, integration, e2e)"
@@ -180,15 +180,17 @@ lint:
 	@echo "✓ All checks passed."
 
 lint-full:
-	@echo "Running oxfmt, oxlint, and tsgo in parallel..."
+	@echo "Running oxfmt, oxlint, tsgo, and tsc in parallel..."
 	@cd $(PEEK_DIR) && { \
 		npx oxfmt --check src 2>&1 & _PID1=$$!; \
 		npx oxlint src 2>&1 & _PID2=$$!; \
 		npx tsgo --noEmit 2>&1 & _PID3=$$!; \
+		npx tsc --noEmit 2>&1 & _PID4=$$!; \
 		_FAIL=0; \
 		wait $$_PID1 || _FAIL=1; \
 		wait $$_PID2 || _FAIL=1; \
 		wait $$_PID3 || _FAIL=1; \
+		wait $$_PID4 || _FAIL=1; \
 		[ $$_FAIL -eq 0 ]; \
 	}
 	@echo ""
@@ -206,7 +208,7 @@ format:
 	fi
 
 format-full:
-	@echo "Formatting code with oxfmt..."
+	@echo "Formatting src with oxfmt..."
 	@cd $(PEEK_DIR) && npx oxfmt --write src
 	@echo ""
 	@echo "✓ Formatting complete."

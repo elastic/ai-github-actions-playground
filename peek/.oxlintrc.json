@@ -53,5 +53,5 @@
       }
     }
   ],
-  "ignorePatterns": ["dist", "*.generated.d.ts", "eslint-plugin-peek/**"]
+  "ignorePatterns": ["dist", "**/*.generated.d.ts", "eslint-plugin-peek/**"]
 }
