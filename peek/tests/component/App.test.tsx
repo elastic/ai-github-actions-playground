@@ -1,11 +1,17 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import userEvent from "@testing-library/user-event";
+import { MemoryRouter, useLocation } from "react-router-dom";
 
 import App from "../../src/App";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
 import { resetAllStores } from "../fixtures/test-utils";
+
+function LocationDisplay() {
+  const location = useLocation();
+  return <div data-testid="location">{location.pathname}</div>;
+}
 
 describe("App shell visibility", () => {
   beforeEach(() => {
@@ -195,5 +201,29 @@ describe("App shell visibility", () => {
 
     // Unknown routes redirect to /dashboards, so title reflects Dashboards
     expect(document.title).toBe("Dashboards — Elastic Peek");
+  });
+
+  it("navigates to /dashboards after resetting all state from a dashboard view", async () => {
+    const user = userEvent.setup();
+    useConnectionStore.getState().setConnected(true);
+
+    render(
+      <MemoryRouter initialEntries={["/dashboards/stale-dashboard-id"]}>
+        <App />
+        <LocationDisplay />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByTestId("location")).toHaveTextContent("/dashboards/stale-dashboard-id");
+
+    // Open Settings menu and click "Reset All State…"
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    await user.click(await screen.findByRole("menuitem", { name: /reset all state/i }));
+
+    // Click the "Reset" button to confirm
+    await user.click(await screen.findByRole("button", { name: "Reset" }));
+
+    // After reset, the URL should be /dashboards (not the stale dashboard ID)
+    expect(screen.getByTestId("location")).toHaveTextContent("/dashboards");
   });
 });
