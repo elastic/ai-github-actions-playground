@@ -15,6 +15,7 @@ import type { AggregationType, ExplorerFilter, FieldInfo } from "../../services/
 import { getAggregationOptions, buildExplorerQuery } from "../../services/es";
 import { resolveDateTime } from "../../services/datemath";
 import type { TimeRange } from "../../types/dashboard";
+import { COMPONENT_HEIGHTS } from "../../types/tokens";
 import MetricSearch from "../MetricSearch";
 import AskAiButton from "../AskAiButton";
 import SignalSearchPanel from "../SignalSearchPanel";
@@ -150,7 +151,7 @@ export default function MetricsSearchPanel({
             label="Index pattern"
             value={indexPattern}
             onChange={(e) => onIndexPatternChange(e.target.value)}
-            sx={{ width: 200 }}
+            sx={{ width: 200, "& .MuiOutlinedInput-root": { height: COMPONENT_HEIGHTS.input } }}
           />
 
           <Box sx={{ flex: 1 }}>
@@ -172,6 +173,7 @@ export default function MetricsSearchPanel({
                 value={aggregation}
                 label="Aggregation"
                 onChange={(e) => onAggregationChange(e.target.value as AggregationType)}
+                sx={{ height: COMPONENT_HEIGHTS.input }}
               >
                 {aggOptions.map((agg) => (
                   <MenuItem key={agg} value={agg}>
