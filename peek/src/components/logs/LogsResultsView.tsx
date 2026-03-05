@@ -165,7 +165,6 @@ export default function LogsResultsView({
           </Typography>
         </Box>
       )}
-
       {result && viewMode === "patterns" && (
         <List dense disablePadding>
           {patternGroups.slice(0, 50).map((group) => (
