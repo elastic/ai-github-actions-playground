@@ -133,7 +133,7 @@ function mockAllQueries() {
 
 describe("useServiceDashboardQueries", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
   });
 
   it("stays idle when connection is null", () => {
