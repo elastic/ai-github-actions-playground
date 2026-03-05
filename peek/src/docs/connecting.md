@@ -2,13 +2,15 @@
 
 Click the connection chip or gear icon in the header to open connection settings.
 
-Enter your Elasticsearch URL and choose API Key or Username/Password authentication.
+Enter your Elasticsearch URL and choose an authentication method. The connection dialog offers three tabs:
+
+- **API Key** — paste an Elasticsearch API key. Use API keys for least-privilege access in shared environments.
+- **Username / Password** — enter a username and password. Reserve this for development or dedicated operator workflows.
+- **No Auth** — connect without credentials. Use this when the cluster does not require authentication (e.g. a local development instance with security disabled).
 
 Use `http://localhost:3000/_es` when running with the local proxy in development, or your direct cluster URL when CORS is configured for browser access.
 Expand **Proxy Settings** in the connection dialog to route requests through a proxy; Peek will
 automatically forward your Elasticsearch URL as a routing header.
-
-Use API keys for least-privilege access in shared environments, and reserve username/password auth for development or dedicated operator workflows.
 
 Your URL is saved in localStorage for convenience. By default, credentials are stored in sessionStorage and cleared when you close the tab. If you lock a profile with a PIN, credentials are encrypted and stored in localStorage so they persist across sessions. Unlocking a PIN-locked profile requires re-entering the PIN to decrypt the credentials.
 

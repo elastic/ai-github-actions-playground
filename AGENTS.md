@@ -28,7 +28,7 @@ Always run this first. Do not use `npm install` — use `npm ci` which is faster
 ```bash
 make lint    # Prettier + ESLint on changed files + full TypeScript type check (override: make lint BASE=HEAD~3)
 make lint-full # Prettier + ESLint + TypeScript type check on all files
-make build   # production build (runs tsc + vite build)
+make build   # production build (runs vite build; use `npm run typecheck` in peek/ for separate type checking)
 make serve   # start dev server
 make format  # auto-format changed files with Prettier (override: make format BASE=HEAD~3)
 make format-full # auto-format all files with Prettier
@@ -178,8 +178,11 @@ clearly larger than labels.
 
 ### UI Smoke Test PR Review
 
-`ui-smoke-test-pr-review.yml` runs on every non-draft pull request that touches
-`peek/**` or `Makefile`. It executes the full E2E smoke suite, runs the
+`ui-smoke-test-pr-review.yml` runs on every pull request that touches specific
+paths (`peek/src/**`, `peek/tests/**`, `peek/scripts/screenshot-preflight.mjs`,
+`peek/package*.json`, `peek/tsconfig*.json`, `peek/vite.config.ts`,
+`peek/vitest*.ts`, `peek/playwright.config.ts`, `peek/index.html`,
+`peek/public/**`, `peek/eslint*`, or `Makefile`). It executes the full E2E smoke suite, runs the
 screenshot preflight, and posts (or updates) a structured PR comment with:
 
 - Per-test pass/fail status and durations
