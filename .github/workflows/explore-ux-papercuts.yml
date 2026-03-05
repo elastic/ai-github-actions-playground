@@ -170,14 +170,19 @@ jobs:
 
         ## Output rules
 
+        - **Complete ALL required exploration phases before filing an issue.**
+          Do not stop after finding your first papercut — continue through
+          every page, check, and evaluation listed above, collecting all
+          findings.
         - File **one** issue per run titled descriptively (e.g., "UX papercuts:
           inconsistent run-query affordances and vague filter labels").
-        - Prefix the title with `[ux-papercuts]`.
-        - List each papercut as a bullet with: the page/location, what you
-          observed, and what you'd expect instead.
+        - List each papercut as a numbered item with: the page/location,
+          what you observed, and what you'd expect instead.
         - Include a screenshot for each papercut where the evidence is visual.
-        - Focus on the **3-7 most impactful** papercuts — not an exhaustive
-          list of every pixel that's off.
+        - Include any **axe-core color-contrast violations** as papercuts,
+          with page/location and screenshot.
+        - A thorough exploration typically finds **5-15** papercuts. Report
+          all of them, not just the first few you notice.
         - Do NOT file issues about bugs (broken functionality) or missing
           features. Only UX friction and inconsistency.
         - Rate each item as **minor** (annoying but easy to ignore),
