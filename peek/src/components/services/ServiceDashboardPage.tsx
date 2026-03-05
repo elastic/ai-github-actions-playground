@@ -138,6 +138,7 @@ export default function ServiceDashboardPage() {
       services: [serviceName],
     });
     useTracesStore.getState().setSelectedTraceId(null);
+    useTracesStore.getState().setPendingSearch(true);
     navigate(PAGE_MANIFEST.traces.path);
   }, [navigate, serviceName, timeFrom, timeTo]);
   const handleDependencyNodeClick = useCallback(
@@ -149,6 +150,7 @@ export default function ServiceDashboardPage() {
         services: [serviceName, peerServiceName],
       });
       useTracesStore.getState().setSelectedTraceId(null);
+      useTracesStore.getState().setPendingSearch(true);
       navigate(PAGE_MANIFEST.traces.path);
     },
     [navigate, serviceName, timeFrom, timeTo],

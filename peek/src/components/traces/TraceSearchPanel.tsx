@@ -93,7 +93,9 @@ export default function TraceSearchPanel({
               key={status}
               label={`status: ${formatStatusLabel(status)}`}
               size="small"
+              variant="outlined"
               color={status === "Error" ? "error" : "default"}
+              sx={{ height: TOOLBAR_CONTROL_HEIGHT }}
               deleteIcon={
                 <CancelIcon data-testid={`trace-status-chip-delete-${status.toLowerCase()}`} />
               }
@@ -108,6 +110,8 @@ export default function TraceSearchPanel({
             <Chip
               label={`min: ${filters.minDurationMs}ms`}
               size="small"
+              variant="outlined"
+              sx={{ height: TOOLBAR_CONTROL_HEIGHT }}
               onDelete={() => {
                 applyFiltersAndRun({ minDurationMs: null });
                 setMinDurationInput("");
@@ -118,6 +122,8 @@ export default function TraceSearchPanel({
             <Chip
               label={`max: ${filters.maxDurationMs}ms`}
               size="small"
+              variant="outlined"
+              sx={{ height: TOOLBAR_CONTROL_HEIGHT }}
               onDelete={() => {
                 applyFiltersAndRun({ maxDurationMs: null });
                 setMaxDurationInput("");
@@ -129,7 +135,9 @@ export default function TraceSearchPanel({
               key={`${tag.key}-${tag.value}-${i}`}
               label={`${tag.exclude ? "NOT " : ""}${tag.key}: ${tag.value}`}
               size="small"
+              variant="outlined"
               color={tag.exclude ? "warning" : "default"}
+              sx={{ height: TOOLBAR_CONTROL_HEIGHT }}
               onDelete={() =>
                 applyFiltersAndRun({
                   tags: filters.tags.filter((_, idx) => idx !== i),
@@ -141,6 +149,8 @@ export default function TraceSearchPanel({
             <Chip
               label={`time: ${TRACE_TIME_RANGE_OPTIONS.find((o) => o.from === filters.timeFrom)?.label ?? "Custom range"}`}
               size="small"
+              variant="outlined"
+              sx={{ height: TOOLBAR_CONTROL_HEIGHT }}
               onDelete={() => applyFiltersAndRun({ timeFrom: null, timeTo: null })}
             />
           )}

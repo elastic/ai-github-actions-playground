@@ -6,6 +6,7 @@ import Paper from "@mui/material/Paper";
 import Switch from "@mui/material/Switch";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
+import AccountTreeIcon from "@mui/icons-material/AccountTree";
 import SearchIcon from "@mui/icons-material/Search";
 
 import type { EsqlResponse } from "../../types";
@@ -230,11 +231,13 @@ export default function TraceResultsView({
           <Box sx={{ height: "100%" }}>
             {traceRows.length === 0 ? (
               <EmptyState
+                icon={<AccountTreeIcon sx={{ mb: 0.5, color: "text.secondary", fontSize: 48 }} />}
                 heading="No traces matched the current filters."
-                description="Adjust filters or widen the time range."
+                description="Adjust filters or widen the time range to generate a service map."
               />
             ) : !selectedTraceId ? (
               <EmptyState
+                icon={<AccountTreeIcon sx={{ mb: 0.5, color: "text.secondary", fontSize: 48 }} />}
                 heading="Select a trace in List or Scatter view to see its service map"
                 description="Choose a trace from List or Scatter view to render service relationships."
               />
