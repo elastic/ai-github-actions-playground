@@ -64,7 +64,10 @@ jobs:
         ## Idea criteria
         Every idea must be:
         - **Customer-aligned**: A real user could plausibly want this.
-        - **Project-aligned**: It fits the project's existing purpose.
+        - **Project-aligned**: It fits the project's existing purpose. **Peek
+          is a read-only exploration tool** — ideas must be about visualizing,
+          exploring, or analyzing data, not creating, deleting, or managing
+          Elasticsearch resources.
         - **Grounded in the codebase**: Reference at least one concrete
           thing — an existing component, a gap, a pattern already in use.
         - **Tractable**: Include a realistic implementation approach.
