@@ -664,7 +664,13 @@ describe("getCapabilities", () => {
     vi.stubGlobal("fetch", fetchSpy);
 
     const client = makeClient({ apiKey: "key" });
-    await expect(client.getCapabilities()).rejects.toMatchObject({ status: 400 });
+    const caps = await client.getCapabilities();
+
+    // All 400 responses from _has_privileges are treated as security-absent
+    // because ES varies the error message across versions.
+    expect(caps.canManageDataStreams).toBe(true);
+    expect(caps.canCreateApiKeys).toBe(true);
+    expect(caps.canReadIngestPipelines).toBe(true);
   });
 
   it("returns optimistic capabilities when the _has_privileges endpoint returns 404", async () => {

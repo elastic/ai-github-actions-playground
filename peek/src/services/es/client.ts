@@ -616,28 +616,20 @@ export class ElasticsearchClient {
           };
         }
         // 400: Security is disabled or the security plugin is not installed.
-        // Without a security layer the cluster enforces no privilege checks, so
-        // return an optimistic capability set — the user effectively has full
-        // access and hiding features would be incorrect.
-        // Narrow to known "security absent" error messages to avoid granting
-        // optimistic capabilities for unrelated 400s (e.g. proxy errors).
+        // ES clusters with xpack.security.enabled=false return a 400 from this
+        // endpoint, but the exact error message varies across ES versions (e.g.
+        // "no handler found for uri", "security_exception", etc.).  Any 400 here
+        // is treated as "security absent" — the user effectively has full access
+        // and hiding features would be incorrect.
         if (err.status === 400) {
-          const msg = err.message.toLowerCase();
-          const looksLikeSecurityAbsent =
-            msg.includes("no handler found for uri") ||
-            msg.includes("security is disabled") ||
-            msg.includes("x-pack security");
-          if (looksLikeSecurityAbsent) {
-            return {
-              canManageDataStreams: true,
-              canCreateApiKeys: true,
-              canReadSecurityUsers: true,
-              canReadSecurityRoles: true,
-              canReadApiKeys: true,
-              canReadIngestPipelines: true,
-            };
-          }
-          throw err;
+          return {
+            canManageDataStreams: true,
+            canCreateApiKeys: true,
+            canReadSecurityUsers: true,
+            canReadSecurityRoles: true,
+            canReadApiKeys: true,
+            canReadIngestPipelines: true,
+          };
         }
         // 403: Security is enabled but the current user lacks the privilege to
         // query _has_privileges itself.  Default to minimal capabilities so the
