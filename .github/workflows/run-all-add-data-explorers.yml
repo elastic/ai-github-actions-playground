@@ -1,0 +1,55 @@
+name: Run All Add Data Explorers
+on:
+  workflow_dispatch:
+
+permissions:
+  actions: write
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch explore-add-data
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run explore-add-data.yml --repo ${{ github.repository }}
+
+      - name: Wait 2 minutes
+        run: sleep 120
+
+      - name: Dispatch explore-add-data-alex
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run explore-add-data-alex.yml --repo ${{ github.repository }}
+
+      - name: Wait 2 minutes
+        run: sleep 120
+
+      - name: Dispatch explore-add-data-jordan
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run explore-add-data-jordan.yml --repo ${{ github.repository }}
+
+      - name: Wait 2 minutes
+        run: sleep 120
+
+      - name: Dispatch explore-add-data-morgan
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run explore-add-data-morgan.yml --repo ${{ github.repository }}
+
+      - name: Wait 2 minutes
+        run: sleep 120
+
+      - name: Dispatch explore-add-data-riley
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run explore-add-data-riley.yml --repo ${{ github.repository }}
+
+      - name: Wait 2 minutes
+        run: sleep 120
+
+      - name: Dispatch explore-add-data-sam
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run explore-add-data-sam.yml --repo ${{ github.repository }}
