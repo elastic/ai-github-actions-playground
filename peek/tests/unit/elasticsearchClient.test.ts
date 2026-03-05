@@ -583,7 +583,7 @@ describe("isElasticsearchError", () => {
 describe("getCapabilities", () => {
   it("returns canManageDataStreams: true when cluster privilege is granted", async () => {
     const fetchSpy = mockFetchOnce(
-      { cluster: { manage_data_stream: true, read_security: true } },
+      { cluster: { manage: true, read_security: true } },
       { status: 200 },
     );
     vi.stubGlobal("fetch", fetchSpy);
@@ -597,7 +597,7 @@ describe("getCapabilities", () => {
   });
 
   it("returns canManageDataStreams: false when cluster privilege is denied", async () => {
-    const fetchSpy = mockFetchOnce({ cluster: { manage_data_stream: false } }, { status: 200 });
+    const fetchSpy = mockFetchOnce({ cluster: { manage: false } }, { status: 200 });
     vi.stubGlobal("fetch", fetchSpy);
 
     const client = makeClient({ apiKey: "key" });
@@ -608,7 +608,7 @@ describe("getCapabilities", () => {
     expect(caps.canReadSecurityRoles).toBe(false);
   });
 
-  it("falls back to canManageDataStreams: false when the security API returns an error", async () => {
+  it("falls back to minimal capabilities when the security API returns 403", async () => {
     const fetchSpy = mockFetchOnce({ error: { reason: "security_exception" } }, { status: 403 });
     vi.stubGlobal("fetch", fetchSpy);
 
@@ -618,6 +618,27 @@ describe("getCapabilities", () => {
     expect(caps.canManageDataStreams).toBe(false);
     expect(caps.canReadSecurityUsers).toBe(false);
     expect(caps.canReadSecurityRoles).toBe(false);
+  });
+
+  it("falls back to minimal capabilities when the security API returns 400 (no security plugin)", async () => {
+    const fetchSpy = mockFetchOnce(
+      {
+        error: {
+          reason: "no handler found for uri [/_security/user/_has_privileges] and method [POST]",
+        },
+      },
+      { status: 400 },
+    );
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const client = makeClient({ apiKey: "key" });
+    const caps = await client.getCapabilities();
+
+    expect(caps.canManageDataStreams).toBe(false);
+    expect(caps.canCreateApiKeys).toBe(false);
+    expect(caps.canReadSecurityUsers).toBe(false);
+    expect(caps.canReadSecurityRoles).toBe(false);
+    expect(caps.canReadApiKeys).toBe(false);
   });
 
   it("returns optimistic capabilities when the _has_privileges endpoint returns 404", async () => {
@@ -636,19 +657,34 @@ describe("getCapabilities", () => {
     expect(caps.canReadApiKeys).toBe(true);
   });
 
-  it("falls back to canManageDataStreams: false on a network failure", async () => {
+  it("re-throws on a network failure", async () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Failed to fetch")));
 
     const client = makeClient({ apiKey: "key" });
-    const caps = await client.getCapabilities();
 
-    expect(caps.canManageDataStreams).toBe(false);
-    expect(caps.canReadSecurityUsers).toBe(false);
-    expect(caps.canReadSecurityRoles).toBe(false);
+    await expect(client.getCapabilities()).rejects.toMatchObject({
+      status: 0,
+      message: "Failed to fetch",
+    });
+  });
+
+  it("re-throws on a 401 Unauthorized error", async () => {
+    const fetchSpy = mockFetchOnce(
+      { error: { reason: "missing authentication credentials" } },
+      { status: 401 },
+    );
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const client = makeClient({ apiKey: "key" });
+
+    await expect(client.getCapabilities()).rejects.toMatchObject({
+      status: 401,
+      message: "missing authentication credentials",
+    });
   });
 
   it("POSTs to /_security/user/_has_privileges with the expected body", async () => {
-    const fetchSpy = mockFetchOnce({ cluster: { manage_data_stream: false } }, { status: 200 });
+    const fetchSpy = mockFetchOnce({ cluster: { manage: false } }, { status: 200 });
     vi.stubGlobal("fetch", fetchSpy);
 
     const client = makeClient();
@@ -659,7 +695,7 @@ describe("getCapabilities", () => {
     expect(init.method).toBe("POST");
     expect(JSON.parse(init.body as string)).toEqual({
       cluster: [
-        "manage_data_stream",
+        "manage",
         "read_security",
         "manage_security",
         "manage_own_api_key",

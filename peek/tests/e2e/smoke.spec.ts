@@ -241,6 +241,7 @@ async function connectToMockCluster(page: Page) {
   await page.goto("");
   await page.getByRole("button", { name: "Connect to Elasticsearch" }).click();
   await page.getByRole("textbox", { name: "Elasticsearch URL" }).fill(DEFAULT_ES_URL);
+  await page.getByRole("textbox", { name: "API Key" }).fill("test-api-key");
   await page.getByRole("button", { name: "Connect", exact: true }).click();
 
   // Wait for connection dialog to close
@@ -331,18 +332,6 @@ test.describe("smoke – site navigation", () => {
     await expect(page.getByRole("textbox", { name: "API Key" })).toBeVisible();
   });
 
-  test("header chip reflects current page label on non-dashboard routes", async ({ page }) => {
-    await connectToMockCluster(page);
-    // Navigate to a non-dashboard page (Query Lab / discover)
-    await navigateViaSidebar(page, "Query Lab");
-    await expect(page).toHaveURL(/\/discover$/);
-    // The global header (banner) must show the current page label chip (Desktop only)
-    if (page.viewportSize()!.width > 768) {
-      const header = page.getByRole("banner");
-      await expect(header.getByText("Query Lab")).toBeVisible();
-    }
-  });
-
   test("ops user confirms connection guardrails and can reset back to the landing state", async ({
     page,
   }) => {
@@ -351,6 +340,9 @@ test.describe("smoke – site navigation", () => {
     const connectBtn = page.getByRole("button", { name: "Connect", exact: true });
     await expect(connectBtn).toBeDisabled();
     await page.getByRole("textbox", { name: "Elasticsearch URL" }).fill(DEFAULT_ES_URL);
+    // Connect still disabled — credentials are also required
+    await expect(connectBtn).toBeDisabled();
+    await page.getByRole("textbox", { name: "API Key" }).fill("test-api-key");
     await expect(connectBtn).toBeEnabled();
     await page.getByRole("button", { name: "Cancel" }).click();
 

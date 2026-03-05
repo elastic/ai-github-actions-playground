@@ -62,15 +62,57 @@ describe("ConnectionDialog", () => {
     expect(screen.getByRole("button", { name: /connect & save/i })).toBeDisabled();
   });
 
-  it("enables Connect button after entering a URL", async () => {
+  it("enables Connect button after entering a URL and API key", async () => {
     const user = userEvent.setup();
     render(<ConnectionDialog />);
 
     const urlField = screen.getByLabelText(/elasticsearch url/i);
     await user.type(urlField, "https://localhost:9200");
 
+    // Still disabled without credentials
+    expect(screen.getByRole("button", { name: /^connect$/i })).toBeDisabled();
+
+    await user.type(screen.getByLabelText(/^api key$/i), "my-api-key");
+
     const connectButton = screen.getByRole("button", { name: /^connect$/i });
     expect(connectButton).toBeEnabled();
+  });
+
+  it("keeps buttons disabled when URL is entered but API key is empty", async () => {
+    const user = userEvent.setup();
+    render(<ConnectionDialog />);
+
+    await user.type(screen.getByLabelText(/elasticsearch url/i), "https://localhost:9200");
+
+    expect(screen.getByRole("button", { name: /^connect$/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /^test$/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /connect & save/i })).toBeDisabled();
+  });
+
+  it("keeps buttons disabled when URL is entered but username/password are empty", async () => {
+    const user = userEvent.setup();
+    render(<ConnectionDialog />);
+
+    await user.type(screen.getByLabelText(/elasticsearch url/i), "https://localhost:9200");
+    await user.click(screen.getByRole("tab", { name: /username/i }));
+
+    expect(screen.getByRole("button", { name: /^connect$/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /^test$/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /connect & save/i })).toBeDisabled();
+  });
+
+  it("enables buttons when URL and username/password are provided", async () => {
+    const user = userEvent.setup();
+    render(<ConnectionDialog />);
+
+    await user.type(screen.getByLabelText(/elasticsearch url/i), "https://localhost:9200");
+    await user.click(screen.getByRole("tab", { name: /username/i }));
+    await user.type(screen.getByLabelText(/^username$/i), "elastic");
+    await user.type(screen.getByLabelText(/^password$/i), "changeme");
+
+    expect(screen.getByRole("button", { name: /^connect$/i })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /^test$/i })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /connect & save/i })).toBeEnabled();
   });
 
   it("connects successfully and closes the dialog", async () => {
@@ -81,6 +123,7 @@ describe("ConnectionDialog", () => {
     render(<ConnectionDialog />);
 
     await user.type(screen.getByLabelText(/elasticsearch url/i), "https://localhost:9200");
+    await user.type(screen.getByLabelText(/^api key$/i), "test-api-key");
     await user.click(screen.getByRole("button", { name: /^connect$/i }));
 
     expect(fetchCapabilitiesForConnectionMock).toHaveBeenCalledTimes(1);
@@ -94,18 +137,20 @@ describe("ConnectionDialog", () => {
     render(<ConnectionDialog />);
 
     await user.type(screen.getByLabelText(/elasticsearch url/i), "https://localhost:9200");
+    await user.type(screen.getByLabelText(/^api key$/i), "bad-api-key");
     await user.click(screen.getByRole("button", { name: /^test$/i }));
 
     expect(await screen.findByText("Unauthorized")).toBeInTheDocument();
   });
 
-  it("shows Connect & Save button after entering a URL", async () => {
+  it("shows Connect & Save button enabled after entering a URL and API key", async () => {
     const user = userEvent.setup();
     render(<ConnectionDialog />);
 
     await user.type(screen.getByLabelText(/elasticsearch url/i), "https://localhost:9200");
+    await user.type(screen.getByLabelText(/^api key$/i), "test-api-key");
 
-    expect(screen.getByRole("button", { name: /connect & save/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /connect & save/i })).toBeEnabled();
   });
 
   it("connects and saves a profile from the prompt", async () => {
@@ -130,6 +175,24 @@ describe("ConnectionDialog", () => {
     expect(profiles[0].connection.apiKey).toBe("dev-key");
     expect(profiles[0].connection.proxyUrl).toBe("http://localhost:3000/_es");
     expect(useConnectionStore.getState().connected).toBe(true);
+  });
+
+  it("does not connect and save from Enter when credentials are missing", async () => {
+    const user = userEvent.setup();
+    fetchCapabilitiesForConnectionMock.mockResolvedValue({
+      canManageDataStreams: true,
+    });
+    render(<ConnectionDialog />);
+
+    await user.type(screen.getByLabelText(/elasticsearch url/i), "https://dev.example.com");
+    await user.type(screen.getByLabelText(/^api key$/i), "dev-key");
+    await user.click(screen.getByRole("button", { name: /^connect & save$/i }));
+    await user.clear(screen.getByLabelText(/^api key$/i));
+    await user.type(screen.getByLabelText(/profile name/i), "Dev Cluster{enter}");
+
+    expect(fetchCapabilitiesForConnectionMock).not.toHaveBeenCalled();
+    expect(useConnectionStore.getState().connectionProfiles).toHaveLength(0);
+    expect(useConnectionStore.getState().connected).toBe(false);
   });
 
   it("displays saved profiles in the dialog", () => {

@@ -571,7 +571,7 @@ export class ElasticsearchClient {
         method: "POST",
         body: JSON.stringify({
           cluster: [
-            "manage_data_stream",
+            "manage",
             "read_security",
             "manage_security",
             "manage_own_api_key",
@@ -587,34 +587,47 @@ export class ElasticsearchClient {
         response.cluster?.["manage_own_api_key"] || response.cluster?.["manage_api_key"],
       );
       return {
-        canManageDataStreams: response.cluster?.["manage_data_stream"] ?? false,
+        canManageDataStreams: response.cluster?.["manage"] ?? false,
         canCreateApiKeys,
         canReadSecurityUsers: canReadSecurity,
         canReadSecurityRoles: canReadSecurity,
         canReadApiKeys: canCreateApiKeys,
       };
     } catch (err: unknown) {
-      // A 404 means the _has_privileges endpoint could not be found (e.g. a
-      // proxy or middleware stripping the route).  This does NOT indicate that
-      // the user lacks privileges, so return an optimistic set and let the
-      // actual operation surface a clear error if it also fails.
-      if (isElasticsearchError(err) && err.status === 404) {
-        return {
-          canManageDataStreams: true,
-          canCreateApiKeys: true,
-          canReadSecurityUsers: true,
-          canReadSecurityRoles: true,
-          canReadApiKeys: true,
-        };
+      if (isElasticsearchError(err)) {
+        // A 404 means the _has_privileges endpoint could not be found (e.g. a
+        // proxy or middleware stripping the route).  This does NOT indicate that
+        // the user lacks privileges, so return an optimistic set and let the
+        // actual operation surface a clear error if it also fails.
+        if (err.status === 404) {
+          return {
+            canManageDataStreams: true,
+            canCreateApiKeys: true,
+            canReadSecurityUsers: true,
+            canReadSecurityRoles: true,
+            canReadApiKeys: true,
+          };
+        }
+        // 400: Security plugin not installed ("no handler found for uri").
+        // Gate on the specific message to avoid masking other 400 errors
+        // (e.g. malformed proxy requests) as a successful connection.
+        // 403: Security enabled but user lacks privilege to check capabilities.
+        // Both are non-fatal — default to minimal privileges.
+        const isNoHandlerFound =
+          err.status === 400 && err.message.toLowerCase().includes("no handler found");
+        if (isNoHandlerFound || err.status === 403) {
+          return {
+            canManageDataStreams: false,
+            canCreateApiKeys: false,
+            canReadSecurityUsers: false,
+            canReadSecurityRoles: false,
+            canReadApiKeys: false,
+          };
+        }
       }
-      // Security API may be unavailable on older / un-secured clusters; default to no extra privileges.
-      return {
-        canManageDataStreams: false,
-        canCreateApiKeys: false,
-        canReadSecurityUsers: false,
-        canReadSecurityRoles: false,
-        canReadApiKeys: false,
-      };
+      // All other errors (401 Unauthorized, 5xx, network failures) are
+      // genuine connection/auth problems — surface them to the caller.
+      throw err;
     }
   }
 

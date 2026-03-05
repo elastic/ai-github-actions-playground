@@ -238,7 +238,7 @@ const INGEST_PIPELINES = {
 
 const HAS_PRIVILEGES = {
   cluster: {
-    manage_data_stream: true,
+    manage: true,
     read_security: true,
     manage_security: false,
     manage_own_api_key: true,

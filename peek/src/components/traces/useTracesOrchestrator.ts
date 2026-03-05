@@ -305,6 +305,17 @@ export function useTracesOrchestrator() {
     runDriftRadarQueries(filters);
   }, [runTraceQueries, runDriftRadarQueries, effectiveQuery, filters, rawQuery]);
 
+  // Auto-execute search when navigating from another page with pendingSearch flag
+  useEffect(() => {
+    const { pendingSearch } = useTracesStore.getState();
+    if (pendingSearch) {
+      useTracesStore.getState().setPendingSearch(false);
+      const { filters: latestFilters, rawQuery: latestRawQuery } = useTracesStore.getState();
+      runTraceQueries(buildTraceSearchQuery(latestFilters), latestFilters, latestRawQuery == null);
+      runDriftRadarQueries(latestFilters);
+    }
+  }, [runTraceQueries, runDriftRadarQueries]);
+
   const handleSelectTrace = useCallback(
     (traceId: string, spanId?: string, timestamp?: string) => {
       setSelectedTraceId(traceId);

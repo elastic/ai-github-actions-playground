@@ -102,7 +102,7 @@ const DEFAULT_MOCK_DATA = {
   ingestNodeStats: { nodes: { n1: { ingest: { total: { count: 1000, failed: 0 } } } } },
   hasPrivileges: {
     cluster: {
-      manage_data_stream: true,
+      manage: true,
       read_security: true,
       manage_security: false,
       manage_own_api_key: true,

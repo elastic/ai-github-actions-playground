@@ -22,6 +22,8 @@ interface TracesState {
   viewMode: TracesViewMode;
   /** Whether the span detail drawer is open */
   drawerOpen: boolean;
+  /** When true, the orchestrator should auto-execute search on mount */
+  pendingSearch: boolean;
 
   setFilters: (filters: TraceFilters) => void;
   updateFilters: (updates: Partial<TraceFilters>) => void;
@@ -34,6 +36,7 @@ interface TracesState {
   addTagFilter: (key: string, value: string, exclude?: boolean) => void;
   removeTagFilter: (index: number) => void;
   resetFilters: () => void;
+  setPendingSearch: (pending: boolean) => void;
 }
 
 const getInitialTracesState = () => ({
@@ -44,6 +47,7 @@ const getInitialTracesState = () => ({
   selectedSpanId: null as string | null,
   viewMode: "list" as TracesViewMode,
   drawerOpen: false,
+  pendingSearch: false,
 });
 
 export const useTracesStore = create<TracesState>()(
@@ -73,6 +77,7 @@ export const useTracesStore = create<TracesState>()(
           rawQuery: null,
         })),
       resetFilters: () => set(getInitialTracesState()),
+      setPendingSearch: (pending) => set({ pendingSearch: pending }),
     }),
     { name: "TracesStore", enabled: import.meta.env.DEV },
   ),
