@@ -48,11 +48,17 @@ export default function ProfilingToolbar({
               variant="text"
               endIcon={<OpenInNewIcon fontSize="small" />}
               onClick={onOpenInQueryLab}
+              sx={{ height: COMPONENT_HEIGHTS.input }}
             >
               Open in Query Lab
             </Button>
           )}
-          <Button size="small" variant="text" onClick={onAdvancedView}>
+          <Button
+            size="small"
+            variant="text"
+            onClick={onAdvancedView}
+            sx={{ height: COMPONENT_HEIGHTS.input }}
+          >
             Advanced view
           </Button>
         </Box>
