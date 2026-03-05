@@ -120,22 +120,19 @@ export default function IndicesPage() {
   const settings = detailResult.status === "success" ? detailResult.data.settings : null;
   const indexStats = detailResult.status === "success" ? detailResult.data.indexStats : null;
 
-  // Auto-select the first index when data loads
+  // Clear selection when the selected index disappears from fetched results.
   useEffect(() => {
     if (!indicesData) return;
-    if (selectedIndex && indicesData.some((i) => i.index === selectedIndex)) return;
-    const first = showSystemIndices
-      ? indicesData[0]
-      : indicesData.find((i) => !i.index.startsWith("."));
-    void setSelectedIndex(first?.index ?? null);
-  }, [indicesData, showSystemIndices, selectedIndex, setSelectedIndex]);
+    if (!selectedIndex) return;
+    if (indicesData.some((i) => i.index === selectedIndex)) return;
+    void setSelectedIndex(null);
+  }, [indicesData, selectedIndex, setSelectedIndex]);
 
   // When system indices are hidden, deselect any active system index.
   useEffect(() => {
     if (showSystemIndices) return;
     if (!selectedIndex?.startsWith(".")) return;
-    const first = indices.find((i) => !i.index.startsWith("."));
-    void setSelectedIndex(first?.index ?? null);
+    void setSelectedIndex(null);
   }, [showSystemIndices, selectedIndex, indices, setSelectedIndex]);
 
   const deferredSearch = useDeferredValue(search);

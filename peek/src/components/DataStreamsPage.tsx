@@ -6,6 +6,7 @@ import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
 import Divider from "@mui/material/Divider";
+import Drawer from "@mui/material/Drawer";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
@@ -22,11 +23,11 @@ import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
+import CloseIcon from "@mui/icons-material/Close";
 import StorageIcon from "@mui/icons-material/Storage";
 import { parseAsString, useQueryState } from "nuqs";
 
 import type { DataStreamInfo, FieldCapsResponse } from "../services/es";
-import { useConnectionStore } from "../store/useConnectionStore";
 import { useApiConsoleStore } from "../store/useApiConsoleStore";
 import { usePageContextStore } from "../store/usePageContextStore";
 import { PAGE_MANIFEST } from "../routes/manifest";
@@ -41,7 +42,6 @@ import { formatBytes } from "../utils/formatBytes";
 
 import ContentSkeleton from "./ContentSkeleton";
 import EmptyState from "./EmptyState";
-import FieldStatsPanel from "./FieldStatsPanel";
 import PageHeader from "./PageHeader";
 import AskAiButton from "./AskAiButton";
 import PageInsightBanner from "./PageInsightBanner";
@@ -133,7 +133,6 @@ function parseCount(value: string | null | undefined): number {
 }
 
 export default function DataStreamsPage() {
-  const connection = useConnectionStore((s) => s.connection);
   const openInDiscover = useOpenInDiscover();
   const setConsoleDraft = useApiConsoleStore((s) => s.setConsoleDraft);
   const navigate = useNavigate();
@@ -193,35 +192,20 @@ export default function DataStreamsPage() {
     return stats;
   }, [dataStreams, indexRows]);
 
-  // Auto-select the first visible stream when data loads.
-  // Runs on every fetch cycle via the hook's stable data identity.
+  // Clear selection when the selected stream disappears from fetched results.
   useEffect(() => {
     if (!streamsData) return;
-    const nextStreams = streamsData;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- conditional update: only fires when current selection is invalid or missing after a data fetch
-    setSelectedName((current) => {
-      if (
-        current &&
-        nextStreams.some((stream) => stream.name === current) &&
-        (showSystemStreams || !current.startsWith("."))
-      ) {
-        return current;
-      }
-      const firstVisible = showSystemStreams
-        ? nextStreams[0]
-        : nextStreams.find((stream) => !stream.name.startsWith("."));
-      return firstVisible?.name ?? null;
-    });
-  }, [streamsData, showSystemStreams]);
+    if (!selectedName) return;
+    if (streamsData.some((stream) => stream.name === selectedName)) return;
+    void setSelectedName(null);
+  }, [streamsData, selectedName, setSelectedName]);
 
   // When system streams are hidden, ensure the selected stream is not a hidden system stream.
   useEffect(() => {
     if (showSystemStreams) return;
     if (!selectedName?.startsWith(".")) return;
-    const firstVisible = dataStreams.find((s) => !s.name.startsWith("."));
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- guarded: only updates when a system stream is selected while system streams are hidden
-    setSelectedName(firstVisible?.name ?? null);
-  }, [showSystemStreams, selectedName, dataStreams]);
+    void setSelectedName(null);
+  }, [showSystemStreams, selectedName, setSelectedName]);
 
   // Clear selected field when the active stream changes.
   useEffect(() => {
@@ -357,13 +341,6 @@ export default function DataStreamsPage() {
     setConsoleDraft({ method: "GET", path: `/_data_stream/${selectedName}` });
     navigate(PAGE_MANIFEST.console.path);
   }, [selectedName, navigate, setConsoleDraft]);
-
-  const handleFieldStatsQuery = useCallback(
-    (query: string) => {
-      openInDiscover(query);
-    },
-    [openInDiscover],
-  );
 
   const insightContext = useMemo(
     () =>
@@ -750,8 +727,32 @@ export default function DataStreamsPage() {
               </TableContainer>
             </Paper>
           </InsightSlot>
-
-          <Box sx={{ display: "flex", flex: 1, flexDirection: "column", minHeight: 0 }}>
+        </Box>
+        <Drawer
+          anchor="right"
+          open={Boolean(displayedDataStream)}
+          onClose={() => void setSelectedName(null)}
+          PaperProps={{
+            sx: {
+              width: { xs: "100%", md: 560 },
+              p: 1,
+              backgroundColor: "background.default",
+            },
+          }}
+        >
+          <Box
+            sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 1 }}
+          >
+            <Typography variant="subtitle1">Data stream details</Typography>
+            <IconButton
+              size="small"
+              aria-label="Close data stream details"
+              onClick={() => void setSelectedName(null)}
+            >
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </Box>
+          <Box sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
             <InsightSlot slotId={DATA_STREAMS_INSIGHT_SLOT_IDS.streamDetail}>
               <Paper
                 variant="outlined"
@@ -775,21 +776,18 @@ export default function DataStreamsPage() {
                         <Typography variant="body2" data-testid="data-stream-meta-status">
                           {displayedDataStream.status}
                         </Typography>
-
                         <Typography variant="caption" color="text.secondary">
                           Generation
                         </Typography>
                         <Typography variant="body2" data-testid="data-stream-meta-generation">
                           {displayedDataStream.generation}
                         </Typography>
-
                         <Typography variant="caption" color="text.secondary">
                           Backing indices
                         </Typography>
                         <Typography variant="body2" data-testid="data-stream-meta-backing-indices">
                           {displayedDataStream.indices.length}
                         </Typography>
-
                         <Typography variant="caption" color="text.secondary">
                           Documents
                         </Typography>
@@ -798,7 +796,6 @@ export default function DataStreamsPage() {
                             streamStatsByName.get(displayedDataStream.name)?.docs ?? 0
                           ).toLocaleString()}
                         </Typography>
-
                         <Typography variant="caption" color="text.secondary">
                           Store size
                         </Typography>
@@ -807,7 +804,6 @@ export default function DataStreamsPage() {
                             streamStatsByName.get(displayedDataStream.name)?.sizeBytes ?? 0,
                           )}
                         </Typography>
-
                         <Typography variant="caption" color="text.secondary">
                           Write index
                         </Typography>
@@ -815,14 +811,12 @@ export default function DataStreamsPage() {
                           {displayedDataStream.indices[displayedDataStream.indices.length - 1]
                             ?.index_name ?? "n/a"}
                         </Typography>
-
                         <Typography variant="caption" color="text.secondary">
                           Managed by
                         </Typography>
                         <Typography variant="body2" data-testid="data-stream-meta-managed-by">
                           {displayedDataStream.next_generation_managed_by}
                         </Typography>
-
                         {displayedDataStream.ilm_policy && (
                           <>
                             <Typography variant="caption" color="text.secondary">
@@ -907,18 +901,7 @@ export default function DataStreamsPage() {
               </Paper>
             </InsightSlot>
           </Box>
-
-          {selectedField && connection && displayedName && (
-            <FieldStatsPanel
-              connection={connection}
-              streamName={displayedName}
-              fieldName={selectedField.name}
-              fieldType={selectedField.type}
-              onClose={() => setSelectedField(null)}
-              onOpenInQueryLab={handleFieldStatsQuery}
-            />
-          )}
-        </Box>
+        </Drawer>
       </Box>
     </InsightSlotProvider>
   );

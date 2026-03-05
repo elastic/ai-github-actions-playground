@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -34,6 +35,7 @@ interface NodeDetailRow {
 }
 
 export default function NodesPage() {
+  const navigate = useNavigate();
   const { result, partialErrors, refresh } = useClusterOverview();
   const loading = result.status === "loading";
   const error = result.status === "error" ? result.error : null;
@@ -134,7 +136,23 @@ export default function NodesPage() {
                 </TableHead>
                 <TableBody>
                   {rows.map((row) => (
-                    <TableRow key={row.id} hover>
+                    <TableRow
+                      key={row.id}
+                      hover
+                      tabIndex={0}
+                      onClick={() => navigate(`/nodes/${encodeURIComponent(row.id)}`)}
+                      onKeyDown={(event) => {
+                        if (
+                          event.key === "Enter" ||
+                          event.key === " " ||
+                          event.key === "Spacebar"
+                        ) {
+                          event.preventDefault();
+                          navigate(`/nodes/${encodeURIComponent(row.id)}`);
+                        }
+                      }}
+                      sx={{ cursor: "pointer" }}
+                    >
                       <TableCell>
                         <Typography variant="body2" noWrap title={`${row.name} (${row.id})`}>
                           {row.name}

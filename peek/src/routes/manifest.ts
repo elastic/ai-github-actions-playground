@@ -50,6 +50,7 @@ const FleetPage = lazy(() => import("../components/FleetPage"));
 const IngestPipelinesPage = lazy(() => import("../components/IngestPipelinesPage"));
 const IndicesPage = lazy(() => import("../components/IndicesPage"));
 const NodesPage = lazy(() => import("../components/NodesPage"));
+const NodeDetailPage = lazy(() => import("../components/NodeDetailPage"));
 const RolesPage = lazy(() => import("../components/RolesPage"));
 const ServiceDashboardPage = lazy(() => import("../components/services/ServiceDashboardPage"));
 const ServiceInventoryPage = lazy(() => import("../components/services/ServiceInventoryPage"));
@@ -437,6 +438,20 @@ export const PAGE_MANIFEST = {
       group: "System",
       order: 24,
       showInSidebar: true,
+      icon: createElement(MemoryIcon, { fontSize: "small" }),
+    },
+  },
+  nodeDetail: {
+    path: "/nodes/:nodeId",
+    component: NodeDetailPage,
+    requiresConnection: true,
+    showTimeControls: false,
+    skeletonVariant: "detail-panel",
+    nav: {
+      label: "Node detail",
+      group: "System",
+      order: 24,
+      showInSidebar: false,
       icon: createElement(MemoryIcon, { fontSize: "small" }),
     },
   },
