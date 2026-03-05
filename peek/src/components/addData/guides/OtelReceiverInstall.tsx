@@ -188,7 +188,7 @@ export default function OtelReceiverInstall({
         endIcon={<OpenInNewIcon fontSize="small" />}
         sx={{ alignSelf: "flex-start" }}
       >
-        {receiver.label} receiver docs
+        OpenTelemetry docs
       </Button>
     </Stack>
   );

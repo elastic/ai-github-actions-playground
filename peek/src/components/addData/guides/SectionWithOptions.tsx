@@ -46,6 +46,7 @@ export default function SectionWithOptions<T extends string>({
         exclusive
         onChange={(_, v) => v != null && onChange(v)}
         size="small"
+        aria-label={label ?? "Options"}
         sx={{
           flexWrap: "wrap",
           "& .MuiToggleButton-root": {

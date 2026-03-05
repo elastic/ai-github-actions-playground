@@ -216,7 +216,7 @@ export function parseCommandSteps(command: string): CommandStep[] {
 
 export type Platform = "kubernetes" | "docker" | "linux" | "macos" | "windows";
 export type HostRunMode = "run_once" | "systemd" | "shell_profile";
-export type LinuxPackageFormat = "deb" | "rpm";
+export type LinuxPackageFormat = "deb" | "rpm" | "auto";
 
 /** Flattened Linux install choice: Run once | Install on Debian/Ubuntu | Install on Red Hat/CentOS. */
 export type LinuxInstallChoice = "run_once" | "deb" | "rpm";
@@ -225,7 +225,7 @@ export function linuxChoiceToContext(choice: LinuxInstallChoice): {
   runMode: HostRunMode;
   linuxPackageFormat: LinuxPackageFormat;
 } {
-  if (choice === "run_once") return { runMode: "run_once", linuxPackageFormat: "deb" };
+  if (choice === "run_once") return { runMode: "run_once", linuxPackageFormat: "auto" };
   return { runMode: "systemd", linuxPackageFormat: choice };
 }
 
@@ -347,6 +347,16 @@ docker compose up -d`;
     }) => {
       const isOtlp = endpointType === "managed_otlp";
       const packageExt = linuxPackageFormat === "rpm" ? "rpm" : "deb";
+      const autoInstallSnippet =
+        linuxPackageFormat === "auto"
+          ? `if command -v dpkg &>/dev/null; then
+  sudo dpkg -i "$PKG_FILE"
+else
+  sudo rpm -Uvh "$PKG_FILE"
+fi`
+          : linuxPackageFormat === "rpm"
+            ? 'sudo rpm -Uvh "$PKG_FILE"'
+            : 'sudo dpkg -i "$PKG_FILE"';
       const sampleConfig = isOtlp
         ? "otel_samples/managed_otlp/platformlogs_hostmetrics.yml"
         : "otel_samples/platformlogs_hostmetrics.yml";
@@ -400,9 +410,10 @@ sudo systemctl enable --now elastic-agent-otel.service`
       return `# 1. Detect architecture, then install the EDOT Collector package
 AGENT_ARCH="$(uname -m | sed -E 's/^(x86_64|amd64)$/x86_64/; s/^(aarch64|arm64)$/arm64/')"
 AGENT_DIR="/opt/Elastic/Agent"
-PKG_FILE="elastic-agent-${version}-linux-\${AGENT_ARCH}.${packageExt}"
+PKG_EXT="${linuxPackageFormat === "auto" ? "$(command -v dpkg &>/dev/null && echo deb || echo rpm)" : packageExt}"
+PKG_FILE="elastic-agent-${version}-linux-\${AGENT_ARCH}.\${PKG_EXT}"
 curl -L -O ${ARTIFACTS_BASE}/\${PKG_FILE}
-${linuxPackageFormat === "rpm" ? 'sudo rpm -Uvh "$PKG_FILE"' : 'sudo dpkg -i "$PKG_FILE"'}
+${autoInstallSnippet}
 sudo cp "$AGENT_DIR/${sampleConfig}" "$AGENT_DIR/otel.yml"
 
 # 2. Set your credentials

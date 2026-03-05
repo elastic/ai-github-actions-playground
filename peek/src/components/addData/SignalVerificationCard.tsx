@@ -13,6 +13,7 @@ import { useNavigate } from "react-router-dom";
 
 import type { PerSignalDelta } from "../../services/addData/ingestionQueries";
 import { useOpenInDiscover } from "../../hooks/useOpenInDiscover";
+import { escapeEsqlString } from "../../services/es/esqlUtils";
 import { formatNumber } from "../visualizations/chartUtils";
 
 import { SIGNAL_COLORS } from "./addDataTechnologyConstants";
@@ -259,8 +260,4 @@ function buildSignalQuery(delta: PerSignalDelta): string {
     (part): part is string => Boolean(part),
   );
   return parts.join(" | ");
-}
-
-function escapeEsqlString(value: string): string {
-  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
 }

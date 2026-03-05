@@ -153,6 +153,7 @@ export default function AddDataStepSetup(p: AddDataStepSetupProps) {
     }
   })();
   const hasAnyApiKey = p.hasApiKey;
+  const { creatingApiKey, apiKeyError, onCreateApiKey } = p;
   const awsListeningForData =
     awsFlowEnabled &&
     p.awsDeployStarted &&
@@ -248,12 +249,12 @@ export default function AddDataStepSetup(p: AddDataStepSetupProps) {
       return;
     }
     if (hasAnyApiKey) return;
-    if (p.creatingApiKey) return;
-    if (p.apiKeyError) return;
+    if (creatingApiKey) return;
+    if (apiKeyError) return;
     if (autoGenerateRequestedRef.current) return;
     autoGenerateRequestedRef.current = true;
-    p.onCreateApiKey();
-  }, [showCredentialsSection, hasAnyApiKey, p.creatingApiKey, p.apiKeyError, p.onCreateApiKey]);
+    onCreateApiKey();
+  }, [showCredentialsSection, hasAnyApiKey, creatingApiKey, apiKeyError, onCreateApiKey]);
 
   if (!p.selectedTechnology) {
     return (

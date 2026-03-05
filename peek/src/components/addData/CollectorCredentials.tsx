@@ -51,7 +51,9 @@ export default function CollectorCredentials({
     scheduleCopyFeedbackReset();
   }, [effectiveApiKey, scheduleCopyFeedbackReset]);
   const isManualEntry = apiKeyValue == null && manualApiKeyValue.trim().length > 0;
-  const outputMode = ingestAvailable ? "managed_otlp" : "elasticsearch";
+  const hasProbeTarget = Boolean(probeTargetOtlpUrl);
+  const outputMode =
+    ingestAvailable === false || !hasProbeTarget ? "elasticsearch" : "managed_otlp";
   const otlpUndetectable = !probeTargetOtlpUrl;
   const otlpUnavailable = otlpUndetectable || ingestAvailable === false;
   const destinationUrl = outputMode === "managed_otlp" ? (probeTargetOtlpUrl ?? esUrl) : esUrl;

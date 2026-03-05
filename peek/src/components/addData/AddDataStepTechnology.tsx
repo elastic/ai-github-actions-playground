@@ -139,7 +139,6 @@ export default function AddDataStepTechnology({
             setCloudSaasFilter("all");
             onClearTechnology();
           }
-          onClearTechnology();
         }}
         fullWidth
         size="small"
@@ -225,6 +224,7 @@ export default function AddDataStepTechnology({
           </Typography>
           <Button
             size="small"
+            aria-pressed={cloudSaasFilter === "all"}
             variant={cloudSaasFilter === "all" ? "contained" : "outlined"}
             onClick={() => setCloudSaasFilter("all")}
           >
@@ -232,6 +232,7 @@ export default function AddDataStepTechnology({
           </Button>
           <Button
             size="small"
+            aria-pressed={cloudSaasFilter === "cloud_providers"}
             variant={cloudSaasFilter === "cloud_providers" ? "contained" : "outlined"}
             onClick={() => setCloudSaasFilter("cloud_providers")}
           >
@@ -239,6 +240,7 @@ export default function AddDataStepTechnology({
           </Button>
           <Button
             size="small"
+            aria-pressed={cloudSaasFilter === "saas_databases"}
             variant={cloudSaasFilter === "saas_databases" ? "contained" : "outlined"}
             onClick={() => setCloudSaasFilter("saas_databases")}
           >

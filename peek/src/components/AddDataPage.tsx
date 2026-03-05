@@ -272,8 +272,12 @@ export default function AddDataPage() {
           signalExpectation={signalExpectation}
           selectedSignals={selectedSignals}
           endpointType={endpointType}
-          probeTargetOtlpUrl={probeTargetOtlpUrl}
-          ingestAvailable={effectiveIngestAvailable}
+          probeTargetOtlpUrl={
+            selectedTechnology?.guideType === "edot_collector" ? probeTargetOtlpUrl : null
+          }
+          ingestAvailable={
+            selectedTechnology?.guideType === "edot_collector" ? effectiveIngestAvailable : null
+          }
           platform={platform}
           onPlatformChange={setPlatform}
           receiver={receiver}

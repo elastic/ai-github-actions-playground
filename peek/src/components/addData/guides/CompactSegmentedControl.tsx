@@ -12,6 +12,8 @@ interface CompactSegmentedControlProps<T extends string> {
   onChange: (value: T) => void;
   /** Optional size. Default "small". */
   size?: "small" | "medium";
+  /** Accessible name for the group. */
+  ariaLabel?: string;
 }
 
 /**
@@ -23,6 +25,7 @@ export default function CompactSegmentedControl<T extends string>({
   options,
   onChange,
   size = "small",
+  ariaLabel,
 }: CompactSegmentedControlProps<T>) {
   return (
     <ToggleButtonGroup
@@ -30,6 +33,7 @@ export default function CompactSegmentedControl<T extends string>({
       exclusive
       onChange={(_, v) => v != null && onChange(v)}
       size={size}
+      aria-label={ariaLabel}
       sx={{
         "& .MuiToggleButton-root": {
           py: 0.5,
