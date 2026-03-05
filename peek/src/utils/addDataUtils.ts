@@ -403,9 +403,7 @@ sudo -E ./elastic-agent otel --config otel.yml`;
       // deb/rpm: package manager install with systemd
       const packageExt = linuxPackageFormat === "rpm" ? "rpm" : "deb";
       const installSnippet =
-        linuxPackageFormat === "rpm"
-          ? 'sudo rpm -Uvh "$PKG_FILE"'
-          : 'sudo dpkg -i "$PKG_FILE"';
+        linuxPackageFormat === "rpm" ? 'sudo rpm -Uvh "$PKG_FILE"' : 'sudo dpkg -i "$PKG_FILE"';
       const runModeCredentials = `sudo install -d -m 0755 /etc/elastic
 cat <<EOF | sudo tee /etc/elastic/elastic-agent-otel.env > /dev/null
 ${envLines}

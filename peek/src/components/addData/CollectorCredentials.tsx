@@ -18,7 +18,9 @@ function formatApiKeyError(raw: string): string {
   const lower = raw.toLowerCase();
   if (
     (lower.includes("api_key") || lower.includes("api key")) &&
-    (lower.includes("unauthorized") || lower.includes("forbidden") || lower.includes("access denied"))
+    (lower.includes("unauthorized") ||
+      lower.includes("forbidden") ||
+      lower.includes("access denied"))
   ) {
     return "";
   }
@@ -156,7 +158,11 @@ export default function CollectorCredentials({
             </Stack>
             {!apiKeyError && (
               <Stack direction="row" spacing={1} alignItems="flex-start" flexWrap="wrap">
-                <Typography variant="caption" color="text.secondary" sx={{ minWidth: 80, pt: 0.75 }}>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ minWidth: 80, pt: 0.75 }}
+                >
                   Destination
                 </Typography>
                 <TextField
