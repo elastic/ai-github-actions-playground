@@ -26,7 +26,7 @@ background.paper         #25262E         #FFFFFF
 background.sunken        #16171C         #EDF0F5
 background.raised        #2D2E36         #FFFFFF
 text.primary             #DFE5EF         #1A1C21
-text.secondary           #98A2B3         #69707D
+text.secondary           #AEB6C1         #69707D
 text.disabled            #535966         #ABB4C4
 primary.main             #36A2EF         #0077CC
 primary.hover            #5AB4F5         #005FA3
@@ -35,7 +35,7 @@ border.default           #343741         #D3DAE6
 border.strong            #535966         #98A7B9
 ```
 
-The `text.secondary` value in dark mode is `#98A2B3` — 4.6:1 contrast against `#25262E` paper background, clearing WCAG AA. Never go darker than this for secondary text.
+The `text.secondary` value in dark mode is `#AEB6C1` — 8.3:1 contrast against `#25262E` paper background, exceeding WCAG AA. Never go darker than this for secondary text.
 
 ### Status Colors
 

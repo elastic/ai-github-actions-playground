@@ -14,7 +14,7 @@ import { useCopyFeedbackTimeout } from "../../hooks/useCopyFeedbackTimeout";
 import { copyToClipboard } from "../../utils/copyToClipboard";
 
 /** Map raw Elasticsearch API key errors to user-friendly messages. */
-function formatApiKeyError(raw: string): string {
+export function formatApiKeyError(raw: string): string {
   const lower = raw.toLowerCase();
   if (
     (lower.includes("api_key") || lower.includes("api key")) &&
@@ -26,6 +26,14 @@ function formatApiKeyError(raw: string): string {
   }
   if (lower.includes("authentication") || lower.includes("401")) {
     return "Authentication failed. Check your Elasticsearch connection credentials.";
+  }
+  if (
+    lower.includes("bad request") ||
+    lower.includes("disabled") ||
+    lower.includes("not enabled") ||
+    lower.includes("security_exception")
+  ) {
+    return "Security features may not be enabled on this cluster. Provide an API key manually.";
   }
   return raw;
 }
