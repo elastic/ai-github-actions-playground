@@ -423,7 +423,9 @@ export class ElasticsearchClient {
   }
 
   async getSnapshotStatus(signal?: AbortSignal): Promise<SnapshotStatusResponse> {
-    return this._fetch<SnapshotStatusResponse>("/_snapshot/_all/_current", { signal });
+    // Use the generic status endpoint so we can fetch repository-wide snapshot state.
+    // `/_snapshot/_all/_current` is less portable across cluster versions/configs.
+    return this._fetch<SnapshotStatusResponse>("/_snapshot/_status", { signal });
   }
 
   async getClusterSettings(signal?: AbortSignal): Promise<ClusterSettingsResponse> {

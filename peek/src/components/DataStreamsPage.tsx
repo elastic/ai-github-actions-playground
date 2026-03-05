@@ -19,20 +19,25 @@ import TableRow from "@mui/material/TableRow";
 import TableSortLabel from "@mui/material/TableSortLabel";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import IconButton from "@mui/material/IconButton";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import StorageIcon from "@mui/icons-material/Storage";
 import { parseAsString, useQueryState } from "nuqs";
 
-import type { FieldCapsResponse } from "../services/es";
+import type { DataStreamInfo, FieldCapsResponse } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useApiConsoleStore } from "../store/useApiConsoleStore";
 import { usePageContextStore } from "../store/usePageContextStore";
 import { PAGE_MANIFEST } from "../routes/manifest";
 import { useDataStreams } from "../hooks/useDataStreams";
 import { useFieldCaps } from "../hooks/useFieldCaps";
+import { useIndices } from "../hooks/useIndices";
 import { useOpenInDiscover } from "../hooks/useOpenInDiscover";
 import { INSIGHT_GUARDRAIL } from "../hooks/insightPromptUtils";
 import { usePageSlotInsights } from "../hooks/usePageSlotInsights";
 import { COMPACT_CHIP_SX } from "../types/tokens";
+import { formatBytes } from "../utils/formatBytes";
 
 import ContentSkeleton from "./ContentSkeleton";
 import EmptyState from "./EmptyState";
@@ -66,14 +71,28 @@ const STATUS_CHIP_COLORS: Record<string, "success" | "warning" | "error" | "defa
 // Sorting helpers
 // ---------------------------------------------------------------------------
 
-type StreamSortField = "name" | "status" | "indices";
+type StreamSortField = "name" | "status" | "indices" | "docs" | "size";
 type StreamSortDirection = "asc" | "desc";
 
 const STREAM_STATUS_ORDER: Record<string, number> = { GREEN: 0, YELLOW: 1, RED: 2 };
+const DATA_STREAM_INDEX_PREFIX = ".ds-";
+
+interface StreamStats {
+  docs: number;
+  sizeBytes: number;
+}
+
+interface GroupedStreamRow {
+  kind: "group" | "stream";
+  key: string;
+  depth: number;
+  name: string;
+  stream?: DataStreamInfo & { docs: number; sizeBytes: number };
+}
 
 function compareStreams(
-  a: { name: string; status: string; indices: unknown[] },
-  b: { name: string; status: string; indices: unknown[] },
+  a: { name: string; status: string; indices: unknown[]; docs: number; sizeBytes: number },
+  b: { name: string; status: string; indices: unknown[]; docs: number; sizeBytes: number },
   field: StreamSortField,
   dir: StreamSortDirection,
 ): number {
@@ -90,10 +109,27 @@ function compareStreams(
     case "indices":
       cmp = a.indices.length - b.indices.length;
       break;
+    case "docs":
+      cmp = a.docs - b.docs;
+      break;
+    case "size":
+      cmp = a.sizeBytes - b.sizeBytes;
+      break;
     default:
       cmp = 0;
   }
   return dir === "asc" ? cmp : -cmp;
+}
+
+function streamGroupName(streamName: string): string {
+  const head = streamName.split("-")[0];
+  return head || streamName;
+}
+
+function parseCount(value: string | null | undefined): number {
+  if (!value) return 0;
+  const n = Number.parseInt(value, 10);
+  return Number.isFinite(n) ? n : 0;
 }
 
 export default function DataStreamsPage() {
@@ -112,15 +148,18 @@ export default function DataStreamsPage() {
   const [showSystemStreams, setShowSystemStreams] = useState(false);
   const [streamSortField, setStreamSortField] = useState<StreamSortField>("name");
   const [streamSortDirection, setStreamSortDirection] = useState<StreamSortDirection>("asc");
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const [selectedName, setSelectedName] = useState<string | null>(null);
   const [selectedField, setSelectedField] = useState<{ name: string; type: string } | null>(null);
 
   const streamsResult = useDataStreams();
+  const indicesResult = useIndices();
   const fieldCapsResult = useFieldCaps(selectedName);
 
   const loadingStreams = streamsResult.status === "loading";
   const streamsData = streamsResult.status === "success" ? streamsResult.data : undefined;
   const dataStreams = useMemo(() => streamsData ?? [], [streamsData]);
+  const indexRows = indicesResult.status === "success" ? indicesResult.data : [];
   const fieldCaps = fieldCapsResult.status === "success" ? fieldCapsResult.data : null;
   const loadingFields = fieldCapsResult.status === "loading";
   const error =
@@ -134,6 +173,25 @@ export default function DataStreamsPage() {
     () => dataStreams.find((stream) => stream.name === selectedName) ?? null,
     [dataStreams, selectedName],
   );
+
+  const streamStatsByName = useMemo(() => {
+    const indexByName = new Map(indexRows.map((r) => [r.index, r]));
+    const stats = new Map<string, StreamStats>();
+    for (const stream of dataStreams) {
+      let docs = 0;
+      let sizeBytes = 0;
+      for (const idx of stream.indices ?? []) {
+        const backingIndexName = (idx as { index_name?: string }).index_name;
+        if (!backingIndexName) continue;
+        const row = indexByName.get(backingIndexName);
+        if (!row) continue;
+        docs += parseCount(row["docs.count"]);
+        sizeBytes += parseCount(row["store.size"]);
+      }
+      stats.set(stream.name, { docs, sizeBytes });
+    }
+    return stats;
+  }, [dataStreams, indexRows]);
 
   // Auto-select the first visible stream when data loads.
   // Runs on every fetch cycle via the hook's stable data identity.
@@ -178,8 +236,45 @@ export default function DataStreamsPage() {
       if (term && !stream.name.toLowerCase().includes(term)) return false;
       return true;
     });
-    return [...filtered].sort((a, b) => compareStreams(a, b, streamSortField, streamSortDirection));
-  }, [dataStreams, deferredSearch, showSystemStreams, streamSortField, streamSortDirection]);
+    const enriched = filtered.map((stream) => {
+      const stats = streamStatsByName.get(stream.name) ?? { docs: 0, sizeBytes: 0 };
+      return { ...stream, docs: stats.docs, sizeBytes: stats.sizeBytes };
+    });
+    return [...enriched].sort((a, b) => compareStreams(a, b, streamSortField, streamSortDirection));
+  }, [
+    dataStreams,
+    deferredSearch,
+    showSystemStreams,
+    streamSortField,
+    streamSortDirection,
+    streamStatsByName,
+  ]);
+
+  const groupedRows = useMemo(() => {
+    const grouped = new Map<string, typeof filteredStreams>();
+    for (const stream of filteredStreams) {
+      const group = streamGroupName(stream.name);
+      const groupStreams = grouped.get(group) ?? [];
+      groupStreams.push(stream);
+      grouped.set(group, groupStreams);
+    }
+
+    const rows: GroupedStreamRow[] = [];
+    for (const groupName of [...grouped.keys()].sort()) {
+      rows.push({ kind: "group", key: `group:${groupName}`, depth: 0, name: groupName });
+      if (expandedGroups[groupName] === false) continue;
+      for (const stream of grouped.get(groupName) ?? []) {
+        rows.push({
+          kind: "stream",
+          key: `stream:${stream.name}`,
+          depth: 1,
+          name: stream.name,
+          stream,
+        });
+      }
+    }
+    return rows;
+  }, [filteredStreams, expandedGroups]);
 
   const streamMetrics = useMemo(
     () =>
@@ -190,12 +285,15 @@ export default function DataStreamsPage() {
           else if (status === "YELLOW") acc.yellow += 1;
           else if (status === "RED") acc.red += 1;
           acc.totalIndices += stream.indices.length;
+          const stats = streamStatsByName.get(stream.name);
+          acc.totalDocs += stats?.docs ?? 0;
+          acc.totalSizeBytes += stats?.sizeBytes ?? 0;
           acc.total += 1;
           return acc;
         },
-        { total: 0, green: 0, yellow: 0, red: 0, totalIndices: 0 },
+        { total: 0, green: 0, yellow: 0, red: 0, totalIndices: 0, totalDocs: 0, totalSizeBytes: 0 },
       ),
-    [dataStreams],
+    [dataStreams, streamStatsByName],
   );
 
   const handleStreamSort = useCallback(
@@ -206,6 +304,19 @@ export default function DataStreamsPage() {
       setStreamSortField(field);
     },
     [streamSortField],
+  );
+
+  const toggleGroup = useCallback((groupName: string) => {
+    setExpandedGroups((prev) => ({ ...prev, [groupName]: !(prev[groupName] ?? true) }));
+  }, []);
+
+  const handleOpenIndicesForStream = useCallback(
+    (streamName: string) => {
+      void navigate(
+        `/indices?search=${encodeURIComponent(`${DATA_STREAM_INDEX_PREFIX}${streamName}-`)}`,
+      );
+    },
+    [navigate],
   );
 
   // When filtered results don't include the selected stream (e.g. search
@@ -497,55 +608,131 @@ export default function DataStreamsPage() {
                           Indices
                         </TableSortLabel>
                       </TableCell>
+                      <TableCell align="right">
+                        <TableSortLabel
+                          active={streamSortField === "docs"}
+                          direction={streamSortField === "docs" ? streamSortDirection : "asc"}
+                          onClick={() => handleStreamSort("docs")}
+                        >
+                          Docs
+                        </TableSortLabel>
+                      </TableCell>
+                      <TableCell align="right">
+                        <TableSortLabel
+                          active={streamSortField === "size"}
+                          direction={streamSortField === "size" ? streamSortDirection : "asc"}
+                          onClick={() => handleStreamSort("size")}
+                        >
+                          Size
+                        </TableSortLabel>
+                      </TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {filteredStreams.map((stream) => (
-                      <TableRow
-                        key={stream.name}
-                        hover
-                        selected={stream.name === selectedName}
-                        onClick={() => setSelectedName(stream.name)}
-                        tabIndex={0}
-                        aria-label={`Select data stream ${stream.name}`}
-                        onKeyDown={(event) => {
-                          if (
-                            event.key === "Enter" ||
-                            event.key === " " ||
-                            event.key === "Spacebar"
-                          ) {
-                            event.preventDefault();
-                            setSelectedName(stream.name);
+                    {groupedRows.map((row) =>
+                      row.kind === "group" ? (
+                        <TableRow key={row.key}>
+                          <TableCell colSpan={5}>
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                              <IconButton
+                                size="small"
+                                aria-label={`${expandedGroups[row.name] === false ? "Expand" : "Collapse"} group ${row.name}`}
+                                onClick={() => toggleGroup(row.name)}
+                              >
+                                {expandedGroups[row.name] === false ? (
+                                  <KeyboardArrowRightIcon fontSize="small" />
+                                ) : (
+                                  <KeyboardArrowDownIcon fontSize="small" />
+                                )}
+                              </IconButton>
+                              <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                {row.name}
+                              </Typography>
+                            </Box>
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        <TableRow
+                          key={row.key}
+                          hover
+                          selected={row.stream?.name === selectedName}
+                          onClick={() => row.stream && setSelectedName(row.stream.name)}
+                          tabIndex={0}
+                          aria-label={
+                            row.stream ? `Select data stream ${row.stream.name}` : undefined
                           }
-                        }}
-                        sx={{ cursor: "pointer" }}
-                      >
-                        <TableCell>
-                          <Typography
-                            variant="body2"
-                            noWrap
-                            title={stream.name}
-                            sx={{ maxWidth: 240, fontSize: "0.85rem", fontFamily: "monospace" }}
-                          >
-                            {stream.name}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={stream.status.toUpperCase()}
-                            color={STATUS_CHIP_COLORS[stream.status.toUpperCase()] ?? "default"}
-                            size="small"
-                            sx={COMPACT_CHIP_SX}
-                          />
-                        </TableCell>
-                        <TableCell align="right">
-                          <Typography variant="body2">{stream.indices.length}</Typography>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                    {!loadingStreams && filteredStreams.length === 0 && (
+                          onKeyDown={(event) => {
+                            if (!row.stream) return;
+                            if (
+                              event.key === "Enter" ||
+                              event.key === " " ||
+                              event.key === "Spacebar"
+                            ) {
+                              event.preventDefault();
+                              setSelectedName(row.stream.name);
+                            }
+                          }}
+                          sx={{ cursor: "pointer" }}
+                        >
+                          <TableCell>
+                            <Box sx={{ display: "flex", alignItems: "center", pl: row.depth * 2 }}>
+                              <Typography
+                                variant="body2"
+                                noWrap
+                                title={row.stream?.name}
+                                sx={{ maxWidth: 240, fontSize: "0.85rem", fontFamily: "monospace" }}
+                              >
+                                {row.stream?.name}
+                              </Typography>
+                            </Box>
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              label={row.stream?.status.toUpperCase() ?? "UNKNOWN"}
+                              color={
+                                STATUS_CHIP_COLORS[row.stream?.status.toUpperCase() ?? ""] ??
+                                "default"
+                              }
+                              size="small"
+                              sx={COMPACT_CHIP_SX}
+                            />
+                          </TableCell>
+                          <TableCell align="right">
+                            <Button
+                              size="small"
+                              variant="text"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                if (row.stream) handleOpenIndicesForStream(row.stream.name);
+                              }}
+                            >
+                              {row.stream?.indices.length ?? 0}
+                            </Button>
+                          </TableCell>
+                          <TableCell align="right">
+                            <Typography variant="body2">
+                              {(row.stream &&
+                                (
+                                  streamStatsByName.get(row.stream.name)?.docs ?? 0
+                                ).toLocaleString()) ||
+                                "0"}
+                            </Typography>
+                          </TableCell>
+                          <TableCell align="right">
+                            <Typography variant="body2">
+                              {formatBytes(
+                                row.stream
+                                  ? (streamStatsByName.get(row.stream.name)?.sizeBytes ?? 0)
+                                  : 0,
+                              )}
+                            </Typography>
+                          </TableCell>
+                        </TableRow>
+                      ),
+                    )}
+                    {!loadingStreams && groupedRows.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={3} sx={{ border: 0 }}>
+                        <TableCell colSpan={5} sx={{ border: 0 }}>
                           <EmptyState
                             size="small"
                             heading="No data streams found"
@@ -597,6 +784,24 @@ export default function DataStreamsPage() {
                         </Typography>
                         <Typography variant="body2" data-testid="data-stream-meta-backing-indices">
                           {displayedDataStream.indices.length}
+                        </Typography>
+
+                        <Typography variant="caption" color="text.secondary">
+                          Documents
+                        </Typography>
+                        <Typography variant="body2" data-testid="data-stream-meta-docs">
+                          {(
+                            streamStatsByName.get(displayedDataStream.name)?.docs ?? 0
+                          ).toLocaleString()}
+                        </Typography>
+
+                        <Typography variant="caption" color="text.secondary">
+                          Store size
+                        </Typography>
+                        <Typography variant="body2" data-testid="data-stream-meta-size">
+                          {formatBytes(
+                            streamStatsByName.get(displayedDataStream.name)?.sizeBytes ?? 0,
+                          )}
                         </Typography>
 
                         <Typography variant="caption" color="text.secondary">
