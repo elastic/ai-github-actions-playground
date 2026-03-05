@@ -96,13 +96,13 @@ export default function CollectorCredentials({
         <Box
           component="fieldset"
           sx={{
+            minWidth: 0,
+            m: 0,
+            py: 1,
+            px: 1.5,
             border: 1,
             borderColor: "divider",
             borderRadius: 1,
-            px: 1.5,
-            py: 1,
-            m: 0,
-            minWidth: 0,
           }}
         >
           <Typography component="legend" variant="caption" color="text.secondary" sx={{ px: 0.5 }}>
@@ -122,12 +122,15 @@ export default function CollectorCredentials({
                   aria-label="Detected transport (read only)"
                   sx={{
                     "& .MuiToggleButton-root": {
-                      py: 0.25,
-                      px: 1,
                       minHeight: 0,
+                      py: 0.5,
+                      px: 1,
+                      borderColor: "divider",
                       textTransform: "none",
                       fontSize: "0.75rem",
-                      borderColor: "divider",
+                    },
+                    "& .MuiToggleButton-root.Mui-selected": {
+                      bgcolor: "action.selected",
                     },
                     "& .MuiToggleButton-root:first-of-type": {
                       borderTopLeftRadius: 4,
@@ -136,9 +139,6 @@ export default function CollectorCredentials({
                     "& .MuiToggleButton-root:last-of-type": {
                       borderTopRightRadius: 4,
                       borderBottomRightRadius: 4,
-                    },
-                    "& .MuiToggleButton-root.Mui-selected": {
-                      bgcolor: "action.selected",
                     },
                   }}
                 >
@@ -158,11 +158,7 @@ export default function CollectorCredentials({
             </Stack>
             {!apiKeyError && (
               <Stack direction="row" spacing={1} alignItems="flex-start" flexWrap="wrap">
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  sx={{ minWidth: 80, pt: 0.75 }}
-                >
+                <Typography variant="caption" color="text.secondary" sx={{ minWidth: 80, pt: 1 }}>
                   Destination
                 </Typography>
                 <TextField
@@ -183,7 +179,7 @@ export default function CollectorCredentials({
               </Stack>
             )}
             {(otlpUnavailable || ingestAvailable === null) && !apiKeyError && (
-              <Typography variant="caption" color="text.secondary" sx={{ pl: 11 }}>
+              <Typography variant="caption" color="text.secondary" style={{ paddingLeft: "88px" }}>
                 {otlpUnavailable
                   ? "Sending data via Elasticsearch _bulk transport."
                   : "Checking managed OTLP endpoint availability..."}
@@ -197,13 +193,13 @@ export default function CollectorCredentials({
       <Box
         component="fieldset"
         sx={{
+          minWidth: 0,
+          m: 0,
+          py: 1,
+          px: 1.5,
           border: 1,
           borderColor: "divider",
           borderRadius: 1,
-          px: 1.5,
-          py: 1,
-          m: 0,
-          minWidth: 0,
         }}
       >
         <Typography
@@ -260,7 +256,7 @@ export default function CollectorCredentials({
                   value={effectiveApiKey}
                   type={showApiKey ? "text" : "password"}
                   slotProps={{ input: { readOnly: true } }}
-                  sx={{ minWidth: 200, flex: 1 }}
+                  sx={{ flex: 1, minWidth: 200 }}
                 />
                 <Stack direction="row" spacing={0.5} flexShrink={0}>
                   <Button
