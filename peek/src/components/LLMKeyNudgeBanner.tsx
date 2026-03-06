@@ -42,7 +42,7 @@ export default function LLMKeyNudgeBanner({ onOpenSettings }: LLMKeyNudgeBannerP
       >
         <Box>
           <Typography variant="body2" sx={{ fontWeight: 600 }}>
-            Configure an LLM key to enable AI features.
+            Works best with an LLM key configured.
           </Typography>
           <Typography variant="caption" color="text.secondary">
             Add an OpenRouter or OpenAI key in Settings to unlock richer AI assistance.

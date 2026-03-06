@@ -9,6 +9,8 @@ import { useDashboardStore } from "../../src/store/useDashboardStore";
 import { useLLMStore } from "../../src/store/useLLMStore";
 import { resetAllStores } from "../fixtures/test-utils";
 
+const llmNudgeCopy = /works best with an llm key configured/i;
+
 function LocationDisplay() {
   const location = useLocation();
   return <div data-testid="location">{location.pathname}</div>;
@@ -131,7 +133,7 @@ describe("App shell visibility", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText(/configure an llm key to enable ai features/i)).toBeInTheDocument();
+    expect(screen.getByText(llmNudgeCopy)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /configure key/i })).toBeInTheDocument();
   });
 
@@ -145,9 +147,7 @@ describe("App shell visibility", () => {
       </MemoryRouter>,
     );
 
-    expect(
-      screen.queryByText(/configure an llm key to enable ai features/i),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText(llmNudgeCopy)).not.toBeInTheDocument();
   });
 
   it("dismisses the LLM key banner for the current session", async () => {
@@ -164,9 +164,7 @@ describe("App shell visibility", () => {
     await user.click(screen.getByRole("button", { name: /maybe later/i }));
 
     expect(sessionStorage.getItem("elastic-peek:llm-key-nudge-dismissed")).toBe("1");
-    expect(
-      screen.queryByText(/configure an llm key to enable ai features/i),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText(llmNudgeCopy)).not.toBeInTheDocument();
   });
 
   it("navigates to settings when Configure key is clicked", async () => {
@@ -197,9 +195,7 @@ describe("App shell visibility", () => {
       </MemoryRouter>,
     );
 
-    expect(
-      screen.queryByText(/configure an llm key to enable ai features/i),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText(llmNudgeCopy)).not.toBeInTheDocument();
   });
 
   it("does not intercept undo shortcut inside contenteditable editors", () => {
