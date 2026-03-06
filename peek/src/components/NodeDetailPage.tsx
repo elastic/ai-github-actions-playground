@@ -74,6 +74,7 @@ function KVRow({ label, value, warn, critical }: KVRowProps) {
         {label}
       </Typography>
       <Typography
+        component="div"
         variant="body2"
         sx={{
           color: critical ? "error.main" : warn ? "warning.main" : undefined,

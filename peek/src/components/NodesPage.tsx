@@ -55,7 +55,6 @@ const NODE_THRESHOLDS = {
   cpu: { warning: 70, critical: 90 },
   heap: { warning: 75, critical: 90 },
   disk: { warning: 85, critical: 95 },
-  load1mWarning: 5,
 } as const;
 
 function nodeHealth(row: NodeTableRow): HealthLevel {
@@ -66,11 +65,10 @@ function nodeHealth(row: NodeTableRow): HealthLevel {
     return "critical";
   if (row.totalBreakerTrips !== null && row.totalBreakerTrips > 0) return "critical";
   if (row.totalThreadRejections !== null && row.totalThreadRejections > 0) return "critical";
-  // Warning: heap > 75%, disk > 85%, load_1m > 5
+  // Warning: heap >= 75%, disk >= 85%
   if (row.heapPercent !== null && row.heapPercent >= NODE_THRESHOLDS.heap.warning) return "warning";
   if (row.fsUsedPercent !== null && row.fsUsedPercent >= NODE_THRESHOLDS.disk.warning)
     return "warning";
-  if (row.load1m !== null && row.load1m >= NODE_THRESHOLDS.load1mWarning) return "warning";
   return "ok";
 }
 
@@ -169,7 +167,8 @@ export default function NodesPage() {
         id,
         name: info?.name ?? stats?.name ?? id,
         transportAddress: info?.transport_address ?? null,
-        roles: info?.roles ?? [],
+        roles:
+          info?.roles && info.roles.length > 0 ? info.roles : info ? ["coordinating_only"] : [],
         version: info?.version ?? "unknown",
         cpuPercent: stats?.os?.cpu?.percent ?? null,
         load1m: stats?.os?.cpu?.load_average?.["1m"] ?? null,
@@ -307,6 +306,8 @@ export default function NodesPage() {
                         key={row.id}
                         hover
                         tabIndex={0}
+                        role="button"
+                        aria-label={`Open node details for ${row.name}`}
                         onClick={() => navigate(`/nodes/${encodeURIComponent(row.id)}`)}
                         onKeyDown={(event) => {
                           if (
