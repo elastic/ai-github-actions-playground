@@ -51,7 +51,7 @@ function abbrevRole(role: string): string {
 
 type HealthLevel = "critical" | "warning" | "ok";
 
-function nodeHealth(row: NodeRow): HealthLevel {
+function nodeHealth(row: NodeTableRow): HealthLevel {
   // Critical: heap > 90%, disk > 95%, any breaker trips, any thread rejections
   if (row.heapPercent !== null && row.heapPercent > 90) return "critical";
   if (row.fsUsedPercent !== null && row.fsUsedPercent > 95) return "critical";
@@ -103,7 +103,7 @@ function levelColor(level: MetricLevel): string | undefined {
 
 // ── Row data ──────────────────────────────────────────────────────────────
 
-interface NodeRow {
+interface NodeTableRow {
   id: string;
   name: string;
   transportAddress: string | null;
@@ -132,7 +132,7 @@ export default function NodesPage() {
   const nodeDataUnavailable =
     partialErrors.includes("nodes") && partialErrors.includes("node stats");
 
-  const rows = useMemo<NodeRow[]>(() => {
+  const rows = useMemo<NodeTableRow[]>(() => {
     const infoNodes = data?.nodesInfo?.nodes ?? {};
     const statsNodes = data?.nodesStats?.nodes ?? {};
     const ids = Array.from(new Set([...Object.keys(infoNodes), ...Object.keys(statsNodes)])).sort();
