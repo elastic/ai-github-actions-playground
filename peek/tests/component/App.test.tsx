@@ -7,6 +7,7 @@ import App from "../../src/App";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
 import { useLLMStore } from "../../src/store/useLLMStore";
+import { SESSION_DISMISS_KEY } from "../../src/components/LLMKeyNudgeBanner";
 import { resetAllStores } from "../fixtures/test-utils";
 
 const llmNudgeCopy = /works best with an llm key configured/i;
@@ -163,7 +164,7 @@ describe("App shell visibility", () => {
 
     await user.click(screen.getByRole("button", { name: /maybe later/i }));
 
-    expect(sessionStorage.getItem("elastic-peek:llm-key-nudge-dismissed")).toBe("1");
+    expect(sessionStorage.getItem(SESSION_DISMISS_KEY)).toBe("1");
     expect(screen.queryByText(llmNudgeCopy)).not.toBeInTheDocument();
   });
 
@@ -187,7 +188,7 @@ describe("App shell visibility", () => {
   it("keeps the LLM key banner hidden when already dismissed in session", () => {
     useConnectionStore.getState().setConnected(true);
     useLLMStore.getState().setApiKey("");
-    sessionStorage.setItem("elastic-peek:llm-key-nudge-dismissed", "1");
+    sessionStorage.setItem(SESSION_DISMISS_KEY, "1");
 
     render(
       <MemoryRouter>

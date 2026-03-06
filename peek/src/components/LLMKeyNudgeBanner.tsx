@@ -7,7 +7,7 @@ import Typography from "@mui/material/Typography";
 
 import { useLLMStore } from "../store/useLLMStore";
 
-const SESSION_DISMISS_KEY = "elastic-peek:llm-key-nudge-dismissed";
+export const SESSION_DISMISS_KEY = "elastic-peek:llm-key-nudge-dismissed";
 
 interface LLMKeyNudgeBannerProps {
   onOpenSettings: () => void;
@@ -15,11 +15,15 @@ interface LLMKeyNudgeBannerProps {
 
 function initialDismissedState(): boolean {
   if (typeof window === "undefined") return false;
-  return sessionStorage.getItem(SESSION_DISMISS_KEY) === "1";
+  try {
+    return window.sessionStorage.getItem(SESSION_DISMISS_KEY) === "1";
+  } catch {
+    return false;
+  }
 }
 
 export default function LLMKeyNudgeBanner({ onOpenSettings }: LLMKeyNudgeBannerProps) {
-  const hasApiKey = useLLMStore((s) => s.config.apiKey.trim().length > 0);
+  const hasApiKey = useLLMStore((s) => s.isConfigured());
   const [dismissed, setDismissed] = useState(initialDismissedState);
 
   if (hasApiKey || dismissed) {
@@ -57,7 +61,11 @@ export default function LLMKeyNudgeBanner({ onOpenSettings }: LLMKeyNudgeBannerP
             color="inherit"
             onClick={() => {
               setDismissed(true);
-              sessionStorage.setItem(SESSION_DISMISS_KEY, "1");
+              try {
+                window.sessionStorage.setItem(SESSION_DISMISS_KEY, "1");
+              } catch {
+                // Ignore storage failures in restricted environments.
+              }
             }}
           >
             Maybe later
