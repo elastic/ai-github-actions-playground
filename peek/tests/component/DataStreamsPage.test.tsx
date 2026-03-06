@@ -586,4 +586,31 @@ describe("DataStreamsPage", () => {
     expect(within(dataRowsDesc[0]).getByText("logs-b")).toBeInTheDocument();
     expect(within(dataRowsDesc[1]).getByText("logs-a")).toBeInTheDocument();
   });
+
+  it("disables grouped rendering when sorting by Docs", async () => {
+    const user = userEvent.setup();
+
+    getDataStreamsMock.mockResolvedValue({
+      data_streams: [
+        { name: "logs-a", status: "GREEN", generation: 1, template: "logs", indices: [{}] },
+        { name: "logs-b", status: "GREEN", generation: 1, template: "logs", indices: [{}] },
+      ],
+    });
+    getFieldCapsMock.mockResolvedValue({ fields: {} });
+
+    render(
+      <MemoryRouter>
+        <NuqsTestingAdapter hasMemory>
+          <DataStreamsPage />
+        </NuqsTestingAdapter>
+      </MemoryRouter>,
+    );
+
+    // Name sort groups matching prefixes by default.
+    expect(await screen.findByLabelText(/collapse group logs/i)).toBeInTheDocument();
+
+    // Non-name sort should render a flat list and hide group controls.
+    await user.click(screen.getByRole("button", { name: /^docs$/i }));
+    expect(screen.queryByLabelText(/group logs/i)).not.toBeInTheDocument();
+  });
 });

@@ -236,6 +236,16 @@ export default function DataStreamsPage() {
   ]);
 
   const groupedRows = useMemo(() => {
+    if (streamSortField !== "name") {
+      return filteredStreams.map((stream) => ({
+        kind: "stream" as const,
+        key: `stream:${stream.name}`,
+        depth: 0,
+        name: stream.name,
+        stream,
+      }));
+    }
+
     const grouped = new Map<string | null, typeof filteredStreams>();
     for (const stream of filteredStreams) {
       const group = streamGroupName(stream.name);
@@ -263,7 +273,7 @@ export default function DataStreamsPage() {
       }
     }
     return rows;
-  }, [filteredStreams, expandedGroups]);
+  }, [filteredStreams, expandedGroups, streamSortField]);
 
   const streamMetrics = useMemo(
     () =>

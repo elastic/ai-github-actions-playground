@@ -23,6 +23,8 @@ export default function NodeDetailPage() {
   const data = result.status === "success" ? result.data : null;
   const loading = result.status === "loading";
   const error = result.status === "error" ? result.error : null;
+  const nodeDataUnavailable =
+    partialErrors.includes("nodes") && partialErrors.includes("node stats");
 
   const details = useMemo(() => {
     if (!decodedNodeId || !data) return null;
@@ -80,10 +82,14 @@ export default function NodeDetailPage() {
         </Alert>
       )}
 
-      {!details ? (
+      {error ? null : !details ? (
         <EmptyState
-          heading="Node not found"
-          description="The selected node could not be found in current cluster node data."
+          heading={nodeDataUnavailable ? "Node data unavailable" : "Node not found"}
+          description={
+            nodeDataUnavailable
+              ? "Node APIs are unavailable for this cluster or current permissions."
+              : "The selected node could not be found in current cluster node data."
+          }
         />
       ) : (
         <Paper variant="outlined" sx={{ p: 2 }}>
