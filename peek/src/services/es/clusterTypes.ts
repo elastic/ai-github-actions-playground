@@ -71,6 +71,18 @@ export interface NodesInfoNode {
   name?: string;
   roles?: string[];
   version?: string;
+  ip?: string;
+  host?: string;
+  transport_address?: string;
+  attributes?: Record<string, string>;
+  os?: { name?: string; version?: string; available_processors?: number };
+  jvm?: {
+    version?: string;
+    vm_vendor?: string;
+    vm_name?: string;
+    mem?: { heap_init_in_bytes?: number; heap_max_in_bytes?: number };
+    uptime_in_millis?: number;
+  };
 }
 
 export interface NodesInfoResponse {
@@ -84,10 +96,23 @@ export interface NodeStatsNode {
       percent?: number;
       load_average?: { "1m"?: number; "5m"?: number; "15m"?: number };
     };
-    mem?: { used_percent?: number; total_in_bytes?: number; free_in_bytes?: number };
+    mem?: {
+      used_percent?: number;
+      total_in_bytes?: number;
+      free_in_bytes?: number;
+      actual_free_in_bytes?: number;
+      actual_used_in_bytes?: number;
+    };
   };
   jvm?: {
-    mem?: { heap_used_percent?: number };
+    uptime_in_millis?: number;
+    mem?: {
+      heap_used_percent?: number;
+      heap_used_in_bytes?: number;
+      heap_max_in_bytes?: number;
+      heap_committed_in_bytes?: number;
+      non_heap_used_in_bytes?: number;
+    };
     gc?: {
       collectors?: {
         young?: { collection_count?: number; collection_time_in_millis?: number };
@@ -95,23 +120,62 @@ export interface NodeStatsNode {
       };
     };
   };
-  fs?: { total?: { total_in_bytes?: number; available_in_bytes?: number } };
+  fs?: {
+    total?: {
+      total_in_bytes?: number;
+      available_in_bytes?: number;
+      free_in_bytes?: number;
+    };
+  };
+  transport?: {
+    rx_count?: number;
+    tx_count?: number;
+    rx_size_in_bytes?: number;
+    tx_size_in_bytes?: number;
+  };
+  http?: { current_open?: number; total_opened?: number };
   indices?: {
-    docs?: { count?: number };
+    docs?: { count?: number; deleted?: number };
     shard_stats?: { total_count?: number };
-    indexing?: { index_total?: number };
-    search?: { query_total?: number; query_time_in_millis?: number };
+    store?: { size_in_bytes?: number };
+    indexing?: {
+      index_total?: number;
+      index_time_in_millis?: number;
+      index_failed?: number;
+    };
+    search?: {
+      query_total?: number;
+      query_time_in_millis?: number;
+      fetch_total?: number;
+      fetch_time_in_millis?: number;
+    };
+    merges?: {
+      total?: number;
+      total_time_in_millis?: number;
+      total_size_in_bytes?: number;
+    };
+    get?: { total?: number; time_in_millis?: number; missing_total?: number };
+    refresh?: { total?: number; total_time_in_millis?: number };
+    flush?: { total?: number; total_time_in_millis?: number };
+    segments?: { count?: number; memory_in_bytes?: number };
   };
   thread_pool?: Record<
     string,
-    { active?: number; rejected?: number; completed?: number; queue?: number }
+    { active?: number; rejected?: number; completed?: number; queue?: number; threads?: number }
   >;
   breakers?: Record<
     string,
     { limit_size_in_bytes?: number; estimated_size_in_bytes?: number; tripped?: number }
   >;
-  process?: { open_file_descriptors?: number; max_file_descriptors?: number };
-  ingest?: { total?: { count?: number; failed?: number; time_in_millis?: number } };
+  process?: {
+    open_file_descriptors?: number;
+    max_file_descriptors?: number;
+    cpu?: { percent?: number; total_in_millis?: number };
+  };
+  ingest?: {
+    total?: { count?: number; failed?: number; time_in_millis?: number };
+    pipelines?: Record<string, { count?: number; failed?: number; time_in_millis?: number }>;
+  };
 }
 
 export interface NodesStatsResponse {
