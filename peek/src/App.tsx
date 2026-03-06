@@ -39,6 +39,7 @@ import WelcomeScreen from "./components/WelcomeScreen";
 import ContentSkeleton from "./components/ContentSkeleton";
 import ErrorBoundary from "./components/ErrorBoundary";
 import PersesProviders from "./components/perses/PersesProviders";
+import LLMKeyNudgeBanner from "./components/LLMKeyNudgeBanner";
 import { PAGE_MANIFEST, type PageConfig } from "./routes/manifest";
 
 const currentYear = new Date().getFullYear();
@@ -147,6 +148,7 @@ export default function App() {
                 />
               ))}
             <Box sx={{ display: "flex", flex: 1, flexDirection: "column", minWidth: 0 }}>
+              {connected && <LLMKeyNudgeBanner onOpenSettings={() => navigate("/settings")} />}
               {connected && isDashboardView && <ParameterBar />}
               <Box
                 component="main"

@@ -6,6 +6,7 @@ import { MemoryRouter, useLocation } from "react-router-dom";
 import App from "../../src/App";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
+import { useLLMStore } from "../../src/store/useLLMStore";
 import { resetAllStores } from "../fixtures/test-utils";
 
 function LocationDisplay() {
@@ -118,6 +119,33 @@ describe("App shell visibility", () => {
 
     expect(screen.getByRole("navigation", { name: /main navigation/i })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /reset state/i })).not.toBeInTheDocument();
+  });
+
+  it("shows a playful LLM key nudge when connected without a key", () => {
+    useConnectionStore.getState().setConnected(true);
+    useLLMStore.getState().setApiKey("");
+
+    render(
+      <MemoryRouter>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText(/works best with an llm key configured/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /configure key/i })).toBeInTheDocument();
+  });
+
+  it("hides the LLM key nudge when an API key is configured", () => {
+    useConnectionStore.getState().setConnected(true);
+    useLLMStore.getState().setApiKey("sk-test-key");
+
+    render(
+      <MemoryRouter>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByText(/works best with an llm key configured/i)).not.toBeInTheDocument();
   });
 
   it("does not intercept undo shortcut inside contenteditable editors", () => {
