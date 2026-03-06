@@ -42,6 +42,16 @@ import { waitForSettle } from "./screenshot-add-data-helpers.mjs";
 // Section → page slug mapping
 // ---------------------------------------------------------------------------
 
+/**
+ * Optional heading text that confirms the correct page loaded after sidebar
+ * navigation. When present, the capture loop waits for this text before
+ * taking the screenshot, preventing race-condition mismatches (e.g. dark
+ * mode context still showing Dashboards instead of Add Data).
+ */
+const PAGE_CONFIRMATION_HEADING = {
+  "add-data": "What do you want to monitor?",
+};
+
 export const SECTION_PAGES = {
   "cluster-overview": ["cluster-overview"],
   "data-management": ["data-streams", "indices", "ingest-pipelines"],
@@ -177,6 +187,16 @@ async function captureThemeScreenshots(browser, opts, pages, themeMode, outDir) 
       // before we capture.
       await page.waitForTimeout(500);
       await waitForSettle(page, opts.timeoutMs);
+
+      // If a confirmation heading is defined for this page, wait for it to
+      // appear before capturing.  This prevents race conditions where a
+      // parallel browser context hasn't finished its route transition.
+      const heading = PAGE_CONFIRMATION_HEADING[slug];
+      if (heading) {
+        await page.getByText(heading, { exact: false }).waitFor({ timeout: 5_000 }).catch(() => {
+          console.warn(`  ⚠ Confirmation heading "${heading}" not found for ${slug}, continuing`);
+        });
+      }
 
       const screenshotPath = path.join(outDir, `${slug}.png`);
       await page.screenshot({ path: screenshotPath, fullPage: true });
