@@ -31,7 +31,7 @@ function formatMs(ms: number | null | undefined): string {
 }
 
 function formatUptime(ms: number | null | undefined): string {
-  if (!ms) return "n/a";
+  if (ms === null || ms === undefined) return "n/a";
   const totalSeconds = Math.floor(ms / 1000);
   const days = Math.floor(totalSeconds / 86400);
   const hours = Math.floor((totalSeconds % 86400) / 3600);
@@ -336,7 +336,7 @@ export default function NodeDetailPage() {
                   value={
                     details.load1m === null
                       ? "n/a"
-                      : `${details.load1m.toFixed(2)} / ${(details.load5m ?? 0).toFixed(2)} / ${(details.load15m ?? 0).toFixed(2)}`
+                      : `${details.load1m.toFixed(2)} / ${details.load5m === null ? "n/a" : details.load5m.toFixed(2)} / ${details.load15m === null ? "n/a" : details.load15m.toFixed(2)}`
                   }
                   warn={details.load1m !== null && details.load1m > 5}
                 />

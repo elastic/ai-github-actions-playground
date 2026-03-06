@@ -42,9 +42,28 @@ const ROLE_ABBR: Record<string, string> = {
   voting_only: "voting",
   coordinating_only: "coord",
 };
+const ROLE_LABEL: Record<string, string> = {
+  master: "Master",
+  data: "Data",
+  data_hot: "Data hot",
+  data_warm: "Data warm",
+  data_cold: "Data cold",
+  data_frozen: "Data frozen",
+  data_content: "Data content",
+  ingest: "Ingest",
+  ml: "Machine learning",
+  remote_cluster_client: "Remote cluster client",
+  transform: "Transform",
+  voting_only: "Voting only",
+  coordinating_only: "Coordinating only",
+};
 
 function abbrevRole(role: string): string {
   return ROLE_ABBR[role] ?? role;
+}
+
+function roleLabel(role: string): string {
+  return ROLE_LABEL[role] ?? role;
 }
 
 // ── Health classification ─────────────────────────────────────────────────
@@ -338,7 +357,7 @@ export default function NodesPage() {
                           <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
                             {row.roles.length > 0
                               ? row.roles.map((r) => (
-                                  <Tooltip key={r} title={r}>
+                                  <Tooltip key={r} title={roleLabel(r)}>
                                     <Chip
                                       label={abbrevRole(r)}
                                       size="small"
