@@ -541,9 +541,8 @@ export default function DataStreamsPage() {
               variant="outlined"
               sx={{
                 display: "flex",
-                flexShrink: 0,
                 flexDirection: "column",
-                width: 480,
+                width: "100%",
                 minHeight: 0,
               }}
             >
