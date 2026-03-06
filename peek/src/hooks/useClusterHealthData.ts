@@ -155,14 +155,30 @@ export function useClusterHealthData(): UseClusterHealthDataReturn {
       },
       {
         queryKey: ["cluster-health", "slm", connUrl],
-        queryFn: ({ signal }: { signal: AbortSignal }) =>
-          new ElasticsearchClient(connection!).getSlmStats(signal),
+        queryFn: async ({ signal }: { signal: AbortSignal }) => {
+          try {
+            return await new ElasticsearchClient(connection!).getSlmStats(signal);
+          } catch (err: unknown) {
+            if (isElasticsearchError(err) && [400, 403, 404].includes(err.status)) {
+              return null as SlmStatsResponse | null;
+            }
+            throw err;
+          }
+        },
         ...shared,
       },
       {
         queryKey: ["cluster-health", "snapshots", connUrl],
-        queryFn: ({ signal }: { signal: AbortSignal }) =>
-          new ElasticsearchClient(connection!).getSnapshotStatus(signal),
+        queryFn: async ({ signal }: { signal: AbortSignal }) => {
+          try {
+            return await new ElasticsearchClient(connection!).getSnapshotStatus(signal);
+          } catch (err: unknown) {
+            if (isElasticsearchError(err) && [400, 403, 404].includes(err.status)) {
+              return null as SnapshotStatusResponse | null;
+            }
+            throw err;
+          }
+        },
         ...shared,
       },
       {

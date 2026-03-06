@@ -5,7 +5,9 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
+import Drawer from "@mui/material/Drawer";
 import FormControlLabel from "@mui/material/FormControlLabel";
+import IconButton from "@mui/material/IconButton";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Switch from "@mui/material/Switch";
@@ -20,6 +22,7 @@ import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import StorageIcon from "@mui/icons-material/Storage";
+import CloseIcon from "@mui/icons-material/Close";
 import { parseAsString, parseAsStringEnum, useQueryState } from "nuqs";
 
 import { useApiConsoleStore } from "../store/useApiConsoleStore";
@@ -117,22 +120,19 @@ export default function IndicesPage() {
   const settings = detailResult.status === "success" ? detailResult.data.settings : null;
   const indexStats = detailResult.status === "success" ? detailResult.data.indexStats : null;
 
-  // Auto-select the first index when data loads
+  // Clear selection when the selected index disappears from fetched results.
   useEffect(() => {
     if (!indicesData) return;
-    if (selectedIndex && indicesData.some((i) => i.index === selectedIndex)) return;
-    const first = showSystemIndices
-      ? indicesData[0]
-      : indicesData.find((i) => !i.index.startsWith("."));
-    void setSelectedIndex(first?.index ?? null);
-  }, [indicesData, showSystemIndices, selectedIndex, setSelectedIndex]);
+    if (!selectedIndex) return;
+    if (indicesData.some((i) => i.index === selectedIndex)) return;
+    void setSelectedIndex(null);
+  }, [indicesData, selectedIndex, setSelectedIndex]);
 
   // When system indices are hidden, deselect any active system index.
   useEffect(() => {
     if (showSystemIndices) return;
     if (!selectedIndex?.startsWith(".")) return;
-    const first = indices.find((i) => !i.index.startsWith("."));
-    void setSelectedIndex(first?.index ?? null);
+    void setSelectedIndex(null);
   }, [showSystemIndices, selectedIndex, indices, setSelectedIndex]);
 
   const deferredSearch = useDeferredValue(search);
@@ -418,9 +418,8 @@ export default function IndicesPage() {
               variant="outlined"
               sx={{
                 display: "flex",
-                flexShrink: 0,
                 flexDirection: "column",
-                width: 480,
+                width: "100%",
                 minHeight: 0,
               }}
             >
@@ -561,8 +560,32 @@ export default function IndicesPage() {
               </TableContainer>
             </Paper>
           </InsightSlot>
-
-          <Box sx={{ display: "flex", flex: 1, flexDirection: "column", minHeight: 0 }}>
+        </Box>
+        <Drawer
+          anchor="right"
+          open={Boolean(displayedIndex)}
+          onClose={() => void setSelectedIndex(null)}
+          PaperProps={{
+            sx: {
+              width: { xs: "100%", md: 560 },
+              p: 1,
+              backgroundColor: "background.default",
+            },
+          }}
+        >
+          <Box
+            sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 1 }}
+          >
+            <Typography variant="subtitle1">Index details</Typography>
+            <IconButton
+              size="small"
+              aria-label="Close index details"
+              onClick={() => void setSelectedIndex(null)}
+            >
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </Box>
+          <Box sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
             <InsightSlot slotId={INDICES_INSIGHT_SLOT_IDS.indexDetail}>
               <IndexDetailPanel
                 selectedIndex={displayedIndex}
@@ -580,7 +603,7 @@ export default function IndicesPage() {
               />
             </InsightSlot>
           </Box>
-        </Box>
+        </Drawer>
       </Box>
     </InsightSlotProvider>
   );

@@ -68,6 +68,13 @@ function LocationDisplay() {
   return <div data-testid="location">{location.pathname}</div>;
 }
 
+async function selectStream(user: ReturnType<typeof userEvent.setup>, name: string) {
+  const tableEl = await screen.findByRole("table", { name: /data stream list/i });
+  const streamCell = await within(tableEl).findByText(name);
+  await user.click(streamCell);
+  await screen.findByTestId("data-stream-meta-status");
+}
+
 describe("DataStreamsPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -103,19 +110,20 @@ describe("DataStreamsPage", () => {
       </MemoryRouter>,
     );
 
-    await screen.findByRole("heading", { level: 6, name: "logs-a" });
-    await user.click(screen.getByRole("button", { name: /refresh/i }));
+    await selectStream(user, "logs-a");
+    await user.click(screen.getByRole("button", { name: /refresh/i, hidden: true }));
 
-    expect(await screen.findByRole("heading", { level: 6, name: "logs-b" })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByTestId("data-stream-meta-status")).not.toBeInTheDocument();
+    });
+    expect(screen.getByRole("button", { name: /open in query lab/i })).toBeDisabled();
 
-    await user.click(screen.getByRole("button", { name: /open in query lab/i }));
-    expect(useQueryStore.getState().discoverQueryDraft).toBe(
-      "FROM logs-b | SORT @timestamp DESC | LIMIT 50",
-    );
-    expect(screen.getByTestId("location")).toHaveTextContent("/discover");
+    expect(useQueryStore.getState().discoverQueryDraft).toBeNull();
+    expect(screen.getByTestId("location")).toHaveTextContent("/");
   });
 
   it("hides system streams (dot-prefixed) by default", async () => {
+    const user = userEvent.setup();
     getDataStreamsMock.mockResolvedValue({
       data_streams: [
         {
@@ -146,9 +154,9 @@ describe("DataStreamsPage", () => {
       </MemoryRouter>,
     );
 
-    await screen.findAllByText("logs-a");
-    const tableEl = screen.getByRole("table", { name: /data stream list/i });
-    const rows = within(tableEl).getAllByRole("row");
+    await selectStream(user, "logs-a");
+    const tableEl = screen.getByRole("table", { name: /data stream list/i, hidden: true });
+    const rows = within(tableEl).getAllByRole("row", { hidden: true });
     // Find the row containing "logs-a" (skip header row)
     const logsRow = rows.find((r) => within(r).queryByText("logs-a") !== null)!;
     expect(within(logsRow).getByText("YELLOW")).toBeInTheDocument();
@@ -164,7 +172,7 @@ describe("DataStreamsPage", () => {
     expect(screen.queryByText(".system-stream")).not.toBeInTheDocument();
   });
 
-  it("clears the detail panel when search excludes the selected stream", async () => {
+  it("shows an empty state when search excludes all streams", async () => {
     const user = userEvent.setup();
 
     getDataStreamsMock.mockResolvedValue({
@@ -184,15 +192,10 @@ describe("DataStreamsPage", () => {
       </MemoryRouter>,
     );
 
-    await screen.findByRole("heading", { level: 6, name: "logs-a" });
-
+    await screen.findByText("logs-a");
     await user.type(screen.getByRole("textbox", { name: /search streams/i }), "non-existent");
-
-    await waitFor(() => {
-      expect(screen.queryByRole("heading", { level: 6, name: "logs-a" })).not.toBeInTheDocument();
-      expect(screen.getByText("Select a data stream")).toBeInTheDocument();
-      expect(screen.queryByRole("button", { name: /host\.name/i })).not.toBeInTheDocument();
-    });
+    await screen.findByText("No data streams found");
+    expect(screen.getByRole("button", { name: /open in query lab/i })).toBeDisabled();
   });
 
   it("truncates long data stream names with a title tooltip", async () => {
@@ -251,13 +254,14 @@ describe("DataStreamsPage", () => {
     await screen.findAllByText("logs-a");
     expect(screen.queryByText(".system-stream")).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole("checkbox", { name: /show system streams/i }));
+    await user.click(screen.getByRole("checkbox", { name: /show system streams/i, hidden: true }));
 
     await screen.findByText(".system-stream");
     expect(screen.getByText(".system-stream")).toBeInTheDocument();
   });
 
   it("does not show a system stream in the details pane when system streams are hidden by default", async () => {
+    const user = userEvent.setup();
     getDataStreamsMock.mockResolvedValue({
       data_streams: [
         {
@@ -280,14 +284,13 @@ describe("DataStreamsPage", () => {
       </MemoryRouter>,
     );
 
-    // The detail heading should show the first *visible* stream (logs-a), not the hidden one
-    await screen.findByRole("heading", { level: 6, name: "logs-a" });
-    expect(
-      screen.queryByRole("heading", { level: 6, name: ".system-stream" }),
-    ).not.toBeInTheDocument();
+    await selectStream(user, "logs-a");
+    expect(screen.getByTestId("data-stream-meta-write-index")).not.toHaveTextContent(
+      ".system-stream",
+    );
   });
 
-  it("re-selects first visible stream when hiding system streams after selecting one", async () => {
+  it("hides system streams again when the toggle is turned off", async () => {
     const user = userEvent.setup();
 
     getDataStreamsMock.mockResolvedValue({
@@ -312,19 +315,11 @@ describe("DataStreamsPage", () => {
       </MemoryRouter>,
     );
 
-    await screen.findByRole("heading", { level: 6, name: "logs-a" });
+    await screen.findByText("logs-a");
     await user.click(screen.getByRole("checkbox", { name: /show system streams/i }));
-    await user.click(screen.getByText(".system-stream"));
-    await screen.findByRole("heading", { level: 6, name: ".system-stream" });
-
+    await screen.findByText(".system-stream");
     await user.click(screen.getByRole("checkbox", { name: /show system streams/i }));
-
-    await waitFor(() => {
-      expect(screen.getByRole("heading", { level: 6, name: "logs-a" })).toBeInTheDocument();
-      expect(
-        screen.queryByRole("heading", { level: 6, name: ".system-stream" }),
-      ).not.toBeInTheDocument();
-    });
+    expect(screen.queryByText(".system-stream")).not.toBeInTheDocument();
   });
 
   it("shows empty details and disables open action when only system streams exist and are hidden", async () => {
@@ -345,7 +340,6 @@ describe("DataStreamsPage", () => {
     );
 
     await screen.findByText("No data streams found");
-    expect(screen.getByText("Select a data stream")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /open in query lab/i })).toBeDisabled();
   });
 
@@ -372,8 +366,9 @@ describe("DataStreamsPage", () => {
       </MemoryRouter>,
     );
 
-    await screen.findByRole("heading", { level: 6, name: "logs-a" });
-    await user.click(screen.getByText("logs-b"));
+    await selectStream(user, "logs-a");
+    const tableEl = screen.getByRole("table", { name: /data stream list/i, hidden: true });
+    await user.click(within(tableEl).getByText("logs-b"));
 
     await act(async () => {
       secondFields.resolve({ fields: { "field-b": { keyword: { type: "keyword" } } } });
@@ -390,7 +385,7 @@ describe("DataStreamsPage", () => {
     });
   });
 
-  it("opens the Field Stats panel when a field row is clicked", async () => {
+  it("marks a field row as selected when clicked", async () => {
     const user = userEvent.setup();
 
     getDataStreamsMock.mockResolvedValue({
@@ -401,7 +396,6 @@ describe("DataStreamsPage", () => {
     getFieldCapsMock.mockResolvedValue({
       fields: { "host.name": { keyword: { type: "keyword" } } },
     });
-    fetchFieldStatsMock.mockReturnValue(new Promise(() => {})); // keep loading
 
     render(
       <MemoryRouter>
@@ -412,17 +406,15 @@ describe("DataStreamsPage", () => {
     );
 
     // Wait for field list to render
+    await selectStream(user, "logs-a");
     await screen.findByText("host.name");
 
-    // Click the field row
-    await user.click(screen.getByRole("button", { name: /host\.name/i }));
-
-    // Field Stats panel should appear with the field name and a close button
-    expect(screen.getAllByText("host.name").length).toBeGreaterThan(0);
-    expect(screen.getByRole("button", { name: /close field stats/i })).toBeInTheDocument();
+    const fieldButton = screen.getByRole("button", { name: /host\.name/i });
+    await user.click(fieldButton);
+    expect(fieldButton).toHaveAttribute("aria-pressed", "true");
   });
 
-  it("closes the Field Stats panel when the close button is clicked", async () => {
+  it("switches selected field when another field row is clicked", async () => {
     const user = userEvent.setup();
 
     getDataStreamsMock.mockResolvedValue({
@@ -431,9 +423,11 @@ describe("DataStreamsPage", () => {
       ],
     });
     getFieldCapsMock.mockResolvedValue({
-      fields: { "host.name": { keyword: { type: "keyword" } } },
+      fields: {
+        "host.name": { keyword: { type: "keyword" } },
+        "event.dataset": { keyword: { type: "keyword" } },
+      },
     });
-    fetchFieldStatsMock.mockReturnValue(new Promise(() => {}));
 
     render(
       <MemoryRouter>
@@ -443,13 +437,15 @@ describe("DataStreamsPage", () => {
       </MemoryRouter>,
     );
 
+    await selectStream(user, "logs-a");
     await screen.findByText("host.name");
-    await user.click(screen.getByRole("button", { name: /host\.name/i }));
-
-    const closeButton = screen.getByRole("button", { name: /close field stats/i });
-    await user.click(closeButton);
-
-    expect(screen.queryByRole("button", { name: /close field stats/i })).not.toBeInTheDocument();
+    const hostField = screen.getByRole("button", { name: /host\.name/i });
+    const datasetField = screen.getByRole("button", { name: /event\.dataset/i });
+    await user.click(hostField);
+    expect(hostField).toHaveAttribute("aria-pressed", "true");
+    await user.click(datasetField);
+    expect(hostField).toHaveAttribute("aria-pressed", "false");
+    expect(datasetField).toHaveAttribute("aria-pressed", "true");
   });
 
   it("clears the Field Stats panel when a different stream is selected", async () => {
@@ -464,7 +460,6 @@ describe("DataStreamsPage", () => {
     getFieldCapsMock.mockResolvedValue({
       fields: { "host.name": { keyword: { type: "keyword" } } },
     });
-    fetchFieldStatsMock.mockReturnValue(new Promise(() => {}));
 
     render(
       <MemoryRouter>
@@ -474,15 +469,21 @@ describe("DataStreamsPage", () => {
       </MemoryRouter>,
     );
 
+    await selectStream(user, "logs-a");
     await screen.findByText("host.name");
-    await user.click(screen.getByRole("button", { name: /host\.name/i }));
-    expect(screen.getByRole("button", { name: /close field stats/i })).toBeInTheDocument();
+    const hostField = screen.getByRole("button", { name: /host\.name/i });
+    await user.click(hostField);
+    expect(hostField).toHaveAttribute("aria-pressed", "true");
 
     // Switch to a different stream
-    await user.click(screen.getByText("logs-b"));
+    const tableEl = screen.getByRole("table", { name: /data stream list/i, hidden: true });
+    await user.click(within(tableEl).getByText("logs-b"));
 
     await waitFor(() => {
-      expect(screen.queryByRole("button", { name: /close field stats/i })).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /host\.name/i })).toHaveAttribute(
+        "aria-pressed",
+        "false",
+      );
     });
   });
 
@@ -505,8 +506,8 @@ describe("DataStreamsPage", () => {
       </MemoryRouter>,
     );
 
-    await screen.findByRole("heading", { level: 6, name: "logs-a" });
-    await user.click(screen.getByRole("button", { name: /inspect in console/i }));
+    await selectStream(user, "logs-a");
+    await user.click(screen.getByRole("button", { name: /inspect in console/i, hidden: true }));
 
     expect(useApiConsoleStore.getState().consoleDraft).toEqual({
       method: "GET",
@@ -569,8 +570,9 @@ describe("DataStreamsPage", () => {
     // Click "Indices" column header to sort ascending
     await user.click(screen.getByRole("button", { name: /^indices$/i }));
 
-    const rows = within(tableEl).getAllByRole("row");
-    const dataRows = rows.slice(1);
+    const dataRows = within(tableEl)
+      .getAllByRole("row")
+      .filter((row) => within(row).queryByText(/logs-[ab]/) !== null);
     // ascending: logs-a (1 index) < logs-b (3 indices)
     expect(within(dataRows[0]).getByText("logs-a")).toBeInTheDocument();
     expect(within(dataRows[1]).getByText("logs-b")).toBeInTheDocument();
@@ -578,8 +580,9 @@ describe("DataStreamsPage", () => {
     // Click again to sort descending
     await user.click(screen.getByRole("button", { name: /^indices$/i }));
 
-    const rowsDesc = within(tableEl).getAllByRole("row");
-    const dataRowsDesc = rowsDesc.slice(1);
+    const dataRowsDesc = within(tableEl)
+      .getAllByRole("row")
+      .filter((row) => within(row).queryByText(/logs-[ab]/) !== null);
     expect(within(dataRowsDesc[0]).getByText("logs-b")).toBeInTheDocument();
     expect(within(dataRowsDesc[1]).getByText("logs-a")).toBeInTheDocument();
   });
