@@ -117,11 +117,11 @@ describe("AddDataPage", () => {
     expect(screen.getByText("Applications (APM Agents)")).toBeInTheDocument();
   }, 15_000);
 
-  it("shows third-party collectors under Advanced", async () => {
+  it("shows third-party collectors under Custom Collectors & Pipelines", async () => {
     const user = userEvent.setup();
     renderPage();
 
-    await user.click(screen.getByRole("button", { name: /^Advanced\b/i }));
+    await user.click(screen.getByRole("button", { name: /^Custom Collectors & Pipelines\b/i }));
 
     expect(screen.getByRole("button", { name: /^Fluent Bit/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^Vector/i })).toBeInTheDocument();
@@ -245,7 +245,7 @@ describe("AddDataPage", () => {
     const user = userEvent.setup();
     renderPage();
 
-    await user.click(screen.getByRole("button", { name: /^Advanced\b/i }));
+    await user.click(screen.getByRole("button", { name: /^Custom Collectors & Pipelines\b/i }));
     await user.click(screen.getByRole("button", { name: /^Filebeat/i }));
 
     expect(screen.getByRole("heading", { name: /Set up Filebeat/i })).toBeInTheDocument();
@@ -316,7 +316,7 @@ describe("AddDataPage", () => {
     const user = userEvent.setup();
     renderPage();
 
-    await user.click(screen.getByRole("button", { name: /^Advanced\b/i }));
+    await user.click(screen.getByRole("button", { name: /^Custom Collectors & Pipelines\b/i }));
     await user.click(screen.getByRole("button", { name: /Scrape Prometheus Metrics with OTel/i }));
     await user.click(screen.getByRole("button", { name: /Monitor with OpenTelemetry Collector/i }));
 
@@ -330,7 +330,7 @@ describe("AddDataPage", () => {
   it("shows a separate Prometheus Remote Write tile", async () => {
     const user = userEvent.setup();
     renderPage();
-    await user.click(screen.getByRole("button", { name: /^Advanced\b/i }));
+    await user.click(screen.getByRole("button", { name: /^Custom Collectors & Pipelines\b/i }));
     expect(
       screen.getByRole("button", { name: /Scrape Prometheus Metrics with OTel/i }),
     ).toBeInTheDocument();
@@ -387,7 +387,7 @@ describe("AddDataPage", () => {
     ).toBeGreaterThan(0);
   }, 30_000);
 
-  it("uses managed OTLP endpoint for APM SDK snippets", async () => {
+  it("uses Elasticsearch URL for APM SDK snippets", async () => {
     const user = userEvent.setup();
     renderPage();
 
@@ -398,12 +398,7 @@ describe("AddDataPage", () => {
       expect(screen.getByText(/Initialize in your app/i)).toBeInTheDocument();
     });
 
-    expect(
-      screen.getByText(/my-project\.ingest\.us-east-1\.aws\.elastic\.cloud/i),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByText(/my-project\.es\.us-east-1\.aws\.elastic\.cloud/i),
-    ).not.toBeInTheDocument();
+    expect(screen.getByText(/my-project\.es\.us-east-1\.aws\.elastic\.cloud/i)).toBeInTheDocument();
   }, 30_000);
 
   it("shows Step 3 outcomes with dashboard/alerting/additional source CTAs", async () => {

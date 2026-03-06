@@ -135,8 +135,7 @@ export default function AddDataStepSetup(p: AddDataStepSetupProps) {
       : undefined;
   const collectorOutputModes =
     guideType === "fluent_bit" && collectorId ? getCollectorOutputConfigs(collectorId) : [];
-  const showConfigureSection =
-    guideType !== "apm" && !(guideType === "fluent_bit" && collectorOutputModes.length <= 1);
+  const showConfigureSection = !(guideType === "fluent_bit" && collectorOutputModes.length <= 1);
   const awsFlowEnabled = guideType === "aws_cloud_deploy";
   const awsConfigureComplete = awsFlowEnabled && Boolean(p.selectedAwsTarget);
   const configureComplete = (() => {
@@ -176,7 +175,7 @@ export default function AddDataStepSetup(p: AddDataStepSetupProps) {
   const credentialsSectionTitle = awsFlowEnabled
     ? `${awsCredentialsSource} -> Elastic Credentials`
     : guideType === "apm"
-      ? "SDK Configuration"
+      ? "Credentials"
       : "Collector configuration";
   const stepLaneSx = {
     border: 1,
@@ -413,7 +412,7 @@ export default function AddDataStepSetup(p: AddDataStepSetupProps) {
       break;
     case "apm":
       installContent = p.selectedApmLanguage ? (
-        <ApmInstall language={p.selectedApmLanguage} endpoint={p.otlpUrl} apiKey={p.apiKey} />
+        <ApmInstall language={p.selectedApmLanguage} endpoint={p.esUrl} apiKey={p.apiKey} />
       ) : (
         <Typography variant="body2" color="text.secondary">
           SDK language details are unavailable for this selection.
@@ -561,6 +560,9 @@ export default function AddDataStepSetup(p: AddDataStepSetupProps) {
             expectedSignals={p.selectedSignals}
             verification={p.verification}
             connectionAvailable={p.connectionAvailable}
+            troubleshootingDocsUrl={
+              gt === "apm" && p.selectedApmLanguage ? p.selectedApmLanguage.docsUrl : undefined
+            }
             autoStart={!awsFlowEnabled || p.awsDeployStarted}
           />
         </Box>

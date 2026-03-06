@@ -33,7 +33,6 @@ export default function ExpandableAlternatives({
   return (
     <Stack spacing={1}>
       <Button
-        size="small"
         variant="outlined"
         color="primary"
         onClick={() => setOpen((prev) => !prev)}

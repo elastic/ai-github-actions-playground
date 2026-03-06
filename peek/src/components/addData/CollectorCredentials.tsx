@@ -232,7 +232,8 @@ export default function CollectorCredentials({
               {apiKeyError && (
                 <>
                   <Typography variant="body2" color="text.secondary">
-                    Unable to automatically create an API key. Provide an API key to proceed.
+                    Automatic API key creation was not possible for this cluster. You can provide an
+                    existing API key below, or retry.
                   </Typography>
                   {friendlyError && (
                     <Typography variant="caption" color="text.secondary">
@@ -249,6 +250,15 @@ export default function CollectorCredentials({
                     onChange={(event) => handleManualApiKeyValueChange(event.target.value)}
                     placeholder="Base64 API key"
                   />
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    onClick={handleCreateApiKey}
+                    disabled={creatingApiKey}
+                    sx={{ alignSelf: "flex-start" }}
+                  >
+                    Retry automatic creation
+                  </Button>
                 </>
               )}
             </>
