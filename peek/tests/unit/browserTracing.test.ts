@@ -122,7 +122,7 @@ describe("browser tracing helpers", () => {
   it("derives ingest URL for Elastic Cloud ES URLs", () => {
     const esUrl = "https://my-deploy.es.us-east-1.aws.elastic.cloud";
     const ingestBase = deriveOtlpEndpoint(esUrl);
-    expect(ingestBase).toBe("https://my-deploy.ingest.us-east-1.aws.elastic.cloud");
+    expect(ingestBase).toBe("https://my-deploy.ingest.us-east-1.aws.elastic.cloud:443");
     expect(deriveDefaultOtlpEndpoint(ingestBase!)).toBe(
       "https://my-deploy.ingest.us-east-1.aws.elastic.cloud/v1/traces",
     );
@@ -131,7 +131,7 @@ describe("browser tracing helpers", () => {
   it("derives ingest URL for cloud.es.io ES URLs", () => {
     const esUrl = "https://my-deploy.es.us-central1.gcp.cloud.es.io";
     const ingestBase = deriveOtlpEndpoint(esUrl);
-    expect(ingestBase).toBe("https://my-deploy.ingest.us-central1.gcp.cloud.es.io");
+    expect(ingestBase).toBe("https://my-deploy.ingest.us-central1.gcp.cloud.es.io:443");
     expect(deriveDefaultOtlpEndpoint(ingestBase!)).toBe(
       "https://my-deploy.ingest.us-central1.gcp.cloud.es.io/v1/traces",
     );
@@ -140,7 +140,7 @@ describe("browser tracing helpers", () => {
   it("derives ingest URL from Kibana cloud.es.io URLs (.kb.)", () => {
     const kbUrl = "https://my-deploy.kb.us-central1.gcp.cloud.es.io";
     const ingestBase = deriveOtlpEndpoint(kbUrl);
-    expect(ingestBase).toBe("https://my-deploy.ingest.us-central1.gcp.cloud.es.io");
+    expect(ingestBase).toBe("https://my-deploy.ingest.us-central1.gcp.cloud.es.io:443");
   });
 
   it("falls back to ES URL for non-Cloud URLs", () => {

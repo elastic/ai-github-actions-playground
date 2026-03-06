@@ -646,15 +646,15 @@ describe("probeOtlpEndpoint", () => {
 });
 
 describe("deriveOtlpEndpoint", () => {
-  it("derives OTLP endpoint from Elastic Cloud ES URL", () => {
+  it("derives OTLP endpoint from Elastic Cloud ES URL with explicit port", () => {
     expect(deriveOtlpEndpoint("https://my-project.es.us-east-1.aws.elastic.cloud:443")).toBe(
-      "https://my-project.ingest.us-east-1.aws.elastic.cloud",
+      "https://my-project.ingest.us-east-1.aws.elastic.cloud:443",
     );
   });
 
-  it("handles Elastic Cloud URL without port", () => {
+  it("includes default port when Elastic Cloud URL has no explicit port", () => {
     expect(deriveOtlpEndpoint("https://abc123.es.eu-west-1.aws.elastic.cloud")).toBe(
-      "https://abc123.ingest.eu-west-1.aws.elastic.cloud",
+      "https://abc123.ingest.eu-west-1.aws.elastic.cloud:443",
     );
   });
 
@@ -666,19 +666,19 @@ describe("deriveOtlpEndpoint", () => {
 
   it("handles URL with trailing slash", () => {
     expect(deriveOtlpEndpoint("https://abc123.es.eu-west-1.aws.elastic.cloud/")).toBe(
-      "https://abc123.ingest.eu-west-1.aws.elastic.cloud",
+      "https://abc123.ingest.eu-west-1.aws.elastic.cloud:443",
     );
   });
 
   it("derives ingest URL from cloud.es.io ES URL", () => {
     expect(deriveOtlpEndpoint("https://elastic-peek-010bd2.es.us-central1.gcp.cloud.es.io")).toBe(
-      "https://elastic-peek-010bd2.ingest.us-central1.gcp.cloud.es.io",
+      "https://elastic-peek-010bd2.ingest.us-central1.gcp.cloud.es.io:443",
     );
   });
 
   it("derives ingest URL from cloud.es.io Kibana URL (.kb.)", () => {
     expect(deriveOtlpEndpoint("https://elastic-peek-010bd2.kb.us-central1.gcp.cloud.es.io")).toBe(
-      "https://elastic-peek-010bd2.ingest.us-central1.gcp.cloud.es.io",
+      "https://elastic-peek-010bd2.ingest.us-central1.gcp.cloud.es.io:443",
     );
   });
 
@@ -739,7 +739,7 @@ describe("detectTelemetrySignals", () => {
 describe("deriveIngestCandidates", () => {
   it("returns single candidate for elastic.cloud URLs", () => {
     expect(deriveIngestCandidates("https://my-deploy.es.us-east-1.aws.elastic.cloud")).toEqual([
-      "https://my-deploy.ingest.us-east-1.aws.elastic.cloud",
+      "https://my-deploy.ingest.us-east-1.aws.elastic.cloud:443",
     ]);
   });
 
@@ -748,8 +748,8 @@ describe("deriveIngestCandidates", () => {
       "https://elastic-peek-010bd2.es.us-central1.gcp.cloud.es.io",
     );
     expect(candidates).toEqual([
-      "https://elastic-peek-010bd2.ingest.us-central1.gcp.cloud.es.io",
-      "https://elastic-peek-010bd2.ingest.us-central1.gcp.elastic-cloud.com",
+      "https://elastic-peek-010bd2.ingest.us-central1.gcp.cloud.es.io:443",
+      "https://elastic-peek-010bd2.ingest.us-central1.gcp.elastic-cloud.com:443",
     ]);
   });
 
