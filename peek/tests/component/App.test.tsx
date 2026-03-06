@@ -121,7 +121,7 @@ describe("App shell visibility", () => {
     expect(screen.queryByRole("button", { name: /reset state/i })).not.toBeInTheDocument();
   });
 
-  it("shows a playful LLM key nudge when connected without a key", () => {
+  it("shows an LLM key banner when connected without a key", () => {
     useConnectionStore.getState().setConnected(true);
     useLLMStore.getState().setApiKey("");
 
@@ -131,7 +131,7 @@ describe("App shell visibility", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText(/works best with an llm key configured/i)).toBeInTheDocument();
+    expect(screen.getByText(/configure an llm key to enable ai features/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /configure key/i })).toBeInTheDocument();
   });
 
@@ -145,7 +145,9 @@ describe("App shell visibility", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.queryByText(/works best with an llm key configured/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/configure an llm key to enable ai features/i),
+    ).not.toBeInTheDocument();
   });
 
   it("does not intercept undo shortcut inside contenteditable editors", () => {
