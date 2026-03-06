@@ -193,9 +193,15 @@ async function captureThemeScreenshots(browser, opts, pages, themeMode, outDir) 
       // parallel browser context hasn't finished its route transition.
       const heading = PAGE_CONFIRMATION_HEADING[slug];
       if (heading) {
-        await page.getByText(heading, { exact: false }).waitFor({ timeout: 5_000 }).catch(() => {
-          console.warn(`  ⚠ Confirmation heading "${heading}" not found for ${slug}, continuing`);
-        });
+        try {
+          await page.getByRole("heading", { name: heading, exact: false }).waitFor({ timeout: 5_000 });
+        } catch {
+          errors.push({
+            type: "navigation",
+            message: `Confirmation heading "${heading}" not found for ${slug}`,
+          });
+          continue;
+        }
       }
 
       const screenshotPath = path.join(outDir, `${slug}.png`);
