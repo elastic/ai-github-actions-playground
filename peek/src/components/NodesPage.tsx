@@ -60,17 +60,17 @@ const NODE_THRESHOLDS = {
 
 function nodeHealth(row: NodeTableRow): HealthLevel {
   // Critical: heap > 90%, disk > 95%, any breaker trips, any thread rejections
-  if (row.heapPercent !== null && row.heapPercent > NODE_THRESHOLDS.heap.critical)
+  if (row.heapPercent !== null && row.heapPercent >= NODE_THRESHOLDS.heap.critical)
     return "critical";
-  if (row.fsUsedPercent !== null && row.fsUsedPercent > NODE_THRESHOLDS.disk.critical)
+  if (row.fsUsedPercent !== null && row.fsUsedPercent >= NODE_THRESHOLDS.disk.critical)
     return "critical";
   if (row.totalBreakerTrips !== null && row.totalBreakerTrips > 0) return "critical";
   if (row.totalThreadRejections !== null && row.totalThreadRejections > 0) return "critical";
   // Warning: heap > 75%, disk > 85%, load_1m > 5
-  if (row.heapPercent !== null && row.heapPercent > NODE_THRESHOLDS.heap.warning) return "warning";
-  if (row.fsUsedPercent !== null && row.fsUsedPercent > NODE_THRESHOLDS.disk.warning)
+  if (row.heapPercent !== null && row.heapPercent >= NODE_THRESHOLDS.heap.warning) return "warning";
+  if (row.fsUsedPercent !== null && row.fsUsedPercent >= NODE_THRESHOLDS.disk.warning)
     return "warning";
-  if (row.load1m !== null && row.load1m > NODE_THRESHOLDS.load1mWarning) return "warning";
+  if (row.load1m !== null && row.load1m >= NODE_THRESHOLDS.load1mWarning) return "warning";
   return "ok";
 }
 
