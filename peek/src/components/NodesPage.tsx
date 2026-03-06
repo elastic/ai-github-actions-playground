@@ -3,36 +3,125 @@ import { useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
 import Paper from "@mui/material/Paper";
+import Stack from "@mui/material/Stack";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import ErrorIcon from "@mui/icons-material/Error";
 import MemoryIcon from "@mui/icons-material/Memory";
+import WarningIcon from "@mui/icons-material/Warning";
 
 import { useClusterOverview } from "../hooks/useClusterOverview";
 
 import EmptyState from "./EmptyState";
 import PageHeader from "./PageHeader";
 
-interface NodeDetailRow {
+// ── Role abbreviation map ─────────────────────────────────────────────────
+
+const ROLE_ABBR: Record<string, string> = {
+  master: "master",
+  data: "data",
+  data_hot: "hot",
+  data_warm: "warm",
+  data_cold: "cold",
+  data_frozen: "frozen",
+  data_content: "content",
+  ingest: "ingest",
+  ml: "ml",
+  remote_cluster_client: "rcc",
+  transform: "transform",
+  voting_only: "voting",
+  coordinating_only: "coord",
+};
+
+function abbrevRole(role: string): string {
+  return ROLE_ABBR[role] ?? role;
+}
+
+// ── Health classification ─────────────────────────────────────────────────
+
+type HealthLevel = "critical" | "warning" | "ok";
+
+function nodeHealth(row: NodeRow): HealthLevel {
+  // Critical: heap > 90%, disk > 95%, any breaker trips, any thread rejections
+  if (row.heapPercent !== null && row.heapPercent > 90) return "critical";
+  if (row.fsUsedPercent !== null && row.fsUsedPercent > 95) return "critical";
+  if (row.totalBreakerTrips !== null && row.totalBreakerTrips > 0) return "critical";
+  if (row.totalThreadRejections !== null && row.totalThreadRejections > 0) return "critical";
+  // Warning: heap > 75%, disk > 85%, load_1m > 5, GC old gen > 10 s cumulative
+  if (row.heapPercent !== null && row.heapPercent > 75) return "warning";
+  if (row.fsUsedPercent !== null && row.fsUsedPercent > 85) return "warning";
+  if (row.load1m !== null && row.load1m > 5) return "warning";
+  if (row.gcOldMs !== null && row.gcOldMs > 10_000) return "warning";
+  return "ok";
+}
+
+function HealthIcon({ level }: { level: HealthLevel }) {
+  if (level === "critical")
+    return (
+      <Tooltip title="Critical: high resource pressure or errors">
+        <ErrorIcon fontSize="small" color="error" aria-label="Critical" />
+      </Tooltip>
+    );
+  if (level === "warning")
+    return (
+      <Tooltip title="Warning: elevated resource usage">
+        <WarningIcon fontSize="small" color="warning" aria-label="Warning" />
+      </Tooltip>
+    );
+  return (
+    <Tooltip title="OK">
+      <CheckCircleIcon fontSize="small" color="success" aria-label="OK" />
+    </Tooltip>
+  );
+}
+
+// ── Metric cell coloring ──────────────────────────────────────────────────
+
+type MetricLevel = "ok" | "warning" | "critical";
+
+function percentLevel(pct: number, warnThreshold: number, critThreshold: number): MetricLevel {
+  if (pct >= critThreshold) return "critical";
+  if (pct >= warnThreshold) return "warning";
+  return "ok";
+}
+
+function levelColor(level: MetricLevel): string | undefined {
+  if (level === "critical") return "error.main";
+  if (level === "warning") return "warning.main";
+  return undefined;
+}
+
+// ── Row data ──────────────────────────────────────────────────────────────
+
+interface NodeRow {
   id: string;
   name: string;
+  transportAddress: string | null;
   roles: string[];
   version: string;
   cpuPercent: number | null;
+  load1m: number | null;
   heapPercent: number | null;
-  memUsedPercent: number | null;
+  gcOldCount: number | null;
+  gcOldMs: number | null;
   fsUsedPercent: number | null;
+  totalThreadRejections: number | null;
+  totalBreakerTrips: number | null;
   docCount: number | null;
   shardCount: number | null;
-  openFds: number | null;
-  maxFds: number | null;
 }
+
+// ── Component ─────────────────────────────────────────────────────────────
 
 export default function NodesPage() {
   const navigate = useNavigate();
@@ -43,32 +132,46 @@ export default function NodesPage() {
   const nodeDataUnavailable =
     partialErrors.includes("nodes") && partialErrors.includes("node stats");
 
-  const rows = useMemo<NodeDetailRow[]>(() => {
+  const rows = useMemo<NodeRow[]>(() => {
     const infoNodes = data?.nodesInfo?.nodes ?? {};
     const statsNodes = data?.nodesStats?.nodes ?? {};
     const ids = Array.from(new Set([...Object.keys(infoNodes), ...Object.keys(statsNodes)])).sort();
+
     return ids.map((id) => {
       const info = infoNodes[id];
       const stats = statsNodes[id];
+
       const totalFs = stats?.fs?.total?.total_in_bytes;
       const availFs = stats?.fs?.total?.available_in_bytes;
       const fsUsedPercent =
         totalFs && totalFs > 0 && availFs !== undefined
           ? ((totalFs - availFs) / totalFs) * 100
           : null;
+
+      const rejections = stats?.thread_pool
+        ? Object.values(stats.thread_pool).reduce((sum, p) => sum + (p.rejected ?? 0), 0)
+        : null;
+
+      const trips = stats?.breakers
+        ? Object.values(stats.breakers).reduce((sum, b) => sum + (b.tripped ?? 0), 0)
+        : null;
+
       return {
         id,
         name: info?.name ?? stats?.name ?? id,
+        transportAddress: info?.transport_address ?? null,
         roles: info?.roles ?? [],
         version: info?.version ?? "unknown",
         cpuPercent: stats?.os?.cpu?.percent ?? null,
+        load1m: stats?.os?.cpu?.load_average?.["1m"] ?? null,
         heapPercent: stats?.jvm?.mem?.heap_used_percent ?? null,
-        memUsedPercent: stats?.os?.mem?.used_percent ?? null,
+        gcOldCount: stats?.jvm?.gc?.collectors?.old?.collection_count ?? null,
+        gcOldMs: stats?.jvm?.gc?.collectors?.old?.collection_time_in_millis ?? null,
         fsUsedPercent,
+        totalThreadRejections: rejections,
+        totalBreakerTrips: trips,
         docCount: stats?.indices?.docs?.count ?? null,
         shardCount: stats?.indices?.shard_stats?.total_count ?? null,
-        openFds: stats?.process?.open_file_descriptors ?? null,
-        maxFds: stats?.process?.max_file_descriptors ?? null,
       };
     });
   }, [data?.nodesInfo?.nodes, data?.nodesStats?.nodes]);
@@ -78,7 +181,7 @@ export default function NodesPage() {
       <Paper variant="outlined" sx={{ p: 1.5 }}>
         <PageHeader
           title="Nodes"
-          description="Detailed runtime and capacity view of Elasticsearch nodes."
+          description="Runtime health and capacity for all Elasticsearch nodes. Click a row to drill into thread pools, circuit breakers, and more."
           actions={
             <Button
               size="small"
@@ -120,76 +223,203 @@ export default function NodesPage() {
               <Table size="small" stickyHeader aria-label="Nodes table">
                 <TableHead>
                   <TableRow>
+                    <TableCell sx={{ width: 32, px: 1 }} aria-label="Health" />
                     <TableCell>Name</TableCell>
                     <TableCell>Roles</TableCell>
                     <TableCell>Version</TableCell>
-                    <TableCell align="right">CPU</TableCell>
-                    <TableCell align="right">Heap</TableCell>
-                    <TableCell align="right">Memory</TableCell>
-                    <TableCell align="right">Disk</TableCell>
+                    <TableCell align="right">
+                      <Tooltip title="OS CPU utilisation (%)">
+                        <span>CPU</span>
+                      </Tooltip>
+                    </TableCell>
+                    <TableCell align="right">
+                      <Tooltip title="System load average (1 min)">
+                        <span>Load 1m</span>
+                      </Tooltip>
+                    </TableCell>
+                    <TableCell align="right">
+                      <Tooltip title="JVM heap used (%)">
+                        <span>Heap</span>
+                      </Tooltip>
+                    </TableCell>
+                    <TableCell align="right">
+                      <Tooltip title="Old-generation GC collections / cumulative time">
+                        <span>GC old</span>
+                      </Tooltip>
+                    </TableCell>
+                    <TableCell align="right">
+                      <Tooltip title="Disk used (%)">
+                        <span>Disk</span>
+                      </Tooltip>
+                    </TableCell>
+                    <TableCell align="right">
+                      <Tooltip title="Total thread-pool rejections across all pools">
+                        <span>Rejected</span>
+                      </Tooltip>
+                    </TableCell>
+                    <TableCell align="right">
+                      <Tooltip title="Total circuit-breaker trips across all breakers">
+                        <span>CB trips</span>
+                      </Tooltip>
+                    </TableCell>
                     <TableCell align="right">Docs</TableCell>
                     <TableCell align="right">Shards</TableCell>
-                    <TableCell align="right">FDs</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {rows.map((row) => (
-                    <TableRow
-                      key={row.id}
-                      hover
-                      tabIndex={0}
-                      onClick={() => navigate(`/nodes/${encodeURIComponent(row.id)}`)}
-                      onKeyDown={(event) => {
-                        if (
-                          event.key === "Enter" ||
-                          event.key === " " ||
-                          event.key === "Spacebar"
-                        ) {
-                          event.preventDefault();
-                          navigate(`/nodes/${encodeURIComponent(row.id)}`);
-                        }
-                      }}
-                      sx={{ cursor: "pointer" }}
-                    >
-                      <TableCell>
-                        <Typography variant="body2" noWrap title={`${row.name} (${row.id})`}>
-                          {row.name}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="caption" color="text.secondary">
-                          {row.roles.length > 0 ? row.roles.join(", ") : "n/a"}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>{row.version}</TableCell>
-                      <TableCell align="right">
-                        {row.cpuPercent === null ? "n/a" : `${row.cpuPercent.toFixed(0)}%`}
-                      </TableCell>
-                      <TableCell align="right">
-                        {row.heapPercent === null ? "n/a" : `${row.heapPercent.toFixed(0)}%`}
-                      </TableCell>
-                      <TableCell align="right">
-                        {row.memUsedPercent === null ? "n/a" : `${row.memUsedPercent.toFixed(0)}%`}
-                      </TableCell>
-                      <TableCell align="right">
-                        {row.fsUsedPercent === null ? "n/a" : `${row.fsUsedPercent.toFixed(0)}%`}
-                      </TableCell>
-                      <TableCell align="right">
-                        {row.docCount === null ? "n/a" : row.docCount.toLocaleString()}
-                      </TableCell>
-                      <TableCell align="right">
-                        {row.shardCount === null ? "n/a" : row.shardCount.toLocaleString()}
-                      </TableCell>
-                      <TableCell align="right">
-                        {row.openFds === null || row.maxFds === null
-                          ? "n/a"
-                          : `${row.openFds.toLocaleString()} / ${row.maxFds.toLocaleString()}`}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {rows.map((row) => {
+                    const health = nodeHealth(row);
+                    const cpuLevel =
+                      row.cpuPercent !== null ? percentLevel(row.cpuPercent, 70, 90) : "ok";
+                    const heapLevel =
+                      row.heapPercent !== null ? percentLevel(row.heapPercent, 75, 90) : "ok";
+                    const diskLevel =
+                      row.fsUsedPercent !== null ? percentLevel(row.fsUsedPercent, 85, 95) : "ok";
+                    return (
+                      <TableRow
+                        key={row.id}
+                        hover
+                        tabIndex={0}
+                        onClick={() => navigate(`/nodes/${encodeURIComponent(row.id)}`)}
+                        onKeyDown={(event) => {
+                          if (
+                            event.key === "Enter" ||
+                            event.key === " " ||
+                            event.key === "Spacebar"
+                          ) {
+                            event.preventDefault();
+                            navigate(`/nodes/${encodeURIComponent(row.id)}`);
+                          }
+                        }}
+                        sx={{ cursor: "pointer" }}
+                      >
+                        <TableCell sx={{ px: 1 }}>
+                          <HealthIcon level={health} />
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" noWrap title={`${row.name} (${row.id})`}>
+                            {row.name}
+                          </Typography>
+                          {row.transportAddress && (
+                            <Typography variant="caption" color="text.secondary" display="block">
+                              {row.transportAddress}
+                            </Typography>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
+                            {row.roles.length > 0
+                              ? row.roles.map((r) => (
+                                  <Tooltip key={r} title={r}>
+                                    <Chip
+                                      label={abbrevRole(r)}
+                                      size="small"
+                                      sx={{ fontSize: "0.65rem", height: 18 }}
+                                    />
+                                  </Tooltip>
+                                ))
+                              : "—"}
+                          </Stack>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" noWrap>
+                            {row.version}
+                          </Typography>
+                        </TableCell>
+                        <TableCell
+                          align="right"
+                          sx={{
+                            color: levelColor(cpuLevel),
+                            fontWeight: cpuLevel !== "ok" ? 600 : undefined,
+                          }}
+                        >
+                          {row.cpuPercent === null ? "n/a" : `${row.cpuPercent.toFixed(0)}%`}
+                        </TableCell>
+                        <TableCell align="right">
+                          {row.load1m === null ? "n/a" : row.load1m.toFixed(2)}
+                        </TableCell>
+                        <TableCell
+                          align="right"
+                          sx={{
+                            color: levelColor(heapLevel),
+                            fontWeight: heapLevel !== "ok" ? 600 : undefined,
+                          }}
+                        >
+                          {row.heapPercent === null ? "n/a" : `${row.heapPercent.toFixed(0)}%`}
+                        </TableCell>
+                        <TableCell align="right">
+                          {row.gcOldCount === null ? (
+                            "n/a"
+                          ) : (
+                            <Tooltip
+                              title={`${row.gcOldCount.toLocaleString()} collections, ${(row.gcOldMs ?? 0).toLocaleString()} ms total`}
+                            >
+                              <span>
+                                {row.gcOldCount.toLocaleString()} /{" "}
+                                {row.gcOldMs !== null
+                                  ? row.gcOldMs >= 1000
+                                    ? `${(row.gcOldMs / 1000).toFixed(1)}s`
+                                    : `${row.gcOldMs}ms`
+                                  : "?"}
+                              </span>
+                            </Tooltip>
+                          )}
+                        </TableCell>
+                        <TableCell
+                          align="right"
+                          sx={{
+                            color: levelColor(diskLevel),
+                            fontWeight: diskLevel !== "ok" ? 600 : undefined,
+                          }}
+                        >
+                          {row.fsUsedPercent === null ? "n/a" : `${row.fsUsedPercent.toFixed(0)}%`}
+                        </TableCell>
+                        <TableCell
+                          align="right"
+                          sx={{
+                            color:
+                              row.totalThreadRejections !== null && row.totalThreadRejections > 0
+                                ? "error.main"
+                                : undefined,
+                            fontWeight:
+                              row.totalThreadRejections !== null && row.totalThreadRejections > 0
+                                ? 600
+                                : undefined,
+                          }}
+                        >
+                          {row.totalThreadRejections === null
+                            ? "n/a"
+                            : row.totalThreadRejections.toLocaleString()}
+                        </TableCell>
+                        <TableCell
+                          align="right"
+                          sx={{
+                            color:
+                              row.totalBreakerTrips !== null && row.totalBreakerTrips > 0
+                                ? "error.main"
+                                : undefined,
+                            fontWeight:
+                              row.totalBreakerTrips !== null && row.totalBreakerTrips > 0
+                                ? 600
+                                : undefined,
+                          }}
+                        >
+                          {row.totalBreakerTrips === null
+                            ? "n/a"
+                            : row.totalBreakerTrips.toLocaleString()}
+                        </TableCell>
+                        <TableCell align="right">
+                          {row.docCount === null ? "n/a" : row.docCount.toLocaleString()}
+                        </TableCell>
+                        <TableCell align="right">
+                          {row.shardCount === null ? "n/a" : row.shardCount.toLocaleString()}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                   {loading && (
                     <TableRow>
-                      <TableCell colSpan={10}>
+                      <TableCell colSpan={13}>
                         <Typography variant="body2" color="text.secondary">
                           Loading node data...
                         </Typography>
