@@ -7,12 +7,26 @@ import type { ElasticsearchClient } from "../services/es";
 export type EndpointType = "elasticsearch" | "managed_otlp";
 
 /**
+ * Build an origin string (`protocol://hostname:port`) that always includes an
+ * explicit port.  The standard `URL` API strips default ports (443 for https,
+ * 80 for http) from its string representation, but OTel collectors require an
+ * explicit port in the endpoint URL.
+ */
+function originWithPort(url: URL): string {
+  const port = url.port || (url.protocol === "https:" ? "443" : "80");
+  return `${url.protocol}//${url.hostname}:${port}`;
+}
+
+/**
  * Attempt to derive the managed OTLP ingest endpoint from an Elasticsearch (or Kibana) URL.
  *
  * Supported patterns:
  * - `<id>.es.<region>.<provider>.elastic.cloud`  → `<id>.ingest.<region>.<provider>.elastic.cloud`
  * - `<id>.es.<region>.<provider>.cloud.es.io`    → `<id>.ingest.<region>.<provider>.cloud.es.io`
  * - `<id>.kb.<region>.<provider>.cloud.es.io`    → `<id>.ingest.<region>.<provider>.cloud.es.io`
+ *
+ * The returned URL always contains an explicit port (e.g. `:443`) so that OTel
+ * configurations include it.
  *
  * Returns `null` when the URL does not match any known Elastic Cloud pattern.
  */
@@ -29,7 +43,7 @@ export function deriveOtlpEndpoint(esUrl: string): string | null {
     if (isElasticCloud || isCloudEsIo) {
       parts[1] = "ingest";
       url.hostname = parts.join(".");
-      return url.toString().replace(/\/+$/, "");
+      return originWithPort(url);
     }
   } catch {
     /* invalid URL — fall through */
@@ -52,7 +66,7 @@ export function deriveIngestCandidates(esUrl: string): string[] {
       const alt = new URL(primary);
       // Replace trailing .cloud.es.io with .elastic-cloud.com
       alt.hostname = alt.hostname.replace(/\.cloud\.es\.io$/, ".elastic-cloud.com");
-      candidates.push(alt.toString().replace(/\/+$/, ""));
+      candidates.push(originWithPort(alt));
     }
   } catch {
     /* ignore */
