@@ -51,17 +51,26 @@ function abbrevRole(role: string): string {
 
 type HealthLevel = "critical" | "warning" | "ok";
 
+const NODE_THRESHOLDS = {
+  cpu: { warning: 70, critical: 90 },
+  heap: { warning: 75, critical: 90 },
+  disk: { warning: 85, critical: 95 },
+  load1mWarning: 5,
+} as const;
+
 function nodeHealth(row: NodeTableRow): HealthLevel {
   // Critical: heap > 90%, disk > 95%, any breaker trips, any thread rejections
-  if (row.heapPercent !== null && row.heapPercent > 90) return "critical";
-  if (row.fsUsedPercent !== null && row.fsUsedPercent > 95) return "critical";
+  if (row.heapPercent !== null && row.heapPercent > NODE_THRESHOLDS.heap.critical)
+    return "critical";
+  if (row.fsUsedPercent !== null && row.fsUsedPercent > NODE_THRESHOLDS.disk.critical)
+    return "critical";
   if (row.totalBreakerTrips !== null && row.totalBreakerTrips > 0) return "critical";
   if (row.totalThreadRejections !== null && row.totalThreadRejections > 0) return "critical";
-  // Warning: heap > 75%, disk > 85%, load_1m > 5, GC old gen > 10 s cumulative
-  if (row.heapPercent !== null && row.heapPercent > 75) return "warning";
-  if (row.fsUsedPercent !== null && row.fsUsedPercent > 85) return "warning";
-  if (row.load1m !== null && row.load1m > 5) return "warning";
-  if (row.gcOldMs !== null && row.gcOldMs > 10_000) return "warning";
+  // Warning: heap > 75%, disk > 85%, load_1m > 5
+  if (row.heapPercent !== null && row.heapPercent > NODE_THRESHOLDS.heap.warning) return "warning";
+  if (row.fsUsedPercent !== null && row.fsUsedPercent > NODE_THRESHOLDS.disk.warning)
+    return "warning";
+  if (row.load1m !== null && row.load1m > NODE_THRESHOLDS.load1mWarning) return "warning";
   return "ok";
 }
 
@@ -270,11 +279,29 @@ export default function NodesPage() {
                   {rows.map((row) => {
                     const health = nodeHealth(row);
                     const cpuLevel =
-                      row.cpuPercent !== null ? percentLevel(row.cpuPercent, 70, 90) : "ok";
+                      row.cpuPercent !== null
+                        ? percentLevel(
+                            row.cpuPercent,
+                            NODE_THRESHOLDS.cpu.warning,
+                            NODE_THRESHOLDS.cpu.critical,
+                          )
+                        : "ok";
                     const heapLevel =
-                      row.heapPercent !== null ? percentLevel(row.heapPercent, 75, 90) : "ok";
+                      row.heapPercent !== null
+                        ? percentLevel(
+                            row.heapPercent,
+                            NODE_THRESHOLDS.heap.warning,
+                            NODE_THRESHOLDS.heap.critical,
+                          )
+                        : "ok";
                     const diskLevel =
-                      row.fsUsedPercent !== null ? percentLevel(row.fsUsedPercent, 85, 95) : "ok";
+                      row.fsUsedPercent !== null
+                        ? percentLevel(
+                            row.fsUsedPercent,
+                            NODE_THRESHOLDS.disk.warning,
+                            NODE_THRESHOLDS.disk.critical,
+                          )
+                        : "ok";
                     return (
                       <TableRow
                         key={row.id}
