@@ -96,6 +96,16 @@ describe("renderTemplate", () => {
     expect(result.yamlValid).toBe(true);
   });
 
+  it("re-indents multiline values at the actual substitution site", () => {
+    const template = ["literal: line1", "  line2", "rendered:", "  value: {{config_value}}"].join(
+      "\n",
+    );
+    const result = renderTemplate(template, [makeVar("config_value", "text", "line1\nline2")], {});
+    expect(result.templateError).toBeNull();
+    expect(result.rendered).toContain("literal: line1\n  line2");
+    expect(result.rendered).toContain("  value: line1\n         line2");
+  });
+
   it("collapses excessive blank lines from false {{#if}} blocks", () => {
     const template = "top: val\n{{#if flag}}\nconditional: yes\n{{/if}}\nbottom: val";
     const result = renderTemplate(template, [makeVar("flag", "bool", "false")], {});
@@ -200,6 +210,11 @@ describe("findUndefinedVars", () => {
     expect(result).toEqual([]);
   });
 
+  it("treats spaced variable tags as references", () => {
+    const result = findUndefinedVars("endpoint: {{ endpoint }}", [makeVar("endpoint")]);
+    expect(result).toEqual([]);
+  });
+
   it("ignores block helpers like {{#if}}", () => {
     const result = findUndefinedVars("{{#if tls}}\ntls: true\n{{/if}}", [makeVar("tls")]);
     expect(result).toEqual([]);
@@ -232,6 +247,11 @@ describe("findUnusedVars", () => {
     const result = findUnusedVars("{{#if tls_enabled}}\ntls: true\n{{/if}}", [
       makeVar("tls_enabled"),
     ]);
+    expect(result).toEqual([]);
+  });
+
+  it("treats spaced variable tags as used", () => {
+    const result = findUnusedVars("endpoint: {{ endpoint }}", [makeVar("endpoint")]);
     expect(result).toEqual([]);
   });
 

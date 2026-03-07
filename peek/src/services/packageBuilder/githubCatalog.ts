@@ -2,9 +2,6 @@ const REPO = "elastic/integrations";
 const BRANCH = "main";
 const RAW_BASE = `https://raw.githubusercontent.com/${REPO}/refs/heads/${BRANCH}`;
 const API_BASE = `https://api.github.com/repos/${REPO}`;
-const GITHUB_TOKEN = (
-  import.meta.env as Record<string, string | undefined>
-).VITE_GITHUB_TOKEN?.trim();
 
 export interface CatalogEntry {
   /** Directory name, e.g. "redis_input_otel" */
@@ -24,7 +21,6 @@ export async function listInputPackages(signal?: AbortSignal): Promise<CatalogEn
 
   const res = await fetch(`${API_BASE}/contents/packages?ref=${BRANCH}`, {
     signal,
-    headers: GITHUB_TOKEN ? { Authorization: `Bearer ${GITHUB_TOKEN}` } : undefined,
   });
   if (!res.ok) throw new Error(`GitHub API error: ${res.status} ${res.statusText}`);
 
@@ -47,6 +43,7 @@ export async function listInputPackages(signal?: AbortSignal): Promise<CatalogEn
 
 /** Files we care about for import. */
 const PACKAGE_FILES = ["manifest.yml", "agent/input/input.yml.hbs", "docs/README.md"] as const;
+const OPTIONAL_PACKAGE_FILES = new Set(["docs/README.md"]);
 
 /**
  * Fetch the key files of a package and return them as a file map
@@ -65,7 +62,12 @@ export async function fetchPackageFiles(
   const textFetches = PACKAGE_FILES.map(async (relPath) => {
     const url = `${RAW_BASE}/packages/${dirName}/${relPath}`;
     const res = await fetch(url, { signal: fetchSignal });
-    if (!res.ok) return; // Skip missing files (e.g. README may not exist)
+    if (!res.ok) {
+      if (OPTIONAL_PACKAGE_FILES.has(relPath)) return;
+      throw new Error(
+        `Failed to fetch package file ${dirName}/${relPath} (${url}): ${res.status} ${res.statusText}`,
+      );
+    }
     const text = await res.text();
     fileMap.set(`${dirName}/${relPath}`, encoder.encode(text));
   });

@@ -25,32 +25,28 @@ function autoIndentMultilineValues(
   );
   if (multilineVars.length === 0) return rendered;
 
-  // For each multi-line variable, find where it appears in the template
-  // to determine the indentation column, then fix the rendered output.
-  let result = rendered;
+  // Re-render with unique markers to identify exact substitution sites,
+  // then indent multiline values at those marker locations.
+  const markerContext: Record<string, unknown> = { ...context };
+  const markerToValue = new Map<string, string>();
   for (const [name, value] of multilineVars) {
-    const tag = `{{${name}}}`;
-    const columns: number[] = [];
+    const marker = `__PKG_BUILDER_MULTILINE_${name}__`;
+    markerContext[name] = marker;
+    markerToValue.set(marker, value as string);
+  }
+
+  const compiled = Handlebars.compile(templateSource, { noEscape: true });
+  let result = compiled(markerContext);
+  for (const [marker, rawVal] of markerToValue) {
     let searchFrom = 0;
-    while (searchFrom < templateSource.length) {
-      const tagIdx = templateSource.indexOf(tag, searchFrom);
-      if (tagIdx === -1) break;
-      const lineStart = templateSource.lastIndexOf("\n", tagIdx) + 1;
-      columns.push(tagIdx - lineStart);
-      searchFrom = tagIdx + tag.length;
-    }
-    if (columns.length === 0) continue;
-    // In the rendered output, re-indent each rendered occurrence with the
-    // matching column from the template.
-    const rawVal = value as string;
-    let resultSearchFrom = 0;
-    for (const column of columns) {
-      const rawIdx = result.indexOf(rawVal, resultSearchFrom);
-      if (rawIdx === -1) break;
-      const indent = " ".repeat(column);
+    while (searchFrom < result.length) {
+      const markerIdx = result.indexOf(marker, searchFrom);
+      if (markerIdx === -1) break;
+      const lineStart = result.lastIndexOf("\n", markerIdx) + 1;
+      const indent = " ".repeat(markerIdx - lineStart);
       const indentedVal = rawVal.split("\n").join("\n" + indent);
-      result = `${result.slice(0, rawIdx)}${indentedVal}${result.slice(rawIdx + rawVal.length)}`;
-      resultSearchFrom = rawIdx + indentedVal.length;
+      result = `${result.slice(0, markerIdx)}${indentedVal}${result.slice(markerIdx + marker.length)}`;
+      searchFrom = markerIdx + indentedVal.length;
     }
   }
   return result;
@@ -130,7 +126,7 @@ function extractReferencedVars(templateSource: string): Set<string> {
     if (m[1]) referenced.add(m[1]);
   }
   // Also match plain {{name}}
-  const rePlain = /\{\{(?!#|\/|!|>)([a-zA-Z_][a-zA-Z0-9_]*)\}\}/g;
+  const rePlain = /\{\{\s*(?!#|\/|!|>)([a-zA-Z_][a-zA-Z0-9_]*)\s*\}\}/g;
   while ((m = rePlain.exec(templateSource)) !== null) {
     if (m[1]) referenced.add(m[1]);
   }

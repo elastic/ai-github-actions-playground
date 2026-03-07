@@ -7,6 +7,7 @@ import Chip from "@mui/material/Chip";
 import Alert from "@mui/material/Alert";
 import Divider from "@mui/material/Divider";
 import Tooltip from "@mui/material/Tooltip";
+import IconButton from "@mui/material/IconButton";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
 import CodeMirror, { type ReactCodeMirrorRef } from "@uiw/react-codemirror";
@@ -209,6 +210,7 @@ export default function StepTemplate() {
             ref={editorRef}
             value={templateContent}
             onChange={setTemplateContent}
+            aria-label="Template source editor"
             extensions={editorExtensions}
             theme={themeMode}
             height="400px"
@@ -244,11 +246,13 @@ export default function StepTemplate() {
             </Typography>
             {result.rendered && (
               <Tooltip title="Copy rendered output">
-                <ContentCopyIcon
-                  fontSize="small"
-                  sx={{ cursor: "pointer", color: "text.secondary" }}
+                <IconButton
+                  size="small"
+                  aria-label="Copy rendered output"
                   onClick={() => void handleCopyRendered(result.rendered)}
-                />
+                >
+                  <ContentCopyIcon fontSize="small" sx={{ color: "text.secondary" }} />
+                </IconButton>
               </Tooltip>
             )}
           </Box>
