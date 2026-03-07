@@ -193,6 +193,9 @@ export default function LogsResultsView({
                     {maxHistogramCount.toLocaleString()}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
+                    {Math.round(maxHistogramCount / 2).toLocaleString()}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
                     0
                   </Typography>
                 </Box>
