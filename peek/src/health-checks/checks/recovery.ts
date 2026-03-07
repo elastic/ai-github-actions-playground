@@ -21,6 +21,9 @@ export const recoveryChecks: HealthCheckDefinition[] = [
     severityOnFail: "medium",
     surfaces: ["global"],
     dependsOn: ["recoveryCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/index-recovery",
+    recommendation:
+      "Many concurrent recoveries impact cluster performance. Check for node failures or rebalancing.",
     evaluate: (snapshot) => {
       const recoveryData = snapshot.data.recoveryCore;
       if (!recoveryData) return unknownRecoveryDataResult();
@@ -50,6 +53,9 @@ export const recoveryChecks: HealthCheckDefinition[] = [
     severityOnFail: "medium",
     surfaces: ["global"],
     dependsOn: ["recoveryCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/index-recovery",
+    recommendation:
+      "Shards stuck in translog/finalize stages indicate slow I/O or large translogs.",
     evaluate: (snapshot) => {
       const recoveryData = snapshot.data.recoveryCore;
       if (!recoveryData) return unknownRecoveryDataResult();

@@ -13,6 +13,9 @@ export const securityChecks: HealthCheckDefinition[] = [
     severityOnFail: "medium",
     surfaces: ["global"],
     dependsOn: ["securityCore"],
+    docsUrl:
+      "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/security-api-get-api-key",
+    recommendation: "Rotate expiring API keys before they expire to avoid service disruptions.",
     evaluate: (snapshot) => {
       const apiKeys = snapshot.data.securityCore?.apiKeys?.api_keys ?? [];
       const now = Date.now();
@@ -43,6 +46,9 @@ export const securityChecks: HealthCheckDefinition[] = [
     severityOnFail: "low",
     surfaces: ["global"],
     dependsOn: ["securityCore"],
+    docsUrl:
+      "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/security-api-get-api-key",
+    recommendation: "Clean up invalidated API keys to reduce security index size.",
     evaluate: (snapshot) => {
       const apiKeys = snapshot.data.securityCore?.apiKeys?.api_keys ?? [];
       const invalidated = apiKeys.filter((k) => k.invalidated);
