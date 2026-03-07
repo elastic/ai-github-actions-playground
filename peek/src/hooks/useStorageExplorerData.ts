@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { isElasticsearchError } from "../services/es";
+import { useConnectionStore } from "../store/useConnectionStore";
 import type { DataFetchResult } from "../types/query";
 
 import { useEsQuery, useRefetchOnConnectionChange } from "./useEsQuery";
@@ -79,8 +80,15 @@ function parseDataStreamName(name: string | null): {
 
 export function useStorageExplorerData(): UseStorageExplorerDataResult {
   const { connection, createQueryFn } = useEsQuery();
+  const activeProfileId = useConnectionStore((s) => s.activeProfileId);
   const query = useQuery({
-    queryKey: ["storage-explorer", connection?.url],
+    queryKey: [
+      "storage-explorer",
+      activeProfileId,
+      connection?.url,
+      connection?.username ?? null,
+      connection?.proxyUrl ?? null,
+    ],
     queryFn: createQueryFn((client) =>
       Promise.allSettled([client.getCatShards(), client.getNodeStats(), client.getDataStreams()]),
     ),

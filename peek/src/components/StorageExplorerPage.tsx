@@ -250,6 +250,7 @@ export default function StorageExplorerPage() {
   const loading = result.status === "loading";
   const error = result.status === "error" ? result.error : null;
   const data = result.status === "success" ? result.data : { nodes: [], shards: [] };
+  const hasShards = data.shards.length > 0;
 
   const filteredShards = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -437,7 +438,17 @@ export default function StorageExplorerPage() {
         </Stack>
       )}
 
-      {!groupBy && (
+      {!loading && !error && !hasShards && (
+        <Paper variant="outlined" sx={{ p: 2, flex: 1, minHeight: 0 }}>
+          <EmptyState
+            icon={<StorageIcon sx={{ fontSize: 28 }} />}
+            heading="No storage data found"
+            description="No shard storage data is available for this cluster yet."
+          />
+        </Paper>
+      )}
+
+      {hasShards && !groupBy && (
         <Paper variant="outlined" sx={{ p: 2, flex: 1, minHeight: 0, overflow: "auto" }}>
           <Typography variant="h6" component="h2" gutterBottom>
             How would you like to slice it?
@@ -640,7 +651,7 @@ export default function StorageExplorerPage() {
         </Paper>
       )}
 
-      {groupBy && (
+      {hasShards && groupBy && (
         <Paper
           variant="outlined"
           sx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}
@@ -713,7 +724,15 @@ export default function StorageExplorerPage() {
                       key={node.id}
                       hover
                       selected={selectedNode?.id === node.id}
+                      aria-selected={selectedNode?.id === node.id}
                       onClick={() => setSelectedId(node.id)}
+                      tabIndex={0}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          setSelectedId(node.id);
+                        }
+                      }}
                       sx={{ cursor: "pointer" }}
                     >
                       <TableCell>

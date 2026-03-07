@@ -35,7 +35,7 @@ async function expandMetricsTree(user: ReturnType<typeof userEvent.setup>) {
 }
 
 async function selectInstanceGrouping(user: ReturnType<typeof userEvent.setup>) {
-  await user.click(screen.getByRole("button", { name: /^group by instance$/i }));
+  await user.click(await screen.findByRole("button", { name: /^group by instance$/i }));
 }
 
 function setupHappyPathMocks() {
@@ -194,5 +194,41 @@ describe("StorageExplorerPage", () => {
 
     expect(await screen.findByRole("button", { name: /change view/i })).toBeInTheDocument();
     expect(screen.getByRole("table", { name: /storage explorer tree/i })).toBeInTheDocument();
+  });
+
+  it("renders a page-level empty state when the cluster has no shards", async () => {
+    getCatShardsMock.mockResolvedValue([]);
+    getNodeStatsMock.mockResolvedValue({ nodes: {} });
+    getDataStreamsMock.mockResolvedValue({ data_streams: [] });
+
+    render(
+      <MemoryRouter>
+        <StorageExplorerPage />
+      </MemoryRouter>,
+    );
+
+    expect(
+      await screen.findByRole("heading", { name: /no storage data found/i }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/how would you like to slice it/i)).not.toBeInTheDocument();
+  });
+
+  it("supports selecting rows from the keyboard", async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter>
+        <StorageExplorerPage />
+      </MemoryRouter>,
+    );
+
+    await selectInstanceGrouping(user);
+    const datasetRow = (await screen.findByText("elastic_agent.default")).closest("tr");
+    expect(datasetRow).not.toBeNull();
+    if (!datasetRow) throw new Error("Expected dataset row to exist");
+
+    datasetRow.focus();
+    await user.keyboard("{Enter}");
+
+    expect(await screen.findByText("Storage details")).toBeInTheDocument();
   });
 });
