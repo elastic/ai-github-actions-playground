@@ -20,59 +20,22 @@ import Typography from "@mui/material/Typography";
 import CloseIcon from "@mui/icons-material/Close";
 import PendingActionsIcon from "@mui/icons-material/PendingActions";
 
-import type { TaskRow } from "../services/es";
 import { useTasks } from "../hooks/useTasks";
 
 import EmptyState from "./EmptyState";
 import PageHeader from "./PageHeader";
 import { OverviewInfoCard } from "./OverviewInfoCard";
+import {
+  compareTasks,
+  formatNanos,
+  LONG_RUNNING_THRESHOLD_NS,
+  type SortField,
+  type SortDirection,
+} from "./taskSortUtils";
 
-// ---------------------------------------------------------------------------
-// Sorting helpers
-// ---------------------------------------------------------------------------
-
-type SortField = "action" | "node" | "runningTime" | "startTime" | "type" | "cancellable";
-type SortDirection = "asc" | "desc";
-
-const LONG_RUNNING_THRESHOLD_NS = 60_000_000_000; // 60 seconds
-
-function formatNanos(nanos: number): string {
-  const ms = nanos / 1_000_000;
-  if (ms < 1_000) return `${Math.round(ms)}ms`;
-  const sec = ms / 1_000;
-  if (sec < 60) return `${sec.toFixed(1)}s`;
-  const min = sec / 60;
-  if (min < 60) return `${min.toFixed(1)}m`;
-  const hr = min / 60;
-  return `${hr.toFixed(1)}h`;
-}
-
-function compareTasks(a: TaskRow, b: TaskRow, field: SortField, dir: SortDirection): number {
-  let cmp: number;
-  switch (field) {
-    case "action":
-      cmp = a.action.localeCompare(b.action);
-      break;
-    case "node":
-      cmp = a.node.localeCompare(b.node);
-      break;
-    case "type":
-      cmp = a.type.localeCompare(b.type);
-      break;
-    case "runningTime":
-      cmp = a.runningTimeNanos - b.runningTimeNanos;
-      break;
-    case "startTime":
-      cmp = a.startTimeMs - b.startTimeMs;
-      break;
-    case "cancellable":
-      cmp = Number(a.cancellable) - Number(b.cancellable);
-      break;
-    default:
-      cmp = 0;
-  }
-  return dir === "asc" ? cmp : -cmp;
-}
+// Re-export so existing consumers still work
+export { compareTasks, LONG_RUNNING_THRESHOLD_NS } from "./taskSortUtils";
+export type { SortField, SortDirection } from "./taskSortUtils";
 
 // ---------------------------------------------------------------------------
 // Component

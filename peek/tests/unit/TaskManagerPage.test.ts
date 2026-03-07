@@ -1,40 +1,7 @@
 import { describe, it, expect } from "vitest";
 
 import type { TaskRow } from "../../src/services/es";
-
-// We test the sorting comparator and filtering logic that the page uses.
-// These are the same functions defined inside TaskManagerPage.tsx.
-// Since they are not exported, we replicate them here for unit testing.
-
-type SortField = "action" | "node" | "runningTime" | "startTime" | "type" | "cancellable";
-type SortDirection = "asc" | "desc";
-
-function compareTasks(a: TaskRow, b: TaskRow, field: SortField, dir: SortDirection): number {
-  let cmp: number;
-  switch (field) {
-    case "action":
-      cmp = a.action.localeCompare(b.action);
-      break;
-    case "node":
-      cmp = a.node.localeCompare(b.node);
-      break;
-    case "type":
-      cmp = a.type.localeCompare(b.type);
-      break;
-    case "runningTime":
-      cmp = a.runningTimeNanos - b.runningTimeNanos;
-      break;
-    case "startTime":
-      cmp = a.startTimeMs - b.startTimeMs;
-      break;
-    case "cancellable":
-      cmp = Number(a.cancellable) - Number(b.cancellable);
-      break;
-    default:
-      cmp = 0;
-  }
-  return dir === "asc" ? cmp : -cmp;
-}
+import { compareTasks, LONG_RUNNING_THRESHOLD_NS } from "../../src/components/taskSortUtils";
 
 function filterTasks(tasks: TaskRow[], search: string): TaskRow[] {
   const term = search.trim().toLowerCase();
@@ -48,8 +15,6 @@ function filterTasks(tasks: TaskRow[], search: string): TaskRow[] {
     );
   });
 }
-
-const LONG_RUNNING_THRESHOLD_NS = 60_000_000_000;
 
 const makeTask = (overrides: Partial<TaskRow> & { taskId: string }): TaskRow => ({
   node: "node-1",

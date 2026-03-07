@@ -23,21 +23,27 @@ import CloseIcon from "@mui/icons-material/Close";
 import DescriptionIcon from "@mui/icons-material/Description";
 import { parseAsBoolean, parseAsString, parseAsStringEnum, useQueryStates } from "nuqs";
 
-import type { IndexTemplateRow, ComponentTemplateRow } from "../services/es";
 import { useSimulatedIndexTemplate, useTemplates } from "../hooks/useTemplates";
 import { COMPONENT_HEIGHTS } from "../types/tokens";
 
 import EmptyState from "./EmptyState";
 import PageHeader from "./PageHeader";
 import { OverviewInfoCard } from "./OverviewInfoCard";
+import {
+  compareIndexTpls,
+  compareCompTpls,
+  type IndexTplSortField,
+  type CompTplSortField,
+  type SortDirection,
+} from "./templatesSortUtils";
+
+// Re-export so existing consumers still work
+export { compareIndexTpls, compareCompTpls } from "./templatesSortUtils";
+export type { IndexTplSortField, CompTplSortField, SortDirection } from "./templatesSortUtils";
 
 // ---------------------------------------------------------------------------
-// Sorting helpers
+// Constants
 // ---------------------------------------------------------------------------
-
-type IndexTplSortField = "name" | "priority" | "composedOfCount" | "dataStream";
-type CompTplSortField = "name" | "usedByCount" | "version";
-type SortDirection = "asc" | "desc";
 
 const TEMPLATE_TABS: Array<"index" | "component"> = ["index", "component"];
 const INDEX_TPL_SORT_FIELDS: IndexTplSortField[] = [
@@ -48,69 +54,6 @@ const INDEX_TPL_SORT_FIELDS: IndexTplSortField[] = [
 ];
 const COMP_TPL_SORT_FIELDS: CompTplSortField[] = ["name", "usedByCount", "version"];
 const SORT_DIRECTIONS: SortDirection[] = ["asc", "desc"];
-
-function compareIndexTpls(
-  a: IndexTemplateRow,
-  b: IndexTemplateRow,
-  field: IndexTplSortField,
-  dir: SortDirection,
-): number {
-  let cmp: number;
-  switch (field) {
-    case "name":
-      cmp = a.name.localeCompare(b.name);
-      break;
-    case "priority":
-      cmp = a.priority - b.priority;
-      break;
-    case "composedOfCount":
-      cmp = a.composedOfCount - b.composedOfCount;
-      break;
-    case "dataStream":
-      cmp = Number(a.dataStreamEnabled) - Number(b.dataStreamEnabled);
-      break;
-    default:
-      cmp = 0;
-  }
-  return dir === "asc" ? cmp : -cmp;
-}
-
-function compareCompTpls(
-  a: ComponentTemplateRow,
-  b: ComponentTemplateRow,
-  field: CompTplSortField,
-  dir: SortDirection,
-): number {
-  let cmp: number;
-  switch (field) {
-    case "name":
-      cmp = a.name.localeCompare(b.name);
-      break;
-    case "usedByCount":
-      cmp = a.usedByCount - b.usedByCount;
-      break;
-    case "version":
-      {
-        const aText = String(a.version);
-        const bText = String(b.version);
-        const aNum = Number(a.version);
-        const bNum = Number(b.version);
-        const aMissing = aText.trim() === "—";
-        const bMissing = bText.trim() === "—";
-        if (aMissing || bMissing) {
-          return aMissing === bMissing ? 0 : aMissing ? 1 : -1;
-        }
-        cmp =
-          Number.isFinite(aNum) && Number.isFinite(bNum)
-            ? aNum - bNum
-            : aText.localeCompare(bText, undefined, { numeric: true });
-      }
-      break;
-    default:
-      cmp = 0;
-  }
-  return dir === "asc" ? cmp : -cmp;
-}
 
 const HIGH_PRIORITY_THRESHOLD = 500;
 
@@ -172,11 +115,15 @@ export default function TemplatesPage() {
     [compTplSortField, compTplSortDir, setUrlState],
   );
 
-  // Detail flyover (index template)
+  // Detail flyover
   const [selectedTemplateName, setSelectedTemplateName] = useState<string | null>(null);
   const selectedTemplate = useMemo(
     () => indexTemplates.find((t) => t.name === selectedTemplateName) ?? null,
     [indexTemplates, selectedTemplateName],
+  );
+  const selectedComponentTemplate = useMemo(
+    () => componentTemplates.find((t) => t.name === selectedTemplateName) ?? null,
+    [componentTemplates, selectedTemplateName],
   );
   const simulatedTemplate = useSimulatedIndexTemplate(selectedTemplate?.name ?? null);
 
@@ -510,7 +457,21 @@ export default function TemplatesPage() {
                   </TableRow>
                 )}
                 {filteredComponentTemplates.map((ct) => (
-                  <TableRow key={ct.name} hover>
+                  <TableRow
+                    key={ct.name}
+                    hover
+                    tabIndex={0}
+                    role="button"
+                    aria-label={`View component template ${ct.name}`}
+                    onClick={() => setSelectedTemplateName(ct.name)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " " || event.key === "Spacebar") {
+                        event.preventDefault();
+                        setSelectedTemplateName(ct.name);
+                      }
+                    }}
+                    sx={{ cursor: "pointer" }}
+                  >
                     <TableCell>
                       <Typography
                         variant="body2"
@@ -557,10 +518,10 @@ export default function TemplatesPage() {
         </Paper>
       )}
 
-      {/* Detail flyover (index template) */}
+      {/* Detail flyover */}
       <Drawer
         anchor="right"
-        open={Boolean(selectedTemplate)}
+        open={Boolean(selectedTemplate || selectedComponentTemplate)}
         onClose={() => setSelectedTemplateName(null)}
         PaperProps={{
           sx: {
@@ -684,6 +645,72 @@ export default function TemplatesPage() {
                   </pre>
                 </Paper>
               </Box>
+            </Box>
+          </>
+        )}
+        {!selectedTemplate && selectedComponentTemplate && (
+          <>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                px: 1,
+              }}
+            >
+              <Typography variant="subtitle1">Component Template Details</Typography>
+              <IconButton
+                size="small"
+                aria-label="Close template details"
+                onClick={() => setSelectedTemplateName(null)}
+              >
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            </Box>
+            <Box sx={{ flex: 1, minHeight: 0, overflow: "auto", px: 1, py: 1 }}>
+              <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
+                NAME
+              </Typography>
+              <Typography variant="body2" gutterBottom sx={{ fontFamily: "monospace" }}>
+                {selectedComponentTemplate.name}
+              </Typography>
+
+              <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
+                VERSION
+              </Typography>
+              <Typography variant="body2" gutterBottom>
+                {selectedComponentTemplate.version}
+              </Typography>
+
+              <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
+                INCLUDES
+              </Typography>
+              <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap", mb: 1 }}>
+                {selectedComponentTemplate.hasMappings && (
+                  <Chip label="Mappings" size="small" variant="outlined" />
+                )}
+                {selectedComponentTemplate.hasSettings && (
+                  <Chip label="Settings" size="small" variant="outlined" />
+                )}
+                {selectedComponentTemplate.hasAliases && (
+                  <Chip label="Aliases" size="small" variant="outlined" />
+                )}
+                {!selectedComponentTemplate.hasMappings &&
+                  !selectedComponentTemplate.hasSettings &&
+                  !selectedComponentTemplate.hasAliases && (
+                    <Typography variant="body2" color="text.secondary">
+                      None
+                    </Typography>
+                  )}
+              </Box>
+
+              <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
+                USED BY
+              </Typography>
+              <Typography variant="body2" gutterBottom>
+                {selectedComponentTemplate.usedByCount} index template
+                {selectedComponentTemplate.usedByCount !== 1 ? "s" : ""}
+              </Typography>
             </Box>
           </>
         )}

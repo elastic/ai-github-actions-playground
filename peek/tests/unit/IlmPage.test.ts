@@ -1,78 +1,7 @@
 import { describe, it, expect } from "vitest";
 
 import type { IlmIndexRow, IlmPolicyRow } from "../../src/services/es";
-import { parseDurationToMs } from "../../src/components/IlmPage";
-
-// Replicate sorting/filtering logic from IlmPage.tsx for unit testing.
-
-type IndexSortField = "index" | "policy" | "phase" | "step" | "age" | "error";
-type PolicySortField = "name" | "version" | "modifiedDate" | "indexCount";
-type SortDirection = "asc" | "desc";
-
-function compareIndexRows(
-  a: IlmIndexRow,
-  b: IlmIndexRow,
-  field: IndexSortField,
-  dir: SortDirection,
-): number {
-  let cmp: number;
-  switch (field) {
-    case "index":
-      cmp = a.index.localeCompare(b.index);
-      break;
-    case "policy":
-      cmp = a.policy.localeCompare(b.policy);
-      break;
-    case "phase":
-      cmp = a.phase.localeCompare(b.phase);
-      break;
-    case "step":
-      cmp = a.step.localeCompare(b.step);
-      break;
-    case "age":
-      {
-        const aMs = parseDurationToMs(a.age);
-        const bMs = parseDurationToMs(b.age);
-        const aMissing = !Number.isFinite(aMs);
-        const bMissing = !Number.isFinite(bMs);
-        if (aMissing || bMissing) return aMissing === bMissing ? 0 : aMissing ? 1 : -1;
-        cmp = aMs - bMs;
-      }
-      break;
-    case "error":
-      cmp = Number(a.isError) - Number(b.isError);
-      break;
-    default:
-      cmp = 0;
-  }
-  return dir === "asc" ? cmp : -cmp;
-}
-
-function comparePolicyRows(
-  a: IlmPolicyRow,
-  b: IlmPolicyRow,
-  field: PolicySortField,
-  dir: SortDirection,
-): number {
-  let cmp: number;
-  switch (field) {
-    case "name":
-      cmp = a.name.localeCompare(b.name);
-      break;
-    case "version":
-      cmp = a.version - b.version;
-      break;
-    case "modifiedDate":
-      cmp = a.modifiedDate.localeCompare(b.modifiedDate);
-      break;
-    case "indexCount":
-      cmp = a.indexCount - b.indexCount;
-      break;
-    default:
-      cmp = 0;
-  }
-  return dir === "asc" ? cmp : -cmp;
-}
+import { compareIndexRows, comparePolicyRows } from "../../src/components/ilmSortUtils";
 
 const makeIndexRow = (overrides: Partial<IlmIndexRow> & { index: string }): IlmIndexRow => ({
   policy: "default-policy",
