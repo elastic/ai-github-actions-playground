@@ -1,5 +1,21 @@
 import type { HealthCheckDefinition } from "../types";
 
+function unknownShardsDataResult() {
+  return {
+    status: "unknown" as const,
+    summary: "Shard data unavailable.",
+    recommendation: "Ensure shard data is collected and verify cluster permissions.",
+  };
+}
+
+function unknownAllocationDataResult() {
+  return {
+    status: "unknown" as const,
+    summary: "Allocation explain data unavailable.",
+    recommendation: "Ensure allocation explain data is collected and verify cluster permissions.",
+  };
+}
+
 export const shardChecks: HealthCheckDefinition[] = [
   // #15
   {
@@ -11,7 +27,8 @@ export const shardChecks: HealthCheckDefinition[] = [
     surfaces: ["global", "local"],
     dependsOn: ["shards"],
     evaluate: (snapshot) => {
-      const shards = snapshot.data.shards?.catShards ?? [];
+      const shards = snapshot.data.shards?.catShards;
+      if (!shards) return unknownShardsDataResult();
       const unassigned = shards.filter((s) => s.state === "UNASSIGNED");
       if (unassigned.length > 0) {
         return {
@@ -35,7 +52,8 @@ export const shardChecks: HealthCheckDefinition[] = [
     surfaces: ["global", "local"],
     dependsOn: ["shards"],
     evaluate: (snapshot) => {
-      const shards = snapshot.data.shards?.catShards ?? [];
+      const shards = snapshot.data.shards?.catShards;
+      if (!shards) return unknownShardsDataResult();
       const unassignedPrimaries = shards.filter(
         (s) => s.state === "UNASSIGNED" && s.prirep === "p",
       );
@@ -66,11 +84,14 @@ export const shardChecks: HealthCheckDefinition[] = [
     surfaces: ["global", "local"],
     dependsOn: ["allocationSample"],
     evaluate: (snapshot) => {
+      if (!snapshot.data.allocationSample) {
+        return unknownAllocationDataResult();
+      }
       const explain = snapshot.data.allocationSample?.allocationExplain;
       if (!explain) {
         return { status: "pass", summary: "No unassigned shards to explain." };
       }
-      if (explain.can_allocate === "no") {
+      if (explain.can_allocate?.toLowerCase() === "no") {
         return {
           status: "fail",
           summary: `Shard ${explain.index ?? "unknown"}[${explain.shard ?? "?"}] cannot be allocated.`,
@@ -101,9 +122,19 @@ export const shardChecks: HealthCheckDefinition[] = [
     surfaces: ["global", "local"],
     dependsOn: ["allocationSample"],
     evaluate: (snapshot) => {
+      if (!snapshot.data.allocationSample) {
+        return unknownAllocationDataResult();
+      }
       const explain = snapshot.data.allocationSample?.allocationExplain;
       if (!explain) {
         return { status: "pass", summary: "No unassigned shards to explain." };
+      }
+      const allocationBlocked = explain.can_allocate?.toLowerCase() === "no";
+      if (!allocationBlocked) {
+        return {
+          status: "pass",
+          summary: "Allocation explain shows shard can be allocated.",
+        };
       }
       const decisions = explain.node_allocation_decisions ?? [];
       const diskBlocked = decisions.some((node) =>
@@ -141,9 +172,19 @@ export const shardChecks: HealthCheckDefinition[] = [
     surfaces: ["global", "local"],
     dependsOn: ["allocationSample"],
     evaluate: (snapshot) => {
+      if (!snapshot.data.allocationSample) {
+        return unknownAllocationDataResult();
+      }
       const explain = snapshot.data.allocationSample?.allocationExplain;
       if (!explain) {
         return { status: "pass", summary: "No unassigned shards to explain." };
+      }
+      const allocationBlocked = explain.can_allocate?.toLowerCase() === "no";
+      if (!allocationBlocked) {
+        return {
+          status: "pass",
+          summary: "Allocation explain shows shard can be allocated.",
+        };
       }
       const decisions = explain.node_allocation_decisions ?? [];
       const tierBlocked = decisions.some((node) =>

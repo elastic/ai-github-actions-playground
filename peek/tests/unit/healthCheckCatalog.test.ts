@@ -227,6 +227,12 @@ describe("shard checks", () => {
     expect(check.evaluate(snap).status).toBe("pass");
   });
 
+  it("#15 shards.state.unassigned.present — unknown when shard data is missing", () => {
+    const check = findCheck(shardChecks, "shards.state.unassigned.present");
+    const snap = makeSnapshot({ shards: undefined });
+    expect(check.evaluate(snap).status).toBe("unknown");
+  });
+
   it("#18 shards.unassigned.primary.present — fails with unassigned primary", () => {
     const check = findCheck(shardChecks, "shards.unassigned.primary.present");
     const snap = makeSnapshot({
@@ -263,6 +269,12 @@ describe("shard checks", () => {
   it("#23 allocation.explain.can_allocate.no — passes when null explain", () => {
     const check = findCheck(shardChecks, "allocation.explain.can_allocate.no");
     expect(check.evaluate(makeSnapshot()).status).toBe("pass");
+  });
+
+  it("#23 allocation.explain.can_allocate.no — unknown when allocation data is missing", () => {
+    const check = findCheck(shardChecks, "allocation.explain.can_allocate.no");
+    const snap = makeSnapshot({ allocationSample: undefined });
+    expect(check.evaluate(snap).status).toBe("unknown");
   });
 
   it("#24 allocation.explain.disk_watermark — fails when disk threshold blocks", () => {
@@ -309,6 +321,34 @@ describe("shard checks", () => {
               node_name: "node-1",
               node_decision: "yes",
               deciders: [{ decider: "disk_threshold", decision: "YES", explanation: "ok" }],
+            },
+          ],
+        },
+      },
+    });
+    expect(check.evaluate(snap).status).toBe("pass");
+  });
+
+  it("#24 allocation.explain.disk_watermark — passes when can_allocate is yes despite NO decider", () => {
+    const check = findCheck(shardChecks, "allocation.explain.disk_watermark");
+    const snap = makeSnapshot({
+      allocationSample: {
+        allocationExplain: {
+          index: "test-idx",
+          shard: 0,
+          primary: false,
+          can_allocate: "yes",
+          node_allocation_decisions: [
+            {
+              node_name: "node-1",
+              node_decision: "yes",
+              deciders: [
+                {
+                  decider: "disk_threshold",
+                  decision: "NO",
+                  explanation: "node above watermark but shard allocates elsewhere",
+                },
+              ],
             },
           ],
         },
@@ -376,6 +416,12 @@ describe("node checks", () => {
       },
     });
     expect(check.evaluate(snap).status).toBe("pass");
+  });
+
+  it("#31 nodes.jvm.heap_percent.high — unknown when node stats are missing", () => {
+    const check = findCheck(nodeChecks, "nodes.jvm.heap_percent.high");
+    const snap = makeSnapshot({ nodesCore: undefined });
+    expect(check.evaluate(snap).status).toBe("unknown");
   });
 
   it("#37 nodes.fs.available.low — warns when disk low", () => {
@@ -686,6 +732,7 @@ describe("check metadata", () => {
       if (result.status === "fail" || result.status === "warn") {
         expect(result.observed).toBeTruthy();
         expect(result.recommendation).toBeTruthy();
+        expect((result.links ?? []).length).toBeGreaterThan(0);
       }
     }
   });

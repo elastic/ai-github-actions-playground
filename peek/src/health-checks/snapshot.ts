@@ -51,8 +51,15 @@ async function fetchGroup(
           return { group, data: { allocationExplain } };
         } catch (innerError) {
           if (isAbortError(innerError) || signal?.aborted) throw innerError;
-          // 400 when no unassigned shards exist — treat as empty
-          return { group, data: { allocationExplain: null } };
+          const status =
+            typeof innerError === "object" && innerError !== null && "status" in innerError
+              ? Number((innerError as { status?: unknown }).status)
+              : undefined;
+          if (status === 400) {
+            // 400 when no unassigned shards exist — treat as empty
+            return { group, data: { allocationExplain: null } };
+          }
+          throw innerError;
         }
       }
       default:

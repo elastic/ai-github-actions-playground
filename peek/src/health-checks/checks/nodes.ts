@@ -10,6 +10,14 @@ const THREAD_POOL_QUEUE_THRESHOLD = 200;
 const HEAP_PERCENT_HIGH_THRESHOLD = 85;
 const CPU_PERCENT_HIGH_THRESHOLD = 90;
 
+function unknownNodeStatsResult() {
+  return {
+    status: "unknown" as const,
+    summary: "Node stats unavailable.",
+    recommendation: "Ensure node stats are collected and verify cluster monitor permissions.",
+  };
+}
+
 export const nodeChecks: HealthCheckDefinition[] = [
   // #31
   {
@@ -21,7 +29,9 @@ export const nodeChecks: HealthCheckDefinition[] = [
     surfaces: ["global", "local"],
     dependsOn: ["nodesCore"],
     evaluate: (snapshot) => {
-      const nodes = Object.values(snapshot.data.nodesCore?.nodeStats?.nodes ?? {});
+      const nodeStats = snapshot.data.nodesCore?.nodeStats?.nodes;
+      if (!nodeStats) return unknownNodeStatsResult();
+      const nodes = Object.values(nodeStats);
       const hottestNode = nodes
         .map((node) => ({
           name: node.name ?? "unknown",
@@ -52,7 +62,9 @@ export const nodeChecks: HealthCheckDefinition[] = [
     surfaces: ["global", "local"],
     dependsOn: ["nodesCore"],
     evaluate: (snapshot) => {
-      const nodes = Object.values(snapshot.data.nodesCore?.nodeStats?.nodes ?? {});
+      const nodeStats = snapshot.data.nodesCore?.nodeStats?.nodes;
+      if (!nodeStats) return unknownNodeStatsResult();
+      const nodes = Object.values(nodeStats);
       const hottestNode = nodes
         .map((node) => ({ name: node.name ?? "unknown", cpu: node.os?.cpu?.percent ?? 0 }))
         .sort((a, b) => b.cpu - a.cpu)[0];
@@ -80,7 +92,9 @@ export const nodeChecks: HealthCheckDefinition[] = [
     surfaces: ["global", "local"],
     dependsOn: ["nodesCore"],
     evaluate: (snapshot) => {
-      const nodes = Object.values(snapshot.data.nodesCore?.nodeStats?.nodes ?? {});
+      const nodeStats = snapshot.data.nodesCore?.nodeStats?.nodes;
+      if (!nodeStats) return unknownNodeStatsResult();
+      const nodes = Object.values(nodeStats);
       const lowestNode = nodes
         .map((node) => ({
           name: node.name ?? "unknown",
@@ -117,7 +131,9 @@ export const nodeChecks: HealthCheckDefinition[] = [
     surfaces: ["global", "local"],
     dependsOn: ["nodesCore"],
     evaluate: (snapshot) => {
-      const nodes = Object.entries(snapshot.data.nodesCore?.nodeStats?.nodes ?? {});
+      const nodeStats = snapshot.data.nodesCore?.nodeStats?.nodes;
+      if (!nodeStats) return unknownNodeStatsResult();
+      const nodes = Object.entries(nodeStats);
       for (const [, node] of nodes) {
         const queue = node.thread_pool?.search?.queue ?? 0;
         if (queue >= THREAD_POOL_QUEUE_THRESHOLD) {
@@ -147,7 +163,8 @@ export const nodeChecks: HealthCheckDefinition[] = [
     surfaces: ["global", "local"],
     dependsOn: ["nodesCore"],
     evaluate: (snapshot) => {
-      const nodes = snapshot.data.nodesCore?.nodeStats?.nodes ?? {};
+      const nodes = snapshot.data.nodesCore?.nodeStats?.nodes;
+      if (!nodes) return unknownNodeStatsResult();
       let totalRejected = 0;
       for (const node of Object.values(nodes)) {
         totalRejected += node.thread_pool?.search?.rejected ?? 0;
@@ -174,7 +191,9 @@ export const nodeChecks: HealthCheckDefinition[] = [
     surfaces: ["global", "local"],
     dependsOn: ["nodesCore"],
     evaluate: (snapshot) => {
-      const nodes = Object.entries(snapshot.data.nodesCore?.nodeStats?.nodes ?? {});
+      const nodeStats = snapshot.data.nodesCore?.nodeStats?.nodes;
+      if (!nodeStats) return unknownNodeStatsResult();
+      const nodes = Object.entries(nodeStats);
       for (const [, node] of nodes) {
         const queue = node.thread_pool?.write?.queue ?? 0;
         if (queue >= THREAD_POOL_QUEUE_THRESHOLD) {
@@ -204,7 +223,8 @@ export const nodeChecks: HealthCheckDefinition[] = [
     surfaces: ["global", "local"],
     dependsOn: ["nodesCore"],
     evaluate: (snapshot) => {
-      const nodes = snapshot.data.nodesCore?.nodeStats?.nodes ?? {};
+      const nodes = snapshot.data.nodesCore?.nodeStats?.nodes;
+      if (!nodes) return unknownNodeStatsResult();
       let totalRejected = 0;
       for (const node of Object.values(nodes)) {
         totalRejected += node.thread_pool?.write?.rejected ?? 0;
@@ -231,7 +251,9 @@ export const nodeChecks: HealthCheckDefinition[] = [
     surfaces: ["global", "local"],
     dependsOn: ["nodesCore"],
     evaluate: (snapshot) => {
-      const nodes = Object.entries(snapshot.data.nodesCore?.nodeStats?.nodes ?? {});
+      const nodeStats = snapshot.data.nodesCore?.nodeStats?.nodes;
+      if (!nodeStats) return unknownNodeStatsResult();
+      const nodes = Object.entries(nodeStats);
       for (const [, node] of nodes) {
         const queue = node.thread_pool?.bulk?.queue ?? 0;
         if (queue >= THREAD_POOL_QUEUE_THRESHOLD) {
@@ -261,7 +283,8 @@ export const nodeChecks: HealthCheckDefinition[] = [
     surfaces: ["global", "local"],
     dependsOn: ["nodesCore"],
     evaluate: (snapshot) => {
-      const nodes = snapshot.data.nodesCore?.nodeStats?.nodes ?? {};
+      const nodes = snapshot.data.nodesCore?.nodeStats?.nodes;
+      if (!nodes) return unknownNodeStatsResult();
       let totalRejected = 0;
       for (const node of Object.values(nodes)) {
         totalRejected += node.thread_pool?.bulk?.rejected ?? 0;
@@ -288,7 +311,9 @@ export const nodeChecks: HealthCheckDefinition[] = [
     surfaces: ["global", "local"],
     dependsOn: ["nodesCore"],
     evaluate: (snapshot) => {
-      const totalTrips = totalCircuitBreakerTrips(snapshot.data.nodesCore?.nodeStats?.nodes);
+      const nodes = snapshot.data.nodesCore?.nodeStats?.nodes;
+      if (!nodes) return unknownNodeStatsResult();
+      const totalTrips = totalCircuitBreakerTrips(nodes);
       if (totalTrips > 0) {
         return {
           status: "warn",
@@ -311,7 +336,9 @@ export const nodeChecks: HealthCheckDefinition[] = [
     surfaces: ["global", "local"],
     dependsOn: ["nodesCore"],
     evaluate: (snapshot) => {
-      const totalRejected = totalThreadPoolRejections(snapshot.data.nodesCore?.nodeStats?.nodes);
+      const nodes = snapshot.data.nodesCore?.nodeStats?.nodes;
+      if (!nodes) return unknownNodeStatsResult();
+      const totalRejected = totalThreadPoolRejections(nodes);
       if (totalRejected > 0) {
         return {
           status: "warn",
