@@ -62,7 +62,11 @@ function useValidation(): ValidationItem[] {
     }
 
     // Format version
-    items.push({ label: `format_version >= 3.5.0`, status: "pass" });
+    if (identity.formatVersion === "3.5.0" || identity.formatVersion === "3.6.0") {
+      items.push({ label: `format_version >= 3.5.0`, status: "pass" });
+    } else {
+      items.push({ label: `format_version >= 3.5.0`, status: "fail" });
+    }
 
     // Title
     if (identity.title) {
@@ -166,6 +170,8 @@ export default function StepExport() {
   const iconExt = iconExtensionFromMimeType(identity.icon?.mimeType);
   const [selectedFile, setSelectedFile] = useState<PreviewFile>("manifest");
   const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
+  const [copyError, setCopyError] = useState<string | null>(null);
 
   const fullName = identity.name.endsWith("_input_otel")
     ? identity.name
@@ -188,16 +194,24 @@ export default function StepExport() {
 
   const handleExport = async () => {
     setExporting(true);
+    setExportError(null);
     try {
       const blob = await exportPackageZip(data);
       downloadBlob(blob, `${fullName}.zip`);
+    } catch (error) {
+      setExportError(error instanceof Error ? error.message : "Failed to export package.");
     } finally {
       setExporting(false);
     }
   };
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(fileContents[selectedFile]);
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(fileContents[selectedFile]);
+      setCopyError(null);
+    } catch {
+      setCopyError("Failed to copy preview content to clipboard.");
+    }
   };
 
   const passes = validation.filter((v) => v.status === "pass").length;
@@ -228,6 +242,16 @@ export default function StepExport() {
       <Alert severity={fails > 0 ? "error" : warns > 0 ? "warning" : "success"} sx={{ py: 0.5 }}>
         {passes} passed, {warns} warnings, {fails} errors
       </Alert>
+      {exportError && (
+        <Alert severity="error" sx={{ py: 0.5 }}>
+          {exportError}
+        </Alert>
+      )}
+      {copyError && (
+        <Alert severity="warning" sx={{ py: 0.5 }}>
+          {copyError}
+        </Alert>
+      )}
 
       <Box sx={{ display: "flex", gap: 2, minHeight: 400 }}>
         {/* Left: file tree + validation */}
@@ -349,7 +373,9 @@ export default function StepExport() {
           <Button
             size="small"
             startIcon={<ContentCopyIcon />}
-            onClick={handleCopy}
+            onClick={() => {
+              void handleCopy();
+            }}
             sx={{ position: "absolute", top: 8, right: 8 }}
           >
             Copy

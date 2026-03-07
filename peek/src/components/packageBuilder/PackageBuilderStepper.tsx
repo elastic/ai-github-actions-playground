@@ -3,7 +3,7 @@ import Step from "@mui/material/Step";
 import StepButton from "@mui/material/StepButton";
 import type { WizardStep } from "../../types/packageBuilder";
 
-const STEPS = [
+const STEPS: ReadonlyArray<{ label: string; step: WizardStep }> = [
   { label: "Identity", step: 1 },
   { label: "Signals", step: 2 },
   { label: "Variables", step: 3 },
@@ -22,7 +22,7 @@ export default function PackageBuilderStepper({ currentStep, onStepClick }: Prop
     <Stepper nonLinear activeStep={currentStep - 1} sx={{ pb: 2 }}>
       {STEPS.map(({ label, step }) => (
         <Step key={step} completed={currentStep > step}>
-          <StepButton onClick={() => onStepClick(step as WizardStep)}>{label}</StepButton>
+          <StepButton onClick={() => onStepClick(step)}>{label}</StepButton>
         </Step>
       ))}
     </Stepper>

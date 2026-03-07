@@ -1,10 +1,11 @@
-import { useMemo, useEffect, useRef } from "react";
+import { useMemo, useEffect, useRef, useState } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import Alert from "@mui/material/Alert";
+import IconButton from "@mui/material/IconButton";
 import Divider from "@mui/material/Divider";
 import Tooltip from "@mui/material/Tooltip";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
@@ -61,6 +62,7 @@ export default function StepTemplate() {
   const loadStarterTemplate = usePackageBuilderStore((s) => s.loadStarterTemplate);
   const setMockValue = usePackageBuilderStore((s) => s.setMockValue);
   const themeMode = useThemeStore((s) => s.themeMode);
+  const [copyError, setCopyError] = useState<string | null>(null);
 
   const isEmpty = !templateContent.trim();
 
@@ -81,8 +83,18 @@ export default function StepTemplate() {
 
   const hasExporters = /\bexporters\s*:/i.test(templateContent);
 
-  const insertAtCursor = (text: string) => {
+  const appendToTemplate = (text: string) => {
     setTemplateContent(templateContent + text);
+  };
+
+  const handleCopyRendered = async () => {
+    if (!result.rendered) return;
+    try {
+      await navigator.clipboard.writeText(result.rendered);
+      setCopyError(null);
+    } catch {
+      setCopyError("Failed to copy rendered output to clipboard.");
+    }
   };
 
   if (isEmpty) {
@@ -151,7 +163,7 @@ export default function StepTemplate() {
                 size="small"
                 variant="outlined"
                 sx={{ fontFamily: "monospace", fontSize: 11, cursor: "pointer" }}
-                onClick={() => insertAtCursor(`{{${v.name}}}`)}
+                onClick={() => appendToTemplate(`{{${v.name}}}`)}
               />
             ))}
           <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />
@@ -161,7 +173,7 @@ export default function StepTemplate() {
               size="small"
               variant="outlined"
               sx={{ fontFamily: "monospace", fontSize: 11, cursor: "pointer" }}
-              onClick={() => insertAtCursor("\n{{#if variable_name}}\n\n{{/if}}\n")}
+              onClick={() => appendToTemplate("\n{{#if variable_name}}\n\n{{/if}}\n")}
             />
           </Tooltip>
         </Box>
@@ -229,11 +241,16 @@ export default function StepTemplate() {
             </Typography>
             {result.rendered && (
               <Tooltip title="Copy rendered output">
-                <ContentCopyIcon
-                  fontSize="small"
-                  sx={{ cursor: "pointer", color: "text.secondary" }}
-                  onClick={() => navigator.clipboard.writeText(result.rendered)}
-                />
+                <IconButton
+                  aria-label="Copy rendered output"
+                  size="small"
+                  sx={{ color: "text.secondary" }}
+                  onClick={() => {
+                    void handleCopyRendered();
+                  }}
+                >
+                  <ContentCopyIcon fontSize="small" />
+                </IconButton>
               </Tooltip>
             )}
           </Box>
@@ -248,6 +265,11 @@ export default function StepTemplate() {
           {result.yamlError && (
             <Alert severity="error" sx={{ mt: 1, py: 0.5 }}>
               {result.yamlError}
+            </Alert>
+          )}
+          {copyError && (
+            <Alert severity="warning" sx={{ mt: 1, py: 0.5 }}>
+              {copyError}
             </Alert>
           )}
         </Box>
@@ -334,7 +356,7 @@ ${numberedLines}`;
     systemPrompt: TEMPLATE_INSIGHT_SYSTEM_PROMPT,
     cacheKey,
     slots,
-    enabled: lines.length > 0 && variables.length > 0,
+    enabled: lines.length > 0,
   });
 
   // Push insights into CodeMirror state whenever they change

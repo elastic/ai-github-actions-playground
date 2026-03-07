@@ -30,7 +30,6 @@ import type { UserCapabilities } from "../services/es";
 
 const PackageBuilderPage = lazy(() => import("../components/PackageBuilderPage"));
 const ApiConsolePage = lazy(() => import("../components/ApiConsolePage"));
-
 const ApiKeysPage = lazy(() => import("../components/ApiKeysPage"));
 const ChatPage = lazy(() => import("../components/ChatPage"));
 const ClusterCapacityPage = lazy(() => import("../components/ClusterCapacityPage"));
