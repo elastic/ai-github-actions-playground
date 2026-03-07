@@ -304,7 +304,7 @@ export const PAGE_MANIFEST = {
     path: "/hosts",
     component: HostsPage,
     requiresConnection: true,
-    showTimeControls: true,
+    showTimeControls: false,
     skeletonVariant: "table",
     nav: {
       label: "Hosts",
@@ -318,7 +318,7 @@ export const PAGE_MANIFEST = {
     path: "/hosts/linux",
     component: HostsLinuxPage,
     requiresConnection: true,
-    showTimeControls: true,
+    showTimeControls: false,
     skeletonVariant: "table",
     nav: {
       label: "Linux Hosts",
@@ -332,7 +332,7 @@ export const PAGE_MANIFEST = {
     path: "/hosts/windows",
     component: HostsWindowsPage,
     requiresConnection: true,
-    showTimeControls: true,
+    showTimeControls: false,
     skeletonVariant: "table",
     nav: {
       label: "Windows Hosts",
@@ -346,7 +346,7 @@ export const PAGE_MANIFEST = {
     path: "/hosts/macos",
     component: HostsMacosPage,
     requiresConnection: true,
-    showTimeControls: true,
+    showTimeControls: false,
     skeletonVariant: "table",
     nav: {
       label: "macOS Hosts",
@@ -360,7 +360,7 @@ export const PAGE_MANIFEST = {
     path: "/hosts/:hostId",
     component: HostDetailPage,
     requiresConnection: true,
-    showTimeControls: true,
+    showTimeControls: false,
     skeletonVariant: "detail-panel",
     nav: {
       label: "Host Detail",

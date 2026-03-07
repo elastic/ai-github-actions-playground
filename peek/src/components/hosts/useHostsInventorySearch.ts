@@ -43,6 +43,7 @@ export function useHostsInventorySearch(osTypeOverride?: HostOsType) {
   const [sortField, setSortField] = useState<keyof HostRow>("lastSeen");
   const [sortDirection, setSortDirection] = useState<HostSortDirection>("desc");
   const latestQueryRef = useRef<string | null>(null);
+  const dispatchedConnectionRef = useRef<string | null>(null);
 
   const handleSort = useCallback(
     (field: keyof HostRow) => {
@@ -59,16 +60,18 @@ export function useHostsInventorySearch(osTypeOverride?: HostOsType) {
   const handleSuccess = useCallback(
     (data: EsqlResponse, executedQuery: string) => {
       if (executedQuery !== latestQueryRef.current) return;
+      if (dispatchedConnectionRef.current !== connection?.url) return;
       setSearchResult(data);
     },
-    [setSearchResult],
+    [setSearchResult, connection?.url],
   );
   const handleFailure = useCallback(
     (failedQuery: string) => {
       if (failedQuery !== latestQueryRef.current) return;
+      if (dispatchedConnectionRef.current !== connection?.url) return;
       setSearchResult(null);
     },
-    [setSearchResult],
+    [setSearchResult, connection?.url],
   );
   const { runQuery, loading, error, clearError } = useEsqlQuery({
     connection,
@@ -91,8 +94,9 @@ export function useHostsInventorySearch(osTypeOverride?: HostOsType) {
     };
     const query = buildHostInventoryQuery(queryFilters);
     latestQueryRef.current = query.trim();
+    dispatchedConnectionRef.current = connection?.url ?? null;
     runQuery(query);
-  }, [filters, osTypeOverride, runQuery]);
+  }, [filters, osTypeOverride, runQuery, connection?.url]);
 
   const handleReset = useCallback(() => {
     if (loading) return;

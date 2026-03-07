@@ -75,7 +75,7 @@ describe("buildHostDetailQuery", () => {
     });
     expect(query).toContain("FROM metrics-hostmetricsreceiver*");
     expect(query).toContain('== "host-123"');
-    expect(query).toContain("CONCAT(COALESCE(host.name");
+    expect(query).toContain("CONCAT(COALESCE(host.name, host.ip");
     expect(query).toContain("LIMIT 1");
   });
 

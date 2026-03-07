@@ -55,20 +55,23 @@ export default function HostDetailPage() {
   );
 
   const latestQueryRef = useRef<string | null>(null);
+  const dispatchedConnectionRef = useRef<string | null>(null);
 
   const handleSuccess = useCallback(
     (data: EsqlResponse, executedQuery: string) => {
       if (executedQuery !== latestQueryRef.current) return;
+      if (dispatchedConnectionRef.current !== connection?.url) return;
       setSearchResult(data);
     },
-    [setSearchResult],
+    [setSearchResult, connection?.url],
   );
   const handleFailure = useCallback(
     (failedQuery: string) => {
       if (failedQuery !== latestQueryRef.current) return;
+      if (dispatchedConnectionRef.current !== connection?.url) return;
       setSearchResult(null);
     },
-    [setSearchResult],
+    [setSearchResult, connection?.url],
   );
   const { runQuery, loading, error } = useEsqlQuery({
     connection,
@@ -83,8 +86,9 @@ export default function HostDetailPage() {
       timeTo: filters.timeTo,
     });
     latestQueryRef.current = query.trim();
+    dispatchedConnectionRef.current = connection?.url ?? null;
     runQuery(query);
-  }, [decodedHostId, filters, runQuery]);
+  }, [decodedHostId, filters, runQuery, connection?.url]);
 
   const hostRow = useMemo(() => {
     if (!searchResult) return null;

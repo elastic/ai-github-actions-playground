@@ -24,7 +24,7 @@ function escapeEsql(value: string): string {
 }
 
 const STABLE_HOST_ID_EXPRESSION =
-  'CONCAT(COALESCE(host.name, "unknown"), "::", COALESCE(os.type, "unknown"))';
+  'CONCAT(COALESCE(host.name, host.ip, "unknown"), "::", COALESCE(os.type, "unknown"))';
 
 /**
  * Builds an ES|QL query that returns one row per host with the latest
