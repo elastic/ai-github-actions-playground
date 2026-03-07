@@ -19,13 +19,12 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 
 import { useClusterSettings } from "../hooks/useClusterSettings";
+import { useTableSort } from "../hooks/useTableSort";
 
 import EmptyState from "./EmptyState";
 import PageHeader from "./PageHeader";
 
 type SettingsSource = "persistent" | "transient" | "default";
-type SortField = "key" | "value";
-type SortDirection = "asc" | "desc";
 
 interface SettingsRow {
   key: string;
@@ -60,8 +59,7 @@ function sourceColor(source: SettingsSource): "warning" | "success" | "default" 
 export default function ClusterSettingsPage() {
   const [search, setSearch] = useState("");
   const [showDefaults, setShowDefaults] = useState(false);
-  const [sortField, setSortField] = useState<SortField>("key");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+  const { sortField, sortDirection, getSortLabelProps } = useTableSort<"key" | "value">("key");
   const result = useClusterSettings();
 
   const loading = result.status === "loading";
@@ -108,15 +106,6 @@ export default function ClusterSettingsPage() {
     for (const row of allRows) tally[row.source] += 1;
     return tally;
   }, [allRows]);
-
-  function handleSort(field: SortField) {
-    if (field === sortField) {
-      setSortDirection((d) => (d === "asc" ? "desc" : "asc"));
-      return;
-    }
-    setSortField(field);
-    setSortDirection("asc");
-  }
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, height: "100%", minHeight: 0 }}>
@@ -191,22 +180,10 @@ export default function ClusterSettingsPage() {
             <TableHead>
               <TableRow>
                 <TableCell>
-                  <TableSortLabel
-                    active={sortField === "key"}
-                    direction={sortField === "key" ? sortDirection : "asc"}
-                    onClick={() => handleSort("key")}
-                  >
-                    Setting
-                  </TableSortLabel>
+                  <TableSortLabel {...getSortLabelProps("key")}>Setting</TableSortLabel>
                 </TableCell>
                 <TableCell>
-                  <TableSortLabel
-                    active={sortField === "value"}
-                    direction={sortField === "value" ? sortDirection : "asc"}
-                    onClick={() => handleSort("value")}
-                  >
-                    Value
-                  </TableSortLabel>
+                  <TableSortLabel {...getSortLabelProps("value")}>Value</TableSortLabel>
                 </TableCell>
                 <TableCell sx={{ width: 130 }}>Source</TableCell>
               </TableRow>

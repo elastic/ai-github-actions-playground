@@ -1,10 +1,11 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 
 import { useEsqlQuery } from "../../hooks/useEsqlQuery";
 import { useConnectionStore } from "../../store/useConnectionStore";
 import { usePageFiltersStore } from "../../store/usePageFiltersStore";
+import { useTableSort } from "../../hooks/useTableSort";
 import type { KubernetesActiveTab } from "../../types/pageFilters";
 import type { EsqlResponse } from "../../types";
 
@@ -74,21 +75,15 @@ export function useK8sInventorySearch() {
     [queryClient, searchQueryKey],
   );
 
-  const [sortField, setSortField] = useState<string>(DEFAULT_SORT_FIELD[filters.activeTab]);
-  const [sortDirection, setSortDirection] = useState<K8sSortDirection>("desc");
+  const {
+    sortField,
+    sortDirection,
+    handleSort,
+    getSortLabelProps,
+    setSortField,
+    setSortDirection,
+  } = useTableSort<string>(DEFAULT_SORT_FIELD[filters.activeTab], "desc");
   const latestQueryRef = useRef<string | null>(null);
-
-  const handleSort = useCallback(
-    (field: string) => {
-      if (field === sortField) {
-        setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
-      } else {
-        setSortField(field);
-        setSortDirection("desc");
-      }
-    },
-    [sortField],
-  );
 
   const handleSuccess = useCallback(
     (data: EsqlResponse, executedQuery: string) => {
@@ -183,6 +178,7 @@ export function useK8sInventorySearch() {
     loading,
     error,
     handleSort,
+    getSortLabelProps,
     handleSearch,
     handleReset,
     handleTabChange,
