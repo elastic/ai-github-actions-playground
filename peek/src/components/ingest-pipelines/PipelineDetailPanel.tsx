@@ -28,6 +28,7 @@ import type { ElasticsearchConnection, NodesStatsResponse } from "../../services
 import { usePipelineSimulate } from "../../hooks/usePipelineSimulate";
 import type { PipelineEntry } from "../../hooks/useIngestPipelines";
 import type { DataFetchResult } from "../../types/query";
+import { formatMs } from "../../utils/formatDuration";
 import EmptyState from "../EmptyState";
 
 import { parseSimulateInput } from "./ingestPipelineUtils";
@@ -53,11 +54,6 @@ function stableStringify(value: unknown): string {
       .join(",")}}`;
   }
   return JSON.stringify(value);
-}
-
-function formatMs(ms: number): string {
-  if (ms < 1000) return `${ms.toLocaleString()} ms`;
-  return `${(ms / 1000).toFixed(2)} s`;
 }
 
 function formatAvgMsPerDoc(timeMs: number, count: number): string {
