@@ -30,6 +30,7 @@ export default function AwsDeployInstall({
   const [activeTab, setActiveTab] = useState<"quick" | "manual">("quick");
   const [copied, setCopied] = useState(false);
   const scheduleReset = useCopyFeedbackTimeout(() => setCopied(false));
+  const hasApiKey = apiKey.trim().length > 0;
   const quickCreateUrl = useMemo(
     () =>
       buildCloudFormationQuickCreateUrl(target, {
@@ -72,6 +73,7 @@ export default function AwsDeployInstall({
             endIcon={<OpenInNewIcon />}
             sx={{ alignSelf: "flex-start" }}
             onClick={onLaunchStack}
+            disabled={!hasApiKey}
           >
             Launch stack in AWS Console
           </Button>
@@ -88,6 +90,7 @@ export default function AwsDeployInstall({
             <Button
               size="small"
               variant="outlined"
+              disabled={!hasApiKey}
               onClick={() => {
                 onLaunchStack();
                 void copyToClipboard(manualDeployCommand).then((ok) => {
