@@ -6,7 +6,11 @@ import { MemoryRouter, useLocation } from "react-router-dom";
 import App from "../../src/App";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
+import { useLLMStore } from "../../src/store/useLLMStore";
+import { SESSION_DISMISS_KEY } from "../../src/components/LLMKeyNudgeBanner";
 import { resetAllStores } from "../fixtures/test-utils";
+
+const llmNudgeCopy = /works best with an llm key configured/i;
 
 function LocationDisplay() {
   const location = useLocation();
@@ -118,6 +122,81 @@ describe("App shell visibility", () => {
 
     expect(screen.getByRole("navigation", { name: /main navigation/i })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /reset state/i })).not.toBeInTheDocument();
+  });
+
+  it("shows an LLM key banner when connected without a key", () => {
+    useConnectionStore.getState().setConnected(true);
+    useLLMStore.getState().setApiKey("");
+
+    render(
+      <MemoryRouter>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText(llmNudgeCopy)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /configure key/i })).toBeInTheDocument();
+  });
+
+  it("hides the LLM key nudge when an API key is configured", () => {
+    useConnectionStore.getState().setConnected(true);
+    useLLMStore.getState().setApiKey("sk-test-key");
+
+    render(
+      <MemoryRouter>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByText(llmNudgeCopy)).not.toBeInTheDocument();
+  });
+
+  it("dismisses the LLM key banner for the current session", async () => {
+    const user = userEvent.setup();
+    useConnectionStore.getState().setConnected(true);
+    useLLMStore.getState().setApiKey("");
+
+    render(
+      <MemoryRouter>
+        <App />
+      </MemoryRouter>,
+    );
+
+    await user.click(screen.getByRole("button", { name: /maybe later/i }));
+
+    expect(sessionStorage.getItem(SESSION_DISMISS_KEY)).toBe("1");
+    expect(screen.queryByText(llmNudgeCopy)).not.toBeInTheDocument();
+  });
+
+  it("navigates to settings when Configure key is clicked", async () => {
+    const user = userEvent.setup();
+    useConnectionStore.getState().setConnected(true);
+    useLLMStore.getState().setApiKey("");
+
+    render(
+      <MemoryRouter initialEntries={["/dashboards"]}>
+        <App />
+        <LocationDisplay />
+      </MemoryRouter>,
+    );
+
+    await user.click(screen.getByRole("button", { name: /configure key/i }));
+
+    expect(screen.getByTestId("location")).toHaveTextContent("/settings");
+  });
+
+  it("keeps the LLM key banner hidden when already dismissed in session", () => {
+    useConnectionStore.getState().setConnected(true);
+    useLLMStore.getState().setApiKey("");
+    sessionStorage.setItem(SESSION_DISMISS_KEY, "1");
+
+    render(
+      <MemoryRouter>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByText(llmNudgeCopy)).not.toBeInTheDocument();
   });
 
   it("does not intercept undo shortcut inside contenteditable editors", () => {
