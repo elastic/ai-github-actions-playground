@@ -566,17 +566,17 @@ describe("IngestPipelinesPage", () => {
     await screen.findByLabelText("Select pipeline fast-pipeline");
     const pipelineTable = screen.getByRole("table", { name: /ingest pipeline list/i });
 
-    // First click switches to avg sort descending (default direction).
+    // First click switches to avg sort ascending.
     await user.click(screen.getByRole("button", { name: "Avg ms/doc" }));
     let rows = within(pipelineTable).getAllByRole("row");
-    expect(rows[1]).toHaveAttribute("aria-label", "Select pipeline slow-pipeline");
-    expect(rows[2]).toHaveAttribute("aria-label", "Select pipeline fast-pipeline");
-
-    // Second click toggles ascending.
-    await user.click(screen.getByRole("button", { name: "Avg ms/doc" }));
-    rows = within(pipelineTable).getAllByRole("row");
     expect(rows[1]).toHaveAttribute("aria-label", "Select pipeline fast-pipeline");
     expect(rows[2]).toHaveAttribute("aria-label", "Select pipeline slow-pipeline");
+
+    // Second click toggles descending.
+    await user.click(screen.getByRole("button", { name: "Avg ms/doc" }));
+    rows = within(pipelineTable).getAllByRole("row");
+    expect(rows[1]).toHaveAttribute("aria-label", "Select pipeline slow-pipeline");
+    expect(rows[2]).toHaveAttribute("aria-label", "Select pipeline fast-pipeline");
   });
 
   it("refreshes pipelines when Refresh button is clicked", async () => {
