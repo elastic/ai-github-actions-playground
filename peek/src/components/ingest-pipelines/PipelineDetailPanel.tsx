@@ -25,9 +25,12 @@ import ExpandMore from "@mui/icons-material/ExpandMore";
 import ExpandLess from "@mui/icons-material/ExpandLess";
 
 import type { ElasticsearchConnection, NodesStatsResponse } from "../../services/es";
+import { useCopyFeedbackTimeout } from "../../hooks/useCopyFeedbackTimeout";
 import { usePipelineSimulate } from "../../hooks/usePipelineSimulate";
 import type { PipelineEntry } from "../../hooks/useIngestPipelines";
 import type { DataFetchResult } from "../../types/query";
+import { copyToClipboard } from "../../utils/copyToClipboard";
+import { formatMs } from "../../utils/formatDuration";
 import EmptyState from "../EmptyState";
 
 import { parseSimulateInput } from "./ingestPipelineUtils";
@@ -53,11 +56,6 @@ function stableStringify(value: unknown): string {
       .join(",")}}`;
   }
   return JSON.stringify(value);
-}
-
-function formatMs(ms: number): string {
-  if (ms < 1000) return `${ms.toLocaleString()} ms`;
-  return `${(ms / 1000).toFixed(2)} s`;
 }
 
 function formatAvgMsPerDoc(timeMs: number, count: number): string {
@@ -100,6 +98,8 @@ export default function PipelineDetailPanel({
   const [verbose, setVerbose] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [expandedProcessors, setExpandedProcessors] = useState<Set<string>>(new Set());
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const scheduleCopyReset = useCopyFeedbackTimeout(() => setCopiedKey(null));
 
   const processors = selectedPipeline?.pipeline.processors ?? [];
   const runtimeStats = useMemo(() => {
@@ -606,10 +606,16 @@ export default function PipelineDetailPanel({
                       >
                         {isExpanded ? "Hide config" : "Show config"}
                       </Button>
-                      <Tooltip title="Copy JSON">
+                      <Tooltip title={copiedKey === processorKey ? "Copied!" : "Copy JSON"}>
                         <IconButton
                           size="small"
-                          onClick={() => void navigator.clipboard.writeText(configJson)}
+                          onClick={() => {
+                            void copyToClipboard(configJson).then((ok) => {
+                              if (!ok) return;
+                              setCopiedKey(processorKey);
+                              scheduleCopyReset();
+                            });
+                          }}
                           aria-label={`Copy ${type} config`}
                         >
                           <ContentCopyIcon fontSize="small" />

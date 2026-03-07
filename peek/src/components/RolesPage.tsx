@@ -17,6 +17,7 @@ import Typography from "@mui/material/Typography";
 import { parseAsString, useQueryState } from "nuqs";
 
 import { useCopyFeedbackTimeout } from "../hooks/useCopyFeedbackTimeout";
+import { useSearchParam } from "../hooks/useSearchParam";
 import { useSecurityRoles } from "../hooks/useSecurityRoles";
 import { usePageContextStore } from "../store/usePageContextStore";
 import { INSIGHT_GUARDRAIL } from "../hooks/insightPromptUtils";
@@ -29,10 +30,7 @@ export default function RolesPage() {
   const { roles, users, loading, error, accessNotice, usersError, refresh } = useSecurityRoles();
   const navigate = useNavigate();
   const [urlRole, setUrlRole] = useQueryState("role", parseAsString);
-  const [search, setSearch] = useQueryState(
-    "search",
-    parseAsString.withDefault("").withOptions({ history: "replace" }),
-  );
+  const [search, setSearch] = useSearchParam();
   const [copied, setCopied] = useState(false);
   const scheduleCopyFeedbackReset = useCopyFeedbackTimeout(() => setCopied(false));
 

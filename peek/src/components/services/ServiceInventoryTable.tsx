@@ -9,6 +9,7 @@ import TableCell from "@mui/material/TableCell";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TableSortLabel from "@mui/material/TableSortLabel";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useTheme } from "@mui/material/styles";
 import { visuallyHidden } from "@mui/utils";
@@ -113,18 +114,26 @@ export default function ServiceInventoryTable({
           const sparkline = sparklineData?.[row.serviceName];
           const slotId = rowInsightSlotIds?.[row.serviceName];
           const serviceLink = (
-            <Link
-              component={RouterLink}
-              to={`/services/${encodeURIComponent(row.serviceName)}`}
-              underline="hover"
-              sx={{ fontWeight: 500 }}
-            >
-              {row.serviceName}
-            </Link>
+            <Tooltip title={row.serviceName} enterDelay={300}>
+              <Link
+                component={RouterLink}
+                to={`/services/${encodeURIComponent(row.serviceName)}`}
+                underline="hover"
+                sx={{
+                  fontWeight: 500,
+                  display: "block",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {row.serviceName}
+              </Link>
+            </Tooltip>
           );
           return (
             <TableRow key={row.serviceName} hover>
-              <TableCell>
+              <TableCell sx={{ maxWidth: 260 }}>
                 {slotId != null ? (
                   <InsightSlot slotId={slotId}>{serviceLink}</InsightSlot>
                 ) : (

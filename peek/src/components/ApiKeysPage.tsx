@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -16,6 +16,7 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 
 import { useApiKeys } from "../hooks/useApiKeys";
+import { useCopyFeedbackTimeout } from "../hooks/useCopyFeedbackTimeout";
 import { usePageContextStore } from "../store/usePageContextStore";
 import { INSIGHT_GUARDRAIL } from "../hooks/insightPromptUtils";
 import { copyToClipboard } from "../utils/copyToClipboard";
@@ -31,7 +32,7 @@ export default function ApiKeysPage() {
   const [search, setSearch] = useState("");
   const [selectedKeyId, setSelectedKeyId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const scheduleCopyFeedbackReset = useCopyFeedbackTimeout(() => setCopied(false));
 
   // Resolve the selected key: keep the user's pick if it still exists in the
   // loaded keys, otherwise fall back to the first key.
@@ -54,14 +55,6 @@ export default function ApiKeysPage() {
           },
     [selectedKey],
   );
-
-  useEffect(() => {
-    return () => {
-      if (copyTimeoutRef.current) {
-        clearTimeout(copyTimeoutRef.current);
-      }
-    };
-  }, []);
 
   const filteredKeys = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -106,11 +99,8 @@ export default function ApiKeysPage() {
     const didCopy = await copyToClipboard("GET /_security/api_key");
     if (!didCopy) return;
     setCopied(true);
-    if (copyTimeoutRef.current) {
-      clearTimeout(copyTimeoutRef.current);
-    }
-    copyTimeoutRef.current = setTimeout(() => setCopied(false), 2000);
-  }, []);
+    scheduleCopyFeedbackReset();
+  }, [scheduleCopyFeedbackReset]);
 
   return (
     <SecurityMasterDetailPage

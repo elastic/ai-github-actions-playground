@@ -52,6 +52,7 @@ const FleetAgentPage = lazy(() => import("../components/FleetAgentPage"));
 const FleetPage = lazy(() => import("../components/FleetPage"));
 const IngestPipelinesPage = lazy(() => import("../components/IngestPipelinesPage"));
 const IndicesPage = lazy(() => import("../components/IndicesPage"));
+const StorageExplorerPage = lazy(() => import("../components/StorageExplorerPage"));
 const NodesPage = lazy(() => import("../components/NodesPage"));
 const NodeDetailPage = lazy(() => import("../components/NodeDetailPage"));
 const RolesPage = lazy(() => import("../components/RolesPage"));
@@ -482,6 +483,20 @@ export const PAGE_MANIFEST = {
       label: "Indices",
       group: "System",
       order: 25,
+      showInSidebar: true,
+      icon: createElement(StorageIcon, { fontSize: "small" }),
+    },
+  },
+  storageExplorer: {
+    path: "/storage-explorer",
+    component: StorageExplorerPage,
+    requiresConnection: true,
+    showTimeControls: false,
+    skeletonVariant: "table",
+    nav: {
+      label: "Storage Explorer",
+      group: "System",
+      order: 27,
       showInSidebar: true,
       icon: createElement(StorageIcon, { fontSize: "small" }),
     },
