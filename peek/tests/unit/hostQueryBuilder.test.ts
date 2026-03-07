@@ -14,8 +14,8 @@ describe("buildHostInventoryQuery", () => {
     expect(query).toContain("FROM metrics-hostmetricsreceiver*");
     expect(query).toContain("NOW() - 5 minutes");
     expect(query).toContain("NOW()");
-    expect(query).toContain("STATS");
-    expect(query).toContain("BY host_key = COALESCE(");
+    expect(query).toContain("DEDUP host_key");
+    expect(query).toContain("EVAL host_key = COALESCE(");
   });
 
   it("adds OS filter for linux", () => {
@@ -76,7 +76,7 @@ describe("buildHostDetailQuery", () => {
     expect(query).toContain("FROM metrics-hostmetricsreceiver*");
     expect(query).toContain('== "host-123"');
     expect(query).toContain("COALESCE(host.id, CONCAT(");
-    expect(query).toContain("STATS");
+    expect(query).toContain("LIMIT 1");
   });
 
   it("escapes double quotes in hostId", () => {

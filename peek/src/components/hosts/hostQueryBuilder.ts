@@ -48,18 +48,21 @@ export function buildHostInventoryQuery(filters: HostQueryFilters): string {
 
   return `FROM metrics-hostmetricsreceiver*
 | WHERE ${whereConditions.join(" AND ")}
-| STATS
-    host_id = MAX(host.id),
-    host_name = MAX(host.name),
-    os_type = MAX(host.os.type),
-    os_name = MAX(host.os.name),
-    os_version = MAX(host.os.version),
-    last_seen = MAX(@timestamp),
-    cpu_utilization = AVG(system.cpu.utilization),
-    memory_utilization = AVG(system.memory.utilization),
-    disk_utilization = MAX(system.filesystem.utilization),
-    process_count = MAX(system.processes.count)
-  BY host_key = ${STABLE_HOST_ID_EXPRESSION}
+| EVAL host_key = ${STABLE_HOST_ID_EXPRESSION}
+| SORT @timestamp DESC
+| DEDUP host_key
+| EVAL
+    host_id = host.id,
+    host_name = host.name,
+    os_type = host.os.type,
+    os_name = host.os.name,
+    os_version = host.os.version,
+    last_seen = @timestamp,
+    cpu_utilization = system.cpu.utilization,
+    memory_utilization = system.memory.utilization,
+    disk_utilization = system.filesystem.utilization,
+    process_count = system.processes.count
+| KEEP host_key, host_id, host_name, os_type, os_name, os_version, last_seen, cpu_utilization, memory_utilization, disk_utilization, process_count
 | SORT last_seen DESC`;
 }
 
@@ -73,16 +76,19 @@ export function buildHostDetailQuery(hostId: string, filters: HostQueryFilters):
 | WHERE @timestamp >= ${filters.timeFrom}
   AND @timestamp <= ${filters.timeTo}
   AND ${STABLE_HOST_ID_EXPRESSION} == "${escaped}"
-| STATS
-    host_id = MAX(host.id),
-    host_name = MAX(host.name),
-    os_type = MAX(host.os.type),
-    os_name = MAX(host.os.name),
-    os_version = MAX(host.os.version),
-    last_seen = MAX(@timestamp),
-    cpu_utilization = AVG(system.cpu.utilization),
-    memory_utilization = AVG(system.memory.utilization),
-    disk_utilization = MAX(system.filesystem.utilization),
-    process_count = MAX(system.processes.count)
-  BY host_key = ${STABLE_HOST_ID_EXPRESSION}`;
+| SORT @timestamp DESC
+| LIMIT 1
+| EVAL
+    host_key = ${STABLE_HOST_ID_EXPRESSION},
+    host_id = host.id,
+    host_name = host.name,
+    os_type = host.os.type,
+    os_name = host.os.name,
+    os_version = host.os.version,
+    last_seen = @timestamp,
+    cpu_utilization = system.cpu.utilization,
+    memory_utilization = system.memory.utilization,
+    disk_utilization = system.filesystem.utilization,
+    process_count = system.processes.count
+| KEEP host_key, host_id, host_name, os_type, os_name, os_version, last_seen, cpu_utilization, memory_utilization, disk_utilization, process_count`;
 }
