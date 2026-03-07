@@ -1,11 +1,8 @@
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
-import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
-import Drawer from "@mui/material/Drawer";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Table from "@mui/material/Table";
@@ -16,10 +13,10 @@ import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
 
 import { useHealthChecks } from "../hooks/useHealthChecks";
-import type { HealthSeverity, HealthStatus } from "../health-checks";
+import type { EvaluatedHealthCheck, HealthSeverity, HealthStatus } from "../health-checks";
 
 import EmptyState from "./EmptyState";
-import PageHeader from "./PageHeader";
+import HealthCheckDrawer from "./HealthCheckDrawer";
 
 const SEVERITY_ORDER: Record<HealthSeverity, number> = {
   critical: 0,
@@ -36,9 +33,10 @@ function statusColor(status: HealthStatus): "success" | "warning" | "error" | "d
 }
 
 export default function GlobalHealthPage() {
-  const navigate = useNavigate();
-  const { checks, loading, error, refresh, lastUpdatedAt } = useHealthChecks({ surface: "global" });
-  const [selectedCheckId, setSelectedCheckId] = useState<string | null>(null);
+  const { checks, loading, error, refresh, lastUpdatedAt } = useHealthChecks({
+    surface: "global",
+  });
+  const [selectedCheck, setSelectedCheck] = useState<EvaluatedHealthCheck | null>(null);
   const formattedLastUpdated = useMemo(() => {
     if (!lastUpdatedAt) return "never";
     const date = new Date(lastUpdatedAt);
@@ -48,6 +46,9 @@ export default function GlobalHealthPage() {
   const orderedChecks = useMemo(
     () =>
       [...checks].sort((a, b) => {
+        const aPass = a.status === "pass" ? 1 : 0;
+        const bPass = b.status === "pass" ? 1 : 0;
+        if (aPass !== bPass) return aPass - bPass;
         if (a.domain !== b.domain) return a.domain.localeCompare(b.domain);
         const aSeverity = a.severity ? SEVERITY_ORDER[a.severity] : Number.MAX_SAFE_INTEGER;
         const bSeverity = b.severity ? SEVERITY_ORDER[b.severity] : Number.MAX_SAFE_INTEGER;
@@ -55,10 +56,6 @@ export default function GlobalHealthPage() {
         return a.title.localeCompare(b.title);
       }),
     [checks],
-  );
-  const selectedCheck = useMemo(
-    () => orderedChecks.find((check) => check.id === selectedCheckId) ?? null,
-    [orderedChecks, selectedCheckId],
   );
 
   const failingCounts = useMemo(() => {
@@ -82,45 +79,44 @@ export default function GlobalHealthPage() {
   }, [checks]);
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, height: "100%", minHeight: 0 }}>
-      <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <PageHeader
-          title="Global Health"
-          actions={
-            <Button size="small" variant="outlined" onClick={refresh} disabled={loading}>
-              {loading ? "Refreshing..." : "Refresh"}
-            </Button>
-          }
-        />
-      </Paper>
-
+    <>
       {error ? <Alert severity="error">{error}</Alert> : null}
 
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-        <Chip color="error" label={`Critical: ${failingCounts.critical}`} />
-        <Chip color="error" variant="outlined" label={`High: ${failingCounts.high}`} />
-        <Chip color="warning" label={`Medium: ${failingCounts.medium}`} />
-        <Chip color="default" label={`Low: ${failingCounts.low}`} />
-        <Chip color="default" variant="outlined" label={`Unknown: ${failingCounts.unknown}`} />
-        <Chip label={`Last updated: ${formattedLastUpdated}`} variant="outlined" />
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ mb: 1 }}>
+        {failingCounts.critical > 0 && (
+          <Chip size="small" color="error" label={`Critical: ${failingCounts.critical}`} />
+        )}
+        {failingCounts.high > 0 && (
+          <Chip
+            size="small"
+            color="error"
+            variant="outlined"
+            label={`High: ${failingCounts.high}`}
+          />
+        )}
+        {failingCounts.medium > 0 && (
+          <Chip size="small" color="warning" label={`Medium: ${failingCounts.medium}`} />
+        )}
+        <Chip size="small" label={`Last updated: ${formattedLastUpdated}`} variant="outlined" />
+        <Button size="small" variant="outlined" onClick={refresh} disabled={loading}>
+          {loading ? "Refreshing..." : "Refresh"}
+        </Button>
       </Stack>
 
       <Paper variant="outlined" sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
-        <Table size="small" stickyHeader aria-label="Global health checks">
+        <Table size="small" stickyHeader aria-label="Health check rules">
           <TableHead>
             <TableRow>
               <TableCell>Check</TableCell>
               <TableCell>Domain</TableCell>
               <TableCell>Status</TableCell>
-              <TableCell>Severity</TableCell>
               <TableCell>Summary</TableCell>
-              <TableCell align="right">Owner link</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={6}>
+                <TableCell colSpan={4}>
                   <Stack
                     direction="row"
                     spacing={1}
@@ -130,14 +126,14 @@ export default function GlobalHealthPage() {
                   >
                     <CircularProgress size={16} />
                     <Typography variant="body2" color="text.secondary">
-                      Loading health checks...
+                      Running health checks...
                     </Typography>
                   </Stack>
                 </TableCell>
               </TableRow>
             ) : orderedChecks.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6}>
+                <TableCell colSpan={4}>
                   <EmptyState
                     size="small"
                     heading="No health checks available"
@@ -147,13 +143,22 @@ export default function GlobalHealthPage() {
               </TableRow>
             ) : (
               orderedChecks.map((check) => (
-                <TableRow key={check.id} hover>
+                <TableRow
+                  key={check.id}
+                  hover
+                  onClick={() => setSelectedCheck(check)}
+                  sx={{ cursor: "pointer" }}
+                >
                   <TableCell>
-                    <Button size="small" onClick={() => setSelectedCheckId(check.id)}>
+                    <Typography variant="body2" fontWeight={500}>
                       {check.title}
-                    </Button>
+                    </Typography>
                   </TableCell>
-                  <TableCell>{check.domain}</TableCell>
+                  <TableCell>
+                    <Typography variant="body2" color="text.secondary">
+                      {check.domain}
+                    </Typography>
+                  </TableCell>
                   <TableCell>
                     <Chip
                       size="small"
@@ -161,16 +166,10 @@ export default function GlobalHealthPage() {
                       label={check.status.toUpperCase()}
                     />
                   </TableCell>
-                  <TableCell>{check.severity ?? "—"}</TableCell>
-                  <TableCell>{check.summary}</TableCell>
-                  <TableCell align="right">
-                    {check.links?.[0] ? (
-                      <Button size="small" onClick={() => navigate(check.links![0]!.to)}>
-                        {check.links[0]!.label}
-                      </Button>
-                    ) : (
-                      "—"
-                    )}
+                  <TableCell>
+                    <Typography variant="body2" color="text.secondary">
+                      {check.summary}
+                    </Typography>
                   </TableCell>
                 </TableRow>
               ))
@@ -179,78 +178,7 @@ export default function GlobalHealthPage() {
         </Table>
       </Paper>
 
-      <Drawer
-        anchor="right"
-        open={Boolean(selectedCheck)}
-        onClose={() => setSelectedCheckId(null)}
-        slotProps={{
-          paper: {
-            sx: {
-              width: { xs: "100%", sm: 520 },
-              p: 2,
-              gap: 1,
-              display: "flex",
-              flexDirection: "column",
-            },
-          },
-        }}
-      >
-        {selectedCheck && (
-          <>
-            <Typography variant="h6">{selectedCheck.title}</Typography>
-            <Typography variant="body2" color="text.secondary">
-              {selectedCheck.description}
-            </Typography>
-            <Stack direction="row" spacing={1}>
-              <Chip size="small" label={selectedCheck.domain} />
-              <Chip
-                size="small"
-                color={statusColor(selectedCheck.status)}
-                label={selectedCheck.status.toUpperCase()}
-              />
-              <Chip size="small" label={selectedCheck.severity ?? "n/a"} variant="outlined" />
-            </Stack>
-            <Typography variant="body2">{selectedCheck.summary}</Typography>
-            {selectedCheck.reason ? <Alert severity="info">{selectedCheck.reason}</Alert> : null}
-            {selectedCheck.recommendation ? (
-              <Typography variant="body2">
-                Recommendation: {selectedCheck.recommendation}
-              </Typography>
-            ) : null}
-            {selectedCheck.observed ? (
-              <Box
-                component="pre"
-                sx={{
-                  m: 0,
-                  p: 1,
-                  border: 1,
-                  borderColor: "divider",
-                  borderRadius: 1,
-                  overflow: "auto",
-                  fontSize: 12,
-                }}
-              >
-                {JSON.stringify(selectedCheck.observed, null, 2)}
-              </Box>
-            ) : null}
-            <Stack direction="row" spacing={1}>
-              {selectedCheck.links?.map((link, index) => (
-                <Button
-                  key={`${link.to}-${link.label}-${index}`}
-                  size="small"
-                  variant="outlined"
-                  onClick={() => navigate(link.to)}
-                >
-                  {link.label}
-                </Button>
-              ))}
-              <Button size="small" onClick={() => setSelectedCheckId(null)}>
-                Close
-              </Button>
-            </Stack>
-          </>
-        )}
-      </Drawer>
-    </Box>
+      <HealthCheckDrawer check={selectedCheck} onClose={() => setSelectedCheck(null)} />
+    </>
   );
 }

@@ -41,6 +41,8 @@ export function evaluateHealthChecks(
         domain: check.domain,
         title: check.title,
         description: check.description,
+        docsUrl: check.docsUrl,
+        definitionRecommendation: check.recommendation,
         severity:
           result.status === "fail" || result.status === "warn" ? check.severityOnFail : null,
         ...result,

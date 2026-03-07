@@ -11,6 +11,7 @@ import { INSIGHT_GUARDRAIL } from "../hooks/insightPromptUtils";
 import { usePageContextStore } from "../store/usePageContextStore";
 
 import CapacityPressureView from "./cluster-health/CapacityPressureView";
+import GlobalHealthPage from "./GlobalHealthPage";
 import NodeDetailTable from "./cluster-health/NodeDetailTable";
 import OverviewView from "./cluster-health/OverviewView";
 import PageInsightBanner from "./PageInsightBanner";
@@ -22,6 +23,7 @@ import TaskBacklogView from "./cluster-health/TaskBacklogView";
 import PageHeader from "./PageHeader";
 
 export type ClusterHealthView =
+  | "rules"
   | "overview"
   | "nodes"
   | "taskBacklog"
@@ -38,6 +40,7 @@ const CLUSTER_HEALTH_REFRESH_OPTIONS: RefreshIntervalOption[] = [
 ];
 
 const TABS: { value: ClusterHealthView; label: string }[] = [
+  { value: "rules", label: "Rules" },
   { value: "overview", label: "Overview" },
   { value: "nodes", label: "Nodes" },
   { value: "taskBacklog", label: "Tasks" },
@@ -46,11 +49,35 @@ const TABS: { value: ClusterHealthView; label: string }[] = [
   { value: "resilienceSignals", label: "Resilience" },
 ];
 
+const TAB_SYSTEM_PROMPTS: Record<ClusterHealthView, string> = {
+  rules:
+    "You are an Elasticsearch health advisor. Summarize the health check results: how many rules passed, failed, or warned. Highlight any critical or high-severity findings." +
+    INSIGHT_GUARDRAIL,
+  overview:
+    "You are an Elasticsearch cluster health advisor. Summarize the cluster health overview in one concise sentence. Mention health status, node count, and any unassigned shards or pending tasks." +
+    INSIGHT_GUARDRAIL,
+  nodes:
+    "You are an Elasticsearch node analyst. Summarize node distribution and health. Flag unusual node roles only when present in context." +
+    INSIGHT_GUARDRAIL,
+  taskBacklog:
+    "You are an Elasticsearch task analyst. Summarize pending tasks and any backlog concerns." +
+    INSIGHT_GUARDRAIL,
+  capacityPressure:
+    "You are an Elasticsearch capacity analyst. Summarize capacity pressure indicators from the provided context only." +
+    INSIGHT_GUARDRAIL,
+  shardDistribution:
+    "You are an Elasticsearch shard analyst. Summarize shard-distribution concerns from the provided context only." +
+    INSIGHT_GUARDRAIL,
+  resilienceSignals:
+    "You are an Elasticsearch resilience advisor. Summarize cluster resilience signals from the provided context only." +
+    INSIGHT_GUARDRAIL,
+};
+
 interface ClusterHealthPageProps {
   defaultTab?: ClusterHealthView;
 }
 
-export default function ClusterHealthPage({ defaultTab = "overview" }: ClusterHealthPageProps) {
+export default function ClusterHealthPage({ defaultTab = "rules" }: ClusterHealthPageProps) {
   const [activeTab, setActiveTab] = useState<ClusterHealthView>(defaultTab);
   const [partialDismissed, setPartialDismissed] = useState(false);
   const {
@@ -106,30 +133,6 @@ export default function ClusterHealthPage({ defaultTab = "overview" }: ClusterHe
     [setPageSection],
   );
 
-  const TAB_SYSTEM_PROMPTS: Record<ClusterHealthView, string> = useMemo(
-    () => ({
-      overview:
-        "You are an Elasticsearch cluster health advisor. Summarize the cluster health overview in one concise sentence. Mention health status, node count, and any unassigned shards or pending tasks." +
-        INSIGHT_GUARDRAIL,
-      nodes:
-        "You are an Elasticsearch node analyst. Summarize node distribution and health. Flag unusual node roles only when present in context." +
-        INSIGHT_GUARDRAIL,
-      taskBacklog:
-        "You are an Elasticsearch task analyst. Summarize pending tasks and any backlog concerns." +
-        INSIGHT_GUARDRAIL,
-      capacityPressure:
-        "You are an Elasticsearch capacity analyst. Summarize capacity pressure indicators from the provided context only." +
-        INSIGHT_GUARDRAIL,
-      shardDistribution:
-        "You are an Elasticsearch shard analyst. Summarize shard-distribution concerns from the provided context only." +
-        INSIGHT_GUARDRAIL,
-      resilienceSignals:
-        "You are an Elasticsearch resilience advisor. Summarize cluster resilience signals from the provided context only." +
-        INSIGHT_GUARDRAIL,
-    }),
-    [],
-  );
-
   const insightContext = useMemo(() => {
     if (!data) return "";
     return JSON.stringify({
@@ -147,7 +150,7 @@ export default function ClusterHealthPage({ defaultTab = "overview" }: ClusterHe
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, height: "100%", minHeight: 0 }}>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
         <PageHeader
-          title="Cluster Health"
+          title="Health"
           actions={
             <RefreshToolbar
               lastUpdatedAt={lastUpdatedAt}
@@ -167,13 +170,16 @@ export default function ClusterHealthPage({ defaultTab = "overview" }: ClusterHe
           Partial data loaded. Unavailable: {partialErrors.join(", ")}.
         </Alert>
       ) : null}
-      {localChecksError ? (
+      {activeTab !== "rules" && localChecksError ? (
         <Alert severity="error">Snapshot checks unavailable: {localChecksError}</Alert>
       ) : null}
-      {!localChecksError && localChecksLoading ? (
+      {activeTab !== "rules" && !localChecksError && localChecksLoading ? (
         <Alert severity="info">Health checks running...</Alert>
       ) : null}
-      {!localChecksError && !localChecksLoading && localFindings.length > 0 ? (
+      {activeTab !== "rules" &&
+      !localChecksError &&
+      !localChecksLoading &&
+      localFindings.length > 0 ? (
         <Alert severity="warning">
           Snapshot checks: {localFindings.length} alert{localFindings.length === 1 ? "" : "s"} —{" "}
           {localFindings[0]?.summary}
@@ -191,7 +197,7 @@ export default function ClusterHealthPage({ defaultTab = "overview" }: ClusterHe
         ))}
       </Tabs>
 
-      {insightContext && (
+      {insightContext && activeTab !== "rules" && (
         <PageInsightBanner
           context={insightContext}
           systemPrompt={TAB_SYSTEM_PROMPTS[activeTab]}
@@ -199,14 +205,18 @@ export default function ClusterHealthPage({ defaultTab = "overview" }: ClusterHe
         />
       )}
 
-      <Paper role="tabpanel" variant="outlined" sx={{ flex: 1, overflow: "auto", p: 2 }}>
-        {activeTab === "overview" && <OverviewView data={data} />}
-        {activeTab === "nodes" && <NodeDetailTable data={data} />}
-        {activeTab === "taskBacklog" && <TaskBacklogView data={data} />}
-        {activeTab === "capacityPressure" && <CapacityPressureView data={data} />}
-        {activeTab === "shardDistribution" && <ShardDistributionView data={data} />}
-        {activeTab === "resilienceSignals" && <ResilienceSignalsView data={data} />}
-      </Paper>
+      {activeTab === "rules" ? (
+        <GlobalHealthPage />
+      ) : (
+        <Paper role="tabpanel" variant="outlined" sx={{ flex: 1, overflow: "auto", p: 2 }}>
+          {activeTab === "overview" && <OverviewView data={data} />}
+          {activeTab === "nodes" && <NodeDetailTable data={data} />}
+          {activeTab === "taskBacklog" && <TaskBacklogView data={data} />}
+          {activeTab === "capacityPressure" && <CapacityPressureView data={data} />}
+          {activeTab === "shardDistribution" && <ShardDistributionView data={data} />}
+          {activeTab === "resilienceSignals" && <ResilienceSignalsView data={data} />}
+        </Paper>
+      )}
     </Box>
   );
 }

@@ -91,6 +91,7 @@ export interface NodesInfoResponse {
 
 export interface NodeStatsNode {
   name?: string;
+  roles?: string[];
   os?: {
     cpu?: {
       percent?: number;

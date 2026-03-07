@@ -41,7 +41,7 @@ describe("GlobalHealthPage", () => {
     getIlmPoliciesMock.mockResolvedValue({});
   });
 
-  it("renders summary cards and check table", async () => {
+  it("renders check table with rules", async () => {
     render(
       <MemoryRouter>
         <GlobalHealthPage />
@@ -49,17 +49,14 @@ describe("GlobalHealthPage", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: "Global Health" })).toBeInTheDocument();
+      expect(screen.getByRole("table", { name: "Health check rules" })).toBeInTheDocument();
     });
-
-    expect(screen.getByText(/Critical:/)).toBeInTheDocument();
-    expect(screen.getByRole("table", { name: "Global health checks" })).toBeInTheDocument();
     await waitFor(() => {
       expect(screen.getByText("Cluster status red")).toBeInTheDocument();
     });
   });
 
-  it("opens flyover with check details", async () => {
+  it("opens flyover with check details and docs link", async () => {
     const user = userEvent.setup();
 
     render(
@@ -72,10 +69,15 @@ describe("GlobalHealthPage", () => {
       expect(screen.getByText("Cluster status red")).toBeInTheDocument();
     });
 
-    await user.click(screen.getByRole("button", { name: "Cluster status red" }));
+    await user.click(screen.getByText("Cluster status red"));
 
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: "Cluster status red" })).toBeInTheDocument();
     });
+    expect(screen.getByRole("link", { name: "Elastic Docs" })).toHaveAttribute(
+      "href",
+      expect.stringContaining("elastic.co/docs"),
+    );
+    expect(screen.getByText(/Recommendation/)).toBeInTheDocument();
   });
 });
