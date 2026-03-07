@@ -385,7 +385,7 @@ export const shardChecks: HealthCheckDefinition[] = [
     dependsOn: ["allocationSample"],
     evaluate: (snapshot) => {
       const explain = snapshot.data.allocationSample?.allocationExplain;
-      if (!explain) return { status: "pass", summary: "No allocation explain data available." };
+      if (!explain) return unknownAllocationDataResult();
       const decisions = explain.node_allocation_decisions ?? [];
       const blocked = decisions.filter((d) =>
         d.deciders?.some((dec) => dec.decider === "awareness" && dec.decision === "NO"),
@@ -412,7 +412,7 @@ export const shardChecks: HealthCheckDefinition[] = [
     dependsOn: ["allocationSample"],
     evaluate: (snapshot) => {
       const explain = snapshot.data.allocationSample?.allocationExplain;
-      if (!explain) return { status: "pass", summary: "No allocation explain data available." };
+      if (!explain) return unknownAllocationDataResult();
       const decisions = explain.node_allocation_decisions ?? [];
       const blocked = decisions.filter((d) =>
         d.deciders?.some((dec) => dec.decider === "same_shard" && dec.decision === "NO"),
@@ -440,7 +440,7 @@ export const shardChecks: HealthCheckDefinition[] = [
     dependsOn: ["allocationSample"],
     evaluate: (snapshot) => {
       const explain = snapshot.data.allocationSample?.allocationExplain;
-      if (!explain) return { status: "pass", summary: "No allocation explain data available." };
+      if (!explain) return unknownAllocationDataResult();
       const retryInCanAllocate = (explain.can_allocate ?? "").toLowerCase().includes("retry");
       const decisions = explain.node_allocation_decisions ?? [];
       const retryDeciders = decisions.filter((d) =>

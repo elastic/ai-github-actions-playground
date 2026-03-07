@@ -99,6 +99,11 @@ describe("cluster checks", () => {
     );
   });
 
+  it("#1 cluster.status.red — unknown when cluster health is missing", () => {
+    const snap = makeSnapshot({ clusterCore: undefined });
+    expect(findCheck(clusterChecks, "cluster.status.red").evaluate(snap).status).toBe("unknown");
+  });
+
   it("#2 cluster.status.yellow — warns on yellow", () => {
     const snap = makeSnapshot({
       clusterCore: {
@@ -413,7 +418,6 @@ describe("shard checks", () => {
   });
 
   it("#24 allocation.explain.disk_watermark — fails when disk threshold blocks", () => {
-    const check = findCheck(shardChecks, "allocation.explain.disk_watermark");
     const snap = makeSnapshot({
       allocationSample: {
         allocationExplain: {
@@ -501,7 +505,9 @@ describe("shard checks", () => {
             {
               node_name: "n1",
               node_decision: "no",
-              deciders: [{ decider: "data_tier", decision: "NO", explanation: "not on correct tier" }],
+              deciders: [
+                { decider: "data_tier", decision: "NO", explanation: "not on correct tier" },
+              ],
             },
           ],
         },
@@ -530,6 +536,13 @@ describe("shard checks", () => {
     expect(
       findCheck(shardChecks, "allocation.explain.awareness_constraints").evaluate(snap).status,
     ).toBe("warn");
+  });
+
+  it("#26 allocation.explain.awareness_constraints — unknown when explain is missing", () => {
+    const snap = makeSnapshot({ allocationSample: { allocationExplain: null } });
+    expect(
+      findCheck(shardChecks, "allocation.explain.awareness_constraints").evaluate(snap).status,
+    ).toBe("unknown");
   });
 
   it("#27 allocation.explain.same_shard_host — warns", () => {
@@ -1176,6 +1189,11 @@ describe("ilm checks", () => {
       "warn",
     );
   });
+
+  it("#96 ilm.indices.error.present — unknown when ILM explain data is missing", () => {
+    const snap = makeSnapshot({ ilmCore: undefined });
+    expect(findCheck(ilmChecks, "ilm.indices.error.present").evaluate(snap).status).toBe("unknown");
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -1202,6 +1220,13 @@ describe("indices checks", () => {
     });
     expect(findCheck(indicesChecks, "indices.status.red.present").evaluate(snap).status).toBe(
       "fail",
+    );
+  });
+
+  it("#73 indices.status.red.present — unknown when indices data is missing", () => {
+    const snap = makeSnapshot({ indicesCore: undefined });
+    expect(findCheck(indicesChecks, "indices.status.red.present").evaluate(snap).status).toBe(
+      "unknown",
     );
   });
 

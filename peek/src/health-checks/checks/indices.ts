@@ -4,6 +4,16 @@ const SHARD_SIZE_TOO_LARGE_BYTES = 50 * 1024 * 1024 * 1024; // 50 GB
 const SHARD_SIZE_TOO_SMALL_BYTES = 1 * 1024 * 1024; // 1 MB
 const DOCS_DELETED_RATIO_HIGH = 0.3;
 const YELLOW_INDICES_HIGH = 10;
+const UNDERSIZED_SHARD_WARNING_THRESHOLD = 5;
+const INDICES_COUNT_HIGH = 1000;
+
+function unknownIndicesDataResult() {
+  return {
+    status: "unknown" as const,
+    summary: "Indices data unavailable.",
+    recommendation: "Ensure indices data is collected and verify cluster permissions.",
+  };
+}
 
 export const indicesChecks: HealthCheckDefinition[] = [
   // #73
@@ -16,7 +26,8 @@ export const indicesChecks: HealthCheckDefinition[] = [
     surfaces: ["global", "local"],
     dependsOn: ["indicesCore"],
     evaluate: (snapshot) => {
-      const indices = snapshot.data.indicesCore?.catIndices ?? [];
+      const indices = snapshot.data.indicesCore?.catIndices;
+      if (!indices) return unknownIndicesDataResult();
       const red = indices.filter((i) => i.health === "red");
       if (red.length > 0) {
         return {
@@ -41,7 +52,8 @@ export const indicesChecks: HealthCheckDefinition[] = [
     surfaces: ["global"],
     dependsOn: ["indicesCore"],
     evaluate: (snapshot) => {
-      const indices = snapshot.data.indicesCore?.catIndices ?? [];
+      const indices = snapshot.data.indicesCore?.catIndices;
+      if (!indices) return unknownIndicesDataResult();
       const yellow = indices.filter((i) => i.health === "yellow");
       if (yellow.length >= YELLOW_INDICES_HIGH) {
         return {
@@ -66,7 +78,8 @@ export const indicesChecks: HealthCheckDefinition[] = [
     surfaces: ["global"],
     dependsOn: ["indicesCore"],
     evaluate: (snapshot) => {
-      const indices = snapshot.data.indicesCore?.catIndices ?? [];
+      const indices = snapshot.data.indicesCore?.catIndices;
+      if (!indices) return unknownIndicesDataResult();
       const oversized = indices.filter((i) => {
         const size = Number(i["pri.store.size"] ?? "0");
         const priCount = Number(i.pri ?? "1") || 1;
@@ -97,14 +110,15 @@ export const indicesChecks: HealthCheckDefinition[] = [
     surfaces: ["global"],
     dependsOn: ["indicesCore"],
     evaluate: (snapshot) => {
-      const indices = snapshot.data.indicesCore?.catIndices ?? [];
+      const indices = snapshot.data.indicesCore?.catIndices;
+      if (!indices) return unknownIndicesDataResult();
       const undersized = indices.filter((i) => {
         const size = Number(i["pri.store.size"] ?? "0");
         const docs = Number(i["docs.count"] ?? "0");
         const priCount = Number(i.pri ?? "1") || 1;
         return docs > 0 && size / priCount < SHARD_SIZE_TOO_SMALL_BYTES;
       });
-      if (undersized.length > 5) {
+      if (undersized.length > UNDERSIZED_SHARD_WARNING_THRESHOLD) {
         return {
           status: "warn",
           summary: `${undersized.length} indices with very small shards (< 1 MB).`,
@@ -126,7 +140,8 @@ export const indicesChecks: HealthCheckDefinition[] = [
     surfaces: ["global"],
     dependsOn: ["indicesCore"],
     evaluate: (snapshot) => {
-      const indices = snapshot.data.indicesCore?.catIndices ?? [];
+      const indices = snapshot.data.indicesCore?.catIndices;
+      if (!indices) return unknownIndicesDataResult();
       const highDeletion = indices.filter((i) => {
         const docs = Number(i["docs.count"] ?? "0");
         const deleted = Number(i["docs.deleted"] ?? "0");
@@ -153,16 +168,17 @@ export const indicesChecks: HealthCheckDefinition[] = [
     id: "indices.count.high",
     domain: "indices",
     title: "High index count",
-    description: "Warns when the total number of indices exceeds 1000.",
+    description: `Warns when the total number of indices exceeds ${INDICES_COUNT_HIGH}.`,
     severityOnFail: "medium",
     surfaces: ["global"],
     dependsOn: ["indicesCore"],
     evaluate: (snapshot) => {
-      const indices = snapshot.data.indicesCore?.catIndices ?? [];
-      if (indices.length > 1000) {
+      const indices = snapshot.data.indicesCore?.catIndices;
+      if (!indices) return unknownIndicesDataResult();
+      if (indices.length > INDICES_COUNT_HIGH) {
         return {
           status: "warn",
-          summary: `${indices.length} indices in cluster (threshold: 1000).`,
+          summary: `${indices.length} indices in cluster (threshold: ${INDICES_COUNT_HIGH}).`,
           observed: { count: indices.length },
           recommendation:
             "Many indices increase cluster state size. Consider using data streams or ILM.",
@@ -182,7 +198,8 @@ export const indicesChecks: HealthCheckDefinition[] = [
     surfaces: ["global"],
     dependsOn: ["indicesCore"],
     evaluate: (snapshot) => {
-      const indices = snapshot.data.indicesCore?.catIndices ?? [];
+      const indices = snapshot.data.indicesCore?.catIndices;
+      if (!indices) return unknownIndicesDataResult();
       const closed = indices.filter((i) => i.status === "close");
       if (closed.length > 0) {
         return {

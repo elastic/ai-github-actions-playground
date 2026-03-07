@@ -7,6 +7,8 @@ const PENDING_TASKS_OLDEST_WAIT_MS = 30_000;
 const PENDING_TASKS_ILM_HEAVY = 5;
 const PENDING_TASKS_MAPPING_HEAVY = 5;
 const PENDING_TASKS_SHARD_STARTED_BACKLOG = 10;
+const ACTIVE_SHARDS_PERCENT_THRESHOLD = 100;
+const IN_FLIGHT_FETCH_HIGH = 10;
 
 export const clusterChecks: HealthCheckDefinition[] = [
   // #1
@@ -19,7 +21,16 @@ export const clusterChecks: HealthCheckDefinition[] = [
     surfaces: ["global", "local"],
     dependsOn: ["clusterCore"],
     evaluate: (snapshot) => {
-      const status = snapshot.data.clusterCore?.clusterHealth?.status ?? "unknown";
+      const status = snapshot.data.clusterCore?.clusterHealth?.status;
+      if (!status) {
+        return {
+          status: "unknown",
+          summary: "Cluster health unknown.",
+          observed: { status },
+          recommendation: "Ensure cluster health data is collected and retry the health snapshot.",
+          links: [{ label: "Cluster Health", to: "/cluster-health" }],
+        };
+      }
       if (status === "red") {
         return {
           status: "fail",
@@ -163,12 +174,14 @@ export const clusterChecks: HealthCheckDefinition[] = [
     dependsOn: ["clusterCore"],
     evaluate: (snapshot) => {
       const percent = snapshot.data.clusterCore?.clusterHealth?.active_shards_percent_as_number;
-      const threshold = 100;
-      if (percent != null && percent < threshold) {
+      if (percent != null && percent < ACTIVE_SHARDS_PERCENT_THRESHOLD) {
         return {
           status: "warn",
           summary: `Active shards percentage is ${percent.toFixed(1)}%.`,
-          observed: { active_shards_percent: percent, threshold },
+          observed: {
+            active_shards_percent: percent,
+            threshold: ACTIVE_SHARDS_PERCENT_THRESHOLD,
+          },
           recommendation:
             "Some shards are not active. Check for unassigned or initializing shards.",
           links: [{ label: "Cluster Health", to: "/cluster-health" }],
@@ -391,7 +404,7 @@ export const clusterChecks: HealthCheckDefinition[] = [
     dependsOn: ["clusterCore"],
     evaluate: (snapshot) => {
       const count = snapshot.data.clusterCore?.clusterHealth?.number_of_in_flight_fetch ?? 0;
-      if (count >= 10) {
+      if (count >= IN_FLIGHT_FETCH_HIGH) {
         return {
           status: "warn",
           summary: `${count} in-flight shard fetches.`,

@@ -3,6 +3,14 @@ import type { HealthCheckDefinition } from "../types";
 const ILM_DELETE_BACKLOG = 50;
 const ILM_HOT_BACKLOG = 100;
 
+function unknownIlmDataResult() {
+  return {
+    status: "unknown" as const,
+    summary: "ILM data unavailable.",
+    recommendation: "Ensure ILM explain data is collected and verify cluster permissions.",
+  };
+}
+
 export const ilmChecks: HealthCheckDefinition[] = [
   // #96
   {
@@ -14,7 +22,9 @@ export const ilmChecks: HealthCheckDefinition[] = [
     surfaces: ["global", "local"],
     dependsOn: ["ilmCore"],
     evaluate: (snapshot) => {
-      const indices = snapshot.data.ilmCore?.ilmExplain?.indices ?? {};
+      const ilmExplain = snapshot.data.ilmCore?.ilmExplain;
+      if (!ilmExplain) return unknownIlmDataResult();
+      const indices = ilmExplain.indices ?? {};
       const failed = Object.entries(indices)
         .filter(([, entry]) => Boolean(entry.failed_step))
         .map(([index, entry]) => ({ index, failedStep: entry.failed_step }));
@@ -41,7 +51,9 @@ export const ilmChecks: HealthCheckDefinition[] = [
     surfaces: ["global"],
     dependsOn: ["ilmCore"],
     evaluate: (snapshot) => {
-      const indices = snapshot.data.ilmCore?.ilmExplain?.indices ?? {};
+      const ilmExplain = snapshot.data.ilmCore?.ilmExplain;
+      if (!ilmExplain) return unknownIlmDataResult();
+      const indices = ilmExplain.indices ?? {};
       const policyNames = new Set(Object.keys(snapshot.data.ilmCore?.ilmPolicies ?? {}));
       const missing = Object.entries(indices)
         .filter(
@@ -71,7 +83,9 @@ export const ilmChecks: HealthCheckDefinition[] = [
     surfaces: ["global"],
     dependsOn: ["ilmCore"],
     evaluate: (snapshot) => {
-      const indices = snapshot.data.ilmCore?.ilmExplain?.indices ?? {};
+      const ilmExplain = snapshot.data.ilmCore?.ilmExplain;
+      if (!ilmExplain) return unknownIlmDataResult();
+      const indices = ilmExplain.indices ?? {};
       const withExceptions = Object.entries(indices)
         .filter(([, entry]) => Boolean(entry.step_info?.reason))
         .map(([index]) => index);
@@ -91,12 +105,14 @@ export const ilmChecks: HealthCheckDefinition[] = [
     id: "ilm.phase.delete_backlog",
     domain: "ilm",
     title: "ILM delete phase backlog",
-    description: `Warns when > ${ILM_DELETE_BACKLOG} indices are stuck in the delete phase.`,
+    description: `Warns when > ${ILM_DELETE_BACKLOG} indices are currently in the delete phase.`,
     severityOnFail: "medium",
     surfaces: ["global"],
     dependsOn: ["ilmCore"],
     evaluate: (snapshot) => {
-      const indices = snapshot.data.ilmCore?.ilmExplain?.indices ?? {};
+      const ilmExplain = snapshot.data.ilmCore?.ilmExplain;
+      if (!ilmExplain) return unknownIlmDataResult();
+      const indices = ilmExplain.indices ?? {};
       const inDelete = Object.entries(indices).filter(
         ([, entry]) => entry.managed && entry.phase === "delete",
       );
@@ -125,7 +141,9 @@ export const ilmChecks: HealthCheckDefinition[] = [
     surfaces: ["global"],
     dependsOn: ["ilmCore"],
     evaluate: (snapshot) => {
-      const indices = snapshot.data.ilmCore?.ilmExplain?.indices ?? {};
+      const ilmExplain = snapshot.data.ilmCore?.ilmExplain;
+      if (!ilmExplain) return unknownIlmDataResult();
+      const indices = ilmExplain.indices ?? {};
       const inHot = Object.entries(indices).filter(
         ([, entry]) => entry.managed && entry.phase === "hot",
       );
@@ -151,7 +169,9 @@ export const ilmChecks: HealthCheckDefinition[] = [
     surfaces: ["global"],
     dependsOn: ["ilmCore"],
     evaluate: (snapshot) => {
-      const indices = snapshot.data.ilmCore?.ilmExplain?.indices ?? {};
+      const ilmExplain = snapshot.data.ilmCore?.ilmExplain;
+      if (!ilmExplain) return unknownIlmDataResult();
+      const indices = ilmExplain.indices ?? {};
       const invalid = Object.entries(indices)
         .filter(([, entry]) => {
           const reason = (entry.step_info?.reason ?? "").toLowerCase();

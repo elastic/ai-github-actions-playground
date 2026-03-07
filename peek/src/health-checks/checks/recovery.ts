@@ -1,6 +1,7 @@
 import type { HealthCheckDefinition } from "../types";
 
 const ACTIVE_RECOVERY_HIGH = 5;
+const SLOW_RECOVERY_STAGE_HIGH = 3;
 
 export const recoveryChecks: HealthCheckDefinition[] = [
   // #29
@@ -49,7 +50,7 @@ export const recoveryChecks: HealthCheckDefinition[] = [
           return stage === "TRANSLOG" || stage === "FINALIZE";
         }).length;
       }
-      if (slowStageCount >= 3) {
+      if (slowStageCount >= SLOW_RECOVERY_STAGE_HIGH) {
         return {
           status: "warn",
           summary: `${slowStageCount} shards in translog/finalize recovery stage.`,

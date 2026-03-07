@@ -18,6 +18,7 @@ const FS_USED_HIGH = 0.9;
 const HTTP_CURRENT_OPEN_HIGH = 200;
 const HTTP_TOTAL_OPENED_BURST = 10_000;
 const HOTSPOT_RATIO = 2.0;
+const OS_MEM_USED_HIGH = 90;
 
 function getNodes(snapshot: HealthSnapshot): NodeStatsNode[] {
   return Object.values(snapshot.data.nodesCore?.nodeStats?.nodes ?? {});
@@ -779,7 +780,7 @@ export const nodeChecks: HealthCheckDefinition[] = [
       const nodes = getNodes(snapshot);
       const hotNodes = nodes
         .map((n) => ({ name: n.name ?? "unknown", memPct: n.os?.mem?.used_percent ?? 0 }))
-        .filter((n) => n.memPct >= 90);
+        .filter((n) => n.memPct >= OS_MEM_USED_HIGH);
       if (hotNodes.length > 0) {
         const worst = hotNodes.sort((a, b) => b.memPct - a.memPct)[0]!;
         return {
