@@ -10,7 +10,7 @@ describe("PageHeaderSection", () => {
   });
 
   it("passes actions through to PageHeader", () => {
-    render(<PageHeaderSection title="Title" actions={<button>Click me</button>} />);
+    render(<PageHeaderSection title="Title" actions={<button type="button">Click me</button>} />);
     expect(screen.getByRole("button", { name: "Click me" })).toBeInTheDocument();
   });
 

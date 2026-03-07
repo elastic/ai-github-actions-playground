@@ -30,6 +30,6 @@ describe("PageContainer", () => {
         <div>Content</div>
       </PageContainer>,
     );
-    expect(container.firstElementChild).toBeTruthy();
+    expect(container.firstElementChild).toHaveStyle({ gap: "16px" });
   });
 });

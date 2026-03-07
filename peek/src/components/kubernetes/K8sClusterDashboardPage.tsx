@@ -9,6 +9,7 @@ import Typography from "@mui/material/Typography";
 import { PAGE_MANIFEST } from "../../routes/manifest";
 import { useConnectionStore } from "../../store/useConnectionStore";
 import EmptyState from "../EmptyState";
+import PageContainer from "../PageContainer";
 import PageHeaderSection from "../PageHeaderSection";
 
 import K8sDashboardControls from "./K8sDashboardControls";
@@ -72,7 +73,7 @@ export default function K8sClusterDashboardPage() {
   const hasTraces = Boolean(tracesResult?.values.length);
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 2, minHeight: "100%" }}>
+    <PageContainer gap={2}>
       <PageHeaderSection
         title={clusterName}
         description="Cluster-level dashboard showing namespaces, resource utilization, logs, and traces."
@@ -156,6 +157,6 @@ export default function K8sClusterDashboardPage() {
             />
           </Paper>
         )}
-    </Box>
+    </PageContainer>
   );
 }

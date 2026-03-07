@@ -17,6 +17,7 @@ import { INSIGHT_GUARDRAIL } from "../hooks/insightPromptUtils";
 
 import AskAiButton from "./AskAiButton";
 import ContentSkeleton from "./ContentSkeleton";
+import PageContainer from "./PageContainer";
 import PageHeaderSection from "./PageHeaderSection";
 import PageInsightBanner from "./PageInsightBanner";
 import { OverviewInfoCard } from "./OverviewInfoCard";
@@ -131,7 +132,7 @@ export default function ClusterOverviewPage() {
   const insightCacheKey = `cluster-overview::${clusterHealth?.status ?? ""}::${clusterHealth?.number_of_nodes ?? ""}`;
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+    <PageContainer gap={2}>
       <PageHeaderSection
         title="Cluster Overview"
         actions={
@@ -435,6 +436,6 @@ export default function ClusterOverviewPage() {
           </OverviewInfoCard>
         </Stack>
       )}
-    </Box>
+    </PageContainer>
   );
 }

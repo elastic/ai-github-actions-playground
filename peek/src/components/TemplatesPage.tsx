@@ -199,7 +199,7 @@ export default function TemplatesPage() {
   return (
     <PageContainer>
       <PageHeaderSection
-        title="Index Templates"
+        title={activeTab === "index" ? "Index Templates" : "Component Templates"}
         actions={
           <Button
             size="small"
