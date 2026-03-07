@@ -20,4 +20,7 @@ export const PAGE_NAV_BUTTONS = {
   fleet: "Fleet",
   health: "Health",
   docs: "Docs",
+  tasks: "Tasks",
+  ilm: "ILM",
+  templates: "Templates",
 };

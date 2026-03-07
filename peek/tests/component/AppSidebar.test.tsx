@@ -217,7 +217,6 @@ describe("AppSidebar", () => {
     useConnectionStore.getState().setConnected(true);
     renderSidebar();
 
-    expect(screen.queryByRole("button", { name: /^tasks$/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^capacity$/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^shards$/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^resilience$/i })).not.toBeInTheDocument();
