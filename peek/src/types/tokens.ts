@@ -80,3 +80,6 @@ export const COMPONENT_HEIGHTS = {
  * Use when a Chip needs a reduced height and smaller font.
  */
 export const COMPACT_CHIP_SX = { height: 20, fontSize: "0.7rem" } as const;
+
+/** CSS media query that targets mobile-width viewports or coarse (touch) pointers. */
+export const MOBILE_OR_COARSE_QUERY = "@media (max-width:767.95px), (pointer: coarse)";
