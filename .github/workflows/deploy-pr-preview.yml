@@ -40,6 +40,8 @@ jobs:
       - name: Build
         if: github.event.action != 'closed'
         working-directory: peek
+        env:
+          VITE_BASE_PATH: /ai-github-actions-playground/pr-preview/pr-${{ github.event.number }}/
         run: npm run build
 
       - name: Generate demo config
