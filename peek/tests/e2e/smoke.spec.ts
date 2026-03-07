@@ -42,9 +42,7 @@ const A11Y_BASELINE: Record<string, Record<string, Record<string, number>>> = {
       "scrollable-region-focusable": 1,
     },
     Logs: {
-      "aria-prohibited-attr": 1,
-      "color-contrast": 18,
-      "scrollable-region-focusable": 1,
+      "color-contrast": 6,
     },
     Console: {
       "color-contrast": 17,
@@ -61,9 +59,7 @@ const A11Y_BASELINE: Record<string, Record<string, Record<string, number>>> = {
       "scrollable-region-focusable": 2,
     },
     Logs: {
-      "aria-prohibited-attr": 1,
-      "color-contrast": 17,
-      "scrollable-region-focusable": 2,
+      "color-contrast": 6,
     },
     Traces: {
       "aria-prohibited-attr": 1,
@@ -408,8 +404,11 @@ test.describe("smoke – site navigation", () => {
 
   test("logs explorer route is available and runs a logs query", async ({ page }) => {
     await connectToMockCluster(page);
-    await navigateViaSidebar(page, "Logs");
-    await expect(page).toHaveURL(/\/logs$/);
+    // Logs Explorer is hidden from the sidebar; navigate directly via hash route
+    await page.evaluate(() => {
+      window.location.hash = "/logs-explorer";
+    });
+    await expect(page).toHaveURL(/\/logs-explorer$/);
     // The ES|QL editor starts collapsed; expand it first
     await page.getByRole("button", { name: "Expand ES|QL query section" }).click();
     const queryInput = page.getByRole("textbox", { name: "ES|QL query editor" });
@@ -425,8 +424,11 @@ test.describe("smoke – site navigation", () => {
   test("logs explorer keeps search and click-to-filter in visible query", async ({ page }) => {
     test.setTimeout(60_000);
     await connectToMockCluster(page);
-    await navigateViaSidebar(page, "Logs");
-    await expect(page).toHaveURL(/\/logs$/);
+    // Logs Explorer is hidden from the sidebar; navigate directly via hash route
+    await page.evaluate(() => {
+      window.location.hash = "/logs-explorer";
+    });
+    await expect(page).toHaveURL(/\/logs-explorer$/);
 
     // Use the guided search input (stepper-based flow) to set search text
     await page.getByPlaceholder('e.g. "timeout in checkout"').fill('"Hello World"');
@@ -466,7 +468,8 @@ test.describe("smoke – site navigation", () => {
       Traces: () => expect(page.getByText("Search for traces")).toBeVisible(),
       "Query Lab": () =>
         expect(page.getByRole("textbox", { name: "ES|QL query editor" })).toBeVisible(),
-      Logs: () => expect(page.getByRole("heading", { name: "Logs Explorer" })).toBeVisible(),
+      Logs: () =>
+        expect(page.getByRole("heading", { name: "What logs are you looking for?" })).toBeVisible(),
       Console: async () => {
         await expect(page).toHaveURL(/\/console$/);
         await expect(page.getByRole("heading", { name: "API Console" })).toBeVisible();
