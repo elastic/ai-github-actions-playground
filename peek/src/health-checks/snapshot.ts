@@ -4,6 +4,14 @@ import type { HealthQueryGroup, HealthSnapshot } from "./types";
 
 export const HEALTH_SNAPSHOT_TTL_MS = 30_000;
 
+function isAbortError(error: unknown): boolean {
+  if (error instanceof DOMException && error.name === "AbortError") return true;
+  if (error instanceof Error) {
+    return error.name === "AbortError" || error.name === "CanceledError";
+  }
+  return false;
+}
+
 async function fetchGroup(
   client: ElasticsearchClient,
   group: HealthQueryGroup,
@@ -37,6 +45,9 @@ async function fetchGroup(
         return { group, data: null };
     }
   } catch (error) {
+    if (isAbortError(error) || signal?.aborted) {
+      throw error;
+    }
     return {
       group,
       error: error instanceof Error ? error.message : `Failed to load ${group}`,

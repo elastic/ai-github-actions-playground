@@ -16,7 +16,7 @@ import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
 
 import { useHealthChecks } from "../hooks/useHealthChecks";
-import type { EvaluatedHealthCheck, HealthSeverity, HealthStatus } from "../health-checks";
+import type { HealthSeverity, HealthStatus } from "../health-checks";
 
 import EmptyState from "./EmptyState";
 import PageHeader from "./PageHeader";
@@ -38,7 +38,7 @@ function statusColor(status: HealthStatus): "success" | "warning" | "error" | "d
 export default function GlobalHealthPage() {
   const navigate = useNavigate();
   const { checks, loading, error, refresh, lastUpdatedAt } = useHealthChecks({ surface: "global" });
-  const [selectedCheck, setSelectedCheck] = useState<EvaluatedHealthCheck | null>(null);
+  const [selectedCheckId, setSelectedCheckId] = useState<string | null>(null);
   const formattedLastUpdated = useMemo(() => {
     if (!lastUpdatedAt) return "never";
     const date = new Date(lastUpdatedAt);
@@ -55,6 +55,10 @@ export default function GlobalHealthPage() {
         return a.title.localeCompare(b.title);
       }),
     [checks],
+  );
+  const selectedCheck = useMemo(
+    () => orderedChecks.find((check) => check.id === selectedCheckId) ?? null,
+    [orderedChecks, selectedCheckId],
   );
 
   const failingCounts = useMemo(() => {
@@ -145,7 +149,7 @@ export default function GlobalHealthPage() {
               orderedChecks.map((check) => (
                 <TableRow key={check.id} hover>
                   <TableCell>
-                    <Button size="small" onClick={() => setSelectedCheck(check)}>
+                    <Button size="small" onClick={() => setSelectedCheckId(check.id)}>
                       {check.title}
                     </Button>
                   </TableCell>
@@ -178,7 +182,7 @@ export default function GlobalHealthPage() {
       <Drawer
         anchor="right"
         open={Boolean(selectedCheck)}
-        onClose={() => setSelectedCheck(null)}
+        onClose={() => setSelectedCheckId(null)}
         slotProps={{
           paper: {
             sx: {
@@ -240,7 +244,7 @@ export default function GlobalHealthPage() {
                   {link.label}
                 </Button>
               ))}
-              <Button size="small" onClick={() => setSelectedCheck(null)}>
+              <Button size="small" onClick={() => setSelectedCheckId(null)}>
                 Close
               </Button>
             </Stack>

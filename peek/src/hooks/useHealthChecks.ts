@@ -56,6 +56,7 @@ export function useHealthChecks(options: UseHealthChecksOptions): UseHealthCheck
       [
         activeProfileId ?? "",
         connection.url,
+        (connection.proxyUrl ?? "").replace(/\/+$/, ""),
         connection.username ?? "",
         connection.password ?? "",
         connection.apiKey ?? "",
@@ -67,6 +68,7 @@ export function useHealthChecks(options: UseHealthChecksOptions): UseHealthCheck
     queryKey: [
       "health-checks",
       connection?.url,
+      connection?.proxyUrl,
       connectionFingerprint,
       SHARED_HEALTH_SNAPSHOT_KEY,
       sharedGroups.join(","),
@@ -95,7 +97,7 @@ export function useHealthChecks(options: UseHealthChecksOptions): UseHealthCheck
 
   return {
     checks,
-    loading: query.isFetching,
+    loading: query.isLoading,
     error: query.isError ? query.error.message : null,
     refresh,
     lastUpdatedAt: query.data?.fetchedAt ?? null,
