@@ -52,31 +52,43 @@ Before finishing:
 
 ### Screenshots for UI Changes
 
-When a change affects the visual appearance of the dashboard, you **must** capture and attach before/after screenshots to the pull request.
+When a change affects the visual appearance of the UI, you **must** capture and attach screenshots to the pull request that show the **actual feature or page you changed**.
 
-**Important:** Screenshots must show the feature you are building or modifying — not the default connections page. After starting the dev server, navigate to the relevant page or route that demonstrates your change before capturing the screenshot. If your change requires an Elasticsearch connection to be visible, describe the change in the PR body instead of attaching a screenshot of the connections page.
+#### CRITICAL: Do NOT screenshot the wrong page
 
-1. Start the dev server in the background and wait until it is ready:
+Most pages in this app require an Elasticsearch connection. The dev server starts on the **Welcome/Connect** page by default. If you screenshot that page, you are screenshotting the WRONG thing — it has nothing to do with your feature.
+
+**Rules:**
+- **NEVER** attach a screenshot of the Welcome page, Connect dialog, or Dashboards page unless your PR specifically changes those pages.
+- If your change is on a page that requires an Elasticsearch connection (most pages do), **do NOT take a screenshot**. Instead, describe the visual change in the PR body with enough detail for a reviewer to understand it.
+- Only take a screenshot if the page you changed is accessible WITHOUT an Elasticsearch connection (e.g., Package Builder, Settings, Add Data wizard step 1).
+- If you are unsure whether the page requires a connection, check `requiresConnection` in `peek/src/routes/manifest.ts` for that page's entry. If `requiresConnection: true` (or not set), do NOT screenshot it.
+
+#### Pages that CAN be screenshotted (no connection required)
+
+Check `peek/src/routes/manifest.ts` — pages with `requiresConnection: false` can be visited directly. Use the page's `path` value as the route:
 
 ```bash
 cd peek && npm run dev &
 DEV_PID=$!
 for i in $(seq 1 30); do curl -sf http://localhost:3000/ai-github-actions-playground/ >/dev/null && break; sleep 1; done
-```
-
-2. Run the screenshot preflight, passing `--url` with the route that shows your feature (not the default connections page):
-
-```bash
-cd peek && node scripts/screenshot-preflight.mjs --url http://127.0.0.1:3000/<feature-route> --output screenshot-preflight.json --screenshot screenshot.png
-```
-
-3. Stop the dev server:
-
-```bash
+node scripts/screenshot-preflight.mjs \
+  --url "http://127.0.0.1:3000/ai-github-actions-playground/#<path-from-manifest>" \
+  --output screenshot-preflight.json \
+  --screenshot screenshot.png
 kill $DEV_PID
 ```
 
-4. If the preflight reports errors, attach the diagnostics JSON instead. If it passes, attach the captured screenshot to the PR body.
+#### Pages that CANNOT be screenshotted (connection required)
+
+For these pages, do NOT attempt to take a screenshot. Instead, add a section to the PR body like:
+
+```markdown
+### Visual Changes
+- **Page:** <page name>
+- **What changed:** <describe the UI change>
+- **How to verify:** Connect to an Elasticsearch instance and navigate to <route>
+```
 
 For this repository:
 
