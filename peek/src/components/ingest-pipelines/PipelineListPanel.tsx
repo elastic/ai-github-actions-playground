@@ -67,7 +67,8 @@ export default function PipelineListPanel({
 }: PipelineListPanelProps) {
   const { sortField, sortDirection, getSortLabelProps } = useTableSort<PipelineSortField>(
     "timeMs",
-    "desc",
+    "asc",
+    { initialDirection: "desc" },
   );
 
   const sortedPipelines = useMemo(() => {

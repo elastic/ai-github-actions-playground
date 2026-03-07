@@ -63,7 +63,9 @@ export default function ShardDistributionView({ data }: ShardDistributionViewPro
     sortField: sortKey,
     sortDirection: sortDir,
     getSortLabelProps,
-  } = useTableSort<SortKey>("index");
+  } = useTableSort<SortKey>("index", "asc", {
+    fieldDefaults: { primary: "desc", replica: "desc", unassigned: "desc" },
+  });
 
   const indexDistribution = useMemo(() => {
     const map = new Map<string, { primary: number; replica: number; unassigned: number }>();

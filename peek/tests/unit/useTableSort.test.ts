@@ -85,4 +85,48 @@ describe("useTableSort", () => {
     act(() => result.current.getSortLabelProps("a").onClick());
     expect(result.current.sortDirection).toBe("desc");
   });
+
+  it("initialDirection overrides the starting sort direction for the default field", () => {
+    const { result } = renderHook(() =>
+      useTableSort<"name" | "duration">("duration", "asc", { initialDirection: "desc" }),
+    );
+    expect(result.current.sortField).toBe("duration");
+    expect(result.current.sortDirection).toBe("desc");
+
+    // Switching to a new field should use defaultDirection ("asc"), not initialDirection
+    act(() => result.current.handleSort("name"));
+    expect(result.current.sortField).toBe("name");
+    expect(result.current.sortDirection).toBe("asc");
+  });
+
+  it("fieldDefaults overrides new-field direction per column", () => {
+    const { result } = renderHook(() =>
+      useTableSort<"index" | "primary" | "replica">("index", "asc", {
+        fieldDefaults: { primary: "desc", replica: "desc" },
+      }),
+    );
+    expect(result.current.sortDirection).toBe("asc");
+
+    // Switching to "primary" should start desc per fieldDefaults
+    act(() => result.current.handleSort("primary"));
+    expect(result.current.sortField).toBe("primary");
+    expect(result.current.sortDirection).toBe("desc");
+
+    // Switching to "index" (no fieldDefault) should fall back to defaultDirection ("asc")
+    act(() => result.current.handleSort("index"));
+    expect(result.current.sortField).toBe("index");
+    expect(result.current.sortDirection).toBe("asc");
+  });
+
+  it("getSortLabelProps direction uses fieldDefaults for inactive columns", () => {
+    const { result } = renderHook(() =>
+      useTableSort<"index" | "primary">("index", "asc", {
+        fieldDefaults: { primary: "desc" },
+      }),
+    );
+
+    const props = result.current.getSortLabelProps("primary");
+    expect(props.active).toBe(false);
+    expect(props.direction).toBe("desc");
+  });
 });
