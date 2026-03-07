@@ -113,12 +113,17 @@ function stripIconRawBytes(identity: PackageBuilderState["identity"]): PackageBu
 function decodeDataUrl(dataUrl: string): Uint8Array {
   const match = dataUrl.match(/^data:.*?;base64,(.+)$/);
   if (!match?.[1]) return new Uint8Array();
-  const binary = atob(match[1]);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i += 1) {
-    bytes[i] = binary.charCodeAt(i);
+  try {
+    const binary = atob(match[1]);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i += 1) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    return bytes;
+  } catch (err) {
+    console.warn("Failed to decode persisted icon data", err);
+    return new Uint8Array();
   }
-  return bytes;
 }
 
 function restoreIconRawBytes(identity: PackageBuilderState["identity"]): PackageBuilderState["identity"] {
