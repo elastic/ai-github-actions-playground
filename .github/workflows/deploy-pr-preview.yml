@@ -1,35 +1,36 @@
-name: Deploy to GitHub Pages
+name: Deploy PR previews
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'peek/**'
-      - '.github/workflows/deploy-pages.yml'
-      - '.github/workflows/deploy-pr-preview.yml'
-  workflow_dispatch:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - closed
 
 permissions:
   contents: write
+  pull-requests: write
 
 concurrency:
-  group: pages
+  group: preview-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  deploy:
+  deploy-preview:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v5
+        if: github.event.action != 'closed'
         with:
           node-version: '24'
           cache: 'npm'
           cache-dependency-path: peek/package-lock.json
 
       - name: Install dependencies
+        if: github.event.action != 'closed'
         working-directory: peek
         run: npm ci
         env:
@@ -37,10 +38,12 @@ jobs:
           ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
 
       - name: Build
+        if: github.event.action != 'closed'
         working-directory: peek
         run: npm run build
 
       - name: Generate demo config
+        if: github.event.action != 'closed'
         working-directory: peek/dist
         env:
           DEMO_URL: ${{ vars.DEMO_URL }}
@@ -57,10 +60,10 @@ jobs:
             --arg password "$DEMO_PASSWORD" \
             '{"url": $url, "username": $username, "password": $password}' > demo.json
 
-      - name: Upload artifact
-        uses: JamesIves/github-pages-deploy-action@v4
+      - name: Deploy preview
+        uses: rossjrw/pr-preview-action@v1
         with:
-          folder: peek/dist
-          branch: gh-pages
-          clean-exclude: pr-preview/
-          force: false
+          source-dir: ./peek/dist/
+          preview-branch: gh-pages
+          umbrella-dir: pr-preview
+          wait-for-pages-deployment: true
