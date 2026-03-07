@@ -28,6 +28,7 @@ import SubjectIcon from "@mui/icons-material/Subject";
 import CloudIcon from "@mui/icons-material/Cloud";
 import DnsIcon from "@mui/icons-material/Dns";
 import DescriptionIcon from "@mui/icons-material/Description";
+import BackupIcon from "@mui/icons-material/Backup";
 
 import type { UserCapabilities } from "../services/es";
 
@@ -88,6 +89,7 @@ const HostsMacosPage = lazy(() => import("../components/hosts/HostsMacosPage"));
 const TaskManagerPage = lazy(() => import("../components/TaskManagerPage"));
 const IlmPage = lazy(() => import("../components/IlmPage"));
 const TemplatesPage = lazy(() => import("../components/TemplatesPage"));
+const SnapshotsPage = lazy(() => import("../components/SnapshotsPage"));
 
 export type NavGroup = "Data" | "Workspace" | "Security" | "System" | "Help" | "Settings";
 
@@ -680,6 +682,20 @@ export const PAGE_MANIFEST = {
       order: 31,
       showInSidebar: true,
       icon: createElement(PolicyIcon, { fontSize: "small" }),
+    },
+  },
+  snapshots: {
+    path: "/snapshots",
+    component: SnapshotsPage,
+    requiresConnection: true,
+    showTimeControls: false,
+    skeletonVariant: "table",
+    nav: {
+      label: "Snapshots",
+      group: "System",
+      order: 32,
+      showInSidebar: true,
+      icon: createElement(BackupIcon, { fontSize: "small" }),
     },
   },
   templates: {

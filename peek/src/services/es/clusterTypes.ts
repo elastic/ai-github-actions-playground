@@ -263,6 +263,15 @@ export interface SlmPolicyStats {
 
 export interface SlmStatsResponse {
   operation_mode?: string;
+  retention_runs?: number;
+  retention_failed?: number;
+  retention_timed_out?: number;
+  retention_deletion_time?: string;
+  retention_deletion_time_millis?: number;
+  total_snapshots_taken?: number;
+  total_snapshots_failed?: number;
+  total_snapshots_deleted?: number;
+  total_snapshot_deletion_failures?: number;
   policy_stats?: SlmPolicyStats[];
 }
 

@@ -5,10 +5,13 @@ import type {
   ClusterHealthResponse,
   ClusterPendingTasksResponse,
   GetApiKeysResponse,
+  GetSlmPoliciesResponse,
   IlmExplainResponse,
   IlmPolicyResponse,
   NodesStatsResponse,
   RecoveryResponse,
+  SlmStatsResponse,
+  SnapshotRecord,
   TasksListResponse,
 } from "../services/es";
 
@@ -27,7 +30,8 @@ export type HealthQueryGroup =
   | "ilmCore"
   | "templatesCore"
   | "recoveryCore"
-  | "securityCore";
+  | "securityCore"
+  | "snapshotsCore";
 
 export interface HealthSnapshot {
   fetchedAt: string;
@@ -62,6 +66,11 @@ export interface HealthSnapshot {
     };
     securityCore: {
       apiKeys: GetApiKeysResponse | null;
+    };
+    snapshotsCore: {
+      snapshots: SnapshotRecord[] | null;
+      policies: GetSlmPoliciesResponse | null;
+      slmStats: SlmStatsResponse | null;
     };
   }>;
   errors: Partial<Record<HealthQueryGroup, string>>;

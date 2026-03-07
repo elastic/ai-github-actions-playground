@@ -27,6 +27,7 @@ export type * from "./watcherTypes";
 export type * from "./taskTypes";
 export type * from "./ilmTypes";
 export type * from "./templateTypes";
+export type * from "./snapshotTypes";
 
 export {
   buildExplorerQuery,

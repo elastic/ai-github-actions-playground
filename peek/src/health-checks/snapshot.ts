@@ -74,6 +74,22 @@ async function fetchGroup(
         const apiKeys = await client.getApiKeys(signal);
         return { group, data: { apiKeys } };
       }
+      case "snapshotsCore": {
+        const [snapshotsRes, policies, slmStats] = await Promise.allSettled([
+          client.getSnapshots(signal),
+          client.getSlmPolicies(signal),
+          client.getSlmStats(signal),
+        ]);
+        return {
+          group,
+          data: {
+            snapshots:
+              snapshotsRes.status === "fulfilled" ? (snapshotsRes.value.snapshots ?? []) : null,
+            policies: policies.status === "fulfilled" ? policies.value : null,
+            slmStats: slmStats.status === "fulfilled" ? slmStats.value : null,
+          },
+        };
+      }
       default:
         return { group, data: null };
     }

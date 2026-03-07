@@ -55,6 +55,12 @@ import type {
   GetComponentTemplatesResponse,
   SimulateIndexTemplateResponse,
 } from "./templateTypes";
+import type {
+  GetSnapshotsResponse,
+  GetRepositoriesResponse,
+  GetSlmPoliciesResponse,
+  GetSearchableSnapshotsCacheStatsResponse,
+} from "./snapshotTypes";
 
 // ---------------------------------------------------------------------------
 // Re-export domain types so existing `import … from "./client"` keeps working.
@@ -524,6 +530,27 @@ export class ElasticsearchClient {
     // Use the generic status endpoint so we can fetch repository-wide snapshot state.
     // `/_snapshot/_all/_current` is less portable across cluster versions/configs.
     return this._fetch<SnapshotStatusResponse>("/_snapshot/_status", { signal });
+  }
+
+  async getSnapshots(signal?: AbortSignal): Promise<GetSnapshotsResponse> {
+    return this._fetch<GetSnapshotsResponse>("/_snapshot/*/*?verbose=false", { signal });
+  }
+
+  async getRepositories(signal?: AbortSignal): Promise<GetRepositoriesResponse> {
+    return this._fetch<GetRepositoriesResponse>("/_snapshot", { signal });
+  }
+
+  async getSlmPolicies(signal?: AbortSignal): Promise<GetSlmPoliciesResponse> {
+    return this._fetch<GetSlmPoliciesResponse>("/_slm/policy?human", { signal });
+  }
+
+  async getSearchableSnapshotsCacheStats(
+    signal?: AbortSignal,
+  ): Promise<GetSearchableSnapshotsCacheStatsResponse> {
+    return this._fetch<GetSearchableSnapshotsCacheStatsResponse>(
+      "/_searchable_snapshots/cache/stats",
+      { signal },
+    );
   }
 
   async getClusterSettings(signal?: AbortSignal): Promise<ClusterSettingsResponse> {

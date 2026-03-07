@@ -8,6 +8,7 @@ import { nodeChecks } from "../../src/health-checks/checks/nodes";
 import { recoveryChecks } from "../../src/health-checks/checks/recovery";
 import { securityChecks } from "../../src/health-checks/checks/security";
 import { shardChecks } from "../../src/health-checks/checks/shards";
+import { snapshotChecks } from "../../src/health-checks/checks/snapshots";
 import { taskChecks } from "../../src/health-checks/checks/tasks";
 import { INITIAL_HEALTH_CHECKS } from "../../src/health-checks/checks/index";
 
@@ -37,6 +38,7 @@ function makeSnapshot(overrides: Partial<HealthSnapshot["data"]> = {}): HealthSn
       ilmCore: { ilmExplain: { indices: {} }, ilmPolicies: {} },
       recoveryCore: { recovery: {} },
       securityCore: { apiKeys: { api_keys: [] } },
+      snapshotsCore: { snapshots: [], policies: {}, slmStats: {} },
       ...overrides,
     },
     errors: {},
@@ -69,7 +71,8 @@ describe("INITIAL_HEALTH_CHECKS aggregation", () => {
       indicesChecks.length +
       ingestChecks.length +
       recoveryChecks.length +
-      securityChecks.length;
+      securityChecks.length +
+      snapshotChecks.length;
     expect(INITIAL_HEALTH_CHECKS).toHaveLength(total);
   });
 
