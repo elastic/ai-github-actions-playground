@@ -230,10 +230,14 @@ describe("StorageExplorerPage", () => {
     fireEvent.keyDown(datasetRow, { key: " ", code: "Space" });
 
     expect(await screen.findByText("Storage details")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /close storage details/i }));
+    await waitFor(() => {
+      expect(screen.queryByText("Storage details")).not.toBeInTheDocument();
+    });
 
     datasetRow.focus();
     await user.keyboard("{Enter}");
 
-    expect(screen.getByText("Storage details")).toBeInTheDocument();
+    expect(await screen.findByText("Storage details")).toBeInTheDocument();
   });
 });

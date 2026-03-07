@@ -254,15 +254,23 @@ export default function StorageExplorerPage() {
 
   const filteredShards = useMemo(() => {
     const term = search.trim().toLowerCase();
+    const dataStreamsUnavailable = partialErrors.includes("data streams");
     return data.shards.filter((shard) => {
       if (!showReplicas && shard.prirep.toLowerCase() === "r") return false;
-      if (!showSystemIndices && shard.index.startsWith(".") && !shard.dataStream) return false;
+      if (
+        !showSystemIndices &&
+        !dataStreamsUnavailable &&
+        shard.index.startsWith(".") &&
+        !shard.dataStream
+      ) {
+        return false;
+      }
       if (!term) return true;
       const text =
         `${shard.node} ${shard.signal} ${shard.dataset} ${shard.namespace} ${shard.index} ${shard.shard}`.toLowerCase();
       return text.includes(term);
     });
-  }, [data.shards, search, showReplicas, showSystemIndices]);
+  }, [data.shards, partialErrors, search, showReplicas, showSystemIndices]);
 
   const tree = useMemo(
     () => (groupBy ? aggregateTree(filteredShards, groupBy) : new Map<string, TreeNode>()),

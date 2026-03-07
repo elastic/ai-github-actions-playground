@@ -201,8 +201,8 @@ export function useStorageExplorerData(): UseStorageExplorerDataResult {
   const result = useMemo<DataFetchResult<StorageExplorerData>>(() => {
     if (!connection) return { status: "idle" };
     if (query.isPending) return { status: "loading" };
-    if (query.isError) return { status: "error", error: query.error.message };
     if (query.data) return { status: "success", data: query.data.data };
+    if (query.isError) return { status: "error", error: query.error.message };
     return { status: "idle" };
   }, [connection, query.data, query.error, query.isError, query.isPending]);
 
