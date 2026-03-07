@@ -50,12 +50,20 @@ function compareCompTpls(
       break;
     case "version":
       {
+        const aText = String(a.version);
+        const bText = String(b.version);
         const aNum = Number(a.version);
         const bNum = Number(b.version);
-        cmp =
-          Number.isFinite(aNum) && Number.isFinite(bNum)
-            ? aNum - bNum
-            : String(a.version).localeCompare(String(b.version), undefined, { numeric: true });
+        const aMissing = aText.trim() === "—";
+        const bMissing = bText.trim() === "—";
+        if (aMissing || bMissing) {
+          cmp = aMissing === bMissing ? 0 : aMissing ? 1 : -1;
+        } else {
+          cmp =
+            Number.isFinite(aNum) && Number.isFinite(bNum)
+              ? aNum - bNum
+              : aText.localeCompare(bText, undefined, { numeric: true });
+        }
       }
       break;
     default:
@@ -147,6 +155,16 @@ describe("TemplatesPage component template sorting", () => {
     ];
     const sorted = [...withVersions].sort((a, b) => compareCompTpls(a, b, "version", "asc"));
     expect(sorted.map((c) => c.version)).toEqual(["1", "2", "10"]);
+  });
+
+  it("sorts missing version placeholders after real versions", () => {
+    const withMissing = [
+      makeComponentTemplate({ name: "a", version: "—" }),
+      makeComponentTemplate({ name: "b", version: "2" }),
+      makeComponentTemplate({ name: "c", version: "10" }),
+    ];
+    const sorted = [...withMissing].sort((a, b) => compareCompTpls(a, b, "version", "asc"));
+    expect(sorted.map((c) => c.version)).toEqual(["2", "10", "—"]);
   });
 });
 
