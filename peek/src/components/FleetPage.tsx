@@ -2,9 +2,11 @@ import { useCallback, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import Paper from "@mui/material/Paper";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
+import ExtensionIcon from "@mui/icons-material/Extension";
 
 import {
   usePageFiltersStore,
@@ -118,14 +120,24 @@ export default function FleetPage() {
         <PageHeader
           title="Fleet"
           actions={
-            <RefreshToolbar
-              lastUpdatedAt={lastUpdatedAt}
-              refreshIntervalSeconds={autoRefreshEnabled ? AUTO_REFRESH_MS / 1000 : 0}
-              refreshOptions={FLEET_REFRESH_OPTIONS}
-              onIntervalChange={(seconds) => setAutoRefreshEnabled(seconds > 0)}
-              onRefresh={refresh}
-              loading={loading}
-            />
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<ExtensionIcon />}
+                onClick={() => navigate("/package-builder")}
+              >
+                Package Builder
+              </Button>
+              <RefreshToolbar
+                lastUpdatedAt={lastUpdatedAt}
+                refreshIntervalSeconds={autoRefreshEnabled ? AUTO_REFRESH_MS / 1000 : 0}
+                refreshOptions={FLEET_REFRESH_OPTIONS}
+                onIntervalChange={(seconds) => setAutoRefreshEnabled(seconds > 0)}
+                onRefresh={refresh}
+                loading={loading}
+              />
+            </Box>
           }
         />
       </Paper>
