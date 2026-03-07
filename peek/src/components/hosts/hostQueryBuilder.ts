@@ -49,23 +49,21 @@ export function buildHostInventoryQuery(filters: HostQueryFilters): string {
   return `FROM metrics-hostmetricsreceiver*
 | WHERE ${whereConditions.join(" AND ")}
 | EVAL host_key = ${STABLE_HOST_ID_EXPRESSION}
-| SORT @timestamp DESC
-| DEDUP host_key
-| EVAL
-    host_id = host.id,
-    host_name = host.name,
-    os_type = host.os.type,
-    os_name = host.os.name,
-    os_version = host.os.version,
-    last_seen = @timestamp,
-    cpu_utilization = system.cpu.utilization,
-    memory_utilization = system.memory.utilization,
-    disk_utilization = system.filesystem.utilization,
-    process_count = system.processes.count,
-    agent_id = agent.id,
-    cloud_instance_id = cloud.instance.id,
-    host_ip = host.ip
-| KEEP host_key, host_id, host_name, os_type, os_name, os_version, last_seen, cpu_utilization, memory_utilization, disk_utilization, process_count, agent_id, cloud_instance_id, host_ip
+| STATS
+    host_id = MAX(host.id),
+    host_name = MAX(host.name),
+    os_type = MAX(host.os.type),
+    os_name = MAX(host.os.name),
+    os_version = MAX(host.os.version),
+    last_seen = MAX(@timestamp),
+    cpu_utilization = MAX(system.cpu.utilization),
+    memory_utilization = MAX(system.memory.utilization),
+    disk_utilization = MAX(system.filesystem.utilization),
+    process_count = MAX(system.processes.count),
+    agent_id = MAX(agent.id),
+    cloud_instance_id = MAX(cloud.instance.id),
+    host_ip = MAX(host.ip)
+  BY host_key
 | SORT last_seen DESC`;
 }
 

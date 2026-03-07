@@ -14,8 +14,8 @@ describe("buildHostInventoryQuery", () => {
     expect(query).toContain("FROM metrics-hostmetricsreceiver*");
     expect(query).toContain("NOW() - 5 minutes");
     expect(query).toContain("NOW()");
-    expect(query).toContain("DEDUP host_key");
-    expect(query).toContain("EVAL host_key = COALESCE(");
+    expect(query).toContain("STATS");
+    expect(query).toContain("BY host_key");
   });
 
   it("adds OS filter for linux", () => {
