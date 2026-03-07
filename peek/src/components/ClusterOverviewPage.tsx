@@ -90,7 +90,7 @@ export default function ClusterOverviewPage() {
     refresh: refreshLocalChecks,
   } = useHealthChecks({
     surface: "local",
-    checkIds: ["cluster.status.red", "cluster.status.yellow", "cluster.unassigned_shards"],
+    checkIds: ["cluster.status.red", "cluster.status.yellow", "cluster.unassigned_shards.nonzero"],
   });
   const nonPassingLocalChecks = localChecks.filter((check) => check.status !== "pass");
 
