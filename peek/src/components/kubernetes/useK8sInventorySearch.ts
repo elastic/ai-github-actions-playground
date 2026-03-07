@@ -138,7 +138,7 @@ export function useK8sInventorySearch() {
       setSortDirection("desc");
       updateFilters({ activeTab: tab });
     },
-    [cancelSearch, clearError, setSearchResult, updateFilters],
+    [cancelSearch, clearError, setSearchResult, setSortDirection, setSortField, updateFilters],
   );
 
   const clusterRows = useMemo<ClusterRow[]>(() => {

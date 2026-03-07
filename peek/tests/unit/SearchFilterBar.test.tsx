@@ -55,15 +55,13 @@ describe("SearchFilterBar", () => {
   });
 
   it("renders divider by default", () => {
-    const { container } = render(<SearchFilterBar search="" onSearchChange={() => {}} />);
-    expect(container.querySelector("hr")).toBeInTheDocument();
+    render(<SearchFilterBar search="" onSearchChange={() => {}} />);
+    expect(screen.getByRole("separator")).toBeInTheDocument();
   });
 
   it("hides divider when divider=false", () => {
-    const { container } = render(
-      <SearchFilterBar search="" onSearchChange={() => {}} divider={false} />,
-    );
-    expect(container.querySelector("hr")).not.toBeInTheDocument();
+    render(<SearchFilterBar search="" onSearchChange={() => {}} divider={false} />);
+    expect(screen.queryByRole("separator")).not.toBeInTheDocument();
   });
 
   it("uses searchAriaLabel when provided", () => {
