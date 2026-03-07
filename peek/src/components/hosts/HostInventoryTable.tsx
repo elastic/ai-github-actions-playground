@@ -80,6 +80,7 @@ export default function HostInventoryTable({
               onClick={() => onRowClick?.(row)}
               onKeyDown={(event) => {
                 if (!onRowClick) return;
+                if (event.target !== event.currentTarget) return;
                 if (event.key === "Enter" || event.key === " ") {
                   event.preventDefault();
                   onRowClick(row);
