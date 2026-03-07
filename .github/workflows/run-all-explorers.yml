@@ -1,0 +1,43 @@
+name: Run All Explorers
+on:
+  workflow_dispatch:
+
+permissions:
+  actions: write
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        workflow:
+          - explore-add-data.yml
+          - explore-add-data-alex.yml
+          - explore-add-data-jordan.yml
+          - explore-add-data-morgan.yml
+          - explore-add-data-riley.yml
+          - explore-add-data-sam.yml
+          - explore-cluster-overview.yml
+          - explore-connection.yml
+          - explore-customer-feedback.yml
+          - explore-dashboards.yml
+          - explore-data-management.yml
+          - explore-fleet-add-data.yml
+          - explore-kubernetes.yml
+          - explore-live-es.yml
+          - explore-logs.yml
+          - explore-metrics.yml
+          - explore-mobile.yml
+          - explore-profiling.yml
+          - explore-query-lab.yml
+          - explore-security.yml
+          - explore-services.yml
+          - explore-traces.yml
+          - explore-ux-papercuts.yml
+      fail-fast: false
+      max-parallel: 5
+    steps:
+      - name: Dispatch ${{ matrix.workflow }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run "${{ matrix.workflow }}" --repo "${{ github.repository }}"
