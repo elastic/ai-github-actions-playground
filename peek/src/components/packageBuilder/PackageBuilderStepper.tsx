@@ -9,7 +9,7 @@ const STEPS = [
   { label: "Variables", step: 3 },
   { label: "Template", step: 4 },
   { label: "Docs", step: 5 },
-  { label: "Export", step: 6 },
+  { label: "Review", step: 6 },
 ] as const;
 
 interface Props {

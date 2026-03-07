@@ -23,9 +23,14 @@ interface PackageBuilderState extends PackageBuilderData {
   currentStep: WizardStep;
   mockValues: Record<string, string>;
   readmeGenerated: boolean;
+  linkedDir: FileSystemDirectoryHandle | null;
 
   // Navigation
   setStep: (step: WizardStep) => void;
+
+  // Linked directory
+  linkDir: (handle: FileSystemDirectoryHandle) => void;
+  unlinkDir: () => void;
 
   // Identity
   setName: (name: string) => void;
@@ -97,6 +102,7 @@ const DEFAULT_STATE: Pick<
   | "readmeContent"
   | "mockValues"
   | "readmeGenerated"
+  | "linkedDir"
 > = {
   currentStep: 1,
   identity: { ...DEFAULT_IDENTITY },
@@ -106,6 +112,7 @@ const DEFAULT_STATE: Pick<
   readmeContent: "",
   mockValues: {},
   readmeGenerated: false,
+  linkedDir: null,
 };
 
 function stripIconRawBytes(
@@ -251,6 +258,10 @@ export const usePackageBuilderStore = create<PackageBuilderState>()(
             mockValues: {},
             readmeGenerated: Boolean(data.readmeContent),
           }),
+
+        // Linked directory
+        linkDir: (handle) => set({ linkedDir: handle }),
+        unlinkDir: () => set({ linkedDir: null }),
 
         // Reset
         reset: () => set({ ...DEFAULT_STATE, readmeGenerated: false }),
