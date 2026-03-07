@@ -14,6 +14,7 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 
 import type { PipelineEntry } from "../../hooks/useIngestPipelines";
+import { formatMs } from "../../utils/formatDuration";
 import EmptyState from "../EmptyState";
 
 type SortField = "name" | "processors" | "docs" | "failed" | "timeMs" | "avgMsPerDoc" | "nodes";
@@ -39,11 +40,6 @@ interface PipelineListPanelProps {
   totalPipelineCount: number;
   selectedName: string | null;
   onSelect: (name: string) => void;
-}
-
-function formatMs(ms: number): string {
-  if (ms < 1000) return `${ms.toLocaleString()} ms`;
-  return `${(ms / 1000).toFixed(2)} s`;
 }
 
 function avgMsPerDoc(timeMs: number, count: number): string {

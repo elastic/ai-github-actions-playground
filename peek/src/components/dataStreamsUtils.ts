@@ -17,7 +17,7 @@ export function getStatusChipColor(status: string): "success" | "warning" | "err
   return STATUS_CHIP_COLORS[status.toUpperCase() as StreamStatus] ?? "default";
 }
 
-const STREAM_STATUS_ORDER: Record<string, number> = { GREEN: 0, YELLOW: 1, RED: 2 };
+export const STREAM_STATUS_ORDER: Record<string, number> = { GREEN: 0, YELLOW: 1, RED: 2 };
 
 export function toFieldRows(fieldCaps: FieldCapsResponse) {
   return Object.entries(fieldCaps.fields ?? {})

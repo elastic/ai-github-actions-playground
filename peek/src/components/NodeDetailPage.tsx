@@ -20,17 +20,12 @@ import MemoryIcon from "@mui/icons-material/Memory";
 import { NODE_PERMISSION_HEADING, NODE_PERMISSION_DESCRIPTION } from "../constants/nodePermissions";
 import { useClusterOverview } from "../hooks/useClusterOverview";
 import { formatBytes } from "../utils/formatBytes";
+import { formatMs } from "../utils/formatDuration";
 
 import EmptyState from "./EmptyState";
 import PageHeader from "./PageHeader";
 
 // ── Helpers ────────────────────────────────────────────────────────────────
-
-function formatMs(ms: number | null | undefined): string {
-  if (ms === null || ms === undefined) return "n/a";
-  if (ms < 1000) return `${ms.toLocaleString()} ms`;
-  return `${(ms / 1000).toFixed(1)} s`;
-}
 
 function formatUptime(ms: number | null | undefined): string {
   if (ms === null || ms === undefined) return "n/a";
