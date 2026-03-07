@@ -180,7 +180,9 @@ export default function HostDetailPage() {
             <MetricCard label="CPU Utilization" value={fmtPct(hostRow.cpuUtilization)} />
             <MetricCard label="Memory Utilization" value={fmtPct(hostRow.memoryUtilization)} />
             <MetricCard label="Disk Utilization" value={fmtPct(hostRow.diskUtilization)} />
-            <MetricCard label="Processes" value={fmtCount(hostRow.processCount)} />
+            {hostRow.processCount != null && (
+              <MetricCard label="Processes" value={fmtCount(hostRow.processCount)} />
+            )}
           </Box>
         </Box>
       )}

@@ -13,7 +13,11 @@ export type HostOsType = "linux" | "windows" | "macos" | "unknown";
  * Consumed by `HostLink`, `openHost`, and any pivot that targets host detail.
  */
 export interface HostRef {
-  /** Primary identifier — `host.id` when available, else `host.name::osType` (see `toHostRef`). */
+  /**
+   * Primary identifier — `host.id` when available, else `host.name::osType`,
+   * else an enricher (`agent.id`, `cloud.instance.id`, `host.ip`).
+   * See `toHostRef` for the full fallback chain.
+   */
   hostId: string;
   /** Human-readable label shown in links/breadcrumbs. */
   displayName: string;
@@ -32,6 +36,12 @@ export interface HostRow {
   memoryUtilization: number | null;
   diskUtilization: number | null;
   processCount: number | null;
+  /** Optional enricher — `agent.id` when available. */
+  agentId?: string;
+  /** Optional enricher — `cloud.instance.id` when available. */
+  cloudInstanceId?: string;
+  /** Optional enricher — first `host.ip` when available. */
+  hostIp?: string;
 }
 
 /** Normalizes raw `host.os.type` string to a known `HostOsType`. */
@@ -44,17 +54,36 @@ export function normalizeOsType(raw: string | null | undefined): HostOsType {
   return "unknown";
 }
 
+/**
+ * Optional identity enrichers used when `host.id` and `host.name` are both
+ * absent. These prevent unidentified hosts from collapsing to the same key.
+ */
+export interface HostIdentityHints {
+  agentId?: string | null;
+  cloudInstanceId?: string | null;
+  hostIp?: string | null;
+}
+
 /** Builds a deterministic `HostRef` from raw host fields. */
 export function toHostRef(
   hostId: string | null | undefined,
   hostName: string | null | undefined,
   osType: string | null | undefined,
+  identityHints?: HostIdentityHints,
 ): HostRef {
   const normalizedOsType = normalizeOsType(osType);
   const trimmedHostId = hostId?.trim();
   const trimmedHostName = hostName?.trim();
+  const trimmedAgentId = identityHints?.agentId?.trim();
+  const trimmedCloudInstanceId = identityHints?.cloudInstanceId?.trim();
+  const trimmedHostIp = identityHints?.hostIp?.trim();
   const id =
-    trimmedHostId || (trimmedHostName ? `${trimmedHostName}::${normalizedOsType}` : "unknown");
+    trimmedHostId ||
+    (trimmedHostName ? `${trimmedHostName}::${normalizedOsType}` : undefined) ||
+    trimmedAgentId ||
+    trimmedCloudInstanceId ||
+    trimmedHostIp ||
+    "unknown";
   const display = trimmedHostName || trimmedHostId || "unknown";
   return { hostId: id, displayName: display, osType: normalizedOsType };
 }

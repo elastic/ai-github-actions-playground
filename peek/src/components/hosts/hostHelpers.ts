@@ -41,6 +41,9 @@ export function parseHostInventory(data: EsqlResponse): HostRow[] {
   const iMem = col(columns, "memory_utilization");
   const iDisk = col(columns, "disk_utilization");
   const iProc = col(columns, "process_count");
+  const iAgentId = col(columns, "agent_id");
+  const iCloudInstanceId = col(columns, "cloud_instance_id");
+  const iHostIp = col(columns, "host_ip");
 
   return values.map((row) => ({
     hostId: str(row, iHostId) || str(row, iHostIdAlias) || str(row, iHostKey) || "unknown",
@@ -53,5 +56,8 @@ export function parseHostInventory(data: EsqlResponse): HostRow[] {
     memoryUtilization: num(row, iMem),
     diskUtilization: num(row, iDisk),
     processCount: num(row, iProc),
+    agentId: str(row, iAgentId) || undefined,
+    cloudInstanceId: str(row, iCloudInstanceId) || undefined,
+    hostIp: str(row, iHostIp) || undefined,
   }));
 }

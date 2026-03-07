@@ -88,7 +88,13 @@ export default function HostInventoryTable({
               }}
             >
               <TableCell onClick={(event) => event.stopPropagation()}>
-                <HostLink hostRef={toHostRef(row.hostId, row.hostName, row.osType)} />
+                <HostLink
+                  hostRef={toHostRef(row.hostId, row.hostName, row.osType, {
+                    agentId: row.agentId,
+                    cloudInstanceId: row.cloudInstanceId,
+                    hostIp: row.hostIp,
+                  })}
+                />
               </TableCell>
               <TableCell>
                 <Chip label={osLabel(row.osType)} size="small" variant="outlined" />

@@ -61,8 +61,11 @@ export function buildHostInventoryQuery(filters: HostQueryFilters): string {
     cpu_utilization = system.cpu.utilization,
     memory_utilization = system.memory.utilization,
     disk_utilization = system.filesystem.utilization,
-    process_count = system.processes.count
-| KEEP host_key, host_id, host_name, os_type, os_name, os_version, last_seen, cpu_utilization, memory_utilization, disk_utilization, process_count
+    process_count = system.processes.count,
+    agent_id = agent.id,
+    cloud_instance_id = cloud.instance.id,
+    host_ip = host.ip
+| KEEP host_key, host_id, host_name, os_type, os_name, os_version, last_seen, cpu_utilization, memory_utilization, disk_utilization, process_count, agent_id, cloud_instance_id, host_ip
 | SORT last_seen DESC`;
 }
 
@@ -89,6 +92,9 @@ export function buildHostDetailQuery(hostId: string, filters: HostQueryFilters):
     cpu_utilization = system.cpu.utilization,
     memory_utilization = system.memory.utilization,
     disk_utilization = system.filesystem.utilization,
-    process_count = system.processes.count
-| KEEP host_key, host_id, host_name, os_type, os_name, os_version, last_seen, cpu_utilization, memory_utilization, disk_utilization, process_count`;
+    process_count = system.processes.count,
+    agent_id = agent.id,
+    cloud_instance_id = cloud.instance.id,
+    host_ip = host.ip
+| KEEP host_key, host_id, host_name, os_type, os_name, os_version, last_seen, cpu_utilization, memory_utilization, disk_utilization, process_count, agent_id, cloud_instance_id, host_ip`;
 }
