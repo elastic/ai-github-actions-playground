@@ -15,10 +15,12 @@ import SearchIcon from "@mui/icons-material/Search";
 
 import { ElasticsearchClient, isElasticsearchError } from "../../services/es";
 import type { ElasticsearchConnection } from "../../services/es";
+import { useDashboardEditorStore } from "../../store/useDashboardEditorStore";
 import { useOpenInDiscover } from "../../hooks/useOpenInDiscover";
 import ContentSkeleton from "../ContentSkeleton";
 import EmptyState from "../EmptyState";
 import { escapeEsqlString } from "../../services/es/esqlUtils";
+import { timeRangeToEsqlFilter } from "./logsQueryBuilder";
 
 import { LOGS_DIMENSION_LABELS, type LogsFocusDimension } from "./logsDimensions";
 
@@ -39,6 +41,7 @@ export default function LogsDimensionListPage({
   onBack,
 }: LogsDimensionListPageProps) {
   const openInDiscover = useOpenInDiscover();
+  const timeRange = useDashboardEditorStore((s) => s.dashboard.timeRange);
   const [rows, setRows] = useState<ValueRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -53,7 +56,8 @@ export default function LogsDimensionListPage({
     setError(null);
     try {
       const client = new ElasticsearchClient(connection);
-      const query = `FROM logs-* | WHERE ${dimension} IS NOT NULL | STATS count = COUNT(*) BY ${dimension} | SORT count DESC | LIMIT 200`;
+      const timeFilter = timeRangeToEsqlFilter(timeRange);
+      const query = `FROM logs-* | WHERE ${timeFilter} | WHERE ${dimension} IS NOT NULL | STATS count = COUNT(*) BY ${dimension} | SORT count DESC | LIMIT 200`;
       const result = await client.query({ query }, controller.signal);
       const dimCol = result.columns.findIndex((c) => c.name === dimension);
       const countCol = result.columns.findIndex((c) => c.name === "count");
@@ -73,7 +77,7 @@ export default function LogsDimensionListPage({
     } finally {
       if (!controller.signal.aborted && abortRef.current === controller) setLoading(false);
     }
-  }, [connection, dimension]);
+  }, [connection, dimension, timeRange]);
 
   useEffect(() => {
     void fetchValues();
@@ -83,11 +87,12 @@ export default function LogsDimensionListPage({
   const handleOpenInQueryLab = useCallback(
     (value: string) => {
       const escaped = escapeEsqlString(value);
+      const timeFilter = timeRangeToEsqlFilter(timeRange);
       openInDiscover(
-        `FROM logs-* | WHERE ${dimension} == "${escaped}" | SORT @timestamp DESC | LIMIT 500`,
+        `FROM logs-* | WHERE ${timeFilter} | WHERE ${dimension} == "${escaped}" | SORT @timestamp DESC | LIMIT 500`,
       );
     },
-    [dimension, openInDiscover],
+    [dimension, openInDiscover, timeRange],
   );
 
   const maxCount = rows[0]?.count || 1;

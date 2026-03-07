@@ -131,7 +131,7 @@ export const PAGE_MANIFEST = {
     path: "/logs",
     component: LogsLandingPage,
     requiresConnection: true,
-    showTimeControls: false,
+    showTimeControls: true,
     skeletonVariant: "list",
     nav: {
       label: "Logs",

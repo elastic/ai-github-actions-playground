@@ -4,6 +4,8 @@ import {
   validateEsqlIndexPattern,
 } from "../../services/es/esqlUtils";
 import { buildWherePipe } from "../../services/es/queryParts";
+import { resolveDateTime } from "../../services/datemath";
+import type { TimeRange } from "../../types/dashboard";
 
 export interface LogsFilterChip {
   field: string;
@@ -104,4 +106,17 @@ export function appendPipeClause(query: string, clause: string): string {
   if (!trimmedQuery) return trimmedClause;
   if (!trimmedClause) return trimmedQuery;
   return `${trimmedQuery} | ${trimmedClause}`;
+}
+
+/**
+ * Convert a `TimeRange` (date-math strings like "now-1h" / "now") to an
+ * ES|QL WHERE filter on `@timestamp`.
+ */
+export function timeRangeToEsqlFilter(timeRange: TimeRange): string {
+  const now = new Date();
+  const resolve = (expr: string) => {
+    const d = resolveDateTime(expr, now);
+    return d ? d.toISOString() : expr;
+  };
+  return `@timestamp >= "${resolve(timeRange.from)}" AND @timestamp <= "${resolve(timeRange.to)}"`;
 }
