@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router-dom";
 
@@ -22,6 +22,10 @@ describe("App shell visibility", () => {
     localStorage.clear();
     sessionStorage.clear();
     resetAllStores();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => Promise.resolve(new Response("{}", { status: 200 }))),
+    );
   });
 
   it("hides navigation when disconnected", () => {
@@ -303,6 +307,6 @@ describe("App shell visibility", () => {
     await user.click(await screen.findByRole("button", { name: "Reset" }));
 
     // After reset, the URL should be /dashboards (not the stale dashboard ID)
-    expect(screen.getByTestId("location")).toHaveTextContent("/dashboards");
+    await waitFor(() => expect(screen.getByTestId("location")).toHaveTextContent("/dashboards"));
   });
 });
