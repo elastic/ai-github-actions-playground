@@ -307,6 +307,6 @@ describe("App shell visibility", () => {
     await user.click(await screen.findByRole("button", { name: "Reset" }));
 
     // After reset, the URL should be /dashboards (not the stale dashboard ID)
-    await waitFor(() => expect(screen.getByTestId("location")).toHaveTextContent("/dashboards"));
+    await waitFor(() => expect(screen.getByTestId("location")).toHaveTextContent(/^\/dashboards$/));
   });
 });
