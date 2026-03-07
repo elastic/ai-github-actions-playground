@@ -27,7 +27,7 @@ function toIlmData(results: [GetIlmPoliciesResponse, IlmExplainDetailResponse]):
     step: detail.step ?? "",
     age: detail.age ?? "",
     failedStep: detail.failed_step ?? "",
-    isError: Boolean(detail.step_info?.reason),
+    isError: Boolean(detail.failed_step || detail.step_info?.reason),
     stepReason: detail.step_info?.reason ?? "",
     raw: detail,
   }));
