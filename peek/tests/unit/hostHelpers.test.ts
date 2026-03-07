@@ -15,7 +15,6 @@ describe("parseHostInventory", () => {
         { name: "last_seen", type: "date" },
         { name: "cpu_utilization", type: "double" },
         { name: "memory_utilization", type: "double" },
-        { name: "disk_utilization", type: "double" },
         { name: "process_count", type: "long" },
       ],
       values: [
@@ -28,7 +27,6 @@ describe("parseHostInventory", () => {
           "2026-01-01T00:00:00Z",
           0.45,
           0.72,
-          0.31,
           120,
         ],
         [
@@ -40,7 +38,6 @@ describe("parseHostInventory", () => {
           "2026-01-01T00:01:00Z",
           0.2,
           0.55,
-          0.45,
           250,
         ],
       ],
@@ -73,11 +70,10 @@ describe("parseHostInventory", () => {
         { name: "last_seen", type: "date" },
         { name: "cpu_utilization", type: "double" },
         { name: "memory_utilization", type: "double" },
-        { name: "disk_utilization", type: "double" },
         { name: "process_count", type: "long" },
       ],
       values: [
-        ["mac-1", "dev-mac", "darwin", "macOS", "14.1", "2026-01-01T00:00:00Z", 0.3, 0.5, 0.2, 80],
+        ["mac-1", "dev-mac", "darwin", "macOS", "14.1", "2026-01-01T00:00:00Z", 0.3, 0.5, 80],
       ],
     };
 
@@ -107,7 +103,6 @@ describe("parseHostInventory", () => {
     expect(rows).toHaveLength(1);
     expect(rows[0].cpuUtilization).toBeNull();
     expect(rows[0].memoryUtilization).toBeNull();
-    expect(rows[0].diskUtilization).toBeNull();
     expect(rows[0].processCount).toBeNull();
   });
 
@@ -122,7 +117,6 @@ describe("parseHostInventory", () => {
         { name: "last_seen", type: "date" },
         { name: "cpu_utilization", type: "double" },
         { name: "memory_utilization", type: "double" },
-        { name: "disk_utilization", type: "double" },
         { name: "process_count", type: "long" },
       ],
       values: [
@@ -135,7 +129,6 @@ describe("parseHostInventory", () => {
           "2026-01-01T00:00:00Z",
           0.1,
           0.3,
-          0.2,
           50,
         ],
       ],

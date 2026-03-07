@@ -80,29 +80,19 @@ describe("toHostRef", () => {
     expect(ref.displayName).toBe("my-host");
   });
 
-  it("falls back to agentId when host.id and host.name are missing", () => {
-    const ref = toHostRef(null, null, "linux", { agentId: "agent-abc" });
-    expect(ref.hostId).toBe("agent-abc");
+  it("falls back to hostIp when host.id and host.name are missing", () => {
+    const ref = toHostRef(null, null, "linux", "10.0.0.1");
+    expect(ref.hostId).toBe("10.0.0.1");
     expect(ref.displayName).toBe("unknown");
   });
 
-  it("falls back to cloudInstanceId when host.id, host.name, and agentId are missing", () => {
-    const ref = toHostRef(null, null, "linux", { cloudInstanceId: "i-12345" });
-    expect(ref.hostId).toBe("i-12345");
-  });
-
-  it("falls back to hostIp when all other identifiers are missing", () => {
-    const ref = toHostRef(null, null, null, { hostIp: "10.0.0.1" });
-    expect(ref.hostId).toBe("10.0.0.1");
-  });
-
-  it("prefers host.id over identity hints", () => {
-    const ref = toHostRef("host-123", null, "linux", { agentId: "agent-abc" });
+  it("prefers host.id over hostIp", () => {
+    const ref = toHostRef("host-123", null, "linux", "10.0.0.1");
     expect(ref.hostId).toBe("host-123");
   });
 
-  it("prefers host.name::osType over identity hints", () => {
-    const ref = toHostRef(null, "my-host", "linux", { agentId: "agent-abc" });
+  it("prefers host.name::osType over hostIp", () => {
+    const ref = toHostRef(null, "my-host", "linux", "10.0.0.1");
     expect(ref.hostId).toBe("my-host::linux");
   });
 });

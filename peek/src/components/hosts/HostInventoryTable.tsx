@@ -87,9 +87,7 @@ export default function HostInventoryTable({
               }}
             >
               <TableCell onClick={(event) => event.stopPropagation()}>
-                <HostLink
-                  hostRef={toHostRef(row.hostId, row.hostName, row.osType, row.hostIp)}
-                />
+                <HostLink hostRef={toHostRef(row.hostId, row.hostName, row.osType, row.hostIp)} />
               </TableCell>
               <TableCell>
                 <Chip label={osLabel(row.osType)} size="small" variant="outlined" />
