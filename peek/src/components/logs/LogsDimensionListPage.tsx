@@ -92,7 +92,8 @@ export default function LogsDimensionListPage({
     ? rows.filter((r) => r.value.toLowerCase().includes(search.trim().toLowerCase()))
     : rows;
 
-  const dimensionLabel = LOGS_DIMENSION_LABELS[dimension];
+  const { singular: dimensionLabel, plural: dimensionPluralLabel } =
+    LOGS_DIMENSION_LABELS[dimension];
   const noData = rows.length === 0;
   const emptyHeading = noData
     ? `No ${dimensionLabel.toLowerCase()} data found`
@@ -108,7 +109,7 @@ export default function LogsDimensionListPage({
           Back
         </Button>
         <Box>
-          <Typography variant="h6">{dimensionLabel}s</Typography>
+          <Typography variant="h6">{dimensionPluralLabel}</Typography>
           <Typography variant="body2" color="text.secondary">
             Ranked by log volume &mdash; click to explore in Query Lab
           </Typography>
