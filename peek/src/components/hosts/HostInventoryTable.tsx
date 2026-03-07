@@ -14,7 +14,7 @@ import HostLink from "./HostLink";
 import { fmtPct, fmtCount, fmtTimestamp } from "./hostFormatters";
 
 interface Column {
-  id: string;
+  id: keyof HostRow;
   label: string;
   align?: "left" | "right";
 }
@@ -31,9 +31,9 @@ const COLUMNS: Column[] = [
 
 interface HostInventoryTableProps {
   hostRows: HostRow[];
-  sortField: string;
+  sortField: keyof HostRow;
   sortDirection: HostSortDirection;
-  handleSort: (field: string) => void;
+  handleSort: (field: keyof HostRow) => void;
   onRowClick?: (row: HostRow) => void;
 }
 

@@ -144,4 +144,38 @@ describe("parseHostInventory", () => {
     const rows = parseHostInventory(data);
     expect(rows[0].hostId).toBe("web-1::linux");
   });
+
+  it("falls back to host_id alias when host.id column is missing", () => {
+    const data: EsqlResponse = {
+      columns: [
+        { name: "host_id", type: "keyword" },
+        { name: "host_name", type: "keyword" },
+        { name: "os_type", type: "keyword" },
+        { name: "os_name", type: "keyword" },
+        { name: "os_version", type: "keyword" },
+        { name: "last_seen", type: "date" },
+        { name: "cpu_utilization", type: "double" },
+        { name: "memory_utilization", type: "double" },
+        { name: "disk_utilization", type: "double" },
+        { name: "process_count", type: "long" },
+      ],
+      values: [
+        [
+          "alias-id-1",
+          "api-1",
+          "linux",
+          "Ubuntu",
+          "24.04",
+          "2026-01-01T00:00:00Z",
+          0.2,
+          0.3,
+          0.4,
+          60,
+        ],
+      ],
+    };
+
+    const rows = parseHostInventory(data);
+    expect(rows[0].hostId).toBe("alias-id-1");
+  });
 });

@@ -10,6 +10,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import SearchOffIcon from "@mui/icons-material/SearchOff";
 
 import { useEsqlQuery } from "../../hooks/useEsqlQuery";
 import { useConnectionStore } from "../../store/useConnectionStore";
@@ -125,6 +126,7 @@ export default function HostDetailPage() {
       {!loading && !hostRow && (
         <Paper variant="outlined" sx={{ flex: 1, minHeight: 200, overflow: "auto" }}>
           <EmptyState
+            icon={<SearchOffIcon />}
             heading="No host data loaded"
             description="Click Load Host Data to fetch the latest snapshot for this host."
           />

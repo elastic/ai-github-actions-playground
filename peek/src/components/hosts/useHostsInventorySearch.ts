@@ -40,12 +40,12 @@ export function useHostsInventorySearch(osTypeOverride?: HostOsType) {
     [queryClient, cacheKey],
   );
 
-  const [sortField, setSortField] = useState<string>("lastSeen");
+  const [sortField, setSortField] = useState<keyof HostRow>("lastSeen");
   const [sortDirection, setSortDirection] = useState<HostSortDirection>("desc");
   const latestQueryRef = useRef<string | null>(null);
 
   const handleSort = useCallback(
-    (field: string) => {
+    (field: keyof HostRow) => {
       if (field === sortField) {
         setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
       } else {
@@ -86,7 +86,7 @@ export function useHostsInventorySearch(osTypeOverride?: HostOsType) {
     const queryFilters: HostQueryFilters = {
       timeFrom: filters.timeFrom,
       timeTo: filters.timeTo,
-      osType: effectiveOsType as HostOsType | undefined,
+      osType: effectiveOsType,
       search: filters.search || undefined,
     };
     const query = buildHostInventoryQuery(queryFilters);
@@ -124,10 +124,10 @@ export function useHostsInventorySearch(osTypeOverride?: HostOsType) {
   };
 }
 
-function sortRows<T>(rows: T[], field: string, direction: HostSortDirection): T[] {
+function sortRows(rows: HostRow[], field: keyof HostRow, direction: HostSortDirection): HostRow[] {
   return rows.slice().sort((a, b) => {
-    const aVal = (a as Record<string, unknown>)[field];
-    const bVal = (b as Record<string, unknown>)[field];
+    const aVal = a[field];
+    const bVal = b[field];
     if (aVal == null && bVal == null) return 0;
     if (aVal == null) return 1;
     if (bVal == null) return -1;

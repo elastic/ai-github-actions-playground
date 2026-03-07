@@ -70,5 +70,11 @@ export function osLabel(osType: HostOsType): string {
       return "macOS";
     case "unknown":
       return "Unknown";
+    default:
+      return assertUnreachable(osType);
   }
+}
+
+function assertUnreachable(value: never): never {
+  throw new Error(`Unhandled host OS type: ${String(value)}`);
 }
