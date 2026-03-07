@@ -16,6 +16,7 @@ import { useSearchPanelUIStore } from "../../src/store/useSearchPanelUIStore";
 import { useApiConsoleStore } from "../../src/store/useApiConsoleStore";
 import { usePageContextStore } from "../../src/store/usePageContextStore";
 import { useLogsStore } from "../../src/store/useLogsStore";
+import { usePackageBuilderStore } from "../../src/store/usePackageBuilderStore";
 
 /**
  * Each entry pairs a store's display name with the reset method name it exposes.
@@ -65,6 +66,7 @@ const STORES_WITH_RESET_API = [
   { name: "useApiConsoleStore", store: useApiConsoleStore, method: "resetApiConsoleState" },
   { name: "usePageContextStore", store: usePageContextStore, method: "resetPageContext" },
   { name: "useLogsStore", store: useLogsStore, method: "reset" },
+  { name: "usePackageBuilderStore", store: usePackageBuilderStore, method: "reset" },
 ] as const;
 
 describe("storeResetters registry", () => {
