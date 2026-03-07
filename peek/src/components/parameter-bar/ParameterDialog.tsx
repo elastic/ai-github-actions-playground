@@ -31,6 +31,7 @@ import { EMPTY_PARAM, formatValueForInput, parseParameterValue } from "./paramet
 interface ParameterDialogProps {
   open: boolean;
   editing: DashboardParameter | null;
+  activeProfileId: string | null;
   connection: ElasticsearchConnection | null;
   parameters: DashboardParameter[];
   onClose: () => void;
@@ -223,6 +224,7 @@ function toFormValues(param: DashboardParameter | null): ParameterDialogFormValu
 export default function ParameterDialog({
   open,
   editing,
+  activeProfileId,
   connection,
   parameters,
   onClose,
@@ -244,10 +246,12 @@ export default function ParameterDialog({
   // Stable query key for the ES|QL preview query
   const previewQueryKey = [
     "parameter-preview",
+    activeProfileId,
     connection?.url,
     watchedSourceQuery,
     parameters,
   ] as const;
+  const hasSourceQueryError = watchedSourceMode === "esql" && Boolean(formState.errors.sourceQuery);
 
   const {
     data: esqlOptions = [],
@@ -511,8 +515,11 @@ export default function ParameterDialog({
               <Button
                 size="small"
                 variant="outlined"
-                onClick={() => void fetchEsqlOptions()}
-                disabled={esqlLoading || !connection}
+                onClick={() => {
+                  if (hasSourceQueryError) return;
+                  void fetchEsqlOptions();
+                }}
+                disabled={esqlLoading || !connection || hasSourceQueryError}
               >
                 {esqlLoading ? <CircularProgress size={16} /> : "Preview options"}
               </Button>

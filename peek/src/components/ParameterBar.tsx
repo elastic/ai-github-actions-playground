@@ -27,6 +27,7 @@ export default function ParameterBar() {
       })),
     );
   const connection = useConnectionStore((s) => s.connection);
+  const activeProfileId = useConnectionStore((s) => s.activeProfileId);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<DashboardParameter | null>(null);
@@ -106,6 +107,7 @@ export default function ParameterBar() {
           <ParameterControl
             key={`${param.name}:${param.type}:${String(param.value)}`}
             param={param}
+            activeProfileId={activeProfileId}
             connection={connection}
             parameters={parameters}
             onChange={(val) => setParameterValue(param.name, val)}
@@ -124,6 +126,7 @@ export default function ParameterBar() {
       <ParameterDialog
         open={dialogOpen}
         editing={editing}
+        activeProfileId={activeProfileId}
         connection={connection}
         parameters={parameters}
         onClose={() => setDialogOpen(false)}

@@ -24,6 +24,7 @@ import { parseParameterValue, formatValueForInput } from "./parameterUtils";
 
 interface ParameterControlProps {
   param: DashboardParameter;
+  activeProfileId: string | null;
   connection: ReturnType<typeof useConnectionStore.getState>["connection"];
   parameters: DashboardParameter[];
   onChange: (value: DashboardParameter["value"]) => void;
@@ -33,6 +34,7 @@ interface ParameterControlProps {
 
 export default function ParameterControl({
   param,
+  activeProfileId,
   connection,
   parameters,
   onChange,
@@ -46,7 +48,7 @@ export default function ParameterControl({
   // Fetch options from ES|QL when source mode is esql
   const esqlQuery = param.source.mode === "esql" ? param.source.query : "";
   const { data: esqlOptions = [] } = useQuery<string[]>({
-    queryKey: ["parameter-options", connection?.url, esqlQuery, parameters],
+    queryKey: ["parameter-options", activeProfileId, connection?.url, esqlQuery, parameters],
     queryFn: async ({ signal }) => {
       const datasource = createPersesEsqlDatasource(connection!);
       const request = buildPersesEsqlRequest(esqlQuery, { parameters });
