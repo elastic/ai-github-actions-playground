@@ -4,7 +4,7 @@ import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
-import CircularProgress from "@mui/material/CircularProgress";
+import LoadingButton from "./LoadingButton";
 import Divider from "@mui/material/Divider";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
@@ -107,9 +107,9 @@ export default function ApiKeysPage() {
       title="API Keys"
       actions={
         <>
-          <Button size="small" variant="outlined" onClick={refresh} disabled={loading}>
-            {loading ? <CircularProgress size={16} /> : "Refresh"}
-          </Button>
+          <LoadingButton size="small" variant="outlined" onClick={refresh} loading={loading}>
+            Refresh
+          </LoadingButton>
           <Button size="small" variant="contained" onClick={() => void copyQuery()}>
             {copied ? "Copied" : "Copy API call"}
           </Button>

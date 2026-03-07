@@ -4,7 +4,7 @@ import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
-import CircularProgress from "@mui/material/CircularProgress";
+import LoadingButton from "./LoadingButton";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
@@ -142,7 +142,7 @@ export default function ClusterOverviewPage() {
                 prompt="Based on the current cluster state, what are the top 3 things I should investigate or optimize?"
                 label="What should I look at?"
               />
-              <Button
+              <LoadingButton
                 size="small"
                 variant="outlined"
                 onClick={() => {
@@ -150,11 +150,11 @@ export default function ClusterOverviewPage() {
                   refresh();
                   refreshLocalChecks();
                 }}
-                startIcon={loading ? <CircularProgress size={14} aria-hidden="true" /> : undefined}
+                loading={loading}
                 aria-label={loading ? "Refreshing cluster overview" : "Refresh cluster overview"}
               >
                 {loading ? "Refreshing..." : "Refresh"}
-              </Button>
+              </LoadingButton>
             </>
           }
         />

@@ -4,7 +4,7 @@ import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
-import CircularProgress from "@mui/material/CircularProgress";
+import LoadingButton from "./LoadingButton";
 import Divider from "@mui/material/Divider";
 import Drawer from "@mui/material/Drawer";
 import Paper from "@mui/material/Paper";
@@ -372,18 +372,15 @@ export default function DataStreamsPage() {
             title="Data Streams"
             actions={
               <>
-                <Button
+                <LoadingButton
                   size="small"
                   variant="outlined"
                   onClick={streamsResult.refresh}
-                  disabled={loadingStreams}
-                  startIcon={
-                    loadingStreams ? <CircularProgress size={14} aria-hidden="true" /> : undefined
-                  }
+                  loading={loadingStreams}
                   aria-label={loadingStreams ? "Refreshing data streams" : "Refresh data streams"}
                 >
                   {loadingStreams ? "Refreshing..." : "Refresh"}
-                </Button>
+                </LoadingButton>
                 <Button
                   size="small"
                   variant="contained"
@@ -833,9 +830,7 @@ export default function DataStreamsPage() {
                           </Stack>
                         ))}
                       {!loadingFields && fieldRows.length === 0 && displayedDataStream && (
-                        <Typography variant="body2" color="text.secondary">
-                          No fields found for this data stream.
-                        </Typography>
+                        <EmptyState size="small" heading="No fields found for this data stream." />
                       )}
                     </Box>
                   )}
