@@ -240,8 +240,11 @@ curl -fsSL -o "$install_script" https://raw.githubusercontent.com/fluent/fluent-
 echo "Reviewing installer script before execution"
 cat "$install_script"
 printf "Press Enter to proceed with installation, or Ctrl+C to abort..."
-read -r _
-sh "$install_script"
+if read -r _; then
+  sh "$install_script"
+else
+  printf '\nInstallation aborted: no interactive confirmation received.\n' >&2
+fi
 
 echo "Step 2: Save the configuration above as /etc/fluent-bit/fluent-bit.conf"
 
