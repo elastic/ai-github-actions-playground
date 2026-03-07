@@ -11,6 +11,10 @@ import { useTheme } from "@mui/material/styles";
 import StorageIcon from "@mui/icons-material/Storage";
 
 import type { ClusterHealthData } from "../../hooks/useClusterHealthData";
+import {
+  NODE_PERMISSION_HEADING,
+  NODE_PERMISSION_DESCRIPTION,
+} from "../../constants/nodePermissions";
 import EmptyState from "../EmptyState";
 
 import type { InfoCardSeverity } from "./InfoCard";
@@ -117,8 +121,8 @@ export default function NodeDetailTable({ data }: NodeDetailTableProps) {
     return (
       <EmptyState
         icon={<StorageIcon sx={{ mb: 0.5, color: "text.secondary", fontSize: 48 }} />}
-        heading="No node data available"
-        description="Node stats require the monitor cluster privilege. Contact your administrator to grant access."
+        heading={NODE_PERMISSION_HEADING}
+        description={NODE_PERMISSION_DESCRIPTION}
       />
     );
   }

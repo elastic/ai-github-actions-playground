@@ -18,6 +18,8 @@ import Typography from "@mui/material/Typography";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ErrorIcon from "@mui/icons-material/Error";
 import MemoryIcon from "@mui/icons-material/Memory";
+
+import { NODE_PERMISSION_HEADING, NODE_PERMISSION_DESCRIPTION } from "../constants/nodePermissions";
 import WarningIcon from "@mui/icons-material/Warning";
 
 import { useClusterOverview } from "../hooks/useClusterOverview";
@@ -238,10 +240,10 @@ export default function NodesPage() {
           {rows.length === 0 && !loading && (partialErrors.length === 0 || nodeDataUnavailable) ? (
             <EmptyState
               icon={<MemoryIcon sx={{ fontSize: 28 }} />}
-              heading={nodeDataUnavailable ? "Node data unavailable" : "No nodes found"}
+              heading={nodeDataUnavailable ? NODE_PERMISSION_HEADING : "No nodes found"}
               description={
                 nodeDataUnavailable
-                  ? "Node APIs are unavailable for this cluster or current permissions."
+                  ? NODE_PERMISSION_DESCRIPTION
                   : "No node metadata is currently available."
               }
             />
