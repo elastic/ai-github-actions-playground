@@ -31,7 +31,9 @@ import DescriptionIcon from "@mui/icons-material/Description";
 
 import type { UserCapabilities } from "../services/es";
 
+const PackageBuilderPage = lazy(() => import("../components/PackageBuilderPage"));
 const ApiConsolePage = lazy(() => import("../components/ApiConsolePage"));
+
 const ApiKeysPage = lazy(() => import("../components/ApiKeysPage"));
 const ChatPage = lazy(() => import("../components/ChatPage"));
 const ClusterCapacityPage = lazy(() => import("../components/ClusterCapacityPage"));
@@ -524,6 +526,19 @@ export const PAGE_MANIFEST = {
       order: 10,
       showInSidebar: true,
       icon: createElement(RocketLaunchIcon, { fontSize: "small" }),
+    },
+  },
+  packageBuilder: {
+    path: "/package-builder",
+    component: PackageBuilderPage,
+    requiresConnection: true,
+    showTimeControls: false,
+    skeletonVariant: "list",
+    nav: {
+      label: "Package Builder",
+      group: "System",
+      order: 17,
+      showInSidebar: false,
     },
   },
   dataStreams: {
