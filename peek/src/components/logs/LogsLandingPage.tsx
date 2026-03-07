@@ -1,6 +1,8 @@
 import { useCallback } from "react";
 import { parseAsString, useQueryState } from "nuqs";
+import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
 import CardActionArea from "@mui/material/CardActionArea";
 import CardContent from "@mui/material/CardContent";
@@ -96,6 +98,20 @@ export default function LogsLandingPage() {
   const handleBack = useCallback(async () => {
     await setUrlDimension(null);
   }, [setUrlDimension]);
+
+  if (dimension && !connection) {
+    return (
+      <Paper variant="outlined" sx={{ p: 3 }}>
+        <Alert severity="info" sx={{ mb: 2 }}>
+          Connect to Elasticsearch to browse {LOGS_DIMENSION_LABELS[dimension].plural.toLowerCase()}
+          .
+        </Alert>
+        <Button variant="outlined" size="small" onClick={() => void handleBack()}>
+          Back
+        </Button>
+      </Paper>
+    );
+  }
 
   // Step 2: Show dimension list
   if (dimension && connection) {

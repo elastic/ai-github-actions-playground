@@ -152,6 +152,7 @@ export const PAGE_MANIFEST = {
       group: "Data",
       order: 31,
       showInSidebar: false,
+      icon: createElement(SubjectIcon, { fontSize: "small" }),
     },
   },
   explore: {

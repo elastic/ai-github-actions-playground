@@ -57,6 +57,9 @@ export default function LogsDimensionListPage({
       const result = await client.query({ query }, controller.signal);
       const dimCol = result.columns.findIndex((c) => c.name === dimension);
       const countCol = result.columns.findIndex((c) => c.name === "count");
+      if (dimCol < 0 || countCol < 0) {
+        throw new Error(`Unexpected response: missing ${dimension} or count column`);
+      }
       const parsed: ValueRow[] = result.values
         .map((row) => ({
           value: String(row[dimCol] ?? ""),
