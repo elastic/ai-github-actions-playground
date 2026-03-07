@@ -7,13 +7,15 @@ import WatcherGetWatchPage from "../../src/components/WatcherGetWatchPage";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { resetAllStores } from "../fixtures/test-utils";
 
-const { getWatcherWatchMock } = vi.hoisted(() => ({
+const { getWatcherWatchMock, queryWatcherWatchesMock } = vi.hoisted(() => ({
   getWatcherWatchMock: vi.fn(),
+  queryWatcherWatchesMock: vi.fn(),
 }));
 
 vi.mock("../../src/services/es", () => ({
   ElasticsearchClient: vi.fn().mockImplementation(() => ({
     getWatcherWatch: getWatcherWatchMock,
+    queryWatcherWatches: queryWatcherWatchesMock,
   })),
   isElasticsearchError: (error: unknown) => {
     if (typeof error !== "object" || error === null) return false;
@@ -25,6 +27,7 @@ vi.mock("../../src/services/es", () => ({
 describe("WatcherGetWatchPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    queryWatcherWatchesMock.mockResolvedValue({ count: 0, watches: [] });
     resetAllStores();
     useConnectionStore
       .getState()
@@ -69,5 +72,34 @@ describe("WatcherGetWatchPage", () => {
     await user.click(screen.getByRole("button", { name: /get watch/i }));
 
     await screen.findByText(/Watch "missing_watch" not found\./i);
+  });
+
+  it("lists watches from query endpoint and loads one on click", async () => {
+    const user = userEvent.setup();
+    queryWatcherWatchesMock.mockResolvedValue({
+      count: 2,
+      watches: [
+        { _id: "z_watch", status: { execution_state: "executed" } },
+        { _id: "a_watch", status: { execution_state: "awaits_execution" } },
+      ],
+    });
+    getWatcherWatchMock.mockResolvedValue({
+      found: true,
+      _id: "a_watch",
+      status: { state: { active: true }, execution_state: "awaits_execution" },
+      watch: { metadata: { owner: "ops" } },
+    });
+
+    render(
+      <MemoryRouter>
+        <WatcherGetWatchPage />
+      </MemoryRouter>,
+    );
+
+    const watchRow = await screen.findByText("a_watch");
+    await user.click(watchRow);
+
+    await screen.findByText(/"a_watch"/i);
+    expect(getWatcherWatchMock).toHaveBeenCalledWith("a_watch");
   });
 });

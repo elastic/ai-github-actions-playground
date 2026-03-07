@@ -47,7 +47,7 @@ import type {
 } from "./securityTypes";
 import type { GetIngestPipelinesResponse, SimulateIngestPipelineResponse } from "./ingestTypes";
 import type { ProfilingTopFunctionsRequest } from "./profilingTypes";
-import type { GetWatchResponse } from "./watcherTypes";
+import type { GetWatchResponse, QueryWatchesRequest, QueryWatchesResponse } from "./watcherTypes";
 
 // ---------------------------------------------------------------------------
 // Re-export domain types so existing `import … from "./client"` keeps working.
@@ -125,7 +125,7 @@ export type {
 } from "./ingestTypes";
 
 export type { ProfilingTopFunctionsRequest } from "./profilingTypes";
-export type { GetWatchResponse } from "./watcherTypes";
+export type { GetWatchResponse, QueryWatchesRequest, QueryWatchesResponse } from "./watcherTypes";
 
 // ---------------------------------------------------------------------------
 // Types that are NOT in the OpenAPI spec (our own)
@@ -658,6 +658,17 @@ export class ElasticsearchClient {
 
   async getWatcherWatch(id: string, signal?: AbortSignal): Promise<GetWatchResponse> {
     return this._fetch<GetWatchResponse>(`/_watcher/watch/${encodeURIComponent(id)}`, { signal });
+  }
+
+  async queryWatcherWatches(
+    request: QueryWatchesRequest = {},
+    signal?: AbortSignal,
+  ): Promise<QueryWatchesResponse> {
+    return this._fetch<QueryWatchesResponse>("/_watcher/_query/watches", {
+      method: "POST",
+      body: JSON.stringify(request),
+      signal,
+    });
   }
 
   // -------------------------------------------------------------------------
