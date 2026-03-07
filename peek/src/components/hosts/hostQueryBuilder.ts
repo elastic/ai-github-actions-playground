@@ -14,6 +14,11 @@ export interface HostQueryFilters {
   search?: string;
 }
 
+/** Escapes a string for safe embedding in an ES|QL double-quoted literal. */
+function escapeEsql(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+}
+
 /**
  * Builds an ES|QL query that returns one row per host with the latest
  * snapshot metrics.
@@ -30,7 +35,7 @@ export function buildHostInventoryQuery(filters: HostQueryFilters): string {
   }
 
   if (filters.search) {
-    const escaped = filters.search.replace(/"/g, '\\"');
+    const escaped = escapeEsql(filters.search);
     whereConditions.push(`host.name LIKE "*${escaped}*"`);
   }
 
@@ -55,7 +60,7 @@ export function buildHostInventoryQuery(filters: HostQueryFilters): string {
  * latest snapshot of all available metrics.
  */
 export function buildHostDetailQuery(hostId: string, filters: HostQueryFilters): string {
-  const escaped = hostId.replace(/"/g, '\\"');
+  const escaped = escapeEsql(hostId);
   return `FROM metrics-hostmetricsreceiver*
 | WHERE @timestamp >= ${filters.timeFrom}
   AND @timestamp <= ${filters.timeTo}

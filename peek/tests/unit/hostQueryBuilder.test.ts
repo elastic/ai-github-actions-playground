@@ -73,4 +73,12 @@ describe("buildHostDetailQuery", () => {
     });
     expect(query).toContain('host.id == "host\\"evil"');
   });
+
+  it("escapes backslashes in hostId", () => {
+    const query = buildHostDetailQuery("host\\path", {
+      timeFrom: "NOW() - 5 minutes",
+      timeTo: "NOW()",
+    });
+    expect(query).toContain('host.id == "host\\\\path"');
+  });
 });

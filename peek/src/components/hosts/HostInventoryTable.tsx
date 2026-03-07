@@ -11,6 +11,7 @@ import type { HostRow } from "./hostTypes";
 import { osLabel, toHostRef } from "./hostTypes";
 import type { HostSortDirection } from "./useHostsInventorySearch";
 import HostLink from "./HostLink";
+import { fmtPct, fmtCount, fmtTimestamp } from "./hostFormatters";
 
 interface Column {
   id: string;
@@ -27,25 +28,6 @@ const COLUMNS: Column[] = [
   { id: "diskUtilization", label: "Disk %", align: "right" },
   { id: "processCount", label: "Processes", align: "right" },
 ];
-
-function fmtPct(value: number | null): string {
-  if (value == null) return "—";
-  return `${(value * 100).toFixed(1)}%`;
-}
-
-function fmtCount(value: number | null): string {
-  if (value == null) return "—";
-  return value.toLocaleString();
-}
-
-function fmtTimestamp(value: string): string {
-  if (!value) return "—";
-  try {
-    return new Date(value).toLocaleString();
-  } catch {
-    return value;
-  }
-}
 
 interface HostInventoryTableProps {
   hostRows: HostRow[];
