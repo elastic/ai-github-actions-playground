@@ -17,6 +17,7 @@ import Typography from "@mui/material/Typography";
 import { useHealthChecks } from "../hooks/useHealthChecks";
 import type { EvaluatedHealthCheck, HealthSeverity, HealthStatus } from "../health-checks";
 
+import EmptyState from "./EmptyState";
 import PageHeader from "./PageHeader";
 
 const SEVERITY_ORDER: Record<HealthSeverity, number> = {
@@ -37,6 +38,11 @@ export default function GlobalHealthPage() {
   const navigate = useNavigate();
   const { checks, loading, error, refresh, lastUpdatedAt } = useHealthChecks({ surface: "global" });
   const [selectedCheck, setSelectedCheck] = useState<EvaluatedHealthCheck | null>(null);
+  const formattedLastUpdated = useMemo(() => {
+    if (!lastUpdatedAt) return "never";
+    const date = new Date(lastUpdatedAt);
+    return Number.isNaN(date.getTime()) ? lastUpdatedAt : date.toLocaleString();
+  }, [lastUpdatedAt]);
 
   const orderedChecks = useMemo(
     () =>
@@ -80,7 +86,7 @@ export default function GlobalHealthPage() {
         <Chip color="error" variant="outlined" label={`High: ${failingCounts.high}`} />
         <Chip color="warning" label={`Medium: ${failingCounts.medium}`} />
         <Chip color="default" label={`Low: ${failingCounts.low}`} />
-        <Chip label={`Last updated: ${lastUpdatedAt ?? "never"}`} variant="outlined" />
+        <Chip label={`Last updated: ${formattedLastUpdated}`} variant="outlined" />
       </Stack>
 
       <Paper variant="outlined" sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
@@ -96,34 +102,46 @@ export default function GlobalHealthPage() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {orderedChecks.map((check) => (
-              <TableRow key={check.id} hover>
-                <TableCell>
-                  <Button size="small" onClick={() => setSelectedCheck(check)}>
-                    {check.title}
-                  </Button>
-                </TableCell>
-                <TableCell>{check.domain}</TableCell>
-                <TableCell>
-                  <Chip
+            {orderedChecks.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6}>
+                  <EmptyState
                     size="small"
-                    color={statusColor(check.status)}
-                    label={check.status.toUpperCase()}
+                    heading="No health checks available"
+                    description="Health checks will appear here once data is loaded."
                   />
                 </TableCell>
-                <TableCell>{check.severity ?? "—"}</TableCell>
-                <TableCell>{check.summary}</TableCell>
-                <TableCell align="right">
-                  {check.links?.[0] ? (
-                    <Button size="small" onClick={() => navigate(check.links![0]!.to)}>
-                      {check.links[0]!.label}
-                    </Button>
-                  ) : (
-                    "—"
-                  )}
-                </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              orderedChecks.map((check) => (
+                <TableRow key={check.id} hover>
+                  <TableCell>
+                    <Button size="small" onClick={() => setSelectedCheck(check)}>
+                      {check.title}
+                    </Button>
+                  </TableCell>
+                  <TableCell>{check.domain}</TableCell>
+                  <TableCell>
+                    <Chip
+                      size="small"
+                      color={statusColor(check.status)}
+                      label={check.status.toUpperCase()}
+                    />
+                  </TableCell>
+                  <TableCell>{check.severity ?? "—"}</TableCell>
+                  <TableCell>{check.summary}</TableCell>
+                  <TableCell align="right">
+                    {check.links?.[0] ? (
+                      <Button size="small" onClick={() => navigate(check.links![0]!.to)}>
+                        {check.links[0]!.label}
+                      </Button>
+                    ) : (
+                      "—"
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </Paper>
@@ -133,7 +151,15 @@ export default function GlobalHealthPage() {
         open={Boolean(selectedCheck)}
         onClose={() => setSelectedCheck(null)}
         slotProps={{
-          paper: { sx: { width: { xs: "100%", sm: 520 }, p: 2, gap: 1, display: "flex" } },
+          paper: {
+            sx: {
+              width: { xs: "100%", sm: 520 },
+              p: 2,
+              gap: 1,
+              display: "flex",
+              flexDirection: "column",
+            },
+          },
         }}
       >
         {selectedCheck && (

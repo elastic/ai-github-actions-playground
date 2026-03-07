@@ -198,7 +198,30 @@ describe("ClusterOverviewPage", () => {
     // Fleet section uses server status metrics
     expect(screen.getByText("Total: 10")).toBeInTheDocument();
     expect(screen.getByText("Healthy: 8")).toBeInTheDocument();
+    expect(screen.getByText("Snapshot checks: 0 alerts")).toBeInTheDocument();
     expect(screen.getByText("View Fleet →")).toBeInTheDocument();
+  });
+
+  it("shows snapshot check alerts when local health checks are not passing", async () => {
+    getClusterHealthMock.mockResolvedValue({
+      status: "yellow",
+      number_of_nodes: 3,
+      number_of_data_nodes: 2,
+      active_primary_shards: 12,
+      unassigned_shards: 2,
+    });
+
+    render(
+      <MemoryRouter>
+        <ClusterOverviewPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Snapshot checks: 2 alerts")).toBeInTheDocument();
+    });
+
+    expect(screen.getByText("Cluster health is YELLOW.")).toBeInTheDocument();
   });
 
   it("shows error alert on total failure", async () => {

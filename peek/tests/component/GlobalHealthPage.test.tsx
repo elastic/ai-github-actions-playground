@@ -75,7 +75,7 @@ describe("GlobalHealthPage", () => {
     await user.click(screen.getByRole("button", { name: "Cluster status red" }));
 
     await waitFor(() => {
-      expect(screen.getAllByText("Cluster status red").length).toBeGreaterThan(1);
+      expect(screen.getByRole("heading", { name: "Cluster status red" })).toBeInTheDocument();
     });
   });
 });

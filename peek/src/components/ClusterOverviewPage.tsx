@@ -83,7 +83,12 @@ export default function ClusterOverviewPage() {
   const clusterIndexCount = clusterStats?.indices?.count ?? null;
 
   const fleetTotal = data?.fleetStatus?.total ?? data?.agentInventoryCount ?? null;
-  const { checks: localChecks } = useHealthChecks({
+  const {
+    checks: localChecks,
+    loading: localChecksLoading,
+    error: localChecksError,
+    refresh: refreshLocalChecks,
+  } = useHealthChecks({
     surface: "local",
     checkIds: ["cluster.status.red", "cluster.status.yellow", "cluster.unassigned_shards"],
   });
@@ -143,6 +148,7 @@ export default function ClusterOverviewPage() {
                 onClick={() => {
                   setDismissedPartialErrorsKey(null);
                   refresh();
+                  refreshLocalChecks();
                 }}
                 startIcon={loading ? <CircularProgress size={14} aria-hidden="true" /> : undefined}
                 aria-label={loading ? "Refreshing cluster overview" : "Refresh cluster overview"}
@@ -271,11 +277,23 @@ export default function ClusterOverviewPage() {
                       )}
                       <Chip
                         size="small"
-                        color={nonPassingLocalChecks.length > 0 ? "warning" : "success"}
-                        label={`Snapshot checks: ${nonPassingLocalChecks.length} alert${nonPassingLocalChecks.length === 1 ? "" : "s"}`}
+                        color={
+                          localChecksLoading || localChecksError
+                            ? "default"
+                            : nonPassingLocalChecks.length > 0
+                              ? "warning"
+                              : "success"
+                        }
+                        label={
+                          localChecksLoading
+                            ? "Snapshot checks: loading"
+                            : localChecksError
+                              ? "Snapshot checks: unavailable"
+                              : `Snapshot checks: ${nonPassingLocalChecks.length} alert${nonPassingLocalChecks.length === 1 ? "" : "s"}`
+                        }
                       />
                     </Stack>
-                    {nonPassingLocalChecks[0] ? (
+                    {!localChecksLoading && !localChecksError && nonPassingLocalChecks[0] ? (
                       <Typography variant="body2" color="text.secondary">
                         {nonPassingLocalChecks[0].summary}
                       </Typography>

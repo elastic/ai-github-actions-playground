@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import {
@@ -7,6 +7,7 @@ import {
   HEALTH_SNAPSHOT_TTL_MS,
   healthRegistry,
 } from "../health-checks";
+import { initializeHealthChecks } from "../health-checks/bootstrap";
 import type { EvaluatedHealthCheck, HealthQueryGroup, HealthSurface } from "../health-checks";
 import { ElasticsearchClient } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
@@ -27,6 +28,7 @@ export interface UseHealthChecksResult {
 }
 
 export function useHealthChecks(options: UseHealthChecksOptions): UseHealthChecksResult {
+  initializeHealthChecks();
   const connection = useConnectionStore((s) => s.connection);
 
   const selectedChecks = useMemo(() => {
@@ -37,17 +39,18 @@ export function useHealthChecks(options: UseHealthChecksOptions): UseHealthCheck
   }, [options.surface, options.checkIds]);
 
   const sharedGroups = useMemo(() => {
-    const allSharedChecks = [
-      ...healthRegistry.getBySurface("global"),
-      ...healthRegistry.getBySurface("local"),
-    ];
     return Array.from(
-      new Set(allSharedChecks.flatMap((check) => check.dependsOn)),
+      new Set(selectedChecks.flatMap((check) => check.dependsOn)),
     ) as HealthQueryGroup[];
-  }, []);
+  }, [selectedChecks]);
 
   const query = useQuery({
-    queryKey: ["health-checks", connection?.url, SHARED_HEALTH_SNAPSHOT_KEY],
+    queryKey: [
+      "health-checks",
+      connection?.url,
+      SHARED_HEALTH_SNAPSHOT_KEY,
+      sharedGroups.join(","),
+    ],
     queryFn: async ({ signal }) => {
       if (!connection) throw new Error("No active Elasticsearch connection");
       const client = new ElasticsearchClient(connection);
@@ -66,9 +69,9 @@ export function useHealthChecks(options: UseHealthChecksOptions): UseHealthCheck
     return evaluateHealthChecks(selectedChecks, query.data);
   }, [selectedChecks, query.data]);
 
-  const refresh = () => {
+  const refresh = useCallback(() => {
     void query.refetch();
-  };
+  }, [query.refetch]);
 
   return {
     checks,

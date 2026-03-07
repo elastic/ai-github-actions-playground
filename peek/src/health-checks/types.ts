@@ -29,16 +29,21 @@ export interface HealthSnapshot {
       clusterHealth: ClusterHealthResponse | null;
       pendingTasks: ClusterPendingTasksResponse | null;
     };
+    shards: unknown | null;
+    allocationSample: unknown | null;
     nodesCore: {
       nodeStats: NodesStatsResponse | null;
     };
     tasksCore: {
       tasks: TasksListResponse | null;
     };
+    indicesCore: unknown | null;
+    indexSettings: unknown | null;
     ilmCore: {
       ilmExplain: IlmExplainResponse | null;
       ilmPolicies: IlmPolicyResponse | null;
     };
+    templatesCore: unknown | null;
   }>;
   errors: Partial<Record<HealthQueryGroup, string>>;
 }
@@ -64,6 +69,7 @@ export interface HealthCheckDefinition {
   description: string;
   severityOnFail: HealthSeverity;
   surfaces: HealthSurface[];
+  requiredPrivileges?: string[];
   dependsOn: HealthQueryGroup[];
   evaluate: (snapshot: HealthSnapshot) => HealthCheckResult;
 }

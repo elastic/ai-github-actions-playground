@@ -60,10 +60,10 @@ export function evaluateHealthChecks(
   });
 
   return evaluated.sort((a, b) => {
-    if (a.domain !== b.domain) return a.domain.localeCompare(b.domain);
     const aRank = a.severity ? SEVERITY_RANK[a.severity] : Number.MAX_SAFE_INTEGER;
     const bRank = b.severity ? SEVERITY_RANK[b.severity] : Number.MAX_SAFE_INTEGER;
     if (aRank !== bRank) return aRank - bRank;
+    if (a.domain !== b.domain) return a.domain.localeCompare(b.domain);
     return a.title.localeCompare(b.title);
   });
 }

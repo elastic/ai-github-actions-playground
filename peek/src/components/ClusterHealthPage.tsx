@@ -64,11 +64,7 @@ export default function ClusterHealthPage({ defaultTab = "overview" }: ClusterHe
     setRefreshIntervalMs,
   } = useClusterHealthData();
 
-  const refresh = useCallback(() => {
-    setPartialDismissed(false);
-    rawRefresh();
-  }, [rawRefresh]);
-  const { checks: localChecks } = useHealthChecks({
+  const { checks: localChecks, refresh: refreshLocalChecks } = useHealthChecks({
     surface: "local",
     checkIds: [
       "cluster.pending_tasks.nonzero",
@@ -76,9 +72,12 @@ export default function ClusterHealthPage({ defaultTab = "overview" }: ClusterHe
       "ilm.indices.error",
     ],
   });
-  const localFindings = localChecks.filter(
-    (check) => check.status === "warn" || check.status === "fail",
-  );
+  const refresh = useCallback(() => {
+    setPartialDismissed(false);
+    rawRefresh();
+    refreshLocalChecks();
+  }, [rawRefresh, refreshLocalChecks]);
+  const localFindings = localChecks.filter((check) => check.status !== "pass");
 
   // Publish screen context for AI chat
   const setPageSection = usePageContextStore((s) => s.setPageSection);

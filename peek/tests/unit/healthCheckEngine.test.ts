@@ -59,4 +59,33 @@ describe("evaluateHealthChecks", () => {
     expect(result[0]?.status).toBe("warn");
     expect(result[0]?.severity).toBe("medium");
   });
+
+  it("orders mixed-domain results by severity before domain", () => {
+    const checks: HealthCheckDefinition[] = [
+      {
+        id: "nodes.medium",
+        domain: "nodes",
+        title: "Nodes medium",
+        description: "nodes medium",
+        severityOnFail: "medium",
+        surfaces: ["global"],
+        dependsOn: ["clusterCore"],
+        evaluate: () => ({ status: "warn", summary: "nodes medium warn" }),
+      },
+      {
+        id: "cluster.critical",
+        domain: "cluster",
+        title: "Cluster critical",
+        description: "cluster critical",
+        severityOnFail: "critical",
+        surfaces: ["global"],
+        dependsOn: ["clusterCore"],
+        evaluate: () => ({ status: "fail", summary: "cluster critical fail" }),
+      },
+    ];
+
+    const result = evaluateHealthChecks(checks, BASE_SNAPSHOT);
+
+    expect(result.map((check) => check.id)).toEqual(["cluster.critical", "nodes.medium"]);
+  });
 });
