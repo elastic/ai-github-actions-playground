@@ -449,6 +449,28 @@ test.describe("smoke – site navigation", () => {
     await expect(queryInput).toContainText('service.name == "checkout-service"');
   });
 
+  test("task manager, ILM, and templates pages render with headings", async ({ page }) => {
+    await connectToMockCluster(page);
+
+    // Task Manager
+    await navigateViaSidebar(page, "Tasks");
+    await expect(page.getByRole("heading", { name: "Task Manager" })).toBeVisible({
+      timeout: 10_000,
+    });
+
+    // ILM
+    await navigateViaSidebar(page, "ILM");
+    await expect(page.getByRole("heading", { name: "ILM Troubleshooting" })).toBeVisible({
+      timeout: 10_000,
+    });
+
+    // Templates
+    await navigateViaSidebar(page, "Templates");
+    await expect(page.getByRole("heading", { name: "Templates" })).toBeVisible({
+      timeout: 10_000,
+    });
+  });
+
   test("pages have no axe accessibility violations", async ({ page }, testInfo) => {
     test.setTimeout(90_000); // axe scans 9 pages serially; 30s default is too tight in CI
     await page.goto("");
