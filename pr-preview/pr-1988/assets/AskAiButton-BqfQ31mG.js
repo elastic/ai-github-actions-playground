@@ -1,0 +1,2 @@
+import{j as n,n as u,ck as c}from"./mui-B7_uOiBV.js";import{ax as e,aa as p}from"./index-Dt7Z7hZ2.js";function f({prompt:s,label:o="Ask AI",icon:a=n.jsx(c,{fontSize:"small"}),size:r="small"}){const i=e(t=>!!t.config.apiKey.trim()),l=e(t=>t.setPendingPrompt),m=p(t=>t.setAiPanelOpen);return i?n.jsx(u,{size:r,variant:"text",startIcon:a,onClick:()=>{l(s),m(!0)},children:o}):null}export{f as A};
+//# sourceMappingURL=AskAiButton-BqfQ31mG.js.map
