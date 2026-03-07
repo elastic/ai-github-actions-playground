@@ -24,6 +24,9 @@ export type * from "./securityTypes";
 export type * from "./ingestTypes";
 export type * from "./profilingTypes";
 export type * from "./watcherTypes";
+export type * from "./taskTypes";
+export type * from "./ilmTypes";
+export type * from "./templateTypes";
 
 export {
   buildExplorerQuery,

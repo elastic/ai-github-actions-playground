@@ -14,8 +14,8 @@ permissions:
   contents: write
 
 concurrency:
-  group: pages
-  cancel-in-progress: true
+  group: deploy-gh-pages
+  cancel-in-progress: false
 
 jobs:
   deploy:

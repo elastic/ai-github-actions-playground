@@ -186,7 +186,7 @@ export default function LogsSearchPanel({
                     onUseCaseServicePivot({ serviceName: pivotService.trim() || undefined, topN });
                     setActiveStep(2);
                   }}
-                  sx={{ minHeight: COMPONENT_HEIGHTS.input }}
+                  sx={{ minHeight: COMPONENT_HEIGHTS.input, whiteSpace: "nowrap" }}
                 >
                   Run pivot
                 </Button>

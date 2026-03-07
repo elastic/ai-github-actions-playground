@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Alert from "@mui/material/Alert";
@@ -8,6 +8,7 @@ import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import { InsightSlotProvider } from "../InsightSlotContext";
 import InsightSlot from "../InsightSlot";
 
+import LogsFocusPicker, { type LogsFocusDimension } from "./LogsFocusPicker";
 import LogsSearchPanel from "./LogsSearchPanel";
 import { LOGS_INSIGHT_SLOT_IDS } from "./logsInsightSlots";
 import type { LogsViewMode } from "./logsUtils";
@@ -19,6 +20,7 @@ import ExtractFieldsDialog from "./ExtractFieldsDialog";
 
 export default function LogsPage() {
   const state = useLogsPageState();
+  const [focusChosen, setFocusChosen] = useState(false);
 
   const handleOpenExtractDialogFromCell = useCallback(
     (source: string) => {
@@ -34,6 +36,19 @@ export default function LogsPage() {
       state.setExtractDialogOpen,
     ],
   );
+
+  const handleFocusSelect = useCallback(
+    (dimension: LogsFocusDimension | null) => {
+      setFocusChosen(true);
+      if (dimension) {
+        state.addFilter({ field: dimension, value: "*" });
+      }
+    },
+    [state.addFilter],
+  );
+
+  // Show the focus picker when the user hasn't interacted yet and there are no results
+  const showFocusPicker = !focusChosen && !state.result && !state.loading && !state.error;
 
   return (
     <InsightSlotProvider
@@ -110,6 +125,8 @@ export default function LogsPage() {
         </Stack>
 
         {state.error && <Alert severity="error">{state.error}</Alert>}
+
+        {showFocusPicker && <LogsFocusPicker onSelect={handleFocusSelect} />}
 
         <Box sx={{ flex: 1, width: "100%", minHeight: 0 }}>
           <InsightSlot slotId={LOGS_INSIGHT_SLOT_IDS.logsResults}>
