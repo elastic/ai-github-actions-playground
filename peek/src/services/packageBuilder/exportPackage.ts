@@ -2,6 +2,12 @@ import JSZip from "jszip";
 import type { PackageBuilderData } from "../../types/packageBuilder";
 import { generateManifest, generateChangelog } from "./generateManifest";
 
+function iconExtensionFromMimeType(mimeType: string | undefined): "svg" | "png" | "jpg" {
+  if (mimeType === "image/png") return "png";
+  if (mimeType === "image/jpeg") return "jpg";
+  return "svg";
+}
+
 export async function exportPackageZip(data: PackageBuilderData): Promise<Blob> {
   const zip = new JSZip();
   const fullName = data.identity.name.endsWith("_input_otel")
@@ -24,7 +30,8 @@ export async function exportPackageZip(data: PackageBuilderData): Promise<Blob> 
 
   // img/ (icon if present)
   if (data.identity.icon) {
-    root.file(`img/logo_${data.identity.name}.svg`, data.identity.icon.rawBytes);
+    const iconExt = iconExtensionFromMimeType(data.identity.icon.mimeType);
+    root.file(`img/logo_${data.identity.name}.${iconExt}`, data.identity.icon.rawBytes);
   }
 
   return zip.generateAsync({ type: "blob" });

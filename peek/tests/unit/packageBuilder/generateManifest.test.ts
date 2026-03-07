@@ -1,6 +1,9 @@
 import { describe, it, expect } from "vitest";
 import YAML from "yaml";
-import { generateManifest, generateChangelog } from "../../../src/services/packageBuilder/generateManifest";
+import {
+  generateManifest,
+  generateChangelog,
+} from "../../../src/services/packageBuilder/generateManifest";
 import type { PackageBuilderData } from "../../../src/types/packageBuilder";
 
 function makeData(overrides: Partial<PackageBuilderData> = {}): PackageBuilderData {
@@ -216,6 +219,18 @@ describe("generateManifest", () => {
     const parsed = YAML.parse(generateManifest(data));
     expect(parsed.icons).toHaveLength(1);
     expect(parsed.icons[0].src).toBe("/img/logo_redis.svg");
+  });
+
+  it("uses icon extension from mime type", () => {
+    const data = makeData();
+    data.identity.icon = {
+      name: "logo.png",
+      dataUrl: "data:image/png;base64,abc",
+      rawBytes: new Uint8Array([1, 2, 3]),
+      mimeType: "image/png",
+    };
+    const parsed = YAML.parse(generateManifest(data));
+    expect(parsed.icons[0].src).toBe("/img/logo_redis.png");
   });
 });
 

@@ -60,9 +60,10 @@ Most pages in this app require an Elasticsearch connection. The dev server start
 
 **Rules:**
 - **NEVER** attach a screenshot of the Welcome page, Connect dialog, or Dashboards page unless your PR specifically changes those pages.
-- If your change is on a page that requires an Elasticsearch connection (most pages do), **do NOT take a screenshot**. Instead, describe the visual change in the PR body with enough detail for a reviewer to understand it.
+- If your change is on a page that requires an Elasticsearch connection, first try `scripts/screenshot-feature.mjs` so the screenshot captures the actual feature with mocked Elasticsearch responses.
+- Only fall back to a text description in the PR body when a faithful mocked screenshot cannot be produced.
 - Only take a screenshot if the page you changed is accessible WITHOUT an Elasticsearch connection (e.g., Package Builder, Settings, Add Data wizard step 1).
-- If you are unsure whether the page requires a connection, check `requiresConnection` in `peek/src/routes/manifest.ts` for that page's entry. If `requiresConnection: true` (or not set), do NOT screenshot it.
+- If you are unsure whether the page requires a connection, check `requiresConnection` in `peek/src/routes/manifest.ts` for that page's entry. If `requiresConnection: true` (or not set), use `scripts/screenshot-feature.mjs` first and only skip screenshots when that path cannot produce an accurate result.
 
 #### Pages that CAN be screenshotted (no connection required)
 
@@ -79,9 +80,9 @@ node scripts/screenshot-preflight.mjs \
 kill $DEV_PID
 ```
 
-#### Pages that CANNOT be screenshotted (connection required)
+#### Pages that need mocked screenshots (connection required)
 
-For these pages, do NOT attempt to take a screenshot. Instead, add a section to the PR body like:
+For these pages, prefer `scripts/screenshot-feature.mjs` with the page key. If that is not possible, run `scripts/screenshot-preflight.mjs` as a diagnostics check and add a section to the PR body like:
 
 ```markdown
 ### Visual Changes

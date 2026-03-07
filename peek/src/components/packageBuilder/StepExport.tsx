@@ -19,9 +19,18 @@ import ErrorIcon from "@mui/icons-material/Error";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 
 import { usePackageBuilderStore } from "../../store/usePackageBuilderStore";
-import { generateManifest, generateChangelog } from "../../services/packageBuilder/generateManifest";
+import {
+  generateManifest,
+  generateChangelog,
+} from "../../services/packageBuilder/generateManifest";
 import { renderTemplate, findUndefinedVars } from "../../services/packageBuilder/renderTemplate";
 import { exportPackageZip, downloadBlob } from "../../services/packageBuilder/exportPackage";
+
+function iconExtensionFromMimeType(mimeType: string | undefined): "svg" | "png" | "jpg" {
+  if (mimeType === "image/png") return "png";
+  if (mimeType === "image/jpeg") return "jpg";
+  return "svg";
+}
 
 interface ValidationItem {
   label: string;
@@ -43,7 +52,11 @@ function useValidation(): ValidationItem[] {
     if (/^[a-z0-9_]+$/.test(identity.name)) {
       items.push({ label: "Package name valid", status: "pass" });
     } else {
-      items.push({ label: "Package name invalid", status: "fail", detail: "Must match ^[a-z0-9_]+$" });
+      items.push({
+        label: "Package name invalid",
+        status: "fail",
+        detail: "Must match ^[a-z0-9_]+$",
+      });
     }
 
     // Version
@@ -80,24 +93,40 @@ function useValidation(): ValidationItem[] {
     // Template renders valid YAML
     const result = renderTemplate(templateContent, variables, {});
     if (result.templateError) {
-      items.push({ label: "Template compilation failed", status: "fail", detail: result.templateError });
+      items.push({
+        label: "Template compilation failed",
+        status: "fail",
+        detail: result.templateError,
+      });
     } else if (result.yamlValid) {
       items.push({ label: "Rendered template is valid YAML", status: "pass" });
     } else {
-      items.push({ label: "Rendered template is invalid YAML", status: "warn", detail: result.yamlError ?? undefined });
+      items.push({
+        label: "Rendered template is invalid YAML",
+        status: "warn",
+        detail: result.yamlError ?? undefined,
+      });
     }
 
     // Undefined vars
     const undef = findUndefinedVars(templateContent, variables);
     if (undef.length > 0) {
-      items.push({ label: "Undefined template variables", status: "warn", detail: undef.join(", ") });
+      items.push({
+        label: "Undefined template variables",
+        status: "warn",
+        detail: undef.join(", "),
+      });
     } else {
       items.push({ label: "All template variables defined", status: "pass" });
     }
 
     // No exporters
     if (/\bexporters\s*:/i.test(templateContent)) {
-      items.push({ label: "Template defines exporters", status: "warn", detail: "Fleet adds exporters automatically" });
+      items.push({
+        label: "Template defines exporters",
+        status: "warn",
+        detail: "Fleet adds exporters automatically",
+      });
     }
 
     // README
@@ -116,7 +145,11 @@ function useValidation(): ValidationItem[] {
 
     // Secret naming
     for (const v of variables) {
-      if (!v.secret && /(?:password|token|secret|_key$)/i.test(v.name) && !/(?:_file$|_url$)/i.test(v.name)) {
+      if (
+        !v.secret &&
+        /(?:password|token|secret|_key$)/i.test(v.name) &&
+        !/(?:_file$|_url$)/i.test(v.name)
+      ) {
         items.push({ label: `Variable "${v.name}" should be secret`, status: "warn" });
       }
     }
@@ -135,6 +168,7 @@ export default function StepExport() {
   const readmeContent = usePackageBuilderStore((s) => s.readmeContent);
 
   const validation = useValidation();
+  const iconExt = iconExtensionFromMimeType(identity.icon?.mimeType);
   const [selectedFile, setSelectedFile] = useState<PreviewFile>("manifest");
   const [exporting, setExporting] = useState(false);
 
@@ -196,10 +230,7 @@ export default function StepExport() {
       </Box>
 
       {/* Validation summary */}
-      <Alert
-        severity={fails > 0 ? "error" : warns > 0 ? "warning" : "success"}
-        sx={{ py: 0.5 }}
-      >
+      <Alert severity={fails > 0 ? "error" : warns > 0 ? "warning" : "success"} sx={{ py: 0.5 }}>
         {passes} passed, {warns} warnings, {fails} errors
       </Alert>
 
@@ -208,29 +239,48 @@ export default function StepExport() {
         <Box sx={{ width: 300, display: "flex", flexDirection: "column", gap: 2 }}>
           {/* File tree */}
           <Paper variant="outlined">
-            <Typography variant="caption" color="text.secondary" sx={{ px: 1.5, pt: 1, display: "block" }}>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ px: 1.5, pt: 1, display: "block" }}
+            >
               Package files
             </Typography>
             <List dense disablePadding>
-              <ListItemButton selected={selectedFile === "manifest"} onClick={() => setSelectedFile("manifest")}>
+              <ListItemButton
+                selected={selectedFile === "manifest"}
+                onClick={() => setSelectedFile("manifest")}
+              >
                 <ListItemIcon sx={{ minWidth: 32 }}>
                   <InsertDriveFileIcon fontSize="small" />
                 </ListItemIcon>
                 <ListItemText primary="manifest.yml" />
               </ListItemButton>
-              <ListItemButton selected={selectedFile === "changelog"} onClick={() => setSelectedFile("changelog")}>
+              <ListItemButton
+                selected={selectedFile === "changelog"}
+                onClick={() => setSelectedFile("changelog")}
+              >
                 <ListItemIcon sx={{ minWidth: 32 }}>
                   <InsertDriveFileIcon fontSize="small" />
                 </ListItemIcon>
                 <ListItemText primary="changelog.yml" />
               </ListItemButton>
-              <ListItemButton selected={selectedFile === "template"} onClick={() => setSelectedFile("template")}>
+              <ListItemButton
+                selected={selectedFile === "template"}
+                onClick={() => setSelectedFile("template")}
+              >
                 <ListItemIcon sx={{ minWidth: 32 }}>
                   <FolderIcon fontSize="small" />
                 </ListItemIcon>
-                <ListItemText primary="agent/input/input.yml.hbs" primaryTypographyProps={{ fontSize: 13 }} />
+                <ListItemText
+                  primary="agent/input/input.yml.hbs"
+                  primaryTypographyProps={{ fontSize: 13 }}
+                />
               </ListItemButton>
-              <ListItemButton selected={selectedFile === "readme"} onClick={() => setSelectedFile("readme")}>
+              <ListItemButton
+                selected={selectedFile === "readme"}
+                onClick={() => setSelectedFile("readme")}
+              >
                 <ListItemIcon sx={{ minWidth: 32 }}>
                   <InsertDriveFileIcon fontSize="small" />
                 </ListItemIcon>
@@ -241,7 +291,10 @@ export default function StepExport() {
                   <ListItemIcon sx={{ minWidth: 32 }}>
                     <ImageIcon fontSize="small" />
                   </ListItemIcon>
-                  <ListItemText primary={`img/logo_${identity.name}.svg`} primaryTypographyProps={{ fontSize: 13 }} />
+                  <ListItemText
+                    primary={`img/logo_${identity.name}.${iconExt}`}
+                    primaryTypographyProps={{ fontSize: 13 }}
+                  />
                 </ListItemButton>
               )}
             </List>
@@ -249,15 +302,25 @@ export default function StepExport() {
 
           {/* Validation checklist */}
           <Paper variant="outlined" sx={{ flex: 1, overflow: "auto" }}>
-            <Typography variant="caption" color="text.secondary" sx={{ px: 1.5, pt: 1, display: "block" }}>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ px: 1.5, pt: 1, display: "block" }}
+            >
               Validation
             </Typography>
             <Stack spacing={0} sx={{ px: 1.5, py: 1 }}>
               {validation.map((item, i) => (
-                <Box key={i} sx={{ display: "flex", alignItems: "flex-start", gap: 0.75, py: 0.25 }}>
-                  {item.status === "pass" && <CheckCircleIcon sx={{ fontSize: 16, color: "success.main", mt: 0.25 }} />}
-                  {item.status === "warn" && <WarningIcon sx={{ fontSize: 16, color: "warning.main", mt: 0.25 }} />}
-                  {item.status === "fail" && <ErrorIcon sx={{ fontSize: 16, color: "error.main", mt: 0.25 }} />}
+                <Box key={i} sx={{ display: "flex", alignItems: "flex-start", gap: 1, py: 0.5 }}>
+                  {item.status === "pass" && (
+                    <CheckCircleIcon sx={{ fontSize: 16, color: "success.main", mt: 0.5 }} />
+                  )}
+                  {item.status === "warn" && (
+                    <WarningIcon sx={{ fontSize: 16, color: "warning.main", mt: 0.5 }} />
+                  )}
+                  {item.status === "fail" && (
+                    <ErrorIcon sx={{ fontSize: 16, color: "error.main", mt: 0.5 }} />
+                  )}
                   <Box>
                     <Typography variant="body2" fontSize={13}>
                       {item.label}
