@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import type { QueryKey } from "@tanstack/react-query";
 
 import type { ElasticsearchClient } from "../services/es";
 import type { DataFetchResult } from "../types/query";
@@ -6,7 +7,7 @@ import type { DataFetchResult } from "../types/query";
 import { useEsQuery, useRefetchOnConnectionChange } from "./useEsQuery";
 
 export interface FetchResourceConfig<TRaw, TData> {
-  queryKey: (connectionUrl?: string) => (string | undefined)[];
+  queryKey: (connectionUrl?: string) => QueryKey;
   queryFn: (client: ElasticsearchClient) => Promise<TRaw>;
   select?: (data: TRaw) => TData;
 }
@@ -33,6 +34,6 @@ export function useFetchResource<TRaw, TData = TRaw>(
   if (!connection) return { status: "idle", refresh };
   if (query.isFetching) return { status: "loading", refresh };
   if (query.isError) return { status: "error", error: query.error.message, refresh };
-  if (query.data) return { status: "success", data: query.data, refresh };
+  if (query.isSuccess) return { status: "success", data: query.data, refresh };
   return { status: "idle", refresh };
 }
