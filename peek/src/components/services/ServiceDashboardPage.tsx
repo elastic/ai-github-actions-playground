@@ -9,6 +9,7 @@ import { useShallow } from "zustand/react/shallow";
 
 import { INSIGHT_GUARDRAIL, INSIGHT_SPECIFICITY_POLICY } from "../../hooks/insightPromptUtils";
 import { usePageSlotInsights } from "../../hooks/usePageSlotInsights";
+import { useTableSort } from "../../hooks/useTableSort";
 import { PAGE_MANIFEST } from "../../routes/manifest";
 import { useConnectionStore } from "../../store/useConnectionStore";
 import { usePageFiltersStore } from "../../store/usePageFiltersStore";
@@ -24,7 +25,6 @@ import ServiceDashboardControls from "./ServiceDashboardControls";
 import {
   type RouteSortField,
   type TraceSortField,
-  type SortDirection,
   parseRouteRows,
   parseRecentTraces,
   parseDeploymentRows,
@@ -87,34 +87,16 @@ export default function ServiceDashboardPage() {
     timeFrom,
     timeTo,
   });
-  const [routeSortField, setRouteSortField] = useState<RouteSortField>("requestCount");
-  const [routeSortDirection, setRouteSortDirection] = useState<SortDirection>("desc");
-  const [traceSortField, setTraceSortField] = useState<TraceSortField>("timestamp");
-  const [traceSortDirection, setTraceSortDirection] = useState<SortDirection>("desc");
-
-  const handleRouteSort = useCallback(
-    (field: RouteSortField) => {
-      if (field === routeSortField) {
-        setRouteSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
-      } else {
-        setRouteSortField(field);
-        setRouteSortDirection("desc");
-      }
-    },
-    [routeSortField],
-  );
-
-  const handleTraceSort = useCallback(
-    (field: TraceSortField) => {
-      if (field === traceSortField) {
-        setTraceSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
-      } else {
-        setTraceSortField(field);
-        setTraceSortDirection("desc");
-      }
-    },
-    [traceSortField],
-  );
+  const {
+    sortField: routeSortField,
+    sortDirection: routeSortDirection,
+    getSortLabelProps: getRouteSortLabelProps,
+  } = useTableSort<RouteSortField>("requestCount", "desc");
+  const {
+    sortField: traceSortField,
+    sortDirection: traceSortDirection,
+    getSortLabelProps: getTraceSortLabelProps,
+  } = useTableSort<TraceSortField>("timestamp", "desc");
 
   const handleViewTrace = useCallback(
     (traceId: string) => {
@@ -395,9 +377,7 @@ export default function ServiceDashboardPage() {
                 <InsightSlot slotId={SERVICE_DASHBOARD_INSIGHT_SLOT_IDS.topRoutesPanel}>
                   <ServiceRoutesPanel
                     routeRows={topRouteRows}
-                    sortField={routeSortField}
-                    sortDirection={routeSortDirection}
-                    onSort={handleRouteSort}
+                    getSortLabelProps={getRouteSortLabelProps}
                     sparklineData={routeSparklineData}
                     routeInsightSlotIds={routeInsightSlotIds}
                   />
@@ -455,9 +435,7 @@ export default function ServiceDashboardPage() {
                 traces={recentTraces}
                 traceExplorerSpans={traceExplorerSpans}
                 traceExplorerLoading={traceExplorerLoading}
-                sortField={traceSortField}
-                sortDirection={traceSortDirection}
-                onSort={handleTraceSort}
+                getSortLabelProps={getTraceSortLabelProps}
                 onViewTrace={handleViewTrace}
                 onViewAllTraces={handleViewAllTraces}
               />

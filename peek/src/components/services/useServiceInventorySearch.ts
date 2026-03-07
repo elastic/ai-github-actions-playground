@@ -7,6 +7,7 @@ import { useEsqlQuery } from "../../hooks/useEsqlQuery";
 import { useConnectionStore } from "../../store/useConnectionStore";
 import { usePageFiltersStore } from "../../store/usePageFiltersStore";
 import { useTracesStore } from "../../store/useTracesStore";
+import { useTableSort } from "../../hooks/useTableSort";
 import { EMPTY_FILTERS } from "../traces/traceQueryBuilder";
 import { PAGE_MANIFEST } from "../../routes/manifest";
 import type { EsqlResponse } from "../../types";
@@ -18,7 +19,6 @@ import {
 } from "./serviceInventoryQueryBuilder";
 import {
   type SortField,
-  type SortDirection,
   type ServiceSparklineData,
   parseServiceRows,
   parseServiceSparklineData,
@@ -67,24 +67,14 @@ export function useServiceInventorySearch() {
     [queryClient, sparklineQueryKey],
   );
   const [sparklineRetryMode, setSparklineRetryMode] = useState<"standard" | "interval">("standard");
-  const [sortField, setSortField] = useState<SortField>("requestCount");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  const { sortField, sortDirection, handleSort, getSortLabelProps } = useTableSort<SortField>(
+    "requestCount",
+    "desc",
+  );
   const latestQueryRef = useRef<string | null>(null);
   const latestSparklineQueryRef = useRef<string | null>(null);
   const runSparklineQueryRef = useRef<(query: string) => void>(() => undefined);
   const activeFiltersRef = useRef(filters);
-
-  const handleSort = useCallback(
-    (field: SortField) => {
-      if (field === sortField) {
-        setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
-      } else {
-        setSortField(field);
-        setSortDirection("desc");
-      }
-    },
-    [sortField],
-  );
 
   const handleSparklineSuccess = useCallback((data: EsqlResponse, executedQuery: string) => {
     if (executedQuery !== latestSparklineQueryRef.current) return;
@@ -222,6 +212,7 @@ export function useServiceInventorySearch() {
     error,
     sparklineError,
     handleSort,
+    getSortLabelProps,
     handleSearch,
     handleReset,
     handleViewTraces,

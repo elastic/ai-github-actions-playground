@@ -51,7 +51,7 @@ export default function ServiceInventoryPage() {
     loading,
     error,
     sparklineError,
-    handleSort,
+    getSortLabelProps,
     handleSearch,
     handleReset,
     handleViewTraces,
@@ -278,9 +278,7 @@ export default function ServiceInventoryPage() {
                 </Box>
                 <ServiceInventoryTable
                   serviceRows={serviceRows}
-                  sortField={sortField}
-                  sortDirection={sortDirection}
-                  handleSort={handleSort}
+                  getSortLabelProps={getSortLabelProps}
                   handleViewTraces={handleViewTraces}
                   sparklineData={sparklineData}
                   rowInsightSlotIds={rowInsightSlotIds}

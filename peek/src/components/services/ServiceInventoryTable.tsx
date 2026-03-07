@@ -20,7 +20,6 @@ import {
   type ServiceRow,
   type ServiceSparklineData,
   type SortField,
-  type SortDirection,
   formatLatency,
   formatErrorRate,
 } from "./serviceInventoryHelpers";
@@ -29,9 +28,11 @@ import ServiceSparklineCell from "./ServiceSparklineCell";
 
 interface ServiceInventoryTableProps {
   serviceRows: ServiceRow[];
-  sortField: SortField;
-  sortDirection: SortDirection;
-  handleSort: (field: SortField) => void;
+  getSortLabelProps: (field: SortField) => {
+    active: boolean;
+    direction: "asc" | "desc";
+    onClick: () => void;
+  };
   handleViewTraces: (serviceName: string) => void;
   sparklineData?: Record<string, ServiceSparklineData>;
   rowInsightSlotIds?: Record<string, string>;
@@ -39,9 +40,7 @@ interface ServiceInventoryTableProps {
 
 export default function ServiceInventoryTable({
   serviceRows,
-  sortField,
-  sortDirection,
-  handleSort,
+  getSortLabelProps,
   handleViewTraces,
   sparklineData,
   rowInsightSlotIds,
@@ -60,42 +59,18 @@ export default function ServiceInventoryTable({
       <TableHead>
         <TableRow>
           <TableCell>
-            <TableSortLabel
-              active={sortField === "serviceName"}
-              direction={sortField === "serviceName" ? sortDirection : "asc"}
-              onClick={() => handleSort("serviceName")}
-            >
-              Service Name
-            </TableSortLabel>
+            <TableSortLabel {...getSortLabelProps("serviceName")}>Service Name</TableSortLabel>
           </TableCell>
           <TableCell align="right">
-            <TableSortLabel
-              active={sortField === "requestCount"}
-              direction={sortField === "requestCount" ? sortDirection : "desc"}
-              onClick={() => handleSort("requestCount")}
-            >
-              Requests
-            </TableSortLabel>
+            <TableSortLabel {...getSortLabelProps("requestCount")}>Requests</TableSortLabel>
           </TableCell>
           {renderSparklineHeaderCell("Requests trend")}
           <TableCell align="right">
-            <TableSortLabel
-              active={sortField === "avgLatencyMs"}
-              direction={sortField === "avgLatencyMs" ? sortDirection : "desc"}
-              onClick={() => handleSort("avgLatencyMs")}
-            >
-              Avg Latency
-            </TableSortLabel>
+            <TableSortLabel {...getSortLabelProps("avgLatencyMs")}>Avg Latency</TableSortLabel>
           </TableCell>
           {renderSparklineHeaderCell("Latency trend")}
           <TableCell align="right">
-            <TableSortLabel
-              active={sortField === "errorRate"}
-              direction={sortField === "errorRate" ? sortDirection : "desc"}
-              onClick={() => handleSort("errorRate")}
-            >
-              Error Rate
-            </TableSortLabel>
+            <TableSortLabel {...getSortLabelProps("errorRate")}>Error Rate</TableSortLabel>
           </TableCell>
           {renderSparklineHeaderCell("Error rate trend")}
           <TableCell>Language</TableCell>

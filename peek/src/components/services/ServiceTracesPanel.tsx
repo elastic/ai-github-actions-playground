@@ -14,15 +14,17 @@ import SpanDetailDrawer from "../traces/SpanDetailDrawer";
 import { useTracesStore } from "../../store/useTracesStore";
 
 import ServiceTracesTable from "./ServiceTracesTable";
-import type { RecentTrace, TraceSortField, SortDirection } from "./serviceDashboardHelpers";
+import type { RecentTrace, TraceSortField } from "./serviceDashboardHelpers";
 
 interface ServiceTracesPanelProps {
   traces: RecentTrace[];
   traceExplorerSpans: Span[];
   traceExplorerLoading: boolean;
-  sortField: TraceSortField;
-  sortDirection: SortDirection;
-  onSort: (field: TraceSortField) => void;
+  getSortLabelProps: (field: TraceSortField) => {
+    active: boolean;
+    direction: "asc" | "desc";
+    onClick: () => void;
+  };
   onViewTrace: (traceId: string) => void;
   onViewAllTraces: () => void;
 }
@@ -31,9 +33,7 @@ export default function ServiceTracesPanel({
   traces,
   traceExplorerSpans,
   traceExplorerLoading,
-  sortField,
-  sortDirection,
-  onSort,
+  getSortLabelProps,
   onViewTrace,
   onViewAllTraces,
 }: ServiceTracesPanelProps) {
@@ -112,9 +112,7 @@ export default function ServiceTracesPanel({
         ) : (
           <ServiceTracesTable
             traces={traces}
-            sortField={sortField}
-            sortDirection={sortDirection}
-            onSort={onSort}
+            getSortLabelProps={getSortLabelProps}
             onViewTrace={onViewTrace}
           />
         )}
