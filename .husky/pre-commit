@@ -1,1 +1,7 @@
 cd peek && npx lint-staged
+
+# Type-check the full project (catches cross-file breakage)
+cd peek && npx tsgo --noEmit
+
+# Run unit tests related to changed files
+cd peek && npx vitest run --changed HEAD --passWithNoTests
