@@ -583,7 +583,7 @@ export const PAGE_MANIFEST = {
     showTimeControls: false,
     skeletonVariant: "table",
     nav: {
-      label: "Templates",
+      label: "Index Templates",
       group: "System",
       order: 22,
       showInSidebar: true,

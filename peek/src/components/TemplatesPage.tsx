@@ -78,6 +78,7 @@ export default function TemplatesPage() {
         parseAsStringEnum<CompTplSortField>(COMP_TPL_SORT_FIELDS).withDefault("name"),
       compTplSortDir: parseAsStringEnum<SortDirection>(SORT_DIRECTIONS).withDefault("asc"),
       dataStreamOnly: parseAsBoolean.withDefault(false),
+      showSystem: parseAsBoolean.withDefault(false),
       priorityMin: parseAsString.withDefault(""),
       priorityMax: parseAsString.withDefault(""),
     },
@@ -92,8 +93,19 @@ export default function TemplatesPage() {
   const compTplSortField = urlState.compTplSortField;
   const compTplSortDir = urlState.compTplSortDir;
   const dataStreamOnly = urlState.dataStreamOnly;
+  const showSystem = urlState.showSystem;
   const priorityMin = urlState.priorityMin;
   const priorityMax = urlState.priorityMax;
+
+  // Filter out system templates (names starting with ".") when toggle is off
+  const visibleIndexTemplates = useMemo(
+    () => indexTemplates.filter((t) => showSystem || !t.name.startsWith(".")),
+    [indexTemplates, showSystem],
+  );
+  const visibleComponentTemplates = useMemo(
+    () => componentTemplates.filter((t) => showSystem || !t.name.startsWith(".")),
+    [componentTemplates, showSystem],
+  );
 
   // Index templates sort
   const handleIndexTplSort = useCallback(
@@ -129,12 +141,12 @@ export default function TemplatesPage() {
 
   // Derived metrics
   const dsCount = useMemo(
-    () => indexTemplates.filter((t) => t.dataStreamEnabled).length,
-    [indexTemplates],
+    () => visibleIndexTemplates.filter((t) => t.dataStreamEnabled).length,
+    [visibleIndexTemplates],
   );
   const highPriorityCount = useMemo(
-    () => indexTemplates.filter((t) => t.priority >= HIGH_PRIORITY_THRESHOLD).length,
-    [indexTemplates],
+    () => visibleIndexTemplates.filter((t) => t.priority >= HIGH_PRIORITY_THRESHOLD).length,
+    [visibleIndexTemplates],
   );
 
   // Filter + sort
@@ -144,7 +156,7 @@ export default function TemplatesPage() {
     const maxPriority = Number(priorityMax);
     const hasMin = priorityMin.trim() !== "" && Number.isFinite(minPriority);
     const hasMax = priorityMax.trim() !== "" && Number.isFinite(maxPriority);
-    const filtered = indexTemplates.filter((t) => {
+    const filtered = visibleIndexTemplates.filter((t) => {
       if (dataStreamOnly && !t.dataStreamEnabled) return false;
       if (hasMin && t.priority < minPriority) return false;
       if (hasMax && t.priority > maxPriority) return false;
@@ -157,7 +169,7 @@ export default function TemplatesPage() {
     });
     return [...filtered].sort((a, b) => compareIndexTpls(a, b, indexTplSortField, indexTplSortDir));
   }, [
-    indexTemplates,
+    visibleIndexTemplates,
     deferredSearch,
     indexTplSortField,
     indexTplSortDir,
@@ -168,12 +180,12 @@ export default function TemplatesPage() {
 
   const filteredComponentTemplates = useMemo(() => {
     const term = deferredSearch.trim().toLowerCase();
-    const filtered = componentTemplates.filter((t) => {
+    const filtered = visibleComponentTemplates.filter((t) => {
       if (!term) return true;
       return t.name.toLowerCase().includes(term);
     });
     return [...filtered].sort((a, b) => compareCompTpls(a, b, compTplSortField, compTplSortDir));
-  }, [componentTemplates, deferredSearch, compTplSortField, compTplSortDir]);
+  }, [visibleComponentTemplates, deferredSearch, compTplSortField, compTplSortDir]);
 
   if (result.status === "error") {
     return (
@@ -187,7 +199,7 @@ export default function TemplatesPage() {
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, height: "100%", minHeight: 0 }}>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
         <PageHeader
-          title="Templates"
+          title="Index Templates"
           actions={
             <Button
               size="small"
@@ -206,14 +218,14 @@ export default function TemplatesPage() {
         <Grid item xs={6} sm={3}>
           <OverviewInfoCard title="Index Templates">
             <Typography variant="h5" component="p">
-              {indexTemplates.length}
+              {visibleIndexTemplates.length}
             </Typography>
           </OverviewInfoCard>
         </Grid>
         <Grid item xs={6} sm={3}>
           <OverviewInfoCard title="Component Templates">
             <Typography variant="h5" component="p">
-              {componentTemplates.length}
+              {visibleComponentTemplates.length}
             </Typography>
           </OverviewInfoCard>
         </Grid>
@@ -259,6 +271,13 @@ export default function TemplatesPage() {
           sx={{ minWidth: 260 }}
           aria-label="Filter templates"
         />
+        <Button
+          size="small"
+          variant={showSystem ? "contained" : "outlined"}
+          onClick={() => void setUrlState({ showSystem: !showSystem })}
+        >
+          Show system templates
+        </Button>
         {activeTab === "index" && (
           <>
             <TextField
@@ -397,8 +416,8 @@ export default function TemplatesPage() {
                         icon={<DescriptionIcon sx={{ fontSize: 28 }} />}
                         heading="No index templates found"
                         description={
-                          search || dataStreamOnly || priorityMin || priorityMax
-                            ? "Try adjusting your search filter."
+                          search || dataStreamOnly || priorityMin || priorityMax || !showSystem
+                            ? 'Try adjusting your filters or enable "Show system templates".'
                             : "No index templates configured."
                         }
                       />
@@ -504,8 +523,8 @@ export default function TemplatesPage() {
                         icon={<DescriptionIcon sx={{ fontSize: 28 }} />}
                         heading="No component templates found"
                         description={
-                          search
-                            ? "Try adjusting your search filter."
+                          search || !showSystem
+                            ? 'Try adjusting your filters or enable "Show system templates".'
                             : "No component templates configured."
                         }
                       />
