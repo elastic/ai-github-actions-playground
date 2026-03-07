@@ -13,6 +13,6 @@ export function formatMs(ms: number | null | undefined): string {
 
 /** Convert nanoseconds to a human-readable millisecond string. */
 export function nanoToMs(nanos: number | undefined): string {
-  if (nanos === undefined) return "\u2014";
+  if (nanos === undefined) return "—";
   return `${(nanos / 1_000_000).toFixed(2)} ms`;
 }
