@@ -200,7 +200,7 @@ export default function AddDataStepSetup(p: AddDataStepSetupProps) {
         autoExpandDoneRef.current = false;
         setConfigureExpanded(false);
         setCredentialsExpanded(true);
-        setInstallExpanded(false);
+        setInstallExpanded(true);
         return;
       }
       if (!autoExpandDoneRef.current) {

@@ -96,7 +96,7 @@ export default function IngestionVerificationPanel({
 
       {/* Action row */}
       <Stack direction="row" spacing={1} alignItems="center">
-        {status === "idle" && connectionAvailable && (
+        {status === "idle" && connectionAvailable && !autoStart && (
           <Button size="small" variant="outlined" onClick={() => verification.startPolling()}>
             Check now
           </Button>
