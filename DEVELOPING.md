@@ -251,7 +251,7 @@ and adapts. They report only genuine bugs.
 
 ### CI
 
-`make ci` runs lint + unit tests + build on every push to `main` and on PRs touching `peek/**`. Integration tests run locally only (`make test-integration`). Production builds deploy to GitHub Pages via `deploy-pages.yml`.
+`make ci` runs lint + unit tests + build on every push to `main` and on PRs touching specific paths (e.g. `peek/src/**`, `peek/tests/**`, selected config files, `Makefile`, and the workflow file itself — see `.github/workflows/ci.yml` for the full path list). Integration tests run locally only (`make test-integration`). Production builds deploy to GitHub Pages via `deploy-pages.yml`.
 
 ## Engineering Standards
 

@@ -26,4 +26,4 @@ Cluster Health goes deeper with six dedicated tabs, built-in auto-refresh, and o
 
 ## Companion routes
 
-The Tasks, Capacity, Shards, and Resilience tabs are also available as standalone pages. These companion routes are not shown in the sidebar but can be accessed through the Cluster Health tabs or by direct URL.
+The Tasks, Capacity, Shards, and Resilience tabs are also available as standalone pages. Tasks is shown in the sidebar; the other companion routes (Capacity, Shards, Resilience) are not shown in the sidebar but can be accessed through the Cluster Health tabs or by direct URL.

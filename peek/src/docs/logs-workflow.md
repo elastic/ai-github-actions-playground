@@ -1,6 +1,10 @@
 # Logs
 
-Open Logs from the sidebar to explore log data with a query-visible workflow: every filter and search action updates the ES|QL editor.
+Open **Logs** from the sidebar to reach the Logs landing page (`/logs`). The landing page asks "What logs are you looking for?" and presents dimension cards — **Services**, **Hosts**, **Processes**, **Files**, and **All logs**. Pick a dimension to browse log volume grouped by that field, or choose **All logs** to open a full log query in Query Lab.
+
+## Logs Explorer
+
+The query-first explorer UI lives at `/logs-explorer`. You can reach it by navigating directly to that path. The explorer provides a query-visible workflow where every filter and search action updates the ES|QL editor.
 
 Use the **Lines / Chart / Patterns** toggle to switch analysis modes while keeping a single visible ES|QL query source of truth.
 
