@@ -244,6 +244,14 @@ export default function TaskManagerPage() {
                   hover
                   selected={task.taskId === selectedTaskId}
                   onClick={() => setSelectedTaskId(task.taskId)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setSelectedTaskId(task.taskId);
+                    }
+                  }}
+                  tabIndex={0}
+                  role="button"
                   sx={{ cursor: "pointer" }}
                 >
                   <TableCell>

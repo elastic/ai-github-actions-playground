@@ -367,6 +367,9 @@ export async function registerElasticsearchMocks(
     if (path.match(/^\/_tasks\/[^/]+\/_cancel$/) && method === "POST") return json(resolved.cancelTask);
     if (path === "/_index_template" && method === "GET") return json(resolved.indexTemplates);
     if (path === "/_component_template" && method === "GET") return json(resolved.componentTemplates);
+    if (path.match(/^\/_index_template\/_simulate\//) && method === "POST") {
+      return json(resolved.simulateIndexTemplate ?? { template: { settings: {}, mappings: {}, aliases: {} } });
+    }
     if (path === "/_slm/stats" && method === "GET") return json(resolved.slmStats);
     if (path.startsWith("/_snapshot/") && method === "GET") return json(resolved.snapshotStatus);
     if (path === "/_cat/indices" && method === "GET") return json(resolved.catIndices);
