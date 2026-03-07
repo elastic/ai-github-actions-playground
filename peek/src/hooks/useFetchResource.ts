@@ -28,6 +28,7 @@ export function useFetchResource<TRaw, TData = TRaw>(
   useRefetchOnConnectionChange(connection, query.refetch);
 
   const refresh = () => {
+    if (!connection) return;
     void query.refetch();
   };
 
