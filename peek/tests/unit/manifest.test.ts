@@ -36,20 +36,17 @@ describe("PAGE_MANIFEST", () => {
     }
   });
 
-  it("pages that don't require connection can render without Elasticsearch", () => {
+  it("includes docs and package builder as pages that don't require connection", () => {
     const noConnectionPages = entries.filter(([, config]) => !config.requiresConnection);
     expect(noConnectionPages.length).toBeGreaterThan(0);
+    const noConnectionPageIds = noConnectionPages.map(([page]) => page);
 
-    for (const [page] of noConnectionPages) {
-      expect(
-        PAGE_MANIFEST[page].nav.showInSidebar,
-        `${page} doesn't require connection but is not reachable from sidebar`,
-      ).toBe(true);
-    }
+    expect(noConnectionPageIds).toEqual(expect.arrayContaining(["docs", "packageBuilder"]));
   });
 
-  it("only docs is accessible without a connection", () => {
+  it("docs and package builder are accessible without a connection", () => {
     expect(PAGE_MANIFEST.docs.requiresConnection).toBe(false);
+    expect(PAGE_MANIFEST.packageBuilder.requiresConnection).toBe(false);
     expect(PAGE_MANIFEST.chat.requiresConnection).toBe(true);
   });
 

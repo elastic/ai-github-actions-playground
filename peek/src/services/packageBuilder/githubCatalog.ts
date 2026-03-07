@@ -36,11 +36,7 @@ export async function listInputPackages(signal?: AbortSignal): Promise<CatalogEn
 }
 
 /** Files we care about for import. */
-const PACKAGE_FILES = [
-  "manifest.yml",
-  "agent/input/input.yml.hbs",
-  "docs/README.md",
-] as const;
+const PACKAGE_FILES = ["manifest.yml", "agent/input/input.yml.hbs", "docs/README.md"] as const;
 
 /**
  * Fetch the key files of a package and return them as a file map

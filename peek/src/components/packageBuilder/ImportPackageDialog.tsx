@@ -8,16 +8,25 @@ import DialogActions from "@mui/material/DialogActions";
 import Typography from "@mui/material/Typography";
 import Alert from "@mui/material/Alert";
 import Stack from "@mui/material/Stack";
-import CircularProgress from "@mui/material/CircularProgress";
 import Autocomplete from "@mui/material/Autocomplete";
 import TextField from "@mui/material/TextField";
+import LinearProgress from "@mui/material/LinearProgress";
+import ButtonBase from "@mui/material/ButtonBase";
 import FolderOpenIcon from "@mui/icons-material/FolderOpen";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import GitHubIcon from "@mui/icons-material/GitHub";
 
 import { usePackageBuilderStore } from "../../store/usePackageBuilderStore";
-import { importFromZip, importFromFolder, importFromFileMap } from "../../services/packageBuilder/importPackage";
-import { listInputPackages, fetchPackageFiles, type CatalogEntry } from "../../services/packageBuilder/githubCatalog";
+import {
+  importFromZip,
+  importFromFolder,
+  importFromFileMap,
+} from "../../services/packageBuilder/importPackage";
+import {
+  listInputPackages,
+  fetchPackageFiles,
+  type CatalogEntry,
+} from "../../services/packageBuilder/githubCatalog";
 
 interface Props {
   open: boolean;
@@ -44,10 +53,19 @@ export default function ImportPackageDialog({ open, onClose }: Props) {
     setCatalogLoading(true);
     setCatalogError(null);
     listInputPackages()
-      .then((entries) => { if (!cancelled) setCatalog(entries); })
-      .catch((err) => { if (!cancelled) setCatalogError(err instanceof Error ? err.message : "Failed to load catalog"); })
-      .finally(() => { if (!cancelled) setCatalogLoading(false); });
-    return () => { cancelled = true; };
+      .then((entries) => {
+        if (!cancelled) setCatalog(entries);
+      })
+      .catch((err) => {
+        if (!cancelled)
+          setCatalogError(err instanceof Error ? err.message : "Failed to load catalog");
+      })
+      .finally(() => {
+        if (!cancelled) setCatalogLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [open]);
 
   const handleResult = useCallback(
@@ -119,8 +137,8 @@ export default function ImportPackageDialog({ open, onClose }: Props) {
         </Typography>
 
         {loading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-            <CircularProgress />
+          <Box sx={{ py: 2 }}>
+            <LinearProgress />
           </Box>
         ) : (
           <Stack spacing={2}>
@@ -135,7 +153,7 @@ export default function ImportPackageDialog({ open, onClose }: Props) {
             >
               <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
                 <GitHubIcon sx={{ fontSize: 20, color: "text.secondary" }} />
-                <Typography variant="subtitle2">Load from elastic/integrations</Typography>
+                <Typography variant="subtitle1">Load from elastic/integrations</Typography>
               </Box>
               {catalogError ? (
                 <Alert severity="warning" sx={{ py: 0.5 }}>
@@ -157,7 +175,7 @@ export default function ImportPackageDialog({ open, onClose }: Props) {
                           ...params.InputProps,
                           endAdornment: (
                             <>
-                              {catalogLoading ? <CircularProgress size={16} /> : null}
+                              {catalogLoading ? <LinearProgress sx={{ width: 16, mr: 1 }} /> : null}
                               {params.InputProps.endAdornment}
                             </>
                           ),
@@ -189,7 +207,8 @@ export default function ImportPackageDialog({ open, onClose }: Props) {
             </Typography>
 
             {/* Zip upload */}
-            <Box
+            <ButtonBase
+              component="div"
               sx={{
                 border: "2px dashed",
                 borderColor: "divider",
@@ -202,18 +221,19 @@ export default function ImportPackageDialog({ open, onClose }: Props) {
               onClick={() => zipInputRef.current?.click()}
             >
               <UploadFileIcon sx={{ fontSize: 40, color: "action.active", mb: 1 }} />
-              <Typography variant="subtitle2">Upload .zip file</Typography>
+              <Typography variant="subtitle1">Upload .zip file</Typography>
               <Typography variant="caption" color="text.secondary">
                 A zip archive containing the package directory
               </Typography>
-            </Box>
+            </ButtonBase>
 
             <Typography variant="body2" color="text.secondary" textAlign="center">
               or
             </Typography>
 
             {/* Folder upload */}
-            <Box
+            <ButtonBase
+              component="div"
               sx={{
                 border: "2px dashed",
                 borderColor: "divider",
@@ -226,11 +246,11 @@ export default function ImportPackageDialog({ open, onClose }: Props) {
               onClick={() => folderInputRef.current?.click()}
             >
               <FolderOpenIcon sx={{ fontSize: 40, color: "action.active", mb: 1 }} />
-              <Typography variant="subtitle2">Select package folder</Typography>
+              <Typography variant="subtitle1">Select package folder</Typography>
               <Typography variant="caption" color="text.secondary">
                 The folder containing manifest.yml
               </Typography>
-            </Box>
+            </ButtonBase>
           </Stack>
         )}
 
@@ -252,13 +272,7 @@ export default function ImportPackageDialog({ open, onClose }: Props) {
         )}
 
         {/* Hidden file inputs */}
-        <input
-          ref={zipInputRef}
-          type="file"
-          accept=".zip"
-          hidden
-          onChange={handleZipUpload}
-        />
+        <input ref={zipInputRef} type="file" accept=".zip" hidden onChange={handleZipUpload} />
         <input
           ref={folderInputRef}
           type="file"

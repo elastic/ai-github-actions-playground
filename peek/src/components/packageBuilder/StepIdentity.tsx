@@ -9,6 +9,7 @@ import Paper from "@mui/material/Paper";
 import Button from "@mui/material/Button";
 import Avatar from "@mui/material/Avatar";
 import Stack from "@mui/material/Stack";
+import ButtonBase from "@mui/material/ButtonBase";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import DeleteIcon from "@mui/icons-material/Delete";
 
@@ -123,7 +124,13 @@ Has icon: ${identity.icon ? "yes" : "no"}`;
     : "";
 
   return (
-    <InsightSlotProvider summary={null} insights={insights} loading={loading} error={error} refresh={refresh}>
+    <InsightSlotProvider
+      summary={null}
+      insights={insights}
+      loading={loading}
+      error={error}
+      refresh={refresh}
+    >
       <Box sx={{ display: "flex", gap: 3 }}>
         <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 2.5 }}>
           <Typography variant="h6">Package Identity</Typography>
@@ -133,7 +140,11 @@ Has icon: ${identity.icon ? "yes" : "no"}`;
               label="Package name"
               value={identity.name}
               onChange={(e) => setName(e.target.value)}
-              helperText={displayName ? `Full name: ${displayName}` : "Lowercase, underscores only. _input_otel suffix added automatically."}
+              helperText={
+                displayName
+                  ? `Full name: ${displayName}`
+                  : "Lowercase, underscores only. _input_otel suffix added automatically."
+              }
               fullWidth
               size="small"
             />
@@ -215,15 +226,11 @@ Has icon: ${identity.icon ? "yes" : "no"}`;
               options={categoryOptions}
               value={identity.categories}
               onChange={(_, v) => setCategories(v)}
-              renderInput={(params) => (
-                <TextField {...params} label="Categories" size="small" />
-              )}
+              renderInput={(params) => <TextField {...params} label="Categories" size="small" />}
               renderTags={(value, getTagProps) =>
                 value.map((option, index) => {
                   const { key, ...tagProps } = getTagProps({ index });
-                  return (
-                    <Chip key={key} label={option} size="small" {...tagProps} />
-                  );
+                  return <Chip key={key} label={option} size="small" {...tagProps} />;
                 })
               }
               size="small"
@@ -259,8 +266,18 @@ Has icon: ${identity.icon ? "yes" : "no"}`;
 
         {/* Icon upload section */}
         <InsightSlot slotId="identity-icon">
-          <Paper variant="outlined" sx={{ width: 220, p: 2, display: "flex", flexDirection: "column", alignItems: "center", gap: 1.5 }}>
-            <Typography variant="subtitle2" color="text.secondary">
+          <Paper
+            variant="outlined"
+            sx={{
+              width: 220,
+              p: 2,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 1.5,
+            }}
+          >
+            <Typography variant="subtitle1" color="text.secondary">
               Package Icon
             </Typography>
             {identity.icon ? (
@@ -273,13 +290,19 @@ Has icon: ${identity.icon ? "yes" : "no"}`;
                 <Typography variant="caption" noWrap sx={{ maxWidth: 180 }}>
                   {identity.icon.name}
                 </Typography>
-                <Button size="small" color="error" startIcon={<DeleteIcon />} onClick={() => setIcon(null)}>
+                <Button
+                  size="small"
+                  color="error"
+                  startIcon={<DeleteIcon />}
+                  onClick={() => setIcon(null)}
+                >
                   Remove
                 </Button>
               </Stack>
             ) : (
               <Stack alignItems="center" spacing={1}>
-                <Box
+                <ButtonBase
+                  component="div"
                   sx={{
                     width: 80,
                     height: 80,
@@ -295,7 +318,7 @@ Has icon: ${identity.icon ? "yes" : "no"}`;
                   onClick={() => fileInputRef.current?.click()}
                 >
                   <UploadFileIcon color="action" />
-                </Box>
+                </ButtonBase>
                 <Typography variant="caption" color="text.secondary">
                   SVG preferred
                 </Typography>

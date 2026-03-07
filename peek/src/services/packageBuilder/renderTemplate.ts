@@ -99,10 +99,7 @@ export function renderTemplate(
 }
 
 /** Find template variables referenced as {{name}} but not defined in the variable list. */
-export function findUndefinedVars(
-  templateSource: string,
-  variables: PackageVariable[],
-): string[] {
+export function findUndefinedVars(templateSource: string, variables: PackageVariable[]): string[] {
   const defined = new Set(variables.map((v) => v.name));
   const referenced = new Set<string>();
   const re = /\{\{(?!#|\/|!|>)([a-zA-Z_][a-zA-Z0-9_]*)\}\}/g;
@@ -114,10 +111,7 @@ export function findUndefinedVars(
 }
 
 /** Find variables defined but never referenced in the template. */
-export function findUnusedVars(
-  templateSource: string,
-  variables: PackageVariable[],
-): string[] {
+export function findUnusedVars(templateSource: string, variables: PackageVariable[]): string[] {
   const referenced = new Set<string>();
   // Match both {{name}} and {{#if name}} and {{/if name}} patterns
   const re = /\{\{[#/]?\s*(?:if|each|unless|with)?\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\}\}/g;

@@ -45,7 +45,11 @@ export default function StepDocs() {
             fullWidth
             sx={{
               flex: 1,
-              "& .MuiInputBase-root": { fontFamily: "monospace", fontSize: 13, alignItems: "flex-start" },
+              "& .MuiInputBase-root": {
+                fontFamily: "monospace",
+                fontSize: 13,
+                alignItems: "flex-start",
+              },
               "& textarea": { minHeight: 300 },
             }}
             size="small"
@@ -65,14 +69,28 @@ export default function StepDocs() {
               overflow: "auto",
               minHeight: 300,
               "& table": { borderCollapse: "collapse", width: "100%" },
-              "& th, & td": { border: "1px solid", borderColor: "divider", px: 1, py: 0.5, textAlign: "left" },
-              "& code": { fontFamily: "monospace", bgcolor: "action.hover", px: 0.5, borderRadius: 0.5 },
+              "& th, & td": {
+                border: "1px solid",
+                borderColor: "divider",
+                px: 1,
+                py: 0.5,
+                textAlign: "left",
+              },
+              "& code": {
+                fontFamily: "monospace",
+                bgcolor: "action.hover",
+                px: 0.5,
+                borderRadius: 0.5,
+              },
               "& pre": { bgcolor: "action.hover", p: 1.5, borderRadius: 1, overflow: "auto" },
               "& h1": { fontSize: "1.4rem", mt: 0 },
               "& h2": { fontSize: "1.15rem" },
             }}
           >
-            <Markdown>{readmeContent || "*No content yet. Click 'Regenerate from metadata' to auto-create a README.*"}</Markdown>
+            <Markdown>
+              {readmeContent ||
+                "*No content yet. Click 'Regenerate from metadata' to auto-create a README.*"}
+            </Markdown>
           </Paper>
         </Box>
       </Box>

@@ -77,7 +77,13 @@ Format version: "${formatVersion}"`;
   });
 
   return (
-    <InsightSlotProvider summary={null} insights={insights} loading={loading} error={error} refresh={refresh}>
+    <InsightSlotProvider
+      summary={null}
+      insights={insights}
+      loading={loading}
+      error={error}
+      refresh={refresh}
+    >
       <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5, maxWidth: 700 }}>
         <Typography variant="h6">Policy Template &amp; Signals</Typography>
 
@@ -85,7 +91,9 @@ Format version: "${formatVersion}"`;
           <TextField
             label="Policy template name"
             value={pt.name}
-            onChange={(e) => setPolicyTemplate({ name: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "") })}
+            onChange={(e) =>
+              setPolicyTemplate({ name: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "") })
+            }
             helperText="Identifier, e.g. redisreceiver"
             fullWidth
             size="small"
@@ -128,12 +136,13 @@ Format version: "${formatVersion}"`;
 
         <InsightSlot slotId="policy-signals">
           <Box>
-            <Typography variant="subtitle2" gutterBottom>
+            <Typography variant="subtitle1" gutterBottom>
               Signal types
             </Typography>
             {!pt.dynamicSignalTypes && (
               <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: "block" }}>
-                Without dynamic signal types, only the first signal is used as the policy template type.
+                Without dynamic signal types, only the first signal is used as the policy template
+                type.
               </Typography>
             )}
             <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
@@ -169,7 +178,8 @@ Format version: "${formatVersion}"`;
             )}
             {canUseDynamic && pt.dynamicSignalTypes && (
               <Typography variant="caption" color="text.secondary" display="block" sx={{ ml: 4 }}>
-                A single policy template will handle multiple signal types. The type field is omitted from the manifest.
+                A single policy template will handle multiple signal types. The type field is
+                omitted from the manifest.
               </Typography>
             )}
           </Box>

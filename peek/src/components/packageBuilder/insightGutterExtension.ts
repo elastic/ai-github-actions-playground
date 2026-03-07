@@ -56,7 +56,10 @@ const insightField = StateField.define<InsightMap>({
 /* ── Gutter marker: coloured dot ── */
 
 class InsightDot extends GutterMarker {
-  constructor(readonly severity: string, readonly text: string) {
+  constructor(
+    readonly severity: string,
+    readonly text: string,
+  ) {
     super();
   }
 
@@ -203,11 +206,5 @@ const gutterTheme = EditorView.theme({
 /* ── Public: bundle all extensions ── */
 
 export function insightGutterExtension() {
-  return [
-    insightField,
-    insightGutter,
-    insightLineHighlight,
-    insightGutterClick,
-    gutterTheme,
-  ];
+  return [insightField, insightGutter, insightLineHighlight, insightGutterClick, gutterTheme];
 }

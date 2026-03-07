@@ -12,7 +12,11 @@ import type {
   SubscriptionLevel,
   WizardStep,
 } from "../types/packageBuilder";
-import { createDefaultVariable, shouldAutoSecret, STARTER_TEMPLATES } from "../types/packageBuilder";
+import {
+  createDefaultVariable,
+  shouldAutoSecret,
+  STARTER_TEMPLATES,
+} from "../types/packageBuilder";
 import { generateReadmeScaffold } from "../services/packageBuilder/generateManifest";
 
 interface PackageBuilderState extends PackageBuilderData {
@@ -85,7 +89,14 @@ const DEFAULT_POLICY_TEMPLATE: PolicyTemplate = {
 
 const DEFAULT_STATE: Pick<
   PackageBuilderState,
-  "currentStep" | "identity" | "policyTemplate" | "variables" | "templateContent" | "readmeContent" | "mockValues" | "readmeGenerated"
+  | "currentStep"
+  | "identity"
+  | "policyTemplate"
+  | "variables"
+  | "templateContent"
+  | "readmeContent"
+  | "mockValues"
+  | "readmeGenerated"
 > = {
   currentStep: 1,
   identity: { ...DEFAULT_IDENTITY },
@@ -119,7 +130,9 @@ export const usePackageBuilderStore = create<PackageBuilderState>()(
 
         // Identity setters
         setName: (name) =>
-          set((s) => ({ identity: { ...s.identity, name: name.toLowerCase().replace(/[^a-z0-9_]/g, "_") } })),
+          set((s) => ({
+            identity: { ...s.identity, name: name.toLowerCase().replace(/[^a-z0-9_]/g, "_") },
+          })),
         setTitle: (title) => set((s) => ({ identity: { ...s.identity, title } })),
         setDescription: (description) => set((s) => ({ identity: { ...s.identity, description } })),
         setVersion: (version) => set((s) => ({ identity: { ...s.identity, version } })),
@@ -136,8 +149,7 @@ export const usePackageBuilderStore = create<PackageBuilderState>()(
           set((s) => ({ policyTemplate: { ...s.policyTemplate, ...updates } })),
 
         // Variables
-        addVariable: () =>
-          set((s) => ({ variables: [...s.variables, createDefaultVariable()] })),
+        addVariable: () => set((s) => ({ variables: [...s.variables, createDefaultVariable()] })),
         removeVariable: (index) =>
           set((s) => ({ variables: s.variables.filter((_, i) => i !== index) })),
         updateVariable: (index, updates) =>
