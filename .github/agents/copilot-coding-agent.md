@@ -52,46 +52,29 @@ Before finishing:
 
 ### Screenshots for UI Changes
 
-When a change affects the visual appearance of the UI, you **must** capture and attach screenshots to the pull request that show the **actual feature or page you changed**.
+When a change affects the visual appearance of the UI, you **must** capture and attach screenshots of the **actual page you changed** to the pull request.
 
-#### CRITICAL: Do NOT screenshot the wrong page
+**NEVER** screenshot the Welcome page, Connect dialog, or Dashboards page unless your PR specifically changes those pages. If you attach a screenshot of the wrong page, the PR is misleading.
 
-Most pages in this app require an Elasticsearch connection. The dev server starts on the **Welcome/Connect** page by default. If you screenshot that page, you are screenshotting the WRONG thing — it has nothing to do with your feature.
+#### How to take screenshots
 
-**Rules:**
-- **NEVER** attach a screenshot of the Welcome page, Connect dialog, or Dashboards page unless your PR specifically changes those pages.
-- If your change is on a page that requires an Elasticsearch connection, first try `scripts/screenshot-feature.mjs` so the screenshot captures the actual feature with mocked Elasticsearch responses.
-- Only fall back to a text description in the PR body when a faithful mocked screenshot cannot be produced.
-- Only take a screenshot if the page you changed is accessible WITHOUT an Elasticsearch connection (e.g., Package Builder, Settings, Add Data wizard step 1).
-- If you are unsure whether the page requires a connection, check `requiresConnection` in `peek/src/routes/manifest.ts` for that page's entry. If `requiresConnection: true` (or not set), use `scripts/screenshot-feature.mjs` first and only skip screenshots when that path cannot produce an accurate result.
-
-#### Pages that CAN be screenshotted (no connection required)
-
-Check `peek/src/routes/manifest.ts` — pages with `requiresConnection: false` can be visited directly. Use the page's `path` value as the route:
+Use `screenshot-feature.mjs` — it launches a browser, mocks Elasticsearch, auto-connects, navigates to the page you specify, and captures a screenshot. No live Elasticsearch cluster needed.
 
 ```bash
-cd peek && npm run dev &
+cd peek && npm run build && npm run preview -- --port 3000 &
 DEV_PID=$!
 for i in $(seq 1 30); do curl -sf http://localhost:3000/ai-github-actions-playground/ >/dev/null && break; sleep 1; done
-node scripts/screenshot-preflight.mjs \
-  --url "http://127.0.0.1:3000/ai-github-actions-playground/#/package-builder" \
-  --output screenshot-preflight.json \
+npx playwright install --with-deps chromium
+node scripts/screenshot-feature.mjs \
+  --url http://127.0.0.1:3000/ai-github-actions-playground/ \
+  --page <page-name> \
   --screenshot screenshot.png
 kill $DEV_PID
 ```
 
-Replace `/package-builder` with the route `path` value from `peek/src/routes/manifest.ts`.
+Replace `<page-name>` with the page you changed. Run `node scripts/screenshot-feature.mjs --page invalid` to see all valid page names.
 
-#### Pages that need mocked screenshots (connection required)
-
-For these pages, prefer `scripts/screenshot-feature.mjs` with the page key. If that is not possible, run `scripts/screenshot-preflight.mjs` as a diagnostics check and add a section to the PR body like:
-
-```markdown
-### Visual Changes
-- **Page:** <page name>
-- **What changed:** <describe the UI change>
-- **How to verify:** Connect to an Elasticsearch instance and navigate to <route>
-```
+If the page you changed is not in the supported list, check `peek/scripts/page-nav-buttons.mjs` and add it.
 
 For this repository:
 
