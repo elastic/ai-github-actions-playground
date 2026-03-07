@@ -23,4 +23,5 @@ export const PAGE_NAV_BUTTONS = {
   tasks: "Tasks",
   ilm: "ILM",
   templates: "Templates",
+  snapshots: "Snapshots",
 };

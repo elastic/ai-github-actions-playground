@@ -182,8 +182,67 @@ const DEFAULT_MOCK_DATA = {
   },
   allocationExplain: { error: { reason: "unable to find any unassigned shards to explain" } },
   allocationExplainStatus: 400,
-  slmStats: { operation_mode: "RUNNING", policy_stats: [] },
+  slmStats: {
+    operation_mode: "RUNNING",
+    retention_runs: 45,
+    retention_failed: 0,
+    total_snapshots_taken: 284,
+    total_snapshots_failed: 3,
+    total_snapshots_deleted: 224,
+    total_snapshot_deletion_failures: 0,
+    policy_stats: [],
+  },
   snapshotStatus: { snapshots: [] },
+  snapshots: {
+    snapshots: [
+      {
+        snapshot: "daily-2026-03-07",
+        repository: "my-s3-repo",
+        state: "SUCCESS",
+        indices: ["index-a", "index-b"],
+        data_streams: [],
+        start_time: "2026-03-07T02:00:00.000Z",
+        start_time_in_millis: 1772946000000,
+        end_time: "2026-03-07T02:15:30.000Z",
+        end_time_in_millis: 1772946930000,
+        duration_in_millis: 930000,
+      },
+      {
+        snapshot: "daily-2026-03-06",
+        repository: "my-s3-repo",
+        state: "SUCCESS",
+        indices: ["index-a"],
+        data_streams: [],
+        start_time: "2026-03-06T02:00:00.000Z",
+        start_time_in_millis: 1772859600000,
+        end_time: "2026-03-06T02:10:00.000Z",
+        end_time_in_millis: 1772860200000,
+        duration_in_millis: 600000,
+      },
+    ],
+  },
+  repositories: {
+    "my-s3-repo": {
+      type: "s3",
+      settings: { bucket: "my-backups", base_path: "elasticsearch", compress: "true" },
+    },
+  },
+  slmPolicies: {
+    "daily-snapshots": {
+      version: 1,
+      modified_date_millis: 1772800000000,
+      policy: {
+        name: "<daily-snap-{now/d}>",
+        repository: "my-s3-repo",
+        schedule: "0 30 2 * * ?",
+        config: { indices: ["*"], include_global_state: true },
+        retention: { expire_after: "30d", min_count: 5, max_count: 50 },
+      },
+      last_success: { snapshot_name: "daily-snap-2026.03.07", time: 1772946930000 },
+      next_execution_millis: 1773032400000,
+      stats: { policy: "daily-snapshots", snapshots_taken: 142, snapshots_failed: 3, snapshots_deleted: 112, snapshot_deletion_failures: 0 },
+    },
+  },
   ingestNodeStats: { nodes: { n1: { ingest: { total: { count: 1000, failed: 0 } } } } },
   hasPrivileges: {
     cluster: {
@@ -371,6 +430,10 @@ export async function registerElasticsearchMocks(
       return json(resolved.simulateIndexTemplate ?? { template: { settings: {}, mappings: {}, aliases: {} } });
     }
     if (path === "/_slm/stats" && method === "GET") return json(resolved.slmStats);
+    if (path === "/_slm/policy" && method === "GET") return json(resolved.slmPolicies);
+    if (path === "/_snapshot" && method === "GET") return json(resolved.repositories);
+    if (path === "/_snapshot/_status" && method === "GET") return json(resolved.snapshotStatus);
+    if (path.match(/^\/_snapshot\/[^/]+\/[^/]+$/) && method === "GET") return json(resolved.snapshots);
     if (path.startsWith("/_snapshot/") && method === "GET") return json(resolved.snapshotStatus);
     if (path === "/_cat/indices" && method === "GET") return json(resolved.catIndices);
     if (path === "/_data_stream" && method === "GET") return json(resolved.dataStreams);
