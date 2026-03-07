@@ -40,6 +40,22 @@ jobs:
 
         When in doubt, reply to the review thread explaining why you're skipping
         the change rather than making a potentially incorrect fix.
+
+        ## CI failures
+
+        After addressing review threads, also check the PR's CI status:
+
+        1. Look at the failing checks on the PR (use the GitHub API or gh CLI).
+        2. Read any bot comments on the PR — the PR Actions Detective agent posts
+           comments explaining what caused CI to fail and how to fix it. These
+           comments are your primary guide for fixing CI.
+        3. If CI is failing and the bot comment (or the check logs) point to a
+           clear, straightforward fix (e.g. a lint error, a type error, a failing
+           unit test, a missing import), apply the fix.
+        4. Apply the same scope rules as review feedback: fix simple, obvious CI
+           failures only. Do NOT attempt complex logic rewrites to make tests pass.
+        5. If you fix a CI failure, briefly describe what you changed and why in
+           your commit message.
     secrets:
       COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
       EXTRA_COMMIT_GITHUB_TOKEN: ${{ secrets.COMMIT_GITHUB_TOKEN }}
