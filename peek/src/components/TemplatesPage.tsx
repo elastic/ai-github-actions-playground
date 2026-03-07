@@ -329,8 +329,8 @@ export default function TemplatesPage() {
                     </TableCell>
                     <TableCell>
                       <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
-                        {tpl.indexPatterns.map((p) => (
-                          <Chip key={p} label={p} size="small" variant="outlined" />
+                        {tpl.indexPatterns.map((p, i) => (
+                          <Chip key={`${p}-${i}`} label={p} size="small" variant="outlined" />
                         ))}
                       </Box>
                     </TableCell>

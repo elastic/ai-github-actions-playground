@@ -8,6 +8,27 @@ type IndexSortField = "index" | "policy" | "phase" | "step" | "age" | "error";
 type PolicySortField = "name" | "version" | "modifiedDate" | "indexCount";
 type SortDirection = "asc" | "desc";
 
+function parseDurationToMs(value: string): number {
+  const match = value.trim().match(/^(\d+(?:\.\d+)?)(ms|s|m|h|d)$/i);
+  if (!match) return Number.POSITIVE_INFINITY;
+  const [, amountText, unitText] = match;
+  if (!amountText || !unitText) return Number.POSITIVE_INFINITY;
+  const amount = Number(amountText);
+  if (Number.isNaN(amount)) return Number.POSITIVE_INFINITY;
+  const unit = unitText.toLowerCase();
+  const factor =
+    unit === "ms"
+      ? 1
+      : unit === "s"
+        ? 1000
+        : unit === "m"
+          ? 60_000
+          : unit === "h"
+            ? 3_600_000
+            : 86_400_000;
+  return amount * factor;
+}
+
 function compareIndexRows(
   a: IlmIndexRow,
   b: IlmIndexRow,
@@ -29,7 +50,7 @@ function compareIndexRows(
       cmp = a.step.localeCompare(b.step);
       break;
     case "age":
-      cmp = a.age.localeCompare(b.age);
+      cmp = parseDurationToMs(a.age) - parseDurationToMs(b.age);
       break;
     case "error":
       cmp = Number(a.isError) - Number(b.isError);
@@ -108,6 +129,16 @@ describe("IlmPage index sorting", () => {
   it("sorts by phase ascending", () => {
     const sorted = [...rows].sort((a, b) => compareIndexRows(a, b, "phase", "asc"));
     expect(sorted.map((r) => r.phase)).toEqual(["cold", "hot", "warm"]);
+  });
+
+  it("sorts age by duration value", () => {
+    const withAges = [
+      makeIndexRow({ index: "a", age: "10d" }),
+      makeIndexRow({ index: "b", age: "2d" }),
+      makeIndexRow({ index: "c", age: "12h" }),
+    ];
+    const sorted = [...withAges].sort((a, b) => compareIndexRows(a, b, "age", "asc"));
+    expect(sorted.map((r) => r.index)).toEqual(["c", "b", "a"]);
   });
 });
 

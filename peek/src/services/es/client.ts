@@ -25,7 +25,6 @@ import type {
   CatAllocationRecord,
   CatShardRecord,
   RecoveryResponse,
-  IlmExplainResponse,
   SlmStatsResponse,
   SnapshotStatusResponse,
   ClusterSettingsResponse,
@@ -501,8 +500,8 @@ export class ElasticsearchClient {
     return this._fetch<RecoveryResponse>("/_recovery?active_only=true", { signal });
   }
 
-  async getIlmExplainAll(signal?: AbortSignal): Promise<IlmExplainResponse> {
-    return this._fetch<IlmExplainResponse>("/_all/_ilm/explain?only_managed=true", { signal });
+  async getIlmExplainAll(signal?: AbortSignal): Promise<IlmExplainDetailResponse> {
+    return this.getIlmExplain(signal);
   }
 
   async getSlmStats(signal?: AbortSignal): Promise<SlmStatsResponse> {

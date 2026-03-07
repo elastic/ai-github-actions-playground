@@ -30,7 +30,6 @@ export function useTasks(): DataFetchResult<TaskRow[]> & { refresh: () => void }
     retry: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    select: toTaskRows,
   });
   useRefetchOnConnectionChange(connection, query.refetch);
 
@@ -38,9 +37,17 @@ export function useTasks(): DataFetchResult<TaskRow[]> & { refresh: () => void }
     void query.refetch();
   };
 
+  const nodeFailureMessages =
+    query.data?.node_failures?.map(
+      (failure) => failure.reason ?? failure.type ?? "Task fetch failed on one or more nodes",
+    ) ?? [];
+
   if (!connection) return { status: "idle", refresh };
   if (query.isFetching) return { status: "loading", refresh };
   if (query.isError) return { status: "error", error: query.error.message, refresh };
-  if (query.data) return { status: "success", data: query.data, refresh };
+  if (nodeFailureMessages.length > 0) {
+    return { status: "error", error: nodeFailureMessages.join("; "), refresh };
+  }
+  if (query.data) return { status: "success", data: toTaskRows(query.data), refresh };
   return { status: "idle", refresh };
 }

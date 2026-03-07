@@ -147,6 +147,7 @@ const DEFAULT_MOCK_DATA = {
       },
     ],
   },
+  cancelTask: { node_failures: [], task_failures: [], nodes: {} },
   indexTemplates: {
     index_templates: [
       {
@@ -363,6 +364,7 @@ export async function registerElasticsearchMocks(
     if (path === "/_ilm/policy" && method === "GET") return json(resolved.ilmPolicies);
     if (path.match(/\/_ilm\/explain/) && method === "GET") return json(resolved.ilmExplainDetail);
     if (path === "/_tasks" && method === "GET") return json(resolved.tasks);
+    if (path.match(/^\/_tasks\/[^/]+\/_cancel$/) && method === "POST") return json(resolved.cancelTask);
     if (path === "/_index_template" && method === "GET") return json(resolved.indexTemplates);
     if (path === "/_component_template" && method === "GET") return json(resolved.componentTemplates);
     if (path === "/_slm/stats" && method === "GET") return json(resolved.slmStats);

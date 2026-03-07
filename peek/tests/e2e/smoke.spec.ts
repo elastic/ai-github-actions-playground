@@ -53,6 +53,15 @@ const A11Y_BASELINE: Record<string, Record<string, Record<string, number>>> = {
     Indices: {
       "color-contrast": 9,
     },
+    Tasks: {
+      "color-contrast": 7,
+    },
+    ILM: {
+      "color-contrast": 7,
+    },
+    Templates: {
+      "color-contrast": 7,
+    },
   },
   "mobile-safari": {
     "Query Lab": {
@@ -81,6 +90,9 @@ const A11Y_BASELINE: Record<string, Record<string, Record<string, number>>> = {
   "mobile-chrome": {
     "Query Lab": {
       "scrollable-region-focusable": 1,
+    },
+    Tasks: {
+      "color-contrast": 5,
     },
   },
 };
@@ -494,6 +506,9 @@ test.describe("smoke – site navigation", () => {
         await expect(page.getByRole("heading", { name: "API Console" })).toBeVisible();
       },
       Indices: () => expect(page.getByRole("heading", { name: "Indices" })).toBeVisible(),
+      Tasks: () => expect(page.getByRole("heading", { name: "Task Manager" })).toBeVisible(),
+      ILM: () => expect(page.getByRole("heading", { name: "ILM Troubleshooting" })).toBeVisible(),
+      Templates: () => expect(page.getByRole("heading", { name: "Templates" })).toBeVisible(),
     };
 
     for (const nav of [
@@ -504,6 +519,9 @@ test.describe("smoke – site navigation", () => {
       "Logs",
       "Console",
       "Indices",
+      "Tasks",
+      "ILM",
+      "Templates",
     ]) {
       await navigateViaSidebar(page, nav);
       await pageReadyLocators[nav]!();
