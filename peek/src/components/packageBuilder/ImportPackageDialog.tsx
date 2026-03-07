@@ -36,27 +36,43 @@ export default function ImportPackageDialog({ open, onClose }: Props) {
 
   const zipInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
+  const importAbortRef = useRef<AbortController | null>(null);
 
   // Load catalog when dialog opens
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
+    const controller = new AbortController();
     setCatalogLoading(true);
     setCatalogError(null);
-    listInputPackages()
+    listInputPackages(controller.signal)
       .then((entries) => { if (!cancelled) setCatalog(entries); })
-      .catch((err) => { if (!cancelled) setCatalogError(err instanceof Error ? err.message : "Failed to load catalog"); })
-      .finally(() => { if (!cancelled) setCatalogLoading(false); });
-    return () => { cancelled = true; };
+      .catch((err) => {
+        if (cancelled || controller.signal.aborted) return;
+        setCatalogError(err instanceof Error ? err.message : "Failed to load catalog");
+      })
+      .finally(() => {
+        if (!cancelled && !controller.signal.aborted) setCatalogLoading(false);
+      });
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
   }, [open]);
 
+  useEffect(() => () => importAbortRef.current?.abort(), []);
+
   const handleResult = useCallback(
-    async (importFn: () => Promise<Awaited<ReturnType<typeof importFromZip>>>) => {
+    async (importFn: (signal: AbortSignal) => Promise<Awaited<ReturnType<typeof importFromZip>>>) => {
+      importAbortRef.current?.abort();
+      const controller = new AbortController();
+      importAbortRef.current = controller;
       setLoading(true);
       setError(null);
       setWarnings([]);
       try {
-        const result = await importFn();
+        const result = await importFn(controller.signal);
+        if (controller.signal.aborted) return;
         setWarnings(result.warnings);
         loadPackage(result.data);
         if (result.warnings.length === 0) {
@@ -65,9 +81,15 @@ export default function ImportPackageDialog({ open, onClose }: Props) {
         // If there are warnings, keep dialog open so the user can see them,
         // but the data is already loaded.
       } catch (err) {
+        if (controller.signal.aborted) return;
         setError(err instanceof Error ? err.message : String(err));
       } finally {
-        setLoading(false);
+        if (importAbortRef.current === controller) {
+          importAbortRef.current = null;
+        }
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
       }
     },
     [loadPackage, onClose],
@@ -96,8 +118,8 @@ export default function ImportPackageDialog({ open, onClose }: Props) {
   const handleCatalogSelect = useCallback(
     (_: unknown, entry: CatalogEntry | null) => {
       if (!entry) return;
-      handleResult(async () => {
-        const fileMap = await fetchPackageFiles(entry.dirName);
+      handleResult(async (signal) => {
+        const fileMap = await fetchPackageFiles(entry.dirName, signal);
         return importFromFileMap(fileMap);
       });
     },
@@ -105,6 +127,9 @@ export default function ImportPackageDialog({ open, onClose }: Props) {
   );
 
   const handleClose = () => {
+    importAbortRef.current?.abort();
+    importAbortRef.current = null;
+    setLoading(false);
     setError(null);
     setWarnings([]);
     onClose();

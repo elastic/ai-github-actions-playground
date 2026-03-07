@@ -63,8 +63,13 @@ describe("generateManifest", () => {
   });
 
   it("does not double-suffix if name already ends with _input_otel", () => {
-    const data = makeData();
-    data.identity.name = "redis_input_otel";
+    const base = makeData();
+    const data = makeData({
+      identity: {
+        ...base.identity,
+        name: "redis_input_otel",
+      },
+    });
     const parsed = YAML.parse(generateManifest(data));
     expect(parsed.name).toBe("redis_input_otel");
   });

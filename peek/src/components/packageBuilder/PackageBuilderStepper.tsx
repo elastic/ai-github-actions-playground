@@ -22,7 +22,7 @@ export default function PackageBuilderStepper({ currentStep, onStepClick }: Prop
     <Stepper nonLinear activeStep={currentStep - 1} sx={{ pb: 2 }}>
       {STEPS.map(({ label, step }) => (
         <Step key={step} completed={currentStep > step}>
-          <StepButton onClick={() => onStepClick(step as WizardStep)}>{label}</StepButton>
+          <StepButton onClick={() => onStepClick(step)}>{label}</StepButton>
         </Step>
       ))}
     </Stepper>

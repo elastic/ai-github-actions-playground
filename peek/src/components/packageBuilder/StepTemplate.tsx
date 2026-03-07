@@ -57,6 +57,7 @@ export default function StepTemplate() {
   const loadStarterTemplate = usePackageBuilderStore((s) => s.loadStarterTemplate);
   const setMockValue = usePackageBuilderStore((s) => s.setMockValue);
   const themeMode = useThemeStore((s) => s.themeMode);
+  const editorRef = useRef<ReactCodeMirrorRef>(null);
 
   const isEmpty = !templateContent.trim();
 
@@ -78,7 +79,13 @@ export default function StepTemplate() {
   const hasExporters = /\bexporters\s*:/i.test(templateContent);
 
   const insertAtCursor = (text: string) => {
-    setTemplateContent(templateContent + text);
+    const view = editorRef.current?.view;
+    if (!view) {
+      setTemplateContent(templateContent + text);
+      return;
+    }
+    const { from, to } = view.state.selection.main;
+    view.dispatch({ changes: { from, to, insert: text } });
   };
 
   if (isEmpty) {
@@ -170,6 +177,7 @@ export default function StepTemplate() {
             agent/input/input.yml.hbs
           </Typography>
           <CodeMirror
+            ref={editorRef}
             value={templateContent}
             onChange={setTemplateContent}
             extensions={editorExtensions}
@@ -284,7 +292,7 @@ Rendered YAML (line numbers for slot references):
 ${numberedLines}`;
   }, [rendered, templateContent, packageName, variables, lines]);
 
-  const cacheKey = `pkg-template-lines::${packageName}::${lines.length}::${rendered.length}`;
+  const cacheKey = `pkg-template-lines::${packageName}::${lines.length}::${templateContent.length}`;
 
   const { insights } = usePageSlotInsights({
     context,
@@ -297,7 +305,7 @@ ${numberedLines}`;
   // Push insights into CodeMirror state whenever they change
   useEffect(() => {
     const view = cmRef.current?.view;
-    if (!view || !insights.length) return;
+    if (!view) return;
     view.dispatch({ effects: setInsights.of(insights) });
   }, [insights]);
 

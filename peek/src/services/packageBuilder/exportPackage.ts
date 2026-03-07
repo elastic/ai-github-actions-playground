@@ -24,7 +24,9 @@ export async function exportPackageZip(data: PackageBuilderData): Promise<Blob> 
 
   // img/ (icon if present)
   if (data.identity.icon) {
-    root.file(`img/logo_${data.identity.name}.svg`, data.identity.icon.rawBytes);
+    const ext = data.identity.icon.name.split(".").pop()?.toLowerCase();
+    const normalizedExt = ext && ["svg", "png", "jpg", "jpeg"].includes(ext) ? ext : "svg";
+    root.file(`img/logo_${data.identity.name}.${normalizedExt}`, data.identity.icon.rawBytes);
   }
 
   return zip.generateAsync({ type: "blob" });

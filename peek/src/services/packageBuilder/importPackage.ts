@@ -88,7 +88,12 @@ function parseManifestVariable(raw: Record<string, unknown>): PackageVariable {
 }
 
 function parseManifest(yamlContent: string): Omit<PackageBuilderData, "templateContent" | "readmeContent"> & { iconPath?: string } {
-  const doc = YAML.parse(yamlContent) as Record<string, unknown>;
+  let doc: Record<string, unknown>;
+  try {
+    doc = YAML.parse(yamlContent) as Record<string, unknown>;
+  } catch (err) {
+    throw new Error(`Invalid manifest.yml: ${err instanceof Error ? err.message : String(err)}`);
+  }
 
   // Identity
   const rawName = String(doc.name ?? "");
@@ -151,7 +156,9 @@ async function bytesToPackageIcon(
   bytes: Uint8Array,
   mimeType: string,
 ): Promise<PackageIcon> {
-  const blob = new Blob([bytes.slice().buffer as ArrayBuffer], { type: mimeType });
+  const arrayBuffer = new ArrayBuffer(bytes.byteLength);
+  new Uint8Array(arrayBuffer).set(bytes);
+  const blob = new Blob([arrayBuffer], { type: mimeType });
   const dataUrl = await new Promise<string>((resolve) => {
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result as string);

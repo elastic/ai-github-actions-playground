@@ -41,7 +41,7 @@ function autoIndentMultilineValues(
     const rawVal = value as string;
     const indentedVal = rawVal.split("\n").join("\n" + indent);
     if (rawVal !== indentedVal) {
-      result = result.replace(rawVal, indentedVal);
+      result = result.split(rawVal).join(indentedVal);
     }
   }
   return result;
@@ -59,7 +59,8 @@ export function renderTemplate(
     if (v.type === "bool") {
       context[v.name] = raw === "true";
     } else if (v.type === "integer") {
-      context[v.name] = raw ? Number(raw) : 0;
+      const parsed = Number(raw);
+      context[v.name] = Number.isFinite(parsed) ? parsed : 0;
     } else {
       context[v.name] = raw;
     }

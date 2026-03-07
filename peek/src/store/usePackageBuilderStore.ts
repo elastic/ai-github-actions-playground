@@ -156,6 +156,7 @@ export const usePackageBuilderStore = create<PackageBuilderState>()(
         moveVariable: (from, to) =>
           set((s) => {
             const variables = [...s.variables];
+            if (from < 0 || from >= variables.length || to < 0 || to >= variables.length) return {};
             const moved = variables[from];
             if (!moved) return {};
             variables.splice(from, 1);

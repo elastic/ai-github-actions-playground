@@ -142,21 +142,21 @@ const insightLineHighlight = ViewPlugin.fromClass(
 
 /* ── Tooltip on gutter click ── */
 
+let cleanupPopover: (() => void) | null = null;
+
 const insightGutterClick = EditorView.domEventHandlers({
   click(event, view) {
     const target = event.target as HTMLElement;
     if (!target.classList.contains("cm-insight-dot")) return false;
-    const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
-    if (pos === null) return false;
-    const line = view.state.doc.lineAt(pos);
+    const lineBlock = view.lineBlockAtHeight(event.clientY - view.documentTop);
+    if (!lineBlock) return false;
+    const line = view.state.doc.lineAt(lineBlock.from);
     const lineIdx = line.number - 1;
     const { byLine } = view.state.field(insightField);
     const insight = byLine.get(lineIdx);
     if (!insight) return false;
 
-    // Show a popover-style tooltip using a temporary DOM element
-    const existing = document.querySelector(".cm-insight-popover");
-    if (existing) existing.remove();
+    cleanupPopover?.();
 
     const popover = document.createElement("div");
     popover.className = "cm-insight-popover";
@@ -180,15 +180,28 @@ const insightGutterClick = EditorView.domEventHandlers({
     popover.textContent = insight.text;
     document.body.appendChild(popover);
 
-    // Dismiss on next click anywhere
+    let timerId: number | null = null;
     const dismiss = () => {
       popover.remove();
+      if (timerId !== null) {
+        window.clearTimeout(timerId);
+      }
       document.removeEventListener("click", dismiss, true);
+      if (cleanupPopover === dismiss) {
+        cleanupPopover = null;
+      }
     };
-    setTimeout(() => document.addEventListener("click", dismiss, true), 0);
+    cleanupPopover = dismiss;
+    timerId = window.setTimeout(() => document.addEventListener("click", dismiss, true), 0);
 
     return true;
   },
+});
+
+const insightPopoverCleanup = ViewPlugin.fromClass(class {
+  destroy() {
+    cleanupPopover?.();
+  }
 });
 
 /* ── CSS for the gutter width ── */
@@ -208,6 +221,7 @@ export function insightGutterExtension() {
     insightGutter,
     insightLineHighlight,
     insightGutterClick,
+    insightPopoverCleanup,
     gutterTheme,
   ];
 }

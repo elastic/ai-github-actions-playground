@@ -12,9 +12,11 @@ export interface CatalogEntry {
 
 /** List all _input_otel packages in the repo (cached in-memory). */
 let catalogCache: CatalogEntry[] | null = null;
+let catalogCacheAt = 0;
+const CATALOG_CACHE_TTL_MS = 5 * 60 * 1000;
 
 export async function listInputPackages(signal?: AbortSignal): Promise<CatalogEntry[]> {
-  if (catalogCache) return catalogCache;
+  if (catalogCache && Date.now() - catalogCacheAt < CATALOG_CACHE_TTL_MS) return catalogCache;
 
   const res = await fetch(`${API_BASE}/contents/packages?ref=${BRANCH}`, { signal });
   if (!res.ok) throw new Error(`GitHub API error: ${res.status} ${res.statusText}`);
@@ -32,6 +34,7 @@ export async function listInputPackages(signal?: AbortSignal): Promise<CatalogEn
     .sort((a, b) => a.label.localeCompare(b.label));
 
   catalogCache = packages;
+  catalogCacheAt = Date.now();
   return packages;
 }
 
@@ -51,6 +54,7 @@ export async function fetchPackageFiles(
   signal?: AbortSignal,
 ): Promise<Map<string, Uint8Array>> {
   const encoder = new TextEncoder();
+  const decoder = new TextDecoder();
   const fileMap = new Map<string, Uint8Array>();
 
   // Fetch text files in parallel
@@ -62,29 +66,21 @@ export async function fetchPackageFiles(
     fileMap.set(`${dirName}/${relPath}`, encoder.encode(text));
   });
 
-  // Also try to fetch the icon — check the manifest first for the icon path,
-  // but also try common patterns
-  const iconFetch = (async () => {
-    // First fetch manifest to find icon reference
-    const manifestUrl = `${RAW_BASE}/packages/${dirName}/manifest.yml`;
-    const manifestRes = await fetch(manifestUrl, { signal });
-    if (!manifestRes.ok) return;
-    const manifestText = await manifestRes.text();
+  await Promise.all(textFetches);
+  const manifestBytes = fileMap.get(`${dirName}/manifest.yml`);
+  if (!manifestBytes) return fileMap;
 
-    // Quick regex to find icon src path
-    const iconMatch = manifestText.match(/src:\s*\/img\/(.+)/);
-    if (!iconMatch) return;
+  // Find icon src path from manifest content.
+  const manifestText = decoder.decode(manifestBytes);
+  const iconMatch = manifestText.match(/src:\s*\/img\/(.+)/);
+  const iconFileName = iconMatch?.[1]?.trim();
+  if (!iconFileName) return fileMap;
 
-    const iconFileName = iconMatch[1]?.trim();
-    if (!iconFileName) return;
-    const iconUrl = `${RAW_BASE}/packages/${dirName}/img/${iconFileName}`;
-    const iconRes = await fetch(iconUrl, { signal });
-    if (!iconRes.ok) return;
+  const iconUrl = `${RAW_BASE}/packages/${dirName}/img/${iconFileName}`;
+  const iconRes = await fetch(iconUrl, { signal });
+  if (!iconRes.ok) return fileMap;
 
-    const bytes = new Uint8Array(await iconRes.arrayBuffer());
-    fileMap.set(`${dirName}/img/${iconFileName}`, bytes);
-  })();
-
-  await Promise.all([...textFetches, iconFetch]);
+  const bytes = new Uint8Array(await iconRes.arrayBuffer());
+  fileMap.set(`${dirName}/img/${iconFileName}`, bytes);
   return fileMap;
 }

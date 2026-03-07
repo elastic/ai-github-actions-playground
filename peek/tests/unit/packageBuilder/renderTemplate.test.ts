@@ -116,13 +116,12 @@ describe("renderTemplate", () => {
 
   it("detects invalid YAML in rendered output", () => {
     const result = renderTemplate(
-      "key: {{value}}\n  bad indent",
+      "key: [{{value}}",
       [makeVar("value", "text", "test")],
       {},
     );
-    // This may or may not be invalid depending on YAML parser leniency,
-    // but the point is yamlError is checked
-    expect(result.rendered).toBeTruthy();
+    expect(result.yamlValid).toBe(false);
+    expect(result.yamlError).toBeTruthy();
   });
 
   it("renders the real Apache template with defaults to valid YAML", () => {

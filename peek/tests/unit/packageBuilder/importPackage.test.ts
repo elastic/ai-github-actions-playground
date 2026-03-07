@@ -13,6 +13,12 @@ function makeFileMap(files: Record<string, string>, rootFolder = "package"): Map
   return map;
 }
 
+function expectVariable(vars: Awaited<ReturnType<typeof importFromFileMap>>["data"]["variables"], name: string) {
+  const variable = vars.find((v) => v.name === name);
+  expect(variable).toBeDefined();
+  return variable;
+}
+
 describe("importFromFileMap — Apache input package", () => {
   it("parses identity fields from manifest", async () => {
     const fileMap = makeFileMap({
@@ -64,7 +70,7 @@ describe("importFromFileMap — Apache input package", () => {
     expect(vars).toHaveLength(11);
 
     // endpoint
-    const endpoint = vars.find((v) => v.name === "endpoint")!;
+    const endpoint = expectVariable(vars, "endpoint");
     expect(endpoint.type).toBe("text");
     expect(endpoint.required).toBe(true);
     expect(endpoint.default).toBe("http://localhost:8080/server-status?auto");
@@ -73,29 +79,29 @@ describe("importFromFileMap — Apache input package", () => {
     expect(endpoint.description).toBe("The URL of the Apache server-status endpoint.");
 
     // collection_interval
-    const interval = vars.find((v) => v.name === "collection_interval")!;
+    const interval = expectVariable(vars, "collection_interval");
     expect(interval.type).toBe("duration");
     expect(interval.default).toBe("10s");
     expect(interval.showUser).toBe(false);
 
     // initial_delay
-    const delay = vars.find((v) => v.name === "initial_delay")!;
+    const delay = expectVariable(vars, "initial_delay");
     expect(delay.type).toBe("duration");
     expect(delay.default).toBe("1s");
 
     // timeout
-    const timeout = vars.find((v) => v.name === "timeout")!;
+    const timeout = expectVariable(vars, "timeout");
     expect(timeout.type).toBe("duration");
     expect(timeout.default).toBe("10s");
 
     // tls_enabled (bool with false default)
-    const tlsEnabled = vars.find((v) => v.name === "tls_enabled")!;
+    const tlsEnabled = expectVariable(vars, "tls_enabled");
     expect(tlsEnabled.type).toBe("bool");
     expect(tlsEnabled.default).toBe("false");
     expect(tlsEnabled.showUser).toBe(true);
 
     // tls_ca_file (no default)
-    const caFile = vars.find((v) => v.name === "tls_ca_file")!;
+    const caFile = expectVariable(vars, "tls_ca_file");
     expect(caFile.type).toBe("text");
     expect(caFile.default).toBe("");
     expect(caFile.required).toBe(false);

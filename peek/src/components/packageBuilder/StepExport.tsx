@@ -23,18 +23,24 @@ import { generateManifest, generateChangelog } from "../../services/packageBuild
 import { renderTemplate, findUndefinedVars } from "../../services/packageBuilder/renderTemplate";
 import { exportPackageZip, downloadBlob } from "../../services/packageBuilder/exportPackage";
 
+type PackageBuilderState = Parameters<typeof usePackageBuilderStore>[0] extends (state: infer T) => unknown ? T : never;
+
+const selectPackageBuilderData = (s: PackageBuilderState) => ({
+  identity: s.identity,
+  policyTemplate: s.policyTemplate,
+  variables: s.variables,
+  templateContent: s.templateContent,
+  readmeContent: s.readmeContent,
+});
+
 interface ValidationItem {
   label: string;
   status: "pass" | "warn" | "fail";
   detail?: string;
 }
 
-function useValidation(): ValidationItem[] {
-  const identity = usePackageBuilderStore((s) => s.identity);
-  const policyTemplate = usePackageBuilderStore((s) => s.policyTemplate);
-  const variables = usePackageBuilderStore((s) => s.variables);
-  const templateContent = usePackageBuilderStore((s) => s.templateContent);
-  const readmeContent = usePackageBuilderStore((s) => s.readmeContent);
+function useValidation(data: ReturnType<typeof selectPackageBuilderData>): ValidationItem[] {
+  const { identity, policyTemplate, variables, templateContent, readmeContent } = data;
 
   return useMemo(() => {
     const items: ValidationItem[] = [];
@@ -54,7 +60,13 @@ function useValidation(): ValidationItem[] {
     }
 
     // Format version
-    items.push({ label: `format_version >= 3.5.0`, status: "pass" });
+    const [major = 0, minor = 0, patch = 0] = identity.formatVersion.split(".").map((v) => Number(v));
+    const formatVersionValid = major > 3 || (major === 3 && (minor > 5 || (minor === 5 && patch >= 0)));
+    if (formatVersionValid) {
+      items.push({ label: `format_version ${identity.formatVersion}`, status: "pass" });
+    } else {
+      items.push({ label: `format_version ${identity.formatVersion} is below 3.5.0`, status: "fail" });
+    }
 
     // Title
     if (identity.title) {
@@ -128,24 +140,17 @@ function useValidation(): ValidationItem[] {
 type PreviewFile = "manifest" | "changelog" | "template" | "readme";
 
 export default function StepExport() {
-  const identity = usePackageBuilderStore((s) => s.identity);
-  const policyTemplate = usePackageBuilderStore((s) => s.policyTemplate);
-  const variables = usePackageBuilderStore((s) => s.variables);
-  const templateContent = usePackageBuilderStore((s) => s.templateContent);
-  const readmeContent = usePackageBuilderStore((s) => s.readmeContent);
+  const data = usePackageBuilderStore(selectPackageBuilderData);
+  const { identity } = data;
 
-  const validation = useValidation();
+  const validation = useValidation(data);
   const [selectedFile, setSelectedFile] = useState<PreviewFile>("manifest");
   const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   const fullName = identity.name.endsWith("_input_otel")
     ? identity.name
     : `${identity.name || "my_package"}_input_otel`;
-
-  const data = useMemo(
-    () => ({ identity, policyTemplate, variables, templateContent, readmeContent }),
-    [identity, policyTemplate, variables, templateContent, readmeContent],
-  );
 
   const fileContents: Record<PreviewFile, string> = useMemo(
     () => ({
@@ -159,9 +164,12 @@ export default function StepExport() {
 
   const handleExport = async () => {
     setExporting(true);
+    setExportError(null);
     try {
       const blob = await exportPackageZip(data);
       downloadBlob(blob, `${fullName}.zip`);
+    } catch (err) {
+      setExportError(err instanceof Error ? err.message : String(err));
     } finally {
       setExporting(false);
     }
@@ -202,6 +210,11 @@ export default function StepExport() {
       >
         {passes} passed, {warns} warnings, {fails} errors
       </Alert>
+      {exportError && (
+        <Alert severity="error" sx={{ py: 0.5 }}>
+          {exportError}
+        </Alert>
+      )}
 
       <Box sx={{ display: "flex", gap: 2, minHeight: 400 }}>
         {/* Left: file tree + validation */}

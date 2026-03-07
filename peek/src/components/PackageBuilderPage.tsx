@@ -16,14 +16,22 @@ import StepTemplate from "./packageBuilder/StepTemplate";
 import StepDocs from "./packageBuilder/StepDocs";
 import StepExport from "./packageBuilder/StepExport";
 
+const FIRST_STEP: WizardStep = 1;
+const LAST_STEP: WizardStep = 6;
+
 export default function PackageBuilderPage() {
   const currentStep = usePackageBuilderStore((s) => s.currentStep);
   const setStep = usePackageBuilderStore((s) => s.setStep);
   const reset = usePackageBuilderStore((s) => s.reset);
   const [importOpen, setImportOpen] = useState(false);
 
-  const canGoBack = currentStep > 1;
-  const canGoForward = currentStep < 6;
+  const canGoBack = currentStep > FIRST_STEP;
+  const canGoForward = currentStep < LAST_STEP;
+
+  const handleReset = () => {
+    if (!window.confirm("Reset all package builder fields? This cannot be undone.")) return;
+    reset();
+  };
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
@@ -36,7 +44,7 @@ export default function PackageBuilderPage() {
           <Button size="small" startIcon={<FolderOpenIcon />} onClick={() => setImportOpen(true)}>
             Open Package
           </Button>
-          <Button size="small" startIcon={<RestartAltIcon />} onClick={reset} color="warning">
+          <Button size="small" startIcon={<RestartAltIcon />} onClick={handleReset} color="warning">
             Reset
           </Button>
         </Box>
@@ -71,7 +79,7 @@ export default function PackageBuilderPage() {
           disabled={!canGoForward}
           onClick={() => setStep((currentStep + 1) as WizardStep)}
         >
-          {currentStep === 5 ? "Review & Export" : "Continue"}
+          {currentStep === LAST_STEP - 1 ? "Review & Export" : "Continue"}
         </Button>
       </Box>
     </Box>

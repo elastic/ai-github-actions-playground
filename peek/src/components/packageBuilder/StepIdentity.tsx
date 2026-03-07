@@ -50,6 +50,26 @@ Each field is a slot you can annotate with a brief suggestion.
 
 Only annotate fields that are empty, have wrong values, or could be improved. Skip fields that are correct.`;
 
+const categoryOptions = PACKAGE_CATEGORIES;
+
+function readAsDataURL(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error ?? new Error("Failed to read file"));
+    reader.readAsDataURL(file);
+  });
+}
+
+function readAsArrayBuffer(file: File): Promise<ArrayBuffer> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as ArrayBuffer);
+    reader.onerror = () => reject(reader.error ?? new Error("Failed to read file"));
+    reader.readAsArrayBuffer(file);
+  });
+}
+
 export default function StepIdentity() {
   const identity = usePackageBuilderStore((s) => s.identity);
   const setName = usePackageBuilderStore((s) => s.setName);
@@ -67,31 +87,21 @@ export default function StepIdentity() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleIconUpload = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        const dataUrl = reader.result as string;
-        const arrayReader = new FileReader();
-        arrayReader.onload = () => {
-          setIcon({
-            name: file.name,
-            dataUrl,
-            rawBytes: new Uint8Array(arrayReader.result as ArrayBuffer),
-            mimeType: file.type || "image/svg+xml",
-          });
-        };
-        arrayReader.readAsArrayBuffer(file);
-      };
-      reader.readAsDataURL(file);
+      const [dataUrl, arrayBuffer] = await Promise.all([readAsDataURL(file), readAsArrayBuffer(file)]);
+      setIcon({
+        name: file.name,
+        dataUrl,
+        rawBytes: new Uint8Array(arrayBuffer),
+        mimeType: file.type || "image/svg+xml",
+      });
       // Reset so same file can be re-selected
       e.target.value = "";
     },
     [setIcon],
   );
-
-  const categoryOptions = useMemo(() => [...PACKAGE_CATEGORIES], []);
 
   const insightContext = useMemo(() => {
     if (!identity.name) return "";
