@@ -62,9 +62,7 @@ export function buildLogsQuery(state: LogsQueryState): string {
     const field = validateEsqlIdentifier(filter.field);
     if (trimmedValue === "*") {
       // Existence filter: match any document where the field has a value
-      whereClauses.push(
-        filter.exclude ? `${field} IS NULL` : `${field} IS NOT NULL`,
-      );
+      whereClauses.push(filter.exclude ? `${field} IS NULL` : `${field} IS NOT NULL`);
     } else {
       const value = escapeEsqlString(trimmedValue);
       whereClauses.push(
