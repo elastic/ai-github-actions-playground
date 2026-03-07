@@ -1,3 +1,5 @@
+set -e
+
 cd peek && npx lint-staged
 
 # Type-check the full project (catches cross-file breakage)
