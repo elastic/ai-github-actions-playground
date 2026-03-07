@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useShallow } from "zustand/react/shallow";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Paper from "@mui/material/Paper";
@@ -177,7 +178,7 @@ function useValidation(data: ReturnType<typeof selectPackageBuilderData>): Valid
 type PreviewFile = "manifest" | "changelog" | "template" | "readme";
 
 export default function StepExport() {
-  const data = usePackageBuilderStore(selectPackageBuilderData);
+  const data = usePackageBuilderStore(useShallow(selectPackageBuilderData));
   const { identity } = data;
 
   const validation = useValidation(data);
