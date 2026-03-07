@@ -74,7 +74,7 @@ export default function ClusterHealthPage({ defaultTab = "overview" }: ClusterHe
     checkIds: [
       "cluster.pending_tasks.nonzero",
       "nodes.thread_pool.rejected.nonzero",
-      "ilm.indices.error",
+      "ilm.indices.error.present",
     ],
   });
   const refresh = useCallback(() => {

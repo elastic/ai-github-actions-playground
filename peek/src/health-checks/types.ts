@@ -1,9 +1,14 @@
 import type {
+  CatIndexRecord,
+  CatShardRecord,
+  ClusterAllocationExplainResponse,
   ClusterHealthResponse,
   ClusterPendingTasksResponse,
+  GetApiKeysResponse,
   IlmExplainResponse,
   IlmPolicyResponse,
   NodesStatsResponse,
+  RecoveryResponse,
   TasksListResponse,
 } from "../services/es";
 
@@ -20,7 +25,9 @@ export type HealthQueryGroup =
   | "indicesCore"
   | "indexSettings"
   | "ilmCore"
-  | "templatesCore";
+  | "templatesCore"
+  | "recoveryCore"
+  | "securityCore";
 
 export interface HealthSnapshot {
   fetchedAt: string;
@@ -29,21 +36,33 @@ export interface HealthSnapshot {
       clusterHealth: ClusterHealthResponse | null;
       pendingTasks: ClusterPendingTasksResponse | null;
     };
-    shards: unknown | null;
-    allocationSample: unknown | null;
+    shards: {
+      catShards: CatShardRecord[] | null;
+    };
+    allocationSample: {
+      allocationExplain: ClusterAllocationExplainResponse | null;
+    };
     nodesCore: {
       nodeStats: NodesStatsResponse | null;
     };
     tasksCore: {
       tasks: TasksListResponse | null;
     };
-    indicesCore: unknown | null;
+    indicesCore: {
+      catIndices: CatIndexRecord[] | null;
+    };
     indexSettings: unknown | null;
     ilmCore: {
       ilmExplain: IlmExplainResponse | null;
       ilmPolicies: IlmPolicyResponse | null;
     };
     templatesCore: unknown | null;
+    recoveryCore: {
+      recovery: RecoveryResponse | null;
+    };
+    securityCore: {
+      apiKeys: GetApiKeysResponse | null;
+    };
   }>;
   errors: Partial<Record<HealthQueryGroup, string>>;
 }
