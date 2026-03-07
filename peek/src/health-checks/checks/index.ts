@@ -9,6 +9,7 @@ import { recoveryChecks } from "./recovery";
 import { securityChecks } from "./security";
 import { shardChecks } from "./shards";
 import { taskChecks } from "./tasks";
+import { transformChecks } from "./transforms";
 
 export const INITIAL_HEALTH_CHECKS: HealthCheckDefinition[] = [
   ...clusterChecks,
@@ -20,4 +21,5 @@ export const INITIAL_HEALTH_CHECKS: HealthCheckDefinition[] = [
   ...ingestChecks,
   ...recoveryChecks,
   ...securityChecks,
+  ...transformChecks,
 ];

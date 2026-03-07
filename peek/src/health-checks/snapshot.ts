@@ -74,6 +74,23 @@ async function fetchGroup(
         const apiKeys = await client.getApiKeys(signal);
         return { group, data: { apiKeys } };
       }
+      case "transformsCore": {
+        try {
+          const transformStats = await client.getTransformStats(signal);
+          return { group, data: { transformStats } };
+        } catch (innerError) {
+          if (isAbortError(innerError) || signal?.aborted) throw innerError;
+          const status =
+            typeof innerError === "object" && innerError !== null && "status" in innerError
+              ? Number((innerError as { status?: unknown }).status)
+              : undefined;
+          // 404 when transforms feature is not available on the cluster
+          if (status === 404 || status === 400) {
+            return { group, data: { transformStats: { count: 0, transforms: [] } } };
+          }
+          throw innerError;
+        }
+      }
       default:
         return { group, data: null };
     }

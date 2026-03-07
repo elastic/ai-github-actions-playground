@@ -28,6 +28,7 @@ import SubjectIcon from "@mui/icons-material/Subject";
 import CloudIcon from "@mui/icons-material/Cloud";
 import DnsIcon from "@mui/icons-material/Dns";
 import DescriptionIcon from "@mui/icons-material/Description";
+import TransformIcon from "@mui/icons-material/Transform";
 
 import type { UserCapabilities } from "../services/es";
 
@@ -88,6 +89,7 @@ const HostsMacosPage = lazy(() => import("../components/hosts/HostsMacosPage"));
 const TaskManagerPage = lazy(() => import("../components/TaskManagerPage"));
 const IlmPage = lazy(() => import("../components/IlmPage"));
 const TemplatesPage = lazy(() => import("../components/TemplatesPage"));
+const TransformsPage = lazy(() => import("../components/TransformsPage"));
 
 export type NavGroup = "Data" | "Workspace" | "Security" | "System" | "Help" | "Settings";
 
@@ -680,6 +682,20 @@ export const PAGE_MANIFEST = {
       order: 31,
       showInSidebar: true,
       icon: createElement(PolicyIcon, { fontSize: "small" }),
+    },
+  },
+  transforms: {
+    path: "/transforms",
+    component: TransformsPage,
+    requiresConnection: true,
+    showTimeControls: false,
+    skeletonVariant: "table",
+    nav: {
+      label: "Transforms",
+      group: "System",
+      order: 32,
+      showInSidebar: true,
+      icon: createElement(TransformIcon, { fontSize: "small" }),
     },
   },
   templates: {

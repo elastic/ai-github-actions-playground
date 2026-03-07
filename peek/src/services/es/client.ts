@@ -55,6 +55,7 @@ import type {
   GetComponentTemplatesResponse,
   SimulateIndexTemplateResponse,
 } from "./templateTypes";
+import type { GetTransformsResponse, GetTransformStatsResponse } from "./transformTypes";
 
 // ---------------------------------------------------------------------------
 // Re-export domain types so existing `import … from "./client"` keeps working.
@@ -157,6 +158,14 @@ export type {
   IndexTemplateRow,
   ComponentTemplateRow,
 } from "./templateTypes";
+
+export type {
+  TransformDefinition,
+  GetTransformsResponse,
+  TransformStatsEntry,
+  GetTransformStatsResponse,
+  TransformRow,
+} from "./transformTypes";
 
 // ---------------------------------------------------------------------------
 // Types that are NOT in the OpenAPI spec (our own)
@@ -755,6 +764,18 @@ export class ElasticsearchClient {
       `/_index_template/_simulate/${encodeURIComponent(name)}`,
       { method: "POST", signal },
     );
+  }
+
+  // -------------------------------------------------------------------------
+  // Transforms
+  // -------------------------------------------------------------------------
+
+  async getTransforms(signal?: AbortSignal): Promise<GetTransformsResponse> {
+    return this._fetch<GetTransformsResponse>("/_transform", { signal });
+  }
+
+  async getTransformStats(signal?: AbortSignal): Promise<GetTransformStatsResponse> {
+    return this._fetch<GetTransformStatsResponse>("/_transform/_stats", { signal });
   }
 
   // -------------------------------------------------------------------------

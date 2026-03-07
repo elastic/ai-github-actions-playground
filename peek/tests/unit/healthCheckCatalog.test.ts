@@ -9,6 +9,7 @@ import { recoveryChecks } from "../../src/health-checks/checks/recovery";
 import { securityChecks } from "../../src/health-checks/checks/security";
 import { shardChecks } from "../../src/health-checks/checks/shards";
 import { taskChecks } from "../../src/health-checks/checks/tasks";
+import { transformChecks } from "../../src/health-checks/checks/transforms";
 import { INITIAL_HEALTH_CHECKS } from "../../src/health-checks/checks/index";
 
 import type { HealthSnapshot } from "../../src/health-checks";
@@ -37,6 +38,7 @@ function makeSnapshot(overrides: Partial<HealthSnapshot["data"]> = {}): HealthSn
       ilmCore: { ilmExplain: { indices: {} }, ilmPolicies: {} },
       recoveryCore: { recovery: {} },
       securityCore: { apiKeys: { api_keys: [] } },
+      transformsCore: { transformStats: { count: 0, transforms: [] } },
       ...overrides,
     },
     errors: {},
@@ -69,7 +71,8 @@ describe("INITIAL_HEALTH_CHECKS aggregation", () => {
       indicesChecks.length +
       ingestChecks.length +
       recoveryChecks.length +
-      securityChecks.length;
+      securityChecks.length +
+      transformChecks.length;
     expect(INITIAL_HEALTH_CHECKS).toHaveLength(total);
   });
 
@@ -1522,6 +1525,107 @@ describe("security checks", () => {
     expect(
       findCheck(securityChecks, "security.api_keys.invalidated_high").evaluate(snap).status,
     ).toBe("warn");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Transform checks
+// ---------------------------------------------------------------------------
+describe("transform checks", () => {
+  it("transforms.failed — fails when a transform is in failed state", () => {
+    const check = findCheck(transformChecks, "transforms.failed");
+    const snap = makeSnapshot({
+      transformsCore: {
+        transformStats: {
+          count: 1,
+          transforms: [
+            { id: "broken-xform", state: "failed", health: { status: "red" }, stats: {} },
+          ],
+        },
+      },
+    });
+    expect(check.evaluate(snap).status).toBe("fail");
+  });
+
+  it("transforms.failed — passes when no transforms are failed", () => {
+    const check = findCheck(transformChecks, "transforms.failed");
+    const snap = makeSnapshot({
+      transformsCore: {
+        transformStats: {
+          count: 1,
+          transforms: [{ id: "healthy", state: "started", health: { status: "green" }, stats: {} }],
+        },
+      },
+    });
+    expect(check.evaluate(snap).status).toBe("pass");
+  });
+
+  it("transforms.health.degraded — warns on red health", () => {
+    const check = findCheck(transformChecks, "transforms.health.degraded");
+    const snap = makeSnapshot({
+      transformsCore: {
+        transformStats: {
+          count: 1,
+          transforms: [
+            { id: "red-health", state: "started", health: { status: "red" }, stats: {} },
+          ],
+        },
+      },
+    });
+    expect(check.evaluate(snap).status).toBe("warn");
+  });
+
+  it("transforms.health.degraded — passes on green health", () => {
+    const check = findCheck(transformChecks, "transforms.health.degraded");
+    const snap = makeSnapshot({
+      transformsCore: {
+        transformStats: {
+          count: 1,
+          transforms: [{ id: "ok", state: "started", health: { status: "green" }, stats: {} }],
+        },
+      },
+    });
+    expect(check.evaluate(snap).status).toBe("pass");
+  });
+
+  it("transforms.failures.nonzero — warns when search/index failures exist", () => {
+    const check = findCheck(transformChecks, "transforms.failures.nonzero");
+    const snap = makeSnapshot({
+      transformsCore: {
+        transformStats: {
+          count: 1,
+          transforms: [
+            {
+              id: "leaky",
+              state: "started",
+              health: { status: "yellow" },
+              stats: { search_failures: 3, index_failures: 1 },
+            },
+          ],
+        },
+      },
+    });
+    expect(check.evaluate(snap).status).toBe("warn");
+  });
+
+  it("transforms.failures.nonzero — passes when no failures", () => {
+    const check = findCheck(transformChecks, "transforms.failures.nonzero");
+    const snap = makeSnapshot({
+      transformsCore: {
+        transformStats: {
+          count: 1,
+          transforms: [
+            {
+              id: "clean",
+              state: "started",
+              health: { status: "green" },
+              stats: { search_failures: 0, index_failures: 0 },
+            },
+          ],
+        },
+      },
+    });
+    expect(check.evaluate(snap).status).toBe("pass");
   });
 });
 
