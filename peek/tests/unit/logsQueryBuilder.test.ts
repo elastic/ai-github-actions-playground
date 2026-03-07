@@ -66,6 +66,30 @@ describe("buildLogsQuery", () => {
     expect(query).toContain('message : "connection reset"');
   });
 
+  it("renders wildcard filter as IS NOT NULL existence check", () => {
+    const query = buildLogsQuery({
+      indexPattern: "logs-*",
+      searchText: "",
+      filters: [{ field: "service.name", value: "*" }],
+      selectedColumns: ["@timestamp", "message"],
+    });
+
+    expect(query).toContain("service.name IS NOT NULL");
+    expect(query).not.toContain('service.name == "*"');
+  });
+
+  it("renders excluded wildcard filter as IS NULL", () => {
+    const query = buildLogsQuery({
+      indexPattern: "logs-*",
+      searchText: "",
+      filters: [{ field: "host.name", value: "*", exclude: true }],
+      selectedColumns: ["@timestamp", "message"],
+    });
+
+    expect(query).toContain("host.name IS NULL");
+    expect(query).not.toContain('host.name != "*"');
+  });
+
   it("supports configurable time range and limit", () => {
     const query = buildLogsQuery({
       indexPattern: "logs-*",

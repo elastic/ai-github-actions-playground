@@ -60,10 +60,17 @@ export function buildLogsQuery(state: LogsQueryState): string {
     const trimmedValue = filter.value.trim();
     if (!trimmedValue) continue;
     const field = validateEsqlIdentifier(filter.field);
-    const value = escapeEsqlString(trimmedValue);
-    whereClauses.push(
-      filter.exclude ? `(${field} != "${value}" OR ${field} IS NULL)` : `${field} == "${value}"`,
-    );
+    if (trimmedValue === "*") {
+      // Existence filter: match any document where the field has a value
+      whereClauses.push(
+        filter.exclude ? `${field} IS NULL` : `${field} IS NOT NULL`,
+      );
+    } else {
+      const value = escapeEsqlString(trimmedValue);
+      whereClauses.push(
+        filter.exclude ? `(${field} != "${value}" OR ${field} IS NULL)` : `${field} == "${value}"`,
+      );
+    }
   }
 
   const searchClause = buildSearchClause(state.searchText);
