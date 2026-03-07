@@ -9,7 +9,7 @@ import Typography from "@mui/material/Typography";
 import { PAGE_MANIFEST } from "../../routes/manifest";
 import { useConnectionStore } from "../../store/useConnectionStore";
 import EmptyState from "../EmptyState";
-import PageHeader from "../PageHeader";
+import PageHeaderSection from "../PageHeaderSection";
 
 import K8sDashboardControls from "./K8sDashboardControls";
 import K8sDashboardSummaryCards, { type K8sDashboardSummary } from "./K8sDashboardSummaryCards";
@@ -74,21 +74,19 @@ export default function K8sPodDashboardPage() {
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2, minHeight: "100%" }}>
-      <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <PageHeader
-          title={podName}
-          description="Pod-level dashboard showing containers, resource utilization, logs, and traces."
-          actions={
-            <Button
-              size="small"
-              variant="text"
-              onClick={() => navigate(PAGE_MANIFEST.kubernetes.path)}
-            >
-              ← Kubernetes
-            </Button>
-          }
-        />
-      </Paper>
+      <PageHeaderSection
+        title={podName}
+        description="Pod-level dashboard showing containers, resource utilization, logs, and traces."
+        actions={
+          <Button
+            size="small"
+            variant="text"
+            onClick={() => navigate(PAGE_MANIFEST.kubernetes.path)}
+          >
+            ← Kubernetes
+          </Button>
+        }
+      />
 
       <K8sDashboardControls
         loading={loading}

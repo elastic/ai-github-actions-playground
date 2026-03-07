@@ -1,6 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import Box from "@mui/material/Box";
-
 import { ElasticsearchClient } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useAddDataApiKey } from "../hooks/useAddDataApiKey";
@@ -19,6 +17,7 @@ import type { FluentBitOutputMode } from "../services/addData/fluentBitConfig";
 import AddDataStepTechnology from "./addData/AddDataStepTechnology";
 import AddDataStepSetup from "./addData/AddDataStepSetup";
 import AddDataStepSuccess from "./addData/AddDataStepSuccess";
+import PageContainer from "./PageContainer";
 
 type WizardStep = 1 | 2 | 3;
 
@@ -258,7 +257,7 @@ export default function AddDataPage() {
   };
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, height: "100%", minHeight: 0 }}>
+    <PageContainer gap={1.5}>
       {wizardStep === 1 && (
         <AddDataStepTechnology
           selectedTechnology={selectedTechnology}
@@ -345,6 +344,6 @@ export default function AddDataPage() {
           onBack={() => setWizardStep(2)}
         />
       )}
-    </Box>
+    </PageContainer>
   );
 }

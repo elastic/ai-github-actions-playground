@@ -5,7 +5,6 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
-import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
@@ -18,7 +17,7 @@ import { INSIGHT_GUARDRAIL } from "../hooks/insightPromptUtils";
 
 import AskAiButton from "./AskAiButton";
 import ContentSkeleton from "./ContentSkeleton";
-import PageHeader from "./PageHeader";
+import PageHeaderSection from "./PageHeaderSection";
 import PageInsightBanner from "./PageInsightBanner";
 import { OverviewInfoCard } from "./OverviewInfoCard";
 import { OverviewNodesTable } from "./OverviewNodesTable";
@@ -133,32 +132,30 @@ export default function ClusterOverviewPage() {
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-      <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <PageHeader
-          title="Cluster Overview"
-          actions={
-            <>
-              <AskAiButton
-                prompt="Based on the current cluster state, what are the top 3 things I should investigate or optimize?"
-                label="What should I look at?"
-              />
-              <Button
-                size="small"
-                variant="outlined"
-                onClick={() => {
-                  setDismissedPartialErrorsKey(null);
-                  refresh();
-                  refreshLocalChecks();
-                }}
-                startIcon={loading ? <CircularProgress size={14} aria-hidden="true" /> : undefined}
-                aria-label={loading ? "Refreshing cluster overview" : "Refresh cluster overview"}
-              >
-                {loading ? "Refreshing..." : "Refresh"}
-              </Button>
-            </>
-          }
-        />
-      </Paper>
+      <PageHeaderSection
+        title="Cluster Overview"
+        actions={
+          <>
+            <AskAiButton
+              prompt="Based on the current cluster state, what are the top 3 things I should investigate or optimize?"
+              label="What should I look at?"
+            />
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={() => {
+                setDismissedPartialErrorsKey(null);
+                refresh();
+                refreshLocalChecks();
+              }}
+              startIcon={loading ? <CircularProgress size={14} aria-hidden="true" /> : undefined}
+              aria-label={loading ? "Refreshing cluster overview" : "Refresh cluster overview"}
+            >
+              {loading ? "Refreshing..." : "Refresh"}
+            </Button>
+          </>
+        }
+      />
 
       {insightContext && (
         <PageInsightBanner

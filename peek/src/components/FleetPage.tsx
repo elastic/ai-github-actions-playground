@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Paper from "@mui/material/Paper";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 import ExtensionIcon from "@mui/icons-material/Extension";
@@ -25,7 +24,8 @@ import FleetActivityList from "./fleet/FleetActivityList";
 import PageInsightBanner from "./PageInsightBanner";
 import RefreshToolbar from "./RefreshToolbar";
 import ContentSkeleton from "./ContentSkeleton";
-import PageHeader from "./PageHeader";
+import PageContainer from "./PageContainer";
+import PageHeaderSection from "./PageHeaderSection";
 
 const TABS: { value: FleetViewTab; label: string }[] = [
   { value: "overview", label: "Overview" },
@@ -114,32 +114,30 @@ export default function FleetPage() {
   const insightCacheKey = `fleet::${agentInventoryTotal ?? ""}::${agentInventoryTotalErrorCount ?? ""}::${JSON.stringify(agentVersions)}`;
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, height: "100%", minHeight: 0 }}>
-      <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <PageHeader
-          title="Fleet"
-          actions={
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <Button
-                size="small"
-                variant="outlined"
-                startIcon={<ExtensionIcon />}
-                onClick={() => navigate("/package-builder")}
-              >
-                Package Builder
-              </Button>
-              <RefreshToolbar
-                lastUpdatedAt={lastUpdatedAt}
-                refreshIntervalSeconds={autoRefreshEnabled ? AUTO_REFRESH_MS / 1000 : 0}
-                refreshOptions={FLEET_REFRESH_OPTIONS}
-                onIntervalChange={(seconds) => setAutoRefreshEnabled(seconds > 0)}
-                onRefresh={refresh}
-                loading={loading}
-              />
-            </Box>
-          }
-        />
-      </Paper>
+    <PageContainer gap={1.5}>
+      <PageHeaderSection
+        title="Fleet"
+        actions={
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Button
+              size="small"
+              variant="outlined"
+              startIcon={<ExtensionIcon />}
+              onClick={() => navigate("/package-builder")}
+            >
+              Package Builder
+            </Button>
+            <RefreshToolbar
+              lastUpdatedAt={lastUpdatedAt}
+              refreshIntervalSeconds={autoRefreshEnabled ? AUTO_REFRESH_MS / 1000 : 0}
+              refreshOptions={FLEET_REFRESH_OPTIONS}
+              onIntervalChange={(seconds) => setAutoRefreshEnabled(seconds > 0)}
+              onRefresh={refresh}
+              loading={loading}
+            />
+          </Box>
+        }
+      />
 
       {insightContext && (
         <PageInsightBanner
@@ -194,6 +192,6 @@ export default function FleetPage() {
           )}
         </Box>
       )}
-    </Box>
+    </PageContainer>
   );
 }

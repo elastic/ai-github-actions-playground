@@ -26,7 +26,8 @@ import { usePageContextStore } from "../store/usePageContextStore";
 import { INSIGHT_GUARDRAIL } from "../hooks/insightPromptUtils";
 
 import ContentSkeleton from "./ContentSkeleton";
-import PageHeader from "./PageHeader";
+import PageContainer from "./PageContainer";
+import PageHeaderSection from "./PageHeaderSection";
 import PageInsightBanner from "./PageInsightBanner";
 import EmptyState from "./EmptyState";
 import { stalenessSeverityToColor, formatFleetTime } from "./fleet/fleetPresentation";
@@ -114,28 +115,26 @@ export default function FleetAgentPage() {
   const insightCacheKey = `fleet-agent::${decodedAgentId}::${agentInfo?.errorCount ?? ""}::${logs.length}::${metrics.length}::${logs.find((log) => log.level.toLowerCase() === "error")?.timestamp ?? ""}::${metrics[0]?.timestamp ?? ""}`;
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, height: "100%", minHeight: 0 }}>
+    <PageContainer gap={1.5}>
       {/* Header */}
-      <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <PageHeader
-          title={agentInfo?.hostname ?? decodedAgentId}
-          actions={
-            <>
-              <Button size="small" variant="text" onClick={() => navigate("/fleet")}>
-                ← Fleet
-              </Button>
-              <Button
-                size="small"
-                variant="outlined"
-                onClick={() => void agentResult.refresh()}
-                disabled={loading}
-              >
-                {loading ? <CircularProgress size={16} /> : "Refresh"}
-              </Button>
-            </>
-          }
-        />
-      </Paper>
+      <PageHeaderSection
+        title={agentInfo?.hostname ?? decodedAgentId}
+        actions={
+          <>
+            <Button size="small" variant="text" onClick={() => navigate("/fleet")}>
+              ← Fleet
+            </Button>
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={() => void agentResult.refresh()}
+              disabled={loading}
+            >
+              {loading ? <CircularProgress size={16} /> : "Refresh"}
+            </Button>
+          </>
+        }
+      />
 
       {insightContext && (
         <PageInsightBanner
@@ -183,7 +182,7 @@ export default function FleetAgentPage() {
           </Box>
         </>
       )}
-    </Box>
+    </PageContainer>
   );
 }
 

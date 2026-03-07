@@ -19,7 +19,8 @@ import { useHealthChecks } from "../hooks/useHealthChecks";
 import type { HealthSeverity, HealthStatus } from "../health-checks";
 
 import EmptyState from "./EmptyState";
-import PageHeader from "./PageHeader";
+import PageContainer from "./PageContainer";
+import PageHeaderSection from "./PageHeaderSection";
 
 const SEVERITY_ORDER: Record<HealthSeverity, number> = {
   critical: 0,
@@ -82,17 +83,15 @@ export default function GlobalHealthPage() {
   }, [checks]);
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, height: "100%", minHeight: 0 }}>
-      <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <PageHeader
-          title="Global Health"
-          actions={
-            <Button size="small" variant="outlined" onClick={refresh} disabled={loading}>
-              {loading ? "Refreshing..." : "Refresh"}
-            </Button>
-          }
-        />
-      </Paper>
+    <PageContainer gap={1.5}>
+      <PageHeaderSection
+        title="Global Health"
+        actions={
+          <Button size="small" variant="outlined" onClick={refresh} disabled={loading}>
+            {loading ? "Refreshing..." : "Refresh"}
+          </Button>
+        }
+      />
 
       {error ? <Alert severity="error">{error}</Alert> : null}
 
@@ -251,6 +250,6 @@ export default function GlobalHealthPage() {
           </>
         )}
       </Drawer>
-    </Box>
+    </PageContainer>
   );
 }
