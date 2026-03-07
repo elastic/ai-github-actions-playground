@@ -7,7 +7,6 @@ import {
   HEALTH_SNAPSHOT_TTL_MS,
   healthRegistry,
 } from "../health-checks";
-import { initializeHealthChecks } from "../health-checks/bootstrap";
 import type { EvaluatedHealthCheck, HealthQueryGroup, HealthSurface } from "../health-checks";
 import { ElasticsearchClient } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
@@ -28,7 +27,6 @@ export interface UseHealthChecksResult {
 }
 
 export function useHealthChecks(options: UseHealthChecksOptions): UseHealthChecksResult {
-  initializeHealthChecks();
   const connection = useConnectionStore((s) => s.connection);
 
   const selectedChecks = useMemo(() => {

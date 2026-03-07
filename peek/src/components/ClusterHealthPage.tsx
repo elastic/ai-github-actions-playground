@@ -64,7 +64,12 @@ export default function ClusterHealthPage({ defaultTab = "overview" }: ClusterHe
     setRefreshIntervalMs,
   } = useClusterHealthData();
 
-  const { checks: localChecks, refresh: refreshLocalChecks } = useHealthChecks({
+  const {
+    checks: localChecks,
+    loading: localChecksLoading,
+    error: localChecksError,
+    refresh: refreshLocalChecks,
+  } = useHealthChecks({
     surface: "local",
     checkIds: [
       "cluster.pending_tasks.nonzero",
@@ -162,7 +167,13 @@ export default function ClusterHealthPage({ defaultTab = "overview" }: ClusterHe
           Partial data loaded. Unavailable: {partialErrors.join(", ")}.
         </Alert>
       ) : null}
-      {localFindings.length > 0 ? (
+      {localChecksError ? (
+        <Alert severity="error">Snapshot checks unavailable: {localChecksError}</Alert>
+      ) : null}
+      {!localChecksError && localChecksLoading ? (
+        <Alert severity="info">Health checks running...</Alert>
+      ) : null}
+      {!localChecksError && !localChecksLoading && localFindings.length > 0 ? (
         <Alert severity="warning">
           Snapshot checks: {localFindings.length} alert{localFindings.length === 1 ? "" : "s"} —{" "}
           {localFindings[0]?.summary}

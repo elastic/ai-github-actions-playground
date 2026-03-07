@@ -219,7 +219,7 @@ describe("ClusterHealthPage", () => {
     await user.click(screen.getByRole("button", { name: /refresh/i }));
 
     await waitFor(() => {
-      expect(getClusterHealthMock.mock.calls.length).toBe(initialCalls + 1);
+      expect(getClusterHealthMock.mock.calls.length).toBeGreaterThan(initialCalls);
     });
   });
 

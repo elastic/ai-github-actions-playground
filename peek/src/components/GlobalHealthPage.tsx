@@ -201,9 +201,9 @@ export default function GlobalHealthPage() {
               </Box>
             ) : null}
             <Stack direction="row" spacing={1}>
-              {selectedCheck.links?.map((link) => (
+              {selectedCheck.links?.map((link, index) => (
                 <Button
-                  key={link.to}
+                  key={`${link.to}-${link.label}-${index}`}
                   size="small"
                   variant="outlined"
                   onClick={() => navigate(link.to)}
