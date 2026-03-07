@@ -26,6 +26,7 @@ import PolicyIcon from "@mui/icons-material/Policy";
 import MiscellaneousServicesIcon from "@mui/icons-material/MiscellaneousServices";
 import SubjectIcon from "@mui/icons-material/Subject";
 import CloudIcon from "@mui/icons-material/Cloud";
+import DescriptionIcon from "@mui/icons-material/Description";
 
 import type { UserCapabilities } from "../services/es";
 
@@ -39,7 +40,6 @@ const ClusterSettingsPage = lazy(() => import("../components/ClusterSettingsPage
 const NodesHotThreadsPage = lazy(() => import("../components/NodesHotThreadsPage"));
 const ClusterResiliencePage = lazy(() => import("../components/ClusterResiliencePage"));
 const ClusterShardsPage = lazy(() => import("../components/ClusterShardsPage"));
-const ClusterTasksPage = lazy(() => import("../components/ClusterTasksPage"));
 const DashboardsLandingPage = lazy(() => import("../components/DashboardsLandingPage"));
 const DataStreamsPage = lazy(() => import("../components/DataStreamsPage"));
 const AddDataPage = lazy(() => import("../components/AddDataPage"));
@@ -77,6 +77,9 @@ const K8sWorkloadDashboardPage = lazy(
   () => import("../components/kubernetes/K8sWorkloadDashboardPage"),
 );
 const K8sPodDashboardPage = lazy(() => import("../components/kubernetes/K8sPodDashboardPage"));
+const TaskManagerPage = lazy(() => import("../components/TaskManagerPage"));
+const IlmPage = lazy(() => import("../components/IlmPage"));
+const TemplatesPage = lazy(() => import("../components/TemplatesPage"));
 
 export type NavGroup = "Data" | "Workspace" | "Security" | "System" | "Help" | "Settings";
 
@@ -379,15 +382,15 @@ export const PAGE_MANIFEST = {
   },
   clusterTasks: {
     path: "/cluster-tasks",
-    component: ClusterTasksPage,
+    component: TaskManagerPage,
     requiresConnection: true,
     showTimeControls: false,
     skeletonVariant: "table",
     nav: {
       label: "Tasks",
       group: "System",
-      order: 15,
-      showInSidebar: false,
+      order: 18,
+      showInSidebar: true,
       icon: createElement(PendingActionsIcon, { fontSize: "small" }),
     },
   },
@@ -428,7 +431,7 @@ export const PAGE_MANIFEST = {
     nav: {
       label: "Resilience",
       group: "System",
-      order: 15,
+      order: 17,
       showInSidebar: false,
       icon: createElement(ShieldIcon, { fontSize: "small" }),
     },
@@ -572,6 +575,34 @@ export const PAGE_MANIFEST = {
       order: 29,
       showInSidebar: true,
       icon: createElement(PendingActionsIcon, { fontSize: "small" }),
+    },
+  },
+  ilm: {
+    path: "/ilm",
+    component: IlmPage,
+    requiresConnection: true,
+    showTimeControls: false,
+    skeletonVariant: "table",
+    nav: {
+      label: "Index Lifecycle Management",
+      group: "System",
+      order: 31,
+      showInSidebar: true,
+      icon: createElement(PolicyIcon, { fontSize: "small" }),
+    },
+  },
+  templates: {
+    path: "/templates",
+    component: TemplatesPage,
+    requiresConnection: true,
+    showTimeControls: false,
+    skeletonVariant: "table",
+    nav: {
+      label: "Index Templates",
+      group: "System",
+      order: 22,
+      showInSidebar: true,
+      icon: createElement(DescriptionIcon, { fontSize: "small" }),
     },
   },
   fleet: {

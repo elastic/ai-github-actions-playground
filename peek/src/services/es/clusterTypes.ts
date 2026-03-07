@@ -233,7 +233,7 @@ export type IlmPolicyResponse = Record<
   }
 >;
 
-export interface TaskInfo {
+export interface ClusterTaskInfo {
   action?: string;
   cancellable?: boolean;
   description?: string;
@@ -250,7 +250,7 @@ export interface TasksListResponse {
     string,
     {
       name?: string;
-      tasks?: Record<string, TaskInfo>;
+      tasks?: Record<string, ClusterTaskInfo>;
     }
   >;
 }
