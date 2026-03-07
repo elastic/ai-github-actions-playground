@@ -76,6 +76,16 @@ export function normalizeTimeExpression(expr: string): string | null {
     return `NOW() ${operator} ${amount} ${rawUnit!.toLowerCase()}`;
   }
 
+  // Handle TO_DATETIME("...") wrapper produced by custom date range pickers
+  const toDatetimeMatch = trimmed.match(/^TO_DATETIME\("(.+)"\)$/i);
+  if (toDatetimeMatch) {
+    const inner = toDatetimeMatch[1]!;
+    const parsed = Date.parse(inner);
+    if (!Number.isNaN(parsed)) {
+      return `"${escapeEsqlString(new Date(parsed).toISOString())}"`;
+    }
+  }
+
   const parsed = Date.parse(trimmed);
   if (!Number.isNaN(parsed)) {
     return `"${escapeEsqlString(new Date(parsed).toISOString())}"`;

@@ -6,6 +6,7 @@ import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 
 import { useClusterHealthData } from "../hooks/useClusterHealthData";
+import { useHealthChecks } from "../hooks/useHealthChecks";
 import { INSIGHT_GUARDRAIL } from "../hooks/insightPromptUtils";
 import { usePageContextStore } from "../store/usePageContextStore";
 
@@ -63,10 +64,25 @@ export default function ClusterHealthPage({ defaultTab = "overview" }: ClusterHe
     setRefreshIntervalMs,
   } = useClusterHealthData();
 
+  const {
+    checks: localChecks,
+    loading: localChecksLoading,
+    error: localChecksError,
+    refresh: refreshLocalChecks,
+  } = useHealthChecks({
+    surface: "local",
+    checkIds: [
+      "cluster.pending_tasks.nonzero",
+      "nodes.thread_pool.rejected.nonzero",
+      "ilm.indices.error",
+    ],
+  });
   const refresh = useCallback(() => {
     setPartialDismissed(false);
     rawRefresh();
-  }, [rawRefresh]);
+    refreshLocalChecks();
+  }, [rawRefresh, refreshLocalChecks]);
+  const localFindings = localChecks.filter((check) => check.status !== "pass");
 
   // Publish screen context for AI chat
   const setPageSection = usePageContextStore((s) => s.setPageSection);
@@ -149,6 +165,18 @@ export default function ClusterHealthPage({ defaultTab = "overview" }: ClusterHe
       {!error && partialErrors.length > 0 && !partialDismissed ? (
         <Alert severity="warning" onClose={() => setPartialDismissed(true)}>
           Partial data loaded. Unavailable: {partialErrors.join(", ")}.
+        </Alert>
+      ) : null}
+      {localChecksError ? (
+        <Alert severity="error">Snapshot checks unavailable: {localChecksError}</Alert>
+      ) : null}
+      {!localChecksError && localChecksLoading ? (
+        <Alert severity="info">Health checks running...</Alert>
+      ) : null}
+      {!localChecksError && !localChecksLoading && localFindings.length > 0 ? (
+        <Alert severity="warning">
+          Snapshot checks: {localFindings.length} alert{localFindings.length === 1 ? "" : "s"} —{" "}
+          {localFindings[0]?.summary}
         </Alert>
       ) : null}
 

@@ -26,10 +26,12 @@ import type {
   CatShardRecord,
   RecoveryResponse,
   IlmExplainResponse,
+  IlmPolicyResponse,
   SlmStatsResponse,
   SnapshotStatusResponse,
   ClusterSettingsResponse,
   ClusterAllocationExplainResponse,
+  TasksListResponse,
 } from "./clusterTypes";
 import type {
   ResolveIndexResponse,
@@ -80,6 +82,7 @@ export type {
   RecoveryResponse,
   IlmExplainIndexStatus,
   IlmExplainResponse,
+  IlmPolicyResponse,
   SlmPolicyStats,
   SlmStatsResponse,
   SnapshotShardStats,
@@ -90,6 +93,8 @@ export type {
   NodesIngestStatsResponse,
   ClusterSettingsResponse,
   ClusterAllocationExplainResponse,
+  TaskInfo,
+  TasksListResponse,
 } from "./clusterTypes";
 
 export type {
@@ -468,7 +473,7 @@ export class ElasticsearchClient {
 
   async getCatShards(signal?: AbortSignal): Promise<CatShardRecord[]> {
     return this._fetch<CatShardRecord[]>(
-      "/_cat/shards?format=json&h=index,shard,prirep,state,docs,store,node,unassigned.reason",
+      "/_cat/shards?format=json&bytes=b&h=index,shard,prirep,state,docs,store,node,unassigned.reason",
       { signal },
     );
   }
@@ -479,6 +484,14 @@ export class ElasticsearchClient {
 
   async getIlmExplainAll(signal?: AbortSignal): Promise<IlmExplainResponse> {
     return this._fetch<IlmExplainResponse>("/_all/_ilm/explain?only_managed=true", { signal });
+  }
+
+  async getIlmPolicies(signal?: AbortSignal): Promise<IlmPolicyResponse> {
+    return this._fetch<IlmPolicyResponse>("/_ilm/policy", { signal });
+  }
+
+  async getTasksDetailed(signal?: AbortSignal): Promise<TasksListResponse> {
+    return this._fetch<TasksListResponse>("/_tasks?detailed=true", { signal });
   }
 
   async getSlmStats(signal?: AbortSignal): Promise<SlmStatsResponse> {

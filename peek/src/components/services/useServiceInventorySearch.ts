@@ -40,6 +40,10 @@ export function useServiceInventorySearch() {
     () => ["services-search", serviceSearchSession] as const,
     [serviceSearchSession],
   );
+  const sparklineQueryKey = useMemo(
+    () => ["services-sparklines", serviceSearchSession] as const,
+    [serviceSearchSession],
+  );
 
   const { data: searchResult = null } = useQuery<EsqlResponse | null>({
     queryKey: serviceSearchQueryKey,
@@ -51,7 +55,17 @@ export function useServiceInventorySearch() {
     (result: EsqlResponse | null) => queryClient.setQueryData(serviceSearchQueryKey, result),
     [queryClient, serviceSearchQueryKey],
   );
-  const [sparklineData, setSparklineData] = useState<Record<string, ServiceSparklineData>>({});
+  const { data: sparklineData = {} } = useQuery<Record<string, ServiceSparklineData>>({
+    queryKey: sparklineQueryKey,
+    queryFn: () => ({}),
+    enabled: false,
+    initialData: {},
+  });
+  const setSparklineData = useCallback(
+    (data: Record<string, ServiceSparklineData>) =>
+      queryClient.setQueryData(sparklineQueryKey, data),
+    [queryClient, sparklineQueryKey],
+  );
   const [sparklineRetryMode, setSparklineRetryMode] = useState<"standard" | "interval">("standard");
   const [sortField, setSortField] = useState<SortField>("requestCount");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");

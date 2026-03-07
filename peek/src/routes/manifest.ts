@@ -50,8 +50,10 @@ const DocsPage = lazy(() => import("../components/DocsPage"));
 const ExplorePage = lazy(() => import("../components/ExplorePage"));
 const FleetAgentPage = lazy(() => import("../components/FleetAgentPage"));
 const FleetPage = lazy(() => import("../components/FleetPage"));
+const GlobalHealthPage = lazy(() => import("../components/GlobalHealthPage"));
 const IngestPipelinesPage = lazy(() => import("../components/IngestPipelinesPage"));
 const IndicesPage = lazy(() => import("../components/IndicesPage"));
+const StorageExplorerPage = lazy(() => import("../components/StorageExplorerPage"));
 const NodesPage = lazy(() => import("../components/NodesPage"));
 const NodeDetailPage = lazy(() => import("../components/NodeDetailPage"));
 const RolesPage = lazy(() => import("../components/RolesPage"));
@@ -342,6 +344,20 @@ export const PAGE_MANIFEST = {
     nav: {
       label: "Health",
       group: "System",
+      order: 12,
+      showInSidebar: true,
+      icon: createElement(HealthAndSafetyIcon, { fontSize: "small" }),
+    },
+  },
+  globalHealth: {
+    path: "/health",
+    component: GlobalHealthPage,
+    requiresConnection: true,
+    showTimeControls: false,
+    skeletonVariant: "table",
+    nav: {
+      label: "Global Health",
+      group: "System",
       order: 11,
       showInSidebar: true,
       icon: createElement(HealthAndSafetyIcon, { fontSize: "small" }),
@@ -356,7 +372,7 @@ export const PAGE_MANIFEST = {
     nav: {
       label: "Tasks",
       group: "System",
-      order: 12,
+      order: 15,
       showInSidebar: false,
       icon: createElement(PendingActionsIcon, { fontSize: "small" }),
     },
@@ -482,6 +498,20 @@ export const PAGE_MANIFEST = {
       label: "Indices",
       group: "System",
       order: 25,
+      showInSidebar: true,
+      icon: createElement(StorageIcon, { fontSize: "small" }),
+    },
+  },
+  storageExplorer: {
+    path: "/storage-explorer",
+    component: StorageExplorerPage,
+    requiresConnection: true,
+    showTimeControls: false,
+    skeletonVariant: "table",
+    nav: {
+      label: "Storage Explorer",
+      group: "System",
+      order: 27,
       showInSidebar: true,
       icon: createElement(StorageIcon, { fontSize: "small" }),
     },
