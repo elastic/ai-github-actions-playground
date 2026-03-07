@@ -276,9 +276,9 @@ export function useLogsPageState() {
   }, [fieldValueQueries]);
 
   const fieldValuesLoading = fieldValueQueries.some((q) => q.isFetching);
-  // Surface the first error encountered (matches original behavior — the
-  // sidebar only displays a single error banner).
-  const fieldValuesError = fieldValueQueries.find((q) => q.error)?.error;
+  const fieldValuesError = fieldValueQueries.every((q) => q.isError)
+    ? fieldValueQueries.find((q) => q.error)?.error
+    : null;
   const fieldValuesErrorMessage = fieldValuesError
     ? fieldValuesError instanceof Error
       ? fieldValuesError.message

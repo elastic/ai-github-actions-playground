@@ -261,9 +261,8 @@ export default function ParameterDialog({
   } = useQuery<string[]>({
     queryKey: previewQueryKey,
     queryFn: async ({ signal }) => {
-      const sourceQuery = getValues("sourceQuery");
       const datasource = createPersesEsqlDatasource(connection!);
-      const request = buildPersesEsqlRequest(sourceQuery, { parameters });
+      const request = buildPersesEsqlRequest(watchedSourceQuery, { parameters });
       const result = await datasource.execute(request, signal);
       return result.values?.map((row) => String(row[0] ?? "")).filter(Boolean) ?? [];
     },
