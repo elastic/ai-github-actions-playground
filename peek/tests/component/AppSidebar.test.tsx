@@ -193,6 +193,16 @@ describe("AppSidebar", () => {
     expect(screen.getByTestId("location")).toHaveTextContent("/cluster-settings");
   });
 
+  it("navigates to Storage Explorer when clicked while connected", async () => {
+    useConnectionStore.getState().setConnected(true);
+    const user = userEvent.setup();
+    renderSidebar();
+
+    await user.click(screen.getByRole("button", { name: /storage explorer/i }));
+
+    expect(screen.getByTestId("location")).toHaveTextContent("/storage-explorer");
+  });
+
   it("navigates to Hot Threads when clicked while connected", async () => {
     useConnectionStore.getState().setConnected(true);
     const user = userEvent.setup();
