@@ -2,6 +2,11 @@ import type { HealthCheckDefinition } from "../types";
 
 const INITIALIZING_SHARDS_THRESHOLD = 5;
 const RELOCATING_SHARDS_THRESHOLD = 5;
+const PENDING_TASKS_HIGH = 10;
+const PENDING_TASKS_OLDEST_WAIT_MS = 30_000;
+const PENDING_TASKS_ILM_HEAVY = 5;
+const PENDING_TASKS_MAPPING_HEAVY = 5;
+const PENDING_TASKS_SHARD_STARTED_BACKLOG = 10;
 
 export const clusterChecks: HealthCheckDefinition[] = [
   // #1
@@ -193,6 +198,209 @@ export const clusterChecks: HealthCheckDefinition[] = [
         };
       }
       return { status: "pass", summary: "No pending cluster tasks." };
+    },
+  },
+  // #9
+  {
+    id: "cluster.pending_tasks.high",
+    domain: "cluster",
+    title: "High pending task count",
+    description: `Warns when pending cluster tasks >= ${PENDING_TASKS_HIGH}.`,
+    severityOnFail: "high",
+    surfaces: ["global"],
+    dependsOn: ["clusterCore"],
+    evaluate: (snapshot) => {
+      const tasks = snapshot.data.clusterCore?.pendingTasks?.tasks ?? [];
+      if (tasks.length >= PENDING_TASKS_HIGH) {
+        return {
+          status: "warn",
+          summary: `${tasks.length} pending cluster tasks (threshold: ${PENDING_TASKS_HIGH}).`,
+          observed: { count: tasks.length, threshold: PENDING_TASKS_HIGH },
+          recommendation: "Investigate cluster master stability and task throughput.",
+          links: [{ label: "Task Backlog", to: "/cluster-tasks" }],
+        };
+      }
+      return { status: "pass", summary: `Pending tasks (${tasks.length}) within threshold.` };
+    },
+  },
+  // #10
+  {
+    id: "cluster.pending_tasks.oldest_wait.high",
+    domain: "cluster",
+    title: "Pending task wait time high",
+    description: `Warns when the oldest pending task has waited >= ${PENDING_TASKS_OLDEST_WAIT_MS}ms.`,
+    severityOnFail: "high",
+    surfaces: ["global"],
+    dependsOn: ["clusterCore"],
+    evaluate: (snapshot) => {
+      const tasks = snapshot.data.clusterCore?.pendingTasks?.tasks ?? [];
+      const maxWait = Math.max(0, ...tasks.map((t) => t.time_in_queue_millis ?? 0));
+      if (maxWait >= PENDING_TASKS_OLDEST_WAIT_MS) {
+        return {
+          status: "warn",
+          summary: `Oldest pending task waiting ${maxWait}ms.`,
+          observed: { maxWaitMs: maxWait, threshold: PENDING_TASKS_OLDEST_WAIT_MS },
+          recommendation: "Check for master node overload or long-running cluster state updates.",
+        };
+      }
+      return {
+        status: "pass",
+        summary: `Oldest pending task wait (${maxWait}ms) within threshold.`,
+      };
+    },
+  },
+  // #11
+  {
+    id: "cluster.pending_tasks.priority.urgent",
+    domain: "cluster",
+    title: "Urgent pending tasks",
+    description: "Fails when URGENT or IMMEDIATE priority pending tasks exist.",
+    severityOnFail: "critical",
+    surfaces: ["global"],
+    dependsOn: ["clusterCore"],
+    evaluate: (snapshot) => {
+      const tasks = snapshot.data.clusterCore?.pendingTasks?.tasks ?? [];
+      const urgent = tasks.filter((t) => {
+        const p = (t.priority ?? "").toUpperCase();
+        return p === "URGENT" || p === "IMMEDIATE";
+      });
+      if (urgent.length > 0) {
+        return {
+          status: "fail",
+          summary: `${urgent.length} urgent/immediate pending task${urgent.length === 1 ? "" : "s"}.`,
+          observed: { count: urgent.length },
+          recommendation: "Urgent tasks indicate critical cluster operations are queued.",
+        };
+      }
+      return { status: "pass", summary: "No urgent pending tasks." };
+    },
+  },
+  // #12
+  {
+    id: "cluster.pending_tasks.source.ilm_heavy",
+    domain: "cluster",
+    title: "ILM-heavy pending tasks",
+    description: `Warns when >= ${PENDING_TASKS_ILM_HEAVY} pending tasks have ILM-related sources.`,
+    severityOnFail: "medium",
+    surfaces: ["global"],
+    dependsOn: ["clusterCore"],
+    evaluate: (snapshot) => {
+      const tasks = snapshot.data.clusterCore?.pendingTasks?.tasks ?? [];
+      const ilmTasks = tasks.filter((t) => (t.source ?? "").toLowerCase().includes("ilm"));
+      if (ilmTasks.length >= PENDING_TASKS_ILM_HEAVY) {
+        return {
+          status: "warn",
+          summary: `${ilmTasks.length} ILM-related pending tasks.`,
+          observed: { count: ilmTasks.length },
+          recommendation: "ILM operations may be overwhelming the master node.",
+        };
+      }
+      return {
+        status: "pass",
+        summary: `ILM pending tasks (${ilmTasks.length}) within threshold.`,
+      };
+    },
+  },
+  // #13
+  {
+    id: "cluster.pending_tasks.source.mapping_heavy",
+    domain: "cluster",
+    title: "Mapping-heavy pending tasks",
+    description: `Warns when >= ${PENDING_TASKS_MAPPING_HEAVY} pending tasks are mapping updates.`,
+    severityOnFail: "medium",
+    surfaces: ["global"],
+    dependsOn: ["clusterCore"],
+    evaluate: (snapshot) => {
+      const tasks = snapshot.data.clusterCore?.pendingTasks?.tasks ?? [];
+      const mappingTasks = tasks.filter((t) =>
+        (t.source ?? "").toLowerCase().includes("put-mapping"),
+      );
+      if (mappingTasks.length >= PENDING_TASKS_MAPPING_HEAVY) {
+        return {
+          status: "warn",
+          summary: `${mappingTasks.length} mapping-update pending tasks.`,
+          observed: { count: mappingTasks.length },
+          recommendation: "Frequent mapping updates can cause master instability.",
+        };
+      }
+      return {
+        status: "pass",
+        summary: `Mapping pending tasks (${mappingTasks.length}) within threshold.`,
+      };
+    },
+  },
+  // #14
+  {
+    id: "cluster.pending_tasks.source.shard_started_backlog",
+    domain: "cluster",
+    title: "Shard-started task backlog",
+    description: `Warns when >= ${PENDING_TASKS_SHARD_STARTED_BACKLOG} pending shard-started tasks exist.`,
+    severityOnFail: "high",
+    surfaces: ["global"],
+    dependsOn: ["clusterCore"],
+    evaluate: (snapshot) => {
+      const tasks = snapshot.data.clusterCore?.pendingTasks?.tasks ?? [];
+      const shardStarted = tasks.filter((t) =>
+        (t.source ?? "").toLowerCase().includes("shard-started"),
+      );
+      if (shardStarted.length >= PENDING_TASKS_SHARD_STARTED_BACKLOG) {
+        return {
+          status: "warn",
+          summary: `${shardStarted.length} shard-started pending tasks.`,
+          observed: { count: shardStarted.length },
+          recommendation: "Large shard-started backlogs suggest recovery or allocation pressure.",
+        };
+      }
+      return {
+        status: "pass",
+        summary: `Shard-started pending tasks (${shardStarted.length}) within threshold.`,
+      };
+    },
+  },
+  // cluster.delayed_unassigned_shards.nonzero
+  {
+    id: "cluster.delayed_unassigned_shards.nonzero",
+    domain: "cluster",
+    title: "Delayed unassigned shards",
+    description: "Warns when delayed unassigned shards are present.",
+    severityOnFail: "medium",
+    surfaces: ["global"],
+    dependsOn: ["clusterCore"],
+    evaluate: (snapshot) => {
+      const count = snapshot.data.clusterCore?.clusterHealth?.delayed_unassigned_shards ?? 0;
+      if (count > 0) {
+        return {
+          status: "warn",
+          summary: `${count} delayed unassigned shard${count === 1 ? "" : "s"}.`,
+          observed: { count },
+          recommendation:
+            "Delayed unassigned shards wait for a node to rejoin. Check for departed nodes.",
+        };
+      }
+      return { status: "pass", summary: "No delayed unassigned shards." };
+    },
+  },
+  // cluster.in_flight_fetch.high
+  {
+    id: "cluster.in_flight_fetch.high",
+    domain: "cluster",
+    title: "In-flight fetches high",
+    description: "Warns when the number of in-flight shard fetches is high.",
+    severityOnFail: "medium",
+    surfaces: ["global"],
+    dependsOn: ["clusterCore"],
+    evaluate: (snapshot) => {
+      const count = snapshot.data.clusterCore?.clusterHealth?.number_of_in_flight_fetch ?? 0;
+      if (count >= 10) {
+        return {
+          status: "warn",
+          summary: `${count} in-flight shard fetches.`,
+          observed: { count },
+          recommendation:
+            "High in-flight fetches indicate ongoing shard recovery or store operations.",
+        };
+      }
+      return { status: "pass", summary: `In-flight fetches (${count}) within threshold.` };
     },
   },
 ];

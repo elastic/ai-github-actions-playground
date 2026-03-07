@@ -16,6 +16,9 @@ function unknownAllocationDataResult() {
   };
 }
 
+const INITIALIZING_SHARDS_HIGH = 10;
+const RELOCATING_SHARDS_HIGH = 10;
+
 export const shardChecks: HealthCheckDefinition[] = [
   // #15
   {
@@ -210,6 +213,248 @@ export const shardChecks: HealthCheckDefinition[] = [
         };
       }
       return { status: "pass", summary: "No tier/attribute allocation mismatches detected." };
+    },
+  },
+  // #16
+  {
+    id: "shards.state.initializing.high",
+    domain: "shards",
+    title: "High initializing shard count",
+    description: `Warns when >= ${INITIALIZING_SHARDS_HIGH} shards are in INITIALIZING state.`,
+    severityOnFail: "medium",
+    surfaces: ["global"],
+    dependsOn: ["shards"],
+    evaluate: (snapshot) => {
+      const shards = snapshot.data.shards?.catShards ?? [];
+      const initializing = shards.filter((s) => s.state === "INITIALIZING");
+      if (initializing.length >= INITIALIZING_SHARDS_HIGH) {
+        return {
+          status: "warn",
+          summary: `${initializing.length} initializing shards.`,
+          observed: { count: initializing.length },
+          recommendation: "High initializing shard count suggests ongoing recovery or allocation.",
+        };
+      }
+      return {
+        status: "pass",
+        summary: `Initializing shards (${initializing.length}) within threshold.`,
+      };
+    },
+  },
+  // #17
+  {
+    id: "shards.state.relocating.high",
+    domain: "shards",
+    title: "High relocating shard count",
+    description: `Warns when >= ${RELOCATING_SHARDS_HIGH} shards are in RELOCATING state.`,
+    severityOnFail: "medium",
+    surfaces: ["global"],
+    dependsOn: ["shards"],
+    evaluate: (snapshot) => {
+      const shards = snapshot.data.shards?.catShards ?? [];
+      const relocating = shards.filter((s) => s.state === "RELOCATING");
+      if (relocating.length >= RELOCATING_SHARDS_HIGH) {
+        return {
+          status: "warn",
+          summary: `${relocating.length} relocating shards.`,
+          observed: { count: relocating.length },
+          recommendation: "Many relocating shards may impact cluster performance.",
+        };
+      }
+      return {
+        status: "pass",
+        summary: `Relocating shards (${relocating.length}) within threshold.`,
+      };
+    },
+  },
+  // #19
+  {
+    id: "shards.unassigned.reason.allocation_failed",
+    domain: "shards",
+    title: "Unassigned shards: allocation failed",
+    description: "Warns when unassigned shards have ALLOCATION_FAILED reason.",
+    severityOnFail: "high",
+    surfaces: ["global"],
+    dependsOn: ["shards"],
+    evaluate: (snapshot) => {
+      const shards = snapshot.data.shards?.catShards ?? [];
+      const matched = shards.filter(
+        (s) =>
+          s.state === "UNASSIGNED" && (s["unassigned.reason"] ?? "").includes("ALLOCATION_FAILED"),
+      );
+      if (matched.length > 0) {
+        return {
+          status: "warn",
+          summary: `${matched.length} shard${matched.length === 1 ? "" : "s"} unassigned due to ALLOCATION_FAILED.`,
+          observed: { count: matched.length },
+          recommendation:
+            "Check node disk space, allocation filters, and shard allocation settings.",
+        };
+      }
+      return { status: "pass", summary: "No shards unassigned due to allocation failure." };
+    },
+  },
+  // #20
+  {
+    id: "shards.unassigned.reason.primary_failed",
+    domain: "shards",
+    title: "Unassigned shards: primary failed",
+    description: "Fails when unassigned shards have PRIMARY_FAILED reason.",
+    severityOnFail: "critical",
+    surfaces: ["global"],
+    dependsOn: ["shards"],
+    evaluate: (snapshot) => {
+      const shards = snapshot.data.shards?.catShards ?? [];
+      const matched = shards.filter(
+        (s) =>
+          s.state === "UNASSIGNED" && (s["unassigned.reason"] ?? "").includes("PRIMARY_FAILED"),
+      );
+      if (matched.length > 0) {
+        return {
+          status: "fail",
+          summary: `${matched.length} shard${matched.length === 1 ? "" : "s"} unassigned due to PRIMARY_FAILED.`,
+          observed: { count: matched.length },
+          recommendation:
+            "Primary shard failures indicate potential data loss. Investigate immediately.",
+        };
+      }
+      return { status: "pass", summary: "No shards unassigned due to primary failure." };
+    },
+  },
+  // #21
+  {
+    id: "shards.unassigned.reason.node_left",
+    domain: "shards",
+    title: "Unassigned shards: node left",
+    description: "Warns when unassigned shards are due to NODE_LEFT or NODE_RESTARTING.",
+    severityOnFail: "high",
+    surfaces: ["global"],
+    dependsOn: ["shards"],
+    evaluate: (snapshot) => {
+      const shards = snapshot.data.shards?.catShards ?? [];
+      const matched = shards.filter((s) => {
+        if (s.state !== "UNASSIGNED") return false;
+        const reason = s["unassigned.reason"] ?? "";
+        return reason.includes("NODE_LEFT") || reason.includes("NODE_RESTARTING");
+      });
+      if (matched.length > 0) {
+        return {
+          status: "warn",
+          summary: `${matched.length} shard${matched.length === 1 ? "" : "s"} unassigned due to node departure.`,
+          observed: { count: matched.length },
+          recommendation: "Check for nodes that have recently left the cluster.",
+        };
+      }
+      return { status: "pass", summary: "No shards unassigned due to node departure." };
+    },
+  },
+  // #22
+  {
+    id: "shards.unassigned.reason.index_closed",
+    domain: "shards",
+    title: "Unassigned shards: index closed",
+    description: "Warns when unassigned shards are due to INDEX_CLOSED.",
+    severityOnFail: "low",
+    surfaces: ["global"],
+    dependsOn: ["shards"],
+    evaluate: (snapshot) => {
+      const shards = snapshot.data.shards?.catShards ?? [];
+      const matched = shards.filter(
+        (s) => s.state === "UNASSIGNED" && (s["unassigned.reason"] ?? "").includes("INDEX_CLOSED"),
+      );
+      if (matched.length > 0) {
+        return {
+          status: "warn",
+          summary: `${matched.length} shard${matched.length === 1 ? "" : "s"} unassigned due to INDEX_CLOSED.`,
+          observed: { count: matched.length },
+          recommendation:
+            "Closed indices have unassigned shards by design. Reopen or delete if unneeded.",
+        };
+      }
+      return { status: "pass", summary: "No shards unassigned due to closed indices." };
+    },
+  },
+  // #26
+  {
+    id: "allocation.explain.awareness_constraints",
+    domain: "shards",
+    title: "Allocation awareness constraints",
+    description: "Warns when awareness decider blocks shard allocation.",
+    severityOnFail: "medium",
+    surfaces: ["global"],
+    dependsOn: ["allocationSample"],
+    evaluate: (snapshot) => {
+      const explain = snapshot.data.allocationSample?.allocationExplain;
+      if (!explain) return { status: "pass", summary: "No allocation explain data available." };
+      const decisions = explain.node_allocation_decisions ?? [];
+      const blocked = decisions.filter((d) =>
+        d.deciders?.some((dec) => dec.decider === "awareness" && dec.decision === "NO"),
+      );
+      if (blocked.length > 0) {
+        return {
+          status: "warn",
+          summary: `Awareness decider blocking allocation on ${blocked.length} node${blocked.length === 1 ? "" : "s"}.`,
+          observed: { blockedNodes: blocked.map((d) => d.node_name) },
+          recommendation: "Review allocation awareness settings and zone distribution.",
+        };
+      }
+      return { status: "pass", summary: "No awareness allocation constraints detected." };
+    },
+  },
+  // #27
+  {
+    id: "allocation.explain.same_shard_host",
+    domain: "shards",
+    title: "Same-shard host constraint",
+    description: "Warns when same_shard decider blocks allocation.",
+    severityOnFail: "medium",
+    surfaces: ["global"],
+    dependsOn: ["allocationSample"],
+    evaluate: (snapshot) => {
+      const explain = snapshot.data.allocationSample?.allocationExplain;
+      if (!explain) return { status: "pass", summary: "No allocation explain data available." };
+      const decisions = explain.node_allocation_decisions ?? [];
+      const blocked = decisions.filter((d) =>
+        d.deciders?.some((dec) => dec.decider === "same_shard" && dec.decision === "NO"),
+      );
+      if (blocked.length > 0) {
+        return {
+          status: "warn",
+          summary: `Same-shard decider blocking allocation on ${blocked.length} node${blocked.length === 1 ? "" : "s"}.`,
+          observed: { blockedNodes: blocked.map((d) => d.node_name) },
+          recommendation:
+            "Multiple shard copies cannot reside on the same node. Add nodes or reduce replicas.",
+        };
+      }
+      return { status: "pass", summary: "No same-shard allocation constraints detected." };
+    },
+  },
+  // #28
+  {
+    id: "allocation.explain.max_retry_exceeded",
+    domain: "shards",
+    title: "Max allocation retry exceeded",
+    description: "Warns when max_retry decider blocks allocation.",
+    severityOnFail: "high",
+    surfaces: ["global"],
+    dependsOn: ["allocationSample"],
+    evaluate: (snapshot) => {
+      const explain = snapshot.data.allocationSample?.allocationExplain;
+      if (!explain) return { status: "pass", summary: "No allocation explain data available." };
+      const retryInCanAllocate = (explain.can_allocate ?? "").toLowerCase().includes("retry");
+      const decisions = explain.node_allocation_decisions ?? [];
+      const retryDeciders = decisions.filter((d) =>
+        d.deciders?.some((dec) => dec.decider === "max_retry"),
+      );
+      if (retryInCanAllocate || retryDeciders.length > 0) {
+        return {
+          status: "warn",
+          summary: "Shard allocation retries exhausted.",
+          observed: { retryInCanAllocate, retryDeciderNodes: retryDeciders.length },
+          recommendation: "Run POST /_cluster/reroute?retry_failed=true to retry allocation.",
+        };
+      }
+      return { status: "pass", summary: "No max-retry allocation issues." };
     },
   },
 ];

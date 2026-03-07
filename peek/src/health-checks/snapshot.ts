@@ -62,6 +62,18 @@ async function fetchGroup(
           throw innerError;
         }
       }
+      case "indicesCore": {
+        const catIndices = await client.getCatIndices(signal);
+        return { group, data: { catIndices } };
+      }
+      case "recoveryCore": {
+        const recovery = await client.getRecoveryStatus(signal);
+        return { group, data: { recovery } };
+      }
+      case "securityCore": {
+        const apiKeys = await client.getApiKeys(signal);
+        return { group, data: { apiKeys } };
+      }
       default:
         return { group, data: null };
     }
@@ -95,23 +107,9 @@ export async function buildHealthSnapshot(
       continue;
     }
 
-    if (result.group === "clusterCore" && result.data) {
-      data.clusterCore = result.data as HealthSnapshot["data"]["clusterCore"];
-    }
-    if (result.group === "shards" && result.data) {
-      data.shards = result.data as HealthSnapshot["data"]["shards"];
-    }
-    if (result.group === "allocationSample" && result.data) {
-      data.allocationSample = result.data as HealthSnapshot["data"]["allocationSample"];
-    }
-    if (result.group === "nodesCore" && result.data) {
-      data.nodesCore = result.data as HealthSnapshot["data"]["nodesCore"];
-    }
-    if (result.group === "tasksCore" && result.data) {
-      data.tasksCore = result.data as HealthSnapshot["data"]["tasksCore"];
-    }
-    if (result.group === "ilmCore" && result.data) {
-      data.ilmCore = result.data as HealthSnapshot["data"]["ilmCore"];
+    if (result.data != null) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- dynamic group assignment
+      (data as any)[result.group] = result.data;
     }
   }
 
