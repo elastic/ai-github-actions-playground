@@ -89,6 +89,9 @@ describe("normalizeTimeExpression", () => {
     expect(normalizeTimeExpression('TO_DATETIME("2025-03-06T15:18:00.000Z")')).toBe(
       '"2025-03-06T15:18:00.000Z"',
     );
+    expect(normalizeTimeExpression('to_datetime("2025-03-06T15:18:00.000Z")')).toBe(
+      '"2025-03-06T15:18:00.000Z"',
+    );
     expect(normalizeTimeExpression('TO_DATETIME("2026-02-24T03:00:00.000Z")')).toBe(
       '"2026-02-24T03:00:00.000Z"',
     );
