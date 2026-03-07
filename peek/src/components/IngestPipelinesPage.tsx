@@ -4,12 +4,8 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
 import Collapse from "@mui/material/Collapse";
-import Drawer from "@mui/material/Drawer";
-import IconButton from "@mui/material/IconButton";
-import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import CloseIcon from "@mui/icons-material/Close";
 
 import { useConnectionStore } from "../store/useConnectionStore";
 import { usePageContextStore } from "../store/usePageContextStore";
@@ -17,7 +13,9 @@ import { useIngestPipelines } from "../hooks/useIngestPipelines";
 import { useIngestNodeStats } from "../hooks/useIngestNodeStats";
 import { INSIGHT_GUARDRAIL } from "../hooks/insightPromptUtils";
 
-import PageHeader from "./PageHeader";
+import DetailDrawer from "./DetailDrawer";
+import PageContainer from "./PageContainer";
+import PageHeaderSection from "./PageHeaderSection";
 import PageInsightBanner from "./PageInsightBanner";
 import { OverviewInfoCard } from "./OverviewInfoCard";
 import PipelineListPanel from "./ingest-pipelines/PipelineListPanel";
@@ -171,25 +169,23 @@ export default function IngestPipelinesPage() {
   const insightCacheKey = `ingest-pipelines::${effectiveSelectedName ?? ""}::${processorSignature}`;
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1, height: "100%", minHeight: 0 }}>
-      <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <PageHeader
-          title="Ingest Pipelines"
-          actions={
-            <Button
-              size="small"
-              variant="outlined"
-              onClick={() => {
-                pipelinesResult.refresh();
-                ingestNodeStatsResult.refresh();
-              }}
-              disabled={loading}
-            >
-              {loading ? <CircularProgress size={16} /> : "Refresh"}
-            </Button>
-          }
-        />
-      </Paper>
+    <PageContainer>
+      <PageHeaderSection
+        title="Ingest Pipelines"
+        actions={
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={() => {
+              pipelinesResult.refresh();
+              ingestNodeStatsResult.refresh();
+            }}
+            disabled={loading}
+          >
+            {loading ? <CircularProgress size={16} /> : "Refresh"}
+          </Button>
+        }
+      />
 
       {insightContext && (
         <PageInsightBanner
@@ -304,38 +300,21 @@ export default function IngestPipelinesPage() {
           show n/a.
         </Alert>
       )}
-      <Drawer
-        anchor="right"
+      <DetailDrawer
         open={Boolean(displayedPipeline)}
         onClose={() => setSelectedName(null)}
-        PaperProps={{
-          sx: {
-            width: { xs: "100%", md: 620 },
-            p: 1,
-            backgroundColor: "background.default",
-          },
-        }}
+        title="Pipeline details"
+        ariaLabel="Close pipeline details"
+        width={620}
       >
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 1 }}>
-          <Typography variant="subtitle1">Pipeline details</Typography>
-          <IconButton
-            size="small"
-            aria-label="Close pipeline details"
-            onClick={() => setSelectedName(null)}
-          >
-            <CloseIcon fontSize="small" />
-          </IconButton>
-        </Box>
-        <Box sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
-          <PipelineDetailPanel
-            key={effectiveSelectedName ?? "none"}
-            selectedPipeline={displayedPipeline}
-            connection={connection}
-            pipelinesExist={pipelines.length > 0}
-            ingestNodeStatsResult={ingestNodeStatsResult}
-          />
-        </Box>
-      </Drawer>
-    </Box>
+        <PipelineDetailPanel
+          key={effectiveSelectedName ?? "none"}
+          selectedPipeline={displayedPipeline}
+          connection={connection}
+          pipelinesExist={pipelines.length > 0}
+          ingestNodeStatsResult={ingestNodeStatsResult}
+        />
+      </DetailDrawer>
+    </PageContainer>
   );
 }

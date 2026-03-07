@@ -5,8 +5,6 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
-import Drawer from "@mui/material/Drawer";
-import IconButton from "@mui/material/IconButton";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Table from "@mui/material/Table";
@@ -19,7 +17,6 @@ import TableSortLabel from "@mui/material/TableSortLabel";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import StorageIcon from "@mui/icons-material/Storage";
-import CloseIcon from "@mui/icons-material/Close";
 import { parseAsString, parseAsStringEnum, useQueryState } from "nuqs";
 
 import { useApiConsoleStore } from "../store/useApiConsoleStore";
@@ -35,7 +32,9 @@ import { INSIGHT_GUARDRAIL } from "../hooks/insightPromptUtils";
 import { useSearchParam } from "../hooks/useSearchParam";
 
 import EmptyState from "./EmptyState";
-import PageHeader from "./PageHeader";
+import DetailDrawer from "./DetailDrawer";
+import PageContainer from "./PageContainer";
+import PageHeaderSection from "./PageHeaderSection";
 import IndexDetailPanel from "./IndexDetailPanel";
 import AskAiButton from "./AskAiButton";
 import InsightSlot from "./InsightSlot";
@@ -257,53 +256,51 @@ export default function IndicesPage() {
       error={slotInsights.error}
       refresh={slotInsights.refresh}
     >
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 1, height: "100%", minHeight: 0 }}>
-        <Paper variant="outlined" sx={{ p: 1.5 }}>
-          <PageHeader
-            title="Indices"
-            actions={
-              <>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  onClick={indicesResult.refresh}
-                  startIcon={
-                    loadingIndices ? <CircularProgress size={14} aria-hidden="true" /> : undefined
-                  }
-                  aria-label={loadingIndices ? "Refreshing indices" : "Refresh indices"}
-                >
-                  {loadingIndices ? "Refreshing..." : "Refresh"}
-                </Button>
-                <Tooltip title={!displayedIndex ? "Select an index first" : ""}>
-                  <span>
-                    <Button
-                      size="small"
-                      variant="contained"
-                      disabled={!displayedIndex}
-                      onClick={handleOpenInQueryLab}
-                    >
-                      Open in Query Lab
-                    </Button>
-                  </span>
-                </Tooltip>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  disabled={!displayedIndex}
-                  onClick={handleInspectInConsole}
-                >
-                  Inspect in Console
-                </Button>
-                {displayedIndex && (
-                  <AskAiButton
-                    label="Explain index"
-                    prompt={`Review index "${displayedIndex}" and suggest improvements for mappings, shard/replica counts, and lifecycle policy based on the currently selected index details.`}
-                  />
-                )}
-              </>
-            }
-          />
-        </Paper>
+      <PageContainer>
+        <PageHeaderSection
+          title="Indices"
+          actions={
+            <>
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={indicesResult.refresh}
+                startIcon={
+                  loadingIndices ? <CircularProgress size={14} aria-hidden="true" /> : undefined
+                }
+                aria-label={loadingIndices ? "Refreshing indices" : "Refresh indices"}
+              >
+                {loadingIndices ? "Refreshing..." : "Refresh"}
+              </Button>
+              <Tooltip title={!displayedIndex ? "Select an index first" : ""}>
+                <span>
+                  <Button
+                    size="small"
+                    variant="contained"
+                    disabled={!displayedIndex}
+                    onClick={handleOpenInQueryLab}
+                  >
+                    Open in Query Lab
+                  </Button>
+                </span>
+              </Tooltip>
+              <Button
+                size="small"
+                variant="outlined"
+                disabled={!displayedIndex}
+                onClick={handleInspectInConsole}
+              >
+                Inspect in Console
+              </Button>
+              {displayedIndex && (
+                <AskAiButton
+                  label="Explain index"
+                  prompt={`Review index "${displayedIndex}" and suggest improvements for mappings, shard/replica counts, and lifecycle policy based on the currently selected index details.`}
+                />
+              )}
+            </>
+          }
+        />
 
         {!loadingIndices && indices.length > 0 && (
           <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
@@ -507,50 +504,30 @@ export default function IndicesPage() {
             </Paper>
           </InsightSlot>
         </Box>
-        <Drawer
-          anchor="right"
+        <DetailDrawer
           open={Boolean(displayedIndex)}
           onClose={() => void setSelectedIndex(null)}
-          PaperProps={{
-            sx: {
-              width: { xs: "100%", md: 560 },
-              p: 1,
-              backgroundColor: "background.default",
-            },
-          }}
+          title="Index details"
+          ariaLabel="Close index details"
         >
-          <Box
-            sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 1 }}
-          >
-            <Typography variant="subtitle1">Index details</Typography>
-            <IconButton
-              size="small"
-              aria-label="Close index details"
-              onClick={() => void setSelectedIndex(null)}
-            >
-              <CloseIcon fontSize="small" />
-            </IconButton>
-          </Box>
-          <Box sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
-            <InsightSlot slotId={INDICES_INSIGHT_SLOT_IDS.indexDetail}>
-              <IndexDetailPanel
-                selectedIndex={displayedIndex}
-                selectedRecord={selectedRecord}
-                loadingDetail={loadingDetail}
-                activeTab={activeTab}
-                onTabChange={(tab) => void setActiveTab(tab)}
-                mappings={mappings}
-                settings={settings}
-                indexStats={indexStats}
-                diskUsage={diskUsage}
-                diskUsageLoading={diskUsageLoading}
-                diskUsageError={diskUsageError}
-                onAnalyzeDiskUsage={diskUsageResult.analyze}
-              />
-            </InsightSlot>
-          </Box>
-        </Drawer>
-      </Box>
+          <InsightSlot slotId={INDICES_INSIGHT_SLOT_IDS.indexDetail}>
+            <IndexDetailPanel
+              selectedIndex={displayedIndex}
+              selectedRecord={selectedRecord}
+              loadingDetail={loadingDetail}
+              activeTab={activeTab}
+              onTabChange={(tab) => void setActiveTab(tab)}
+              mappings={mappings}
+              settings={settings}
+              indexStats={indexStats}
+              diskUsage={diskUsage}
+              diskUsageLoading={diskUsageLoading}
+              diskUsageError={diskUsageError}
+              onAnalyzeDiskUsage={diskUsageResult.analyze}
+            />
+          </InsightSlot>
+        </DetailDrawer>
+      </PageContainer>
     </InsightSlotProvider>
   );
 }

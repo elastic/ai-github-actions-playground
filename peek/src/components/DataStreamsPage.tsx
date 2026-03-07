@@ -6,7 +6,6 @@ import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
 import Divider from "@mui/material/Divider";
-import Drawer from "@mui/material/Drawer";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Table from "@mui/material/Table";
@@ -21,7 +20,6 @@ import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
-import CloseIcon from "@mui/icons-material/Close";
 import StorageIcon from "@mui/icons-material/Storage";
 import { useSearchParam } from "../hooks/useSearchParam";
 
@@ -41,7 +39,9 @@ import { formatBytes } from "../utils/formatBytes";
 
 import ContentSkeleton from "./ContentSkeleton";
 import EmptyState from "./EmptyState";
-import PageHeader from "./PageHeader";
+import DetailDrawer from "./DetailDrawer";
+import PageContainer from "./PageContainer";
+import PageHeaderSection from "./PageHeaderSection";
 import AskAiButton from "./AskAiButton";
 import PageInsightBanner from "./PageInsightBanner";
 import InsightSlot from "./InsightSlot";
@@ -366,50 +366,48 @@ export default function DataStreamsPage() {
       error={slotInsights.error}
       refresh={slotInsights.refresh}
     >
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 1, height: "100%", minHeight: 0 }}>
-        <Paper variant="outlined" sx={{ p: 1.5 }}>
-          <PageHeader
-            title="Data Streams"
-            actions={
-              <>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  onClick={streamsResult.refresh}
-                  disabled={loadingStreams}
-                  startIcon={
-                    loadingStreams ? <CircularProgress size={14} aria-hidden="true" /> : undefined
-                  }
-                  aria-label={loadingStreams ? "Refreshing data streams" : "Refresh data streams"}
-                >
-                  {loadingStreams ? "Refreshing..." : "Refresh"}
-                </Button>
-                <Button
-                  size="small"
-                  variant="contained"
-                  disabled={!displayedName}
-                  onClick={handleOpenInDiscover}
-                >
-                  Open in Query Lab
-                </Button>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  disabled={!displayedName}
-                  onClick={handleInspectInConsole}
-                >
-                  Inspect in Console
-                </Button>
-                {displayedName && (
-                  <AskAiButton
-                    label="Summarize schema"
-                    prompt={`Summarize the schema of data stream "${displayedName}" and suggest one ES|QL query to explore it.`}
-                  />
-                )}
-              </>
-            }
-          />
-        </Paper>
+      <PageContainer>
+        <PageHeaderSection
+          title="Data Streams"
+          actions={
+            <>
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={streamsResult.refresh}
+                disabled={loadingStreams}
+                startIcon={
+                  loadingStreams ? <CircularProgress size={14} aria-hidden="true" /> : undefined
+                }
+                aria-label={loadingStreams ? "Refreshing data streams" : "Refresh data streams"}
+              >
+                {loadingStreams ? "Refreshing..." : "Refresh"}
+              </Button>
+              <Button
+                size="small"
+                variant="contained"
+                disabled={!displayedName}
+                onClick={handleOpenInDiscover}
+              >
+                Open in Query Lab
+              </Button>
+              <Button
+                size="small"
+                variant="outlined"
+                disabled={!displayedName}
+                onClick={handleInspectInConsole}
+              >
+                Inspect in Console
+              </Button>
+              {displayedName && (
+                <AskAiButton
+                  label="Summarize schema"
+                  prompt={`Summarize the schema of data stream "${displayedName}" and suggest one ES|QL query to explore it.`}
+                />
+              )}
+            </>
+          }
+        />
 
         {!loadingStreams && dataStreams.length > 0 && (
           <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
@@ -670,181 +668,158 @@ export default function DataStreamsPage() {
             </Paper>
           </InsightSlot>
         </Box>
-        <Drawer
-          anchor="right"
+        <DetailDrawer
           open={Boolean(displayedDataStream)}
           onClose={() => void setSelectedName(null)}
-          PaperProps={{
-            sx: {
-              width: { xs: "100%", md: 560 },
-              p: 1,
-              backgroundColor: "background.default",
-            },
-          }}
+          title="Data stream details"
+          ariaLabel="Close data stream details"
         >
-          <Box
-            sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 1 }}
-          >
-            <Typography variant="subtitle1">Data stream details</Typography>
-            <IconButton
-              size="small"
-              aria-label="Close data stream details"
-              onClick={() => void setSelectedName(null)}
+          <InsightSlot slotId={DATA_STREAMS_INSIGHT_SLOT_IDS.streamDetail}>
+            <Paper
+              variant="outlined"
+              sx={{ display: "flex", flex: 1, flexDirection: "column", minHeight: 0 }}
             >
-              <CloseIcon fontSize="small" />
-            </IconButton>
-          </Box>
-          <Box sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
-            <InsightSlot slotId={DATA_STREAMS_INSIGHT_SLOT_IDS.streamDetail}>
-              <Paper
-                variant="outlined"
-                sx={{ display: "flex", flex: 1, flexDirection: "column", minHeight: 0 }}
-              >
-                <Box sx={{ p: 1.5 }}>
-                  {displayedDataStream ? (
-                    <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                      <Typography variant="subtitle1">{displayedDataStream.name}</Typography>
-                      <Box
-                        sx={{
-                          display: "grid",
-                          gridTemplateColumns: "minmax(120px, auto) 1fr",
-                          rowGap: 0.5,
-                          columnGap: 1.5,
-                        }}
-                      >
-                        <Typography variant="caption" color="text.secondary">
-                          Status
-                        </Typography>
-                        <Typography variant="body2" data-testid="data-stream-meta-status">
-                          {displayedDataStream.status}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          Generation
-                        </Typography>
-                        <Typography variant="body2" data-testid="data-stream-meta-generation">
-                          {displayedDataStream.generation}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          Backing indices
-                        </Typography>
-                        <Typography variant="body2" data-testid="data-stream-meta-backing-indices">
-                          {displayedDataStream.indices.length}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          Documents
-                        </Typography>
-                        <Typography variant="body2" data-testid="data-stream-meta-docs">
-                          {(
-                            streamStatsByName.get(displayedDataStream.name)?.docs ?? 0
-                          ).toLocaleString()}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          Store size
-                        </Typography>
-                        <Typography variant="body2" data-testid="data-stream-meta-size">
-                          {formatBytes(
-                            streamStatsByName.get(displayedDataStream.name)?.sizeBytes ?? 0,
-                          )}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          Write index
-                        </Typography>
-                        <Typography variant="body2" data-testid="data-stream-meta-write-index">
-                          {displayedDataStream.indices[displayedDataStream.indices.length - 1]
-                            ?.index_name ?? "n/a"}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          Managed by
-                        </Typography>
-                        <Typography variant="body2" data-testid="data-stream-meta-managed-by">
-                          {displayedDataStream.next_generation_managed_by}
-                        </Typography>
-                        {displayedDataStream.ilm_policy && (
-                          <>
-                            <Typography variant="caption" color="text.secondary">
-                              ILM policy
-                            </Typography>
-                            <Typography variant="body2" data-testid="data-stream-meta-ilm-policy">
-                              {displayedDataStream.ilm_policy}
-                            </Typography>
-                          </>
+              <Box sx={{ p: 1.5 }}>
+                {displayedDataStream ? (
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                    <Typography variant="subtitle1">{displayedDataStream.name}</Typography>
+                    <Box
+                      sx={{
+                        display: "grid",
+                        gridTemplateColumns: "minmax(120px, auto) 1fr",
+                        rowGap: 0.5,
+                        columnGap: 1.5,
+                      }}
+                    >
+                      <Typography variant="caption" color="text.secondary">
+                        Status
+                      </Typography>
+                      <Typography variant="body2" data-testid="data-stream-meta-status">
+                        {displayedDataStream.status}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Generation
+                      </Typography>
+                      <Typography variant="body2" data-testid="data-stream-meta-generation">
+                        {displayedDataStream.generation}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Backing indices
+                      </Typography>
+                      <Typography variant="body2" data-testid="data-stream-meta-backing-indices">
+                        {displayedDataStream.indices.length}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Documents
+                      </Typography>
+                      <Typography variant="body2" data-testid="data-stream-meta-docs">
+                        {(
+                          streamStatsByName.get(displayedDataStream.name)?.docs ?? 0
+                        ).toLocaleString()}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Store size
+                      </Typography>
+                      <Typography variant="body2" data-testid="data-stream-meta-size">
+                        {formatBytes(
+                          streamStatsByName.get(displayedDataStream.name)?.sizeBytes ?? 0,
                         )}
-                      </Box>
-                    </Box>
-                  ) : (
-                    <EmptyState
-                      icon={<StorageIcon sx={{ fontSize: 32 }} />}
-                      heading="Select a data stream"
-                      description="Select a data stream from the left panel to view its fields and backing indices."
-                    />
-                  )}
-                </Box>
-                <Divider />
-                <Box
-                  sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: 0, p: 1.5 }}
-                >
-                  {displayedDataStream && (
-                    <TextField
-                      size="small"
-                      placeholder="Search fields"
-                      value={fieldSearch}
-                      onChange={(e) => setFieldSearch(e.target.value)}
-                      inputProps={{ "aria-label": "Search fields" }}
-                    />
-                  )}
-                  {loadingFields ? (
-                    <ContentSkeleton variant="table" />
-                  ) : (
-                    <Box sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
-                      {displayedDataStream &&
-                        fieldRows.map((field) => (
-                          <Stack
-                            key={`${field.name}:${field.type}`}
-                            component="button"
-                            direction="row"
-                            spacing={1}
-                            onClick={() => setSelectedField({ name: field.name, type: field.type })}
-                            aria-pressed={
-                              selectedField?.name === field.name &&
-                              selectedField?.type === field.type
-                            }
-                            sx={{
-                              alignItems: "center",
-                              width: "100%",
-                              py: 0.5,
-                              px: 0.5,
-                              border: "none",
-                              borderRadius: 1,
-                              background: "none",
-                              bgcolor:
-                                selectedField?.name === field.name &&
-                                selectedField?.type === field.type
-                                  ? "action.selected"
-                                  : "transparent",
-                              cursor: "pointer",
-                              textAlign: "left",
-                              "&:hover": { bgcolor: "action.hover" },
-                            }}
-                          >
-                            <Typography variant="body2" color="text.primary" sx={{ flex: 1 }}>
-                              {field.name}
-                            </Typography>
-                            <Chip size="small" label={field.type} />
-                          </Stack>
-                        ))}
-                      {!loadingFields && fieldRows.length === 0 && displayedDataStream && (
-                        <Typography variant="body2" color="text.secondary">
-                          No fields found for this data stream.
-                        </Typography>
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Write index
+                      </Typography>
+                      <Typography variant="body2" data-testid="data-stream-meta-write-index">
+                        {displayedDataStream.indices[displayedDataStream.indices.length - 1]
+                          ?.index_name ?? "n/a"}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Managed by
+                      </Typography>
+                      <Typography variant="body2" data-testid="data-stream-meta-managed-by">
+                        {displayedDataStream.next_generation_managed_by}
+                      </Typography>
+                      {displayedDataStream.ilm_policy && (
+                        <>
+                          <Typography variant="caption" color="text.secondary">
+                            ILM policy
+                          </Typography>
+                          <Typography variant="body2" data-testid="data-stream-meta-ilm-policy">
+                            {displayedDataStream.ilm_policy}
+                          </Typography>
+                        </>
                       )}
                     </Box>
-                  )}
-                </Box>
-              </Paper>
-            </InsightSlot>
-          </Box>
-        </Drawer>
-      </Box>
+                  </Box>
+                ) : (
+                  <EmptyState
+                    icon={<StorageIcon sx={{ fontSize: 32 }} />}
+                    heading="Select a data stream"
+                    description="Select a data stream from the left panel to view its fields and backing indices."
+                  />
+                )}
+              </Box>
+              <Divider />
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: 0, p: 1.5 }}>
+                {displayedDataStream && (
+                  <TextField
+                    size="small"
+                    placeholder="Search fields"
+                    value={fieldSearch}
+                    onChange={(e) => setFieldSearch(e.target.value)}
+                    inputProps={{ "aria-label": "Search fields" }}
+                  />
+                )}
+                {loadingFields ? (
+                  <ContentSkeleton variant="table" />
+                ) : (
+                  <Box sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
+                    {displayedDataStream &&
+                      fieldRows.map((field) => (
+                        <Stack
+                          key={`${field.name}:${field.type}`}
+                          component="button"
+                          direction="row"
+                          spacing={1}
+                          onClick={() => setSelectedField({ name: field.name, type: field.type })}
+                          aria-pressed={
+                            selectedField?.name === field.name && selectedField?.type === field.type
+                          }
+                          sx={{
+                            alignItems: "center",
+                            width: "100%",
+                            py: 0.5,
+                            px: 0.5,
+                            border: "none",
+                            borderRadius: 1,
+                            background: "none",
+                            bgcolor:
+                              selectedField?.name === field.name &&
+                              selectedField?.type === field.type
+                                ? "action.selected"
+                                : "transparent",
+                            cursor: "pointer",
+                            textAlign: "left",
+                            "&:hover": { bgcolor: "action.hover" },
+                          }}
+                        >
+                          <Typography variant="body2" color="text.primary" sx={{ flex: 1 }}>
+                            {field.name}
+                          </Typography>
+                          <Chip size="small" label={field.type} />
+                        </Stack>
+                      ))}
+                    {!loadingFields && fieldRows.length === 0 && displayedDataStream && (
+                      <Typography variant="body2" color="text.secondary">
+                        No fields found for this data stream.
+                      </Typography>
+                    )}
+                  </Box>
+                )}
+              </Box>
+            </Paper>
+          </InsightSlot>
+        </DetailDrawer>
+      </PageContainer>
     </InsightSlotProvider>
   );
 }
