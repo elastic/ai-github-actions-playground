@@ -1,5 +1,8 @@
 import type { HealthCheckDefinition } from "../types";
 
+const INITIALIZING_SHARDS_THRESHOLD = 5;
+const RELOCATING_SHARDS_THRESHOLD = 5;
+
 export const clusterChecks: HealthCheckDefinition[] = [
   // #1
   {
@@ -108,12 +111,11 @@ export const clusterChecks: HealthCheckDefinition[] = [
     dependsOn: ["clusterCore"],
     evaluate: (snapshot) => {
       const initializing = snapshot.data.clusterCore?.clusterHealth?.initializing_shards ?? 0;
-      const threshold = 5;
-      if (initializing >= threshold) {
+      if (initializing >= INITIALIZING_SHARDS_THRESHOLD) {
         return {
           status: "warn",
           summary: `${initializing} initializing shard${initializing === 1 ? "" : "s"} detected.`,
-          observed: { initializing_shards: initializing, threshold },
+          observed: { initializing_shards: initializing, threshold: INITIALIZING_SHARDS_THRESHOLD },
           recommendation:
             "Many initializing shards may indicate ongoing recovery or allocation issues.",
           links: [{ label: "Cluster Health", to: "/cluster-health" }],
@@ -133,12 +135,11 @@ export const clusterChecks: HealthCheckDefinition[] = [
     dependsOn: ["clusterCore"],
     evaluate: (snapshot) => {
       const relocating = snapshot.data.clusterCore?.clusterHealth?.relocating_shards ?? 0;
-      const threshold = 5;
-      if (relocating >= threshold) {
+      if (relocating >= RELOCATING_SHARDS_THRESHOLD) {
         return {
           status: "warn",
           summary: `${relocating} relocating shard${relocating === 1 ? "" : "s"} detected.`,
-          observed: { relocating_shards: relocating, threshold },
+          observed: { relocating_shards: relocating, threshold: RELOCATING_SHARDS_THRESHOLD },
           recommendation: "High shard relocation may impact cluster performance.",
           links: [{ label: "Cluster Health", to: "/cluster-health" }],
         };

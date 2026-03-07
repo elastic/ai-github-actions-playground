@@ -72,6 +72,7 @@ describe("cluster checks", () => {
     const result = check.evaluate(snap);
     expect(result.status).toBe("fail");
     expect(result.observed?.status).toBe("red");
+    expect(result.recommendation).toBeTruthy();
   });
 
   it("#1 cluster.status.red — passes on green", () => {
@@ -87,7 +88,10 @@ describe("cluster checks", () => {
         pendingTasks: { tasks: [] },
       },
     });
-    expect(check.evaluate(snap).status).toBe("warn");
+    const result = check.evaluate(snap);
+    expect(result.status).toBe("warn");
+    expect(result.observed?.status).toBe("yellow");
+    expect(result.recommendation).toBeTruthy();
   });
 
   it("#3 cluster.unassigned_shards.nonzero — fails with unassigned", () => {

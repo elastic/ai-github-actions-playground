@@ -7,6 +7,8 @@ import type { HealthCheckDefinition } from "../types";
 
 const FS_AVAILABLE_LOW_BYTES = 10 * 1024 * 1024 * 1024; // 10 GB
 const THREAD_POOL_QUEUE_THRESHOLD = 200;
+const HEAP_PERCENT_HIGH_THRESHOLD = 85;
+const CPU_PERCENT_HIGH_THRESHOLD = 90;
 
 export const nodeChecks: HealthCheckDefinition[] = [
   // #31
@@ -27,7 +29,7 @@ export const nodeChecks: HealthCheckDefinition[] = [
         }))
         .sort((a, b) => b.heap - a.heap)[0];
 
-      if ((hottestNode?.heap ?? 0) >= 85) {
+      if ((hottestNode?.heap ?? 0) >= HEAP_PERCENT_HIGH_THRESHOLD) {
         return {
           status: "warn",
           summary: `High JVM heap on ${hottestNode?.name} (${hottestNode?.heap}%).`,
@@ -55,7 +57,7 @@ export const nodeChecks: HealthCheckDefinition[] = [
         .map((node) => ({ name: node.name ?? "unknown", cpu: node.os?.cpu?.percent ?? 0 }))
         .sort((a, b) => b.cpu - a.cpu)[0];
 
-      if ((hottestNode?.cpu ?? 0) >= 90) {
+      if ((hottestNode?.cpu ?? 0) >= CPU_PERCENT_HIGH_THRESHOLD) {
         return {
           status: "warn",
           summary: `High CPU on ${hottestNode?.name} (${hottestNode?.cpu}%).`,
