@@ -1,10 +1,10 @@
-import type { TaskInfo, TasksListResponse } from "../../services/es";
+import type { ClusterTaskInfo, TasksListResponse } from "../../services/es";
 
 import type { HealthCheckDefinition } from "../types";
 
 const LONG_TASK_NANOS = 300_000_000_000; // 5 minutes
 
-function flattenTasks(tasksCore: TasksListResponse | null | undefined): TaskInfo[] {
+function flattenTasks(tasksCore: TasksListResponse | null | undefined): ClusterTaskInfo[] {
   const nodes = tasksCore?.nodes ?? {};
   return Object.values(nodes).flatMap((node) => Object.values(node.tasks ?? {}));
 }

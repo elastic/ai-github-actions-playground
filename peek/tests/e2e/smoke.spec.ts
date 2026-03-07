@@ -42,6 +42,10 @@ const A11Y_BASELINE: Record<string, Record<string, Record<string, number>>> = {
       "scrollable-region-focusable": 1,
     },
     Logs: {
+      "color-contrast": 6,
+      "page-has-heading-one": 1,
+    },
+    "logs-explorer": {
       "aria-prohibited-attr": 1,
       "color-contrast": 18,
       "scrollable-region-focusable": 1,
@@ -53,6 +57,15 @@ const A11Y_BASELINE: Record<string, Record<string, Record<string, number>>> = {
     Indices: {
       "color-contrast": 9,
     },
+    Tasks: {
+      "color-contrast": 7,
+    },
+    "Index Lifecycle Management": {
+      "color-contrast": 8,
+    },
+    "Index Templates": {
+      "color-contrast": 7,
+    },
   },
   "mobile-safari": {
     "Query Lab": {
@@ -61,6 +74,9 @@ const A11Y_BASELINE: Record<string, Record<string, Record<string, number>>> = {
       "scrollable-region-focusable": 2,
     },
     Logs: {
+      "color-contrast": 6,
+    },
+    "logs-explorer": {
       "aria-prohibited-attr": 1,
       "color-contrast": 17,
       "scrollable-region-focusable": 2,
@@ -81,6 +97,9 @@ const A11Y_BASELINE: Record<string, Record<string, Record<string, number>>> = {
   "mobile-chrome": {
     "Query Lab": {
       "scrollable-region-focusable": 1,
+    },
+    Tasks: {
+      "color-contrast": 5,
     },
   },
 };
@@ -258,6 +277,15 @@ async function connectToMockCluster(page: Page) {
   await expect(page.getByRole("button", { name: "Metrics", exact: true })).toBeVisible();
 }
 
+async function dismissMobileDrawerIfOpen(page: Page) {
+  const isMobile = page.viewportSize()!.width <= 768;
+  if (!isMobile) return;
+  const backdrop = page.locator(".MuiDrawer-root .MuiBackdrop-root");
+  if (await backdrop.isVisible()) {
+    await backdrop.click({ position: { x: 8, y: 8 } });
+  }
+}
+
 test.describe("smoke – site navigation", () => {
   test("onboarding user reaches the connect entrypoint from the welcome screen", async ({
     page,
@@ -408,8 +436,12 @@ test.describe("smoke – site navigation", () => {
 
   test("logs explorer route is available and runs a logs query", async ({ page }) => {
     await connectToMockCluster(page);
-    await navigateViaSidebar(page, "Logs");
-    await expect(page).toHaveURL(/\/logs$/);
+    await dismissMobileDrawerIfOpen(page);
+    // Logs Explorer is hidden from the sidebar; navigate directly via hash route
+    await page.evaluate(() => {
+      window.location.hash = "/logs-explorer";
+    });
+    await expect(page).toHaveURL(/\/logs-explorer$/);
     // The ES|QL editor starts collapsed; expand it first
     await page.getByRole("button", { name: "Expand ES|QL query section" }).click();
     const queryInput = page.getByRole("textbox", { name: "ES|QL query editor" });
@@ -425,8 +457,12 @@ test.describe("smoke – site navigation", () => {
   test("logs explorer keeps search and click-to-filter in visible query", async ({ page }) => {
     test.setTimeout(60_000);
     await connectToMockCluster(page);
-    await navigateViaSidebar(page, "Logs");
-    await expect(page).toHaveURL(/\/logs$/);
+    await dismissMobileDrawerIfOpen(page);
+    // Logs Explorer is hidden from the sidebar; navigate directly via hash route
+    await page.evaluate(() => {
+      window.location.hash = "/logs-explorer";
+    });
+    await expect(page).toHaveURL(/\/logs-explorer$/);
 
     // Use the guided search input (stepper-based flow) to set search text
     await page.getByPlaceholder('e.g. "timeout in checkout"').fill('"Hello World"');
@@ -449,6 +485,28 @@ test.describe("smoke – site navigation", () => {
     await expect(queryInput).toContainText('service.name == "checkout-service"');
   });
 
+  test("task manager, ILM, and templates pages render with headings", async ({ page }) => {
+    await connectToMockCluster(page);
+
+    // Task Manager
+    await navigateViaSidebar(page, "Tasks");
+    await expect(page.getByRole("heading", { name: "Task Manager" })).toBeVisible({
+      timeout: 10_000,
+    });
+
+    // Index Lifecycle Management
+    await navigateViaSidebar(page, "Index Lifecycle Management");
+    await expect(page.getByRole("heading", { name: "Index Lifecycle Management" })).toBeVisible({
+      timeout: 10_000,
+    });
+
+    // Index Templates
+    await navigateViaSidebar(page, "Index Templates");
+    await expect(page.getByRole("heading", { name: "Index Templates" })).toBeVisible({
+      timeout: 10_000,
+    });
+  });
+
   test("pages have no axe accessibility violations", async ({ page }, testInfo) => {
     test.setTimeout(90_000); // axe scans 9 pages serially; 30s default is too tight in CI
     await page.goto("");
@@ -466,12 +524,20 @@ test.describe("smoke – site navigation", () => {
       Traces: () => expect(page.getByText("Search for traces")).toBeVisible(),
       "Query Lab": () =>
         expect(page.getByRole("textbox", { name: "ES|QL query editor" })).toBeVisible(),
-      Logs: () => expect(page.getByRole("heading", { name: "Logs Explorer" })).toBeVisible(),
+      Logs: () =>
+        expect(page.getByRole("heading", { name: "What logs are you looking for?" })).toBeVisible(),
+      "logs-explorer": () =>
+        expect(page.getByRole("heading", { name: "Logs Explorer" })).toBeVisible(),
       Console: async () => {
         await expect(page).toHaveURL(/\/console$/);
         await expect(page.getByRole("heading", { name: "API Console" })).toBeVisible();
       },
       Indices: () => expect(page.getByRole("heading", { name: "Indices" })).toBeVisible(),
+      Tasks: () => expect(page.getByRole("heading", { name: "Task Manager" })).toBeVisible(),
+      "Index Lifecycle Management": () =>
+        expect(page.getByRole("heading", { name: "Index Lifecycle Management" })).toBeVisible(),
+      "Index Templates": () =>
+        expect(page.getByRole("heading", { name: "Index Templates" })).toBeVisible(),
     };
 
     for (const nav of [
@@ -482,10 +548,21 @@ test.describe("smoke – site navigation", () => {
       "Logs",
       "Console",
       "Indices",
+      "Tasks",
+      "Index Lifecycle Management",
+      "Index Templates",
     ]) {
       await navigateViaSidebar(page, nav);
       await pageReadyLocators[nav]!();
       await checkA11y(page, nav, testInfo);
     }
+
+    await dismissMobileDrawerIfOpen(page);
+    await page.evaluate(() => {
+      window.location.hash = "/logs-explorer";
+    });
+    await expect(page).toHaveURL(/\/logs-explorer$/);
+    await pageReadyLocators["logs-explorer"]!();
+    await checkA11y(page, "logs-explorer", testInfo);
   });
 });

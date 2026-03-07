@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -23,6 +23,8 @@ import AccountTreeIcon from "@mui/icons-material/AccountTree";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import ExpandMore from "@mui/icons-material/ExpandMore";
 import ExpandLess from "@mui/icons-material/ExpandLess";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 
 import type { ElasticsearchConnection, NodesStatsResponse } from "../../services/es";
 import { useCopyFeedbackTimeout } from "../../hooks/useCopyFeedbackTimeout";
@@ -98,6 +100,7 @@ export default function PipelineDetailPanel({
   const [verbose, setVerbose] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [expandedProcessors, setExpandedProcessors] = useState<Set<string>>(new Set());
+  const [expandedHotspots, setExpandedHotspots] = useState<Set<string>>(new Set());
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const scheduleCopyReset = useCopyFeedbackTimeout(() => setCopiedKey(null));
 
@@ -210,6 +213,33 @@ export default function PipelineDetailPanel({
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- processors reference is stable when pipeline.processors is unchanged
   }, [selectedPipeline?.pipeline.processors, selectedPipeline?.name]);
+
+  /** Map hotspot processor id (e.g. "grok:0") to the matching pipeline processor definition. */
+  const hotspotConfigByProcessorId = useMemo(() => {
+    const result = new Map<string, { type: string; config: unknown; onFailure: unknown }>();
+    if (!selectedPipeline) return result;
+
+    // Build a type-occurrence index so we can match "grok:0" → first grok processor, "grok:1" → second, etc.
+    const typeCounts = new Map<string, number>();
+    for (const processor of processors) {
+      const [type, config] = Object.entries(processor)[0] ?? ["unknown", {}];
+      const occurrence = typeCounts.get(type) ?? 0;
+      typeCounts.set(type, occurrence + 1);
+      const id = `${type}:${occurrence}`;
+      const onFailure = (config as Record<string, unknown>)?.on_failure ?? null;
+      result.set(id, { type, config, onFailure });
+    }
+    return result;
+  }, [selectedPipeline, processors]);
+
+  const toggleHotspot = useCallback((id: string) => {
+    setExpandedHotspots((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
 
   const {
     simulating,
@@ -475,45 +505,143 @@ export default function PipelineDetailPanel({
                           </TableRow>
                         </TableHead>
                         <TableBody>
-                          {runtimeStats.processors.slice(0, 12).map((processor) => (
-                            <TableRow key={processor.id}>
-                              <TableCell>
-                                <Typography
-                                  variant="body2"
+                          {runtimeStats.processors.slice(0, 12).map((processor) => {
+                            const isHotspotExpanded = expandedHotspots.has(processor.id);
+                            const matchedConfig = hotspotConfigByProcessorId.get(processor.id);
+                            return (
+                              <React.Fragment key={processor.id}>
+                                <TableRow
+                                  hover
                                   sx={{
-                                    fontFamily: "monospace",
-                                    fontSize: "0.75rem",
-                                    whiteSpace: "normal",
-                                    wordBreak: "break-word",
-                                    overflowWrap: "anywhere",
+                                    cursor: "pointer",
+                                    "& > *": {
+                                      borderBottom: isHotspotExpanded ? "unset" : undefined,
+                                    },
                                   }}
-                                  title={processor.id}
+                                  onClick={() => toggleHotspot(processor.id)}
                                 >
-                                  {processor.id}
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                  {processor.type}
-                                </Typography>
-                              </TableCell>
-                              <TableCell align="right">
-                                {processor.count.toLocaleString()}
-                              </TableCell>
-                              <TableCell
-                                align="right"
-                                sx={{ color: processor.failed > 0 ? "warning.main" : undefined }}
-                              >
-                                {processor.failed.toLocaleString()}
-                              </TableCell>
-                              <TableCell align="right">{formatMs(processor.timeMs)}</TableCell>
-                              <TableCell align="right">
-                                {formatAvgMsPerDoc(processor.timeMs, processor.count).replace(
-                                  " ms/doc",
-                                  "",
+                                  <TableCell>
+                                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                                      <IconButton
+                                        size="small"
+                                        aria-label={
+                                          isHotspotExpanded
+                                            ? "Collapse processor details"
+                                            : "Expand processor details"
+                                        }
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          toggleHotspot(processor.id);
+                                        }}
+                                        sx={{ p: 0 }}
+                                      >
+                                        {isHotspotExpanded ? (
+                                          <KeyboardArrowUpIcon fontSize="small" />
+                                        ) : (
+                                          <KeyboardArrowDownIcon fontSize="small" />
+                                        )}
+                                      </IconButton>
+                                      <Box>
+                                        <Typography
+                                          variant="body2"
+                                          sx={{
+                                            fontFamily: "monospace",
+                                            fontSize: "0.75rem",
+                                            whiteSpace: "normal",
+                                            wordBreak: "break-word",
+                                            overflowWrap: "anywhere",
+                                          }}
+                                          title={processor.id}
+                                        >
+                                          {processor.id}
+                                        </Typography>
+                                        <Typography variant="caption" color="text.secondary">
+                                          {processor.type}
+                                        </Typography>
+                                      </Box>
+                                    </Box>
+                                  </TableCell>
+                                  <TableCell align="right">
+                                    {processor.count.toLocaleString()}
+                                  </TableCell>
+                                  <TableCell
+                                    align="right"
+                                    sx={{
+                                      color: processor.failed > 0 ? "warning.main" : undefined,
+                                    }}
+                                  >
+                                    {processor.failed.toLocaleString()}
+                                  </TableCell>
+                                  <TableCell align="right">{formatMs(processor.timeMs)}</TableCell>
+                                  <TableCell align="right">
+                                    {formatAvgMsPerDoc(processor.timeMs, processor.count).replace(
+                                      " ms/doc",
+                                      "",
+                                    )}
+                                  </TableCell>
+                                  <TableCell align="right">{processor.nodesSeen}</TableCell>
+                                </TableRow>
+                                {isHotspotExpanded && (
+                                  <TableRow>
+                                    <TableCell colSpan={6} sx={{ py: 1 }}>
+                                      {matchedConfig ? (
+                                        <Box
+                                          sx={{ display: "flex", flexDirection: "column", gap: 1 }}
+                                        >
+                                          <Typography variant="caption" color="text.secondary">
+                                            Processor type: <strong>{matchedConfig.type}</strong>
+                                          </Typography>
+                                          <Typography
+                                            component="pre"
+                                            variant="body2"
+                                            sx={{
+                                              m: 0,
+                                              p: 1,
+                                              borderRadius: 1,
+                                              bgcolor: "action.hover",
+                                              wordBreak: "break-word",
+                                              whiteSpace: "pre-wrap",
+                                              fontSize: "0.75rem",
+                                              fontFamily: "monospace",
+                                            }}
+                                          >
+                                            {JSON.stringify(matchedConfig.config, null, 2)}
+                                          </Typography>
+                                          {Boolean(matchedConfig.onFailure) && (
+                                            <>
+                                              <Typography variant="caption" color="text.secondary">
+                                                on_failure handler
+                                              </Typography>
+                                              <Typography
+                                                component="pre"
+                                                variant="body2"
+                                                sx={{
+                                                  m: 0,
+                                                  p: 1,
+                                                  borderRadius: 1,
+                                                  bgcolor: "action.hover",
+                                                  wordBreak: "break-word",
+                                                  whiteSpace: "pre-wrap",
+                                                  fontSize: "0.75rem",
+                                                  fontFamily: "monospace",
+                                                }}
+                                              >
+                                                {JSON.stringify(matchedConfig.onFailure, null, 2)}
+                                              </Typography>
+                                            </>
+                                          )}
+                                        </Box>
+                                      ) : (
+                                        <Typography variant="body2" color="text.secondary">
+                                          Processor configuration not found in pipeline definition.
+                                        </Typography>
+                                      )}
+                                    </TableCell>
+                                  </TableRow>
                                 )}
-                              </TableCell>
-                              <TableCell align="right">{processor.nodesSeen}</TableCell>
-                            </TableRow>
-                          ))}
+                              </React.Fragment>
+                            );
+                          })}
                         </TableBody>
                       </Table>
                     </TableContainer>
