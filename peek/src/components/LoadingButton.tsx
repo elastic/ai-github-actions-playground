@@ -15,8 +15,11 @@ export default function LoadingButton({
   return (
     <Button
       {...props}
+      aria-busy={loading || undefined}
       disabled={disabled || loading}
-      startIcon={loading ? <CircularProgress size={14} aria-hidden="true" /> : startIcon}
+      startIcon={
+        loading ? <CircularProgress size={14} color="inherit" aria-hidden="true" /> : startIcon
+      }
     >
       {children}
     </Button>

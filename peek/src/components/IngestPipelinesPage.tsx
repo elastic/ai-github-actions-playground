@@ -185,7 +185,7 @@ export default function IngestPipelinesPage() {
               }}
               loading={loading}
             >
-              Refresh
+              {loading ? "Refreshing..." : "Refresh"}
             </LoadingButton>
           }
         />

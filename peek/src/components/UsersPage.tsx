@@ -104,7 +104,7 @@ export default function UsersPage() {
         actions={
           <>
             <LoadingButton size="small" variant="outlined" onClick={refresh} loading={loading}>
-              Refresh
+              {loading ? "Refreshing..." : "Refresh"}
             </LoadingButton>
             <Button size="small" variant="contained" onClick={() => void copyQuery()}>
               {copied ? "Copied" : "Copy API call"}

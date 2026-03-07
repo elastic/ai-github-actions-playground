@@ -23,6 +23,8 @@ export default function RefreshToolbar({
   onRefresh,
   loading,
 }: RefreshToolbarProps) {
+  const refreshLabel = loading ? "Refreshing..." : "Refresh";
+
   return (
     <Stack direction="row" spacing={1} alignItems="center">
       <Typography variant="caption" color="text.secondary">
@@ -38,9 +40,9 @@ export default function RefreshToolbar({
         variant="outlined"
         onClick={onRefresh}
         loading={loading}
-        aria-label="Refresh"
+        aria-label={refreshLabel}
       >
-        Refresh
+        {refreshLabel}
       </LoadingButton>
     </Stack>
   );

@@ -104,7 +104,7 @@ describe("FieldStatsPanel", () => {
       </MemoryRouter>,
     );
 
-    expect(document.querySelector(".MuiSkeleton-root")).toBeInTheDocument();
+    expect(screen.getByTestId("field-stats-loading")).toBeInTheDocument();
   });
 
   it("displays counts and top values for a keyword field", async () => {

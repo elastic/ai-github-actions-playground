@@ -117,9 +117,19 @@ export default function FieldStatsPanel({
 
       {/* Body */}
       <Box
+        aria-busy={loading}
         sx={{ display: "flex", flex: 1, flexDirection: "column", gap: 1, overflow: "auto", p: 1.5 }}
       >
-        {loading && <ContentSkeleton variant="list" />}
+        {loading && (
+          <Box
+            role="status"
+            aria-live="polite"
+            aria-label="Loading field statistics"
+            data-testid="field-stats-loading"
+          >
+            <ContentSkeleton variant="list" />
+          </Box>
+        )}
 
         {!loading && error && <Alert severity="error">{error}</Alert>}
 
