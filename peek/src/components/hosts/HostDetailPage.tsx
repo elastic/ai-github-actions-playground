@@ -11,6 +11,7 @@ import Typography from "@mui/material/Typography";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
 
+import { PAGE_MANIFEST } from "../../routes/manifest";
 import { useSimpleEsqlQuery } from "../../hooks/useSimpleEsqlQuery";
 import { usePageFiltersStore } from "../../store/usePageFiltersStore";
 import DateRangePicker from "../DateRangePicker";
@@ -69,7 +70,7 @@ export default function HostDetailPage() {
         leading={
           <Button
             component={RouterLink}
-            to="/hosts"
+            to={PAGE_MANIFEST.hosts.path}
             startIcon={<ArrowBackIcon />}
             size="small"
             sx={{ mr: 1 }}

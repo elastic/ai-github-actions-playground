@@ -40,7 +40,7 @@ export default function MetricChartCard({
     () => buildHostTimeSeriesQuery(metricField, filters),
     [metricField, filters],
   );
-  const { data, loading } = useSimpleEsqlQuery({ query });
+  const { data, loading, error } = useSimpleEsqlQuery({ query });
 
   const points = useMemo(() => parseSimpleTimeSeries(data), [data]);
 
@@ -124,8 +124,8 @@ export default function MetricChartCard({
           <Box
             sx={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}
           >
-            <Typography variant="body2" color="text.secondary">
-              {loading ? "Loading..." : "No data"}
+            <Typography variant="body2" color={error ? "error" : "text.secondary"}>
+              {loading ? "Loading..." : (error ?? "No data")}
             </Typography>
           </Box>
         )}

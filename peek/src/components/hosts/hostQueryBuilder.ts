@@ -78,9 +78,13 @@ function buildWhereConditions(filters: HostQueryFilters): string[] {
     `@timestamp >= ${filters.timeFrom}`,
     `@timestamp <= ${filters.timeTo}`,
   ];
-  if (filters.osType && filters.osType !== "unknown") {
-    const osValue = filters.osType === "macos" ? "darwin" : filters.osType;
-    conditions.push(`os.type == "${osValue}"`);
+  if (filters.osType) {
+    if (filters.osType === "unknown") {
+      conditions.push(`os.type == "unknown"`);
+    } else {
+      const osValue = filters.osType === "macos" ? "darwin" : filters.osType;
+      conditions.push(`os.type == "${osValue}"`);
+    }
   }
   if (filters.search) {
     const escaped = escapeEsql(filters.search);
@@ -203,10 +207,7 @@ export function buildHostDetailTimeSeriesQuery(
 /**
  * Builds a TS-backed load-average time-series query for a single host.
  */
-export function buildHostDetailLoadAverageQuery(
-  hostId: string,
-  filters: HostQueryFilters,
-): string {
+export function buildHostDetailLoadAverageQuery(hostId: string, filters: HostQueryFilters): string {
   const escaped = escapeEsql(hostId);
   return `TS metrics-hostmetricsreceiver*
 | WHERE @timestamp >= ${filters.timeFrom}

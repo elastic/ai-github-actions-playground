@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { Link as RouterLink } from "react-router-dom";
+import { useCallback, useMemo } from "react";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
@@ -22,7 +22,7 @@ import HostInventoryTable from "./HostInventoryTable";
 import HostMetricsCharts from "./HostMetricsCharts";
 import HostOverviewCards from "./HostOverviewCards";
 import { useHostsInventorySearch } from "./useHostsInventorySearch";
-import type { HostOsType } from "./hostTypes";
+import type { HostOsType, HostRow } from "./hostTypes";
 import { osLabel } from "./hostTypes";
 import type { HostQueryFilters } from "./hostQueryBuilder";
 
@@ -32,6 +32,7 @@ interface HostsPageProps {
 }
 
 export default function HostsPage({ osType }: HostsPageProps) {
+  const navigate = useNavigate();
   const {
     filters,
     updateFilters,
@@ -48,6 +49,13 @@ export default function HostsPage({ osType }: HostsPageProps) {
   const description = osType
     ? `Inventory and health snapshot of your ${osLabel(osType)} hosts.`
     : "Inventory and health snapshot of all monitored hosts.";
+
+  const handleRowClick = useCallback(
+    (row: HostRow) => {
+      navigate(`/hosts/${encodeURIComponent(row.hostId)}`);
+    },
+    [navigate],
+  );
 
   const metricsFilters = useMemo<HostQueryFilters>(
     () => ({
@@ -148,6 +156,7 @@ export default function HostsPage({ osType }: HostsPageProps) {
               sortField={sortField}
               sortDirection={sortDirection}
               handleSort={handleSort}
+              onRowClick={handleRowClick}
             />
           </Paper>
         </Stack>

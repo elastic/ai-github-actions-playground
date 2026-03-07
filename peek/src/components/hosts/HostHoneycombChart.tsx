@@ -13,7 +13,7 @@ interface HostHoneycombChartProps {
 
 // Flat-top hexagon geometry
 const CELL_W = 52; // px
-const CELL_H = Math.round(CELL_W * Math.sqrt(3) / 2); // ≈ 45px
+const CELL_H = Math.round((CELL_W * Math.sqrt(3)) / 2); // ≈ 45px
 const GAP = 4; // px gap between cells
 const COLS = 8; // cells per row
 
@@ -37,8 +37,7 @@ function cpuColor(value: number | null): string {
 
 function HexCell({ row }: { row: HostRow }) {
   const navigate = useNavigate();
-  const cpu =
-    row.cpuUtilization != null ? `${(row.cpuUtilization * 100).toFixed(1)}%` : "N/A";
+  const cpu = row.cpuUtilization != null ? `${(row.cpuUtilization * 100).toFixed(1)}%` : "N/A";
   const mem =
     row.memoryUtilization != null ? `${(row.memoryUtilization * 100).toFixed(1)}%` : "N/A";
 
@@ -60,12 +59,12 @@ function HexCell({ row }: { row: HostRow }) {
       arrow
     >
       <Box
-        role="button"
-        tabIndex={0}
+        component="button"
+        type="button"
         onClick={() => navigate(`/hosts/${encodeURIComponent(row.hostId)}`)}
         onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            navigate(`/hosts/${encodeURIComponent(row.hostId)}`);
+          if (e.key === " ") {
+            e.preventDefault();
           }
         }}
         sx={{
@@ -75,6 +74,8 @@ function HexCell({ row }: { row: HostRow }) {
           clipPath: "polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)",
           backgroundColor: cpuColor(row.cpuUtilization),
           cursor: "pointer",
+          border: "none",
+          p: 0,
           transition: "opacity 0.15s",
           "&:hover": { opacity: 0.75 },
           "&:focus-visible": { outline: "2px solid white", outlineOffset: 2 },
@@ -97,7 +98,7 @@ export default function HostHoneycombChart({ hostRows }: HostHoneycombChartProps
   if (hostRows.length === 0) return null;
 
   return (
-    <Paper variant="outlined" sx={{ overflow: "hidden" }}>
+    <Paper variant="outlined" sx={{ overflowX: "auto" }}>
       <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
         <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
           Host Map
@@ -129,7 +130,7 @@ export default function HostHoneycombChart({ hostRows }: HostHoneycombChartProps
       <Box sx={{ p: 2 }}>
         {rows.map((rowHosts, rowIdx) => (
           <Box
-            key={rowIdx}
+            key={rowHosts.map((h) => h.hostId).join(",")}
             sx={{
               display: "flex",
               gap: `${GAP}px`,
@@ -146,4 +147,3 @@ export default function HostHoneycombChart({ hostRows }: HostHoneycombChartProps
     </Paper>
   );
 }
-
