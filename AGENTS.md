@@ -194,18 +194,6 @@ workflow run for deeper inspection.
 
 Use the workflow specs under `.github/workflows/`.
 
-**Reading the PR comment outside CI:** Some MCP tools and API clients strip
-`<details>` HTML from GitHub comment bodies, hiding the per-test results and
-failure details. Always use the `gh` CLI to read the full raw comment body:
-
-```bash
-gh api repos/elastic/ai-github-actions-playground/issues/<PR>/comments \
-  --jq '.[0].body'
-```
-
-This renders the complete markdown including `<details>` blocks so you can see
-exactly which tests failed and why without digging through raw CI logs.
-
 ## Git Branch Discipline
 
 **Always check your current branch before committing.** Use `git branch --show-current`. The main worktree defaults to `main` — committing fixes there instead of the PR branch is a hard-to-recover mistake.
