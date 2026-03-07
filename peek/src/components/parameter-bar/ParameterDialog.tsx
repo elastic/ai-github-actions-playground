@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useLayoutEffect } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
@@ -278,7 +278,7 @@ export default function ParameterDialog({
       : String(esqlQueryError)
     : null;
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!open) return;
     reset(toFormValues(editing));
     void trigger();
