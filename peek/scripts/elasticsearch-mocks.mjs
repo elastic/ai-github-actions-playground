@@ -95,6 +95,90 @@ const DEFAULT_MOCK_DATA = {
   ],
   recovery: {},
   ilmExplain: { indices: {} },
+  ilmPolicies: {
+    "logs-lifecycle": {
+      version: 1,
+      modified_date_string: "2026-01-15T00:00:00.000Z",
+      policy: {
+        phases: {
+          hot: { min_age: "0ms", actions: { rollover: { max_primary_shard_size: "50gb" } } },
+          warm: { min_age: "30d", actions: { shrink: { number_of_shards: 1 } } },
+          delete: { min_age: "90d", actions: { delete: {} } },
+        },
+      },
+      in_use_by: { indices: ["web-logs-2026.02"], data_streams: [], composable_templates: [] },
+    },
+  },
+  ilmExplainDetail: {
+    indices: {
+      "web-logs-2026.02": {
+        index: "web-logs-2026.02",
+        managed: true,
+        policy: "logs-lifecycle",
+        phase: "hot",
+        action: "complete",
+        step: "complete",
+        age: "5d",
+        lifecycle_date_millis: Date.now() - 5 * 86_400_000,
+      },
+    },
+  },
+  tasks: {
+    tasks: [
+      {
+        node: "n1",
+        id: 101,
+        type: "transport",
+        action: "indices:data/read/search",
+        description: "searching web-logs-*",
+        start_time_in_millis: Date.now() - 5000,
+        running_time_in_nanos: 5_000_000_000,
+        cancellable: true,
+      },
+      {
+        node: "n1",
+        id: 102,
+        type: "transport",
+        action: "cluster:monitor/tasks/lists",
+        description: "",
+        start_time_in_millis: Date.now() - 100,
+        running_time_in_nanos: 100_000_000,
+        cancellable: false,
+      },
+    ],
+  },
+  indexTemplates: {
+    index_templates: [
+      {
+        name: "logs-nginx",
+        index_template: {
+          index_patterns: ["logs-nginx*"],
+          composed_of: ["logs-mappings", "logs-settings"],
+          priority: 200,
+          version: 1,
+          data_stream: {},
+        },
+      },
+    ],
+  },
+  componentTemplates: {
+    component_templates: [
+      {
+        name: "logs-mappings",
+        component_template: {
+          template: { mappings: { properties: { "@timestamp": { type: "date" } } } },
+          version: 1,
+        },
+      },
+      {
+        name: "logs-settings",
+        component_template: {
+          template: { settings: { number_of_replicas: 1 } },
+          version: 1,
+        },
+      },
+    ],
+  },
   allocationExplain: { error: { reason: "unable to find any unassigned shards to explain" } },
   allocationExplainStatus: 400,
   slmStats: { operation_mode: "RUNNING", policy_stats: [] },
@@ -276,7 +360,11 @@ export async function registerElasticsearchMocks(
     if (path === "/_cat/shards" && method === "GET") return json(resolved.catShards);
     if (path === "/_cat/allocation" && method === "GET") return json(resolved.catAllocation);
     if (path.startsWith("/_recovery") && method === "GET") return json(resolved.recovery);
-    if (path.match(/\/_ilm\/explain/) && method === "GET") return json(resolved.ilmExplain);
+    if (path === "/_ilm/policy" && method === "GET") return json(resolved.ilmPolicies);
+    if (path.match(/\/_ilm\/explain/) && method === "GET") return json(resolved.ilmExplainDetail);
+    if (path === "/_tasks" && method === "GET") return json(resolved.tasks);
+    if (path === "/_index_template" && method === "GET") return json(resolved.indexTemplates);
+    if (path === "/_component_template" && method === "GET") return json(resolved.componentTemplates);
     if (path === "/_slm/stats" && method === "GET") return json(resolved.slmStats);
     if (path.startsWith("/_snapshot/") && method === "GET") return json(resolved.snapshotStatus);
     if (path === "/_cat/indices" && method === "GET") return json(resolved.catIndices);

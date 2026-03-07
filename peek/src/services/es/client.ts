@@ -48,6 +48,9 @@ import type {
 import type { GetIngestPipelinesResponse, SimulateIngestPipelineResponse } from "./ingestTypes";
 import type { ProfilingTopFunctionsRequest } from "./profilingTypes";
 import type { GetWatchResponse, QueryWatchesRequest, QueryWatchesResponse } from "./watcherTypes";
+import type { ListTasksResponse } from "./taskTypes";
+import type { GetIlmPoliciesResponse, IlmExplainDetailResponse } from "./ilmTypes";
+import type { GetIndexTemplatesResponse, GetComponentTemplatesResponse } from "./templateTypes";
 
 // ---------------------------------------------------------------------------
 // Re-export domain types so existing `import … from "./client"` keeps working.
@@ -126,6 +129,27 @@ export type {
 
 export type { ProfilingTopFunctionsRequest } from "./profilingTypes";
 export type { GetWatchResponse, QueryWatchesRequest, QueryWatchesResponse } from "./watcherTypes";
+
+export type { TaskInfo, ListTasksResponse, TaskRow } from "./taskTypes";
+
+export type {
+  IlmPolicy,
+  IlmPhaseDefinition,
+  GetIlmPoliciesResponse,
+  IlmExplainIndexDetail,
+  IlmExplainDetailResponse,
+  IlmIndexRow,
+  IlmPolicyRow,
+} from "./ilmTypes";
+
+export type {
+  IndexTemplateRecord,
+  GetIndexTemplatesResponse,
+  ComponentTemplateRecord,
+  GetComponentTemplatesResponse,
+  IndexTemplateRow,
+  ComponentTemplateRow,
+} from "./templateTypes";
 
 // ---------------------------------------------------------------------------
 // Types that are NOT in the OpenAPI spec (our own)
@@ -669,6 +693,47 @@ export class ElasticsearchClient {
       body: JSON.stringify(request),
       signal,
     });
+  }
+
+  // -------------------------------------------------------------------------
+  // Task Management
+  // -------------------------------------------------------------------------
+
+  async listTasks(signal?: AbortSignal): Promise<ListTasksResponse> {
+    return this._fetch<ListTasksResponse>("/_tasks?detailed=true&group_by=none", { signal });
+  }
+
+  async cancelTask(taskId: string, signal?: AbortSignal): Promise<unknown> {
+    return this._fetch<unknown>(`/_tasks/${encodeURIComponent(taskId)}/_cancel`, {
+      method: "POST",
+      signal,
+    });
+  }
+
+  // -------------------------------------------------------------------------
+  // ILM (Index Lifecycle Management)
+  // -------------------------------------------------------------------------
+
+  async getIlmPolicies(signal?: AbortSignal): Promise<GetIlmPoliciesResponse> {
+    return this._fetch<GetIlmPoliciesResponse>("/_ilm/policy", { signal });
+  }
+
+  async getIlmExplain(signal?: AbortSignal): Promise<IlmExplainDetailResponse> {
+    return this._fetch<IlmExplainDetailResponse>("/_all/_ilm/explain?only_managed=true", {
+      signal,
+    });
+  }
+
+  // -------------------------------------------------------------------------
+  // Index & Component Templates
+  // -------------------------------------------------------------------------
+
+  async getIndexTemplates(signal?: AbortSignal): Promise<GetIndexTemplatesResponse> {
+    return this._fetch<GetIndexTemplatesResponse>("/_index_template", { signal });
+  }
+
+  async getComponentTemplates(signal?: AbortSignal): Promise<GetComponentTemplatesResponse> {
+    return this._fetch<GetComponentTemplatesResponse>("/_component_template", { signal });
   }
 
   // -------------------------------------------------------------------------
