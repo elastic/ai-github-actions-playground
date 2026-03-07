@@ -304,9 +304,9 @@ export default function StepVariables() {
           </Typography>
           {variables
             .filter((v) => v.name)
-            .map((v, index) => (
+            .map((v, idx) => (
               <Chip
-                key={`${v.name}-${index}`}
+                key={`tag-${idx}-${v.name}`}
                 label={`{{${v.name}}}`}
                 size="small"
                 variant="outlined"

@@ -29,10 +29,13 @@ const IDENTITY_SLOTS: readonly InsightSlotDefinition[] = [
   { slotId: "identity-name", label: "Package name field" },
   { slotId: "identity-title", label: "Package title field" },
   { slotId: "identity-description", label: "Package description field" },
-  { slotId: "identity-version", label: "Version and format version fields" },
-  { slotId: "identity-owner", label: "Owner GitHub team and type fields" },
+  { slotId: "identity-version", label: "Package version field" },
+  { slotId: "identity-format-version", label: "Format version field" },
+  { slotId: "identity-owner-github", label: "Owner GitHub team field" },
+  { slotId: "identity-owner-type", label: "Owner type field" },
   { slotId: "identity-categories", label: "Package categories field" },
-  { slotId: "identity-conditions", label: "Kibana version and subscription fields" },
+  { slotId: "identity-kibana-version", label: "Kibana version constraint field" },
+  { slotId: "identity-subscription", label: "Subscription level field" },
   { slotId: "identity-icon", label: "Package icon upload" },
 ];
 
@@ -43,10 +46,13 @@ Each field is a slot you can annotate with a brief suggestion.
 - **name** (identity-name): Lowercase with underscores only. The suffix "_input_otel" is appended automatically. User enters just the base name (e.g. "redis", "apache", "mysql"). If empty, this is the most important field to fill first.
 - **title** (identity-title): Must follow the pattern "{Technology} OpenTelemetry Input Package". Derived from the name — if name is "redis", title should be "Redis OpenTelemetry Input Package". If empty or doesn't match the pattern, suggest the correct value.
 - **description** (identity-description): One sentence: "Collect {Technology} {signal type} using OpenTelemetry Collector". If empty, suggest based on the name.
-- **version** (identity-version): Semver format. "0.1.0" is correct for new packages. format_version should be "3.5.0" (standard) or "3.6.0" (if dynamic signal types needed).
-- **owner** (identity-owner): github format is "org/team" — "elastic/ecosystem" is default for Elastic OTel packages. type is "elastic", "partner", or "community".
+- **version** (identity-version): Semver format. "0.1.0" is correct for new packages.
+- **format version** (identity-format-version): "3.5.0" (standard) or "3.6.0" (if dynamic signal types needed).
+- **owner github** (identity-owner-github): Format is "org/team" — "elastic/ecosystem" is default for Elastic OTel packages.
+- **owner type** (identity-owner-type): "elastic", "partner", or "community".
 - **categories** (identity-categories): MUST include "opentelemetry". Should also include domain: "datastore" for databases/caches, "web" for web servers, "network" for network devices, "os_system" for OS-level, etc. Usually include "observability". 2-4 total.
-- **conditions** (identity-conditions): kibana.version should be "^9.2.0" or later (OTel packages require Stack 9.2+). subscription is usually "basic".
+- **kibana version** (identity-kibana-version): Should be "^9.2.0" or later (OTel packages require Stack 9.2+).
+- **subscription** (identity-subscription): Usually "basic".
 - **icon** (identity-icon): SVG format preferred. Not required but recommended for published packages.
 
 Only annotate fields that are empty, have wrong values, or could be improved. Skip fields that are correct.`;
@@ -215,52 +221,56 @@ Has icon: ${identity.icon ? "yes" : "no"}`;
             />
           </InsightSlot>
 
-          <InsightSlot slotId="identity-version">
-            <Box sx={{ display: "flex", gap: 2 }}>
+          <Box sx={{ display: "flex", gap: 2 }}>
+            <InsightSlot slotId="identity-version">
               <TextField
                 label="Version"
                 value={identity.version}
                 onChange={(e) => setVersion(e.target.value)}
                 size="small"
-                sx={{ width: 140 }}
+                fullWidth
               />
+            </InsightSlot>
+            <InsightSlot slotId="identity-format-version">
               <TextField
                 label="Format version"
                 value={identity.formatVersion}
                 onChange={(e) => setFormatVersion(e.target.value as FormatVersion)}
                 select
                 size="small"
-                sx={{ width: 160 }}
+                fullWidth
               >
                 <MenuItem value="3.5.0">3.5.0</MenuItem>
                 <MenuItem value="3.6.0">3.6.0</MenuItem>
               </TextField>
-            </Box>
-          </InsightSlot>
+            </InsightSlot>
+          </Box>
 
-          <InsightSlot slotId="identity-owner">
-            <Box sx={{ display: "flex", gap: 2 }}>
+          <Box sx={{ display: "flex", gap: 2 }}>
+            <InsightSlot slotId="identity-owner-github">
               <TextField
                 label="Owner GitHub team"
                 value={identity.ownerGithub}
                 onChange={(e) => setOwnerGithub(e.target.value)}
                 size="small"
-                sx={{ flex: 1 }}
+                fullWidth
               />
+            </InsightSlot>
+            <InsightSlot slotId="identity-owner-type">
               <TextField
                 label="Owner type"
                 value={identity.ownerType}
                 onChange={(e) => setOwnerType(e.target.value as OwnerType)}
                 select
                 size="small"
-                sx={{ width: 160 }}
+                fullWidth
               >
                 <MenuItem value="elastic">Elastic</MenuItem>
                 <MenuItem value="partner">Partner</MenuItem>
                 <MenuItem value="community">Community</MenuItem>
               </TextField>
-            </Box>
-          </InsightSlot>
+            </InsightSlot>
+          </Box>
 
           <InsightSlot slotId="identity-categories">
             <Autocomplete
@@ -280,30 +290,32 @@ Has icon: ${identity.icon ? "yes" : "no"}`;
             />
           </InsightSlot>
 
-          <InsightSlot slotId="identity-conditions">
-            <Box sx={{ display: "flex", gap: 2 }}>
+          <Box sx={{ display: "flex", gap: 2 }}>
+            <InsightSlot slotId="identity-kibana-version">
               <TextField
                 label="Kibana version"
                 value={identity.kibanaVersion}
                 onChange={(e) => setKibanaVersion(e.target.value)}
                 size="small"
-                sx={{ flex: 1 }}
+                fullWidth
               />
+            </InsightSlot>
+            <InsightSlot slotId="identity-subscription">
               <TextField
                 label="Subscription"
                 value={identity.subscription}
                 onChange={(e) => setSubscription(e.target.value as SubscriptionLevel)}
                 select
                 size="small"
-                sx={{ width: 160 }}
+                fullWidth
               >
                 <MenuItem value="basic">Basic</MenuItem>
                 <MenuItem value="gold">Gold</MenuItem>
                 <MenuItem value="platinum">Platinum</MenuItem>
                 <MenuItem value="enterprise">Enterprise</MenuItem>
               </TextField>
-            </Box>
-          </InsightSlot>
+            </InsightSlot>
+          </Box>
         </Box>
 
         {/* Icon upload section */}

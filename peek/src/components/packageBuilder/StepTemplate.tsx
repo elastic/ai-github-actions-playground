@@ -159,9 +159,9 @@ export default function StepTemplate() {
           </Typography>
           {variables
             .filter((v) => v.name)
-            .map((v) => (
+            .map((v, idx) => (
               <Chip
-                key={v.name}
+                key={`insert-${idx}-${v.name}`}
                 label={`{{${v.name}}}`}
                 size="small"
                 variant="outlined"
@@ -372,7 +372,14 @@ Rendered YAML (line numbers for slot references):
 ${numberedLines}`;
   }, [rendered, templateContent, packageName, variables, lines, mockValues]);
 
-  const cacheKey = `pkg-template-lines::${packageName}::${lines.length}::${templateContent.length}`;
+  const contentHash = useMemo(() => {
+    let hash = 0;
+    for (let i = 0; i < rendered.length; i += 1) {
+      hash = (Math.imul(31, hash) + rendered.charCodeAt(i)) | 0;
+    }
+    return hash.toString(36);
+  }, [rendered]);
+  const cacheKey = `pkg-template-lines::${packageName}::${contentHash}`;
   const insightsEnabled = lines.length > 0;
 
   const { insights } = usePageSlotInsights({

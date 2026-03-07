@@ -82,13 +82,11 @@ export default function PackageBuilderPage() {
         >
           Back
         </Button>
-        <Button
-          variant="contained"
-          disabled={!canGoForward}
-          onClick={() => setStep((currentStep + 1) as WizardStep)}
-        >
-          {currentStep === LAST_STEP - 1 ? "Review & Export" : "Continue"}
-        </Button>
+        {canGoForward && (
+          <Button variant="contained" onClick={() => setStep((currentStep + 1) as WizardStep)}>
+            {currentStep === LAST_STEP - 1 ? "Review & Export" : "Continue"}
+          </Button>
+        )}
       </Box>
     </Box>
   );

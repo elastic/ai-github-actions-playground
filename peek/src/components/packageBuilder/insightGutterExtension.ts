@@ -67,6 +67,9 @@ class InsightDot extends GutterMarker {
     const dot = document.createElement("span");
     dot.className = "cm-insight-dot";
     dot.title = this.text;
+    dot.setAttribute("role", "button");
+    dot.setAttribute("tabindex", "0");
+    dot.setAttribute("aria-label", `${this.severity} insight: ${this.text}`);
     const color = SEVERITY_DOT[this.severity] ?? SEVERITY_DOT.info;
     dot.style.cssText = `
       display: inline-block;
@@ -159,56 +162,98 @@ const gutterTheme = EditorView.theme({
 export function insightGutterExtension() {
   let cleanupPopover: (() => void) | null = null;
 
+  const AUTO_DISMISS_MS = 8_000;
+
+  function showPopover(insight: SlotInsight, anchorX: number, anchorY: number) {
+    cleanupPopover?.();
+
+    const popover = document.createElement("div");
+    popover.className = "cm-insight-popover";
+    popover.setAttribute("role", "tooltip");
+    const severity = insight.severity ?? "info";
+    const borderColor = SEVERITY_DOT[severity] ?? SEVERITY_DOT.info;
+    popover.style.cssText = `
+      position: fixed;
+      z-index: 10000;
+      max-width: 320px;
+      padding: 8px 12px;
+      background: var(--cm-insight-popover-bg, #fff);
+      color: var(--cm-insight-popover-color, #222);
+      border: 1px solid ${borderColor};
+      border-radius: 6px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+      font-size: 13px;
+      line-height: 1.5;
+      left: ${anchorX + 8}px;
+      top: ${anchorY + 8}px;
+    `;
+    popover.textContent = insight.text;
+    document.body.appendChild(popover);
+
+    let clickListenerTimerId: number | null = null;
+    let autoDismissTimerId: number | null = null;
+
+    const dismiss = () => {
+      popover.remove();
+      if (clickListenerTimerId !== null) {
+        window.clearTimeout(clickListenerTimerId);
+      }
+      if (autoDismissTimerId !== null) {
+        window.clearTimeout(autoDismissTimerId);
+      }
+      document.removeEventListener("click", dismiss, true);
+      document.removeEventListener("keydown", onKeyDown, true);
+      if (cleanupPopover === dismiss) {
+        cleanupPopover = null;
+      }
+    };
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        dismiss();
+      }
+    };
+
+    cleanupPopover = dismiss;
+    clickListenerTimerId = window.setTimeout(
+      () => document.addEventListener("click", dismiss, true),
+      0,
+    );
+    document.addEventListener("keydown", onKeyDown, true);
+    autoDismissTimerId = window.setTimeout(dismiss, AUTO_DISMISS_MS);
+  }
+
+  function findInsightForDot(
+    target: HTMLElement,
+    view: EditorView,
+    clientY: number,
+  ): SlotInsight | null {
+    if (!target.classList.contains("cm-insight-dot")) return null;
+    const lineBlock = view.lineBlockAtHeight(clientY - view.documentTop);
+    if (!lineBlock) return null;
+    const line = view.state.doc.lineAt(lineBlock.from);
+    const lineIdx = line.number - 1;
+    const { byLine } = view.state.field(insightField);
+    return byLine.get(lineIdx) ?? null;
+  }
+
   const insightGutterClick = EditorView.domEventHandlers({
     click(event, view) {
       const target = event.target as HTMLElement;
-      if (!target.classList.contains("cm-insight-dot")) return false;
-      const lineBlock = view.lineBlockAtHeight(event.clientY - view.documentTop);
-      if (!lineBlock) return false;
-      const line = view.state.doc.lineAt(lineBlock.from);
-      const lineIdx = line.number - 1;
-      const { byLine } = view.state.field(insightField);
-      const insight = byLine.get(lineIdx);
+      const insight = findInsightForDot(target, view, event.clientY);
       if (!insight) return false;
-
-      cleanupPopover?.();
-
-      const popover = document.createElement("div");
-      popover.className = "cm-insight-popover";
-      const severity = insight.severity ?? "info";
-      const borderColor = SEVERITY_DOT[severity] ?? SEVERITY_DOT.info;
-      popover.style.cssText = `
-        position: fixed;
-        z-index: 10000;
-        max-width: 320px;
-        padding: 8px 12px;
-        background: var(--cm-insight-popover-bg, #fff);
-        color: var(--cm-insight-popover-color, #222);
-        border: 1px solid ${borderColor};
-        border-radius: 6px;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-        font-size: 13px;
-        line-height: 1.5;
-        left: ${event.clientX + 8}px;
-        top: ${event.clientY + 8}px;
-      `;
-      popover.textContent = insight.text;
-      document.body.appendChild(popover);
-
-      let timerId: number | null = null;
-      const dismiss = () => {
-        popover.remove();
-        if (timerId !== null) {
-          window.clearTimeout(timerId);
-        }
-        document.removeEventListener("click", dismiss, true);
-        if (cleanupPopover === dismiss) {
-          cleanupPopover = null;
-        }
-      };
-      cleanupPopover = dismiss;
-      timerId = window.setTimeout(() => document.addEventListener("click", dismiss, true), 0);
-
+      showPopover(insight, event.clientX, event.clientY);
+      return true;
+    },
+    keydown(event, view) {
+      if (event.key !== "Enter" && event.key !== " ") return false;
+      const target = event.target as HTMLElement;
+      if (!target.classList.contains("cm-insight-dot")) return false;
+      event.preventDefault();
+      const rect = target.getBoundingClientRect();
+      const insight = findInsightForDot(target, view, rect.top + rect.height / 2);
+      if (!insight) return false;
+      showPopover(insight, rect.right, rect.top);
       return true;
     },
   });

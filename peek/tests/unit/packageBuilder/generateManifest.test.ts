@@ -3,6 +3,7 @@ import YAML from "yaml";
 import {
   generateManifest,
   generateChangelog,
+  generateReadmeScaffold,
 } from "../../../src/services/packageBuilder/generateManifest";
 import type { PackageBuilderData } from "../../../src/types/packageBuilder";
 
@@ -138,7 +139,7 @@ describe("generateManifest", () => {
     expect(parsed.policy_templates[0].vars[0].default).toBe(6379);
   });
 
-  it("falls back integer variable defaults to 0 when invalid", () => {
+  it("omits invalid integer defaults instead of serializing NaN", () => {
     const data = makeData({
       variables: [
         {
@@ -156,7 +157,7 @@ describe("generateManifest", () => {
       ],
     });
     const parsed = YAML.parse(generateManifest(data));
-    expect(parsed.policy_templates[0].vars[0].default).toBe(0);
+    expect(parsed.policy_templates[0].vars[0].default).toBeUndefined();
   });
 
   it("includes select options", () => {
@@ -231,7 +232,7 @@ describe("generateManifest", () => {
     const parsed = YAML.parse(generateManifest(data));
     const pt = parsed.policy_templates[0];
     expect(pt.dynamic_signal_types).toBe(true);
-    expect(pt.type).toBeUndefined();
+    expect(pt.type).toBe("metrics");
   });
 
   it("includes icon reference when icon is set", () => {
@@ -245,6 +246,29 @@ describe("generateManifest", () => {
     const parsed = YAML.parse(generateManifest(data));
     expect(parsed.icons).toHaveLength(1);
     expect(parsed.icons[0].src).toBe("/img/logo_redis.svg");
+  });
+});
+
+describe("generateReadmeScaffold", () => {
+  it("escapes markdown table pipes in variable fields", () => {
+    const data = makeData({
+      variables: [
+        {
+          name: "api_key",
+          type: "text",
+          title: "API | key",
+          description: "Use value_a|value_b",
+          default: "a|b",
+          required: true,
+          showUser: true,
+          multi: false,
+          secret: false,
+          options: [],
+        },
+      ],
+    });
+    const markdown = generateReadmeScaffold(data);
+    expect(markdown).toContain("| API \\| key | Use value_a\\|value_b | a\\|b | Yes |");
   });
 });
 

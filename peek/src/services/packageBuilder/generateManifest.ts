@@ -45,8 +45,10 @@ function serializeVariable(v: PackageVariable) {
   if (v.required) out.required = true;
   if (v.default !== "") {
     if (v.type === "integer") {
-      const parsed = Number(v.default);
-      out.default = Number.isFinite(parsed) ? parsed : 0;
+      const parsed = Number.parseInt(v.default.trim(), 10);
+      if (Number.isFinite(parsed)) {
+        out.default = parsed;
+      }
     } else if (v.type === "bool") {
       out.default = v.default === "true";
     } else {
@@ -106,10 +108,11 @@ export function generateManifest(data: PackageBuilderData): string {
     template_path: "input.yml.hbs",
   };
 
+  if (policyTemplate.signalTypes.length > 0) {
+    pt.type = policyTemplate.signalTypes[0];
+  }
   if (policyTemplate.dynamicSignalTypes && identity.formatVersion === "3.6.0") {
     pt.dynamic_signal_types = true;
-  } else if (policyTemplate.signalTypes.length > 0) {
-    pt.type = policyTemplate.signalTypes[0];
   }
 
   if (variables.length > 0) {
@@ -161,6 +164,7 @@ export function generateReadmeScaffold(data: PackageBuilderData): string {
   ];
 
   if (variables.length > 0) {
+    const escapeCell = (value: string) => value.replace(/\|/g, "\\|");
     lines.push(
       "## Configuration",
       "",
@@ -170,7 +174,7 @@ export function generateReadmeScaffold(data: PackageBuilderData): string {
     for (const v of variables) {
       const def = v.secret ? "\\*\\*\\*" : v.default || "-";
       lines.push(
-        `| ${v.title || v.name} | ${v.description || "-"} | ${def} | ${v.required ? "Yes" : "No"} |`,
+        `| ${escapeCell(v.title || v.name)} | ${escapeCell(v.description || "-")} | ${escapeCell(def)} | ${v.required ? "Yes" : "No"} |`,
       );
     }
     lines.push("");

@@ -3,9 +3,6 @@ import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import Chip from "@mui/material/Chip";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import Switch from "@mui/material/Switch";
-import Alert from "@mui/material/Alert";
 
 import { usePackageBuilderStore } from "../../store/usePackageBuilderStore";
 import type { InsightSlotDefinition } from "../../types/insightSlots";
@@ -20,8 +17,7 @@ const POLICY_SLOTS: readonly InsightSlotDefinition[] = [
   { slotId: "policy-name", label: "Policy template name field" },
   { slotId: "policy-title", label: "Policy template title field" },
   { slotId: "policy-description", label: "Policy template description field" },
-  { slotId: "policy-signals", label: "Signal types selection" },
-  { slotId: "policy-dynamic", label: "Dynamic signal types toggle" },
+  { slotId: "policy-signals", label: "Signal types and dynamic toggle" },
 ];
 
 const POLICY_SYSTEM_PROMPT = `You are reviewing form fields for an Elastic OTel input package policy template.
@@ -32,7 +28,7 @@ Each field is a slot you can annotate with a brief suggestion.
 - **title** (policy-title): Pattern: "{Technology} {Signal Types} (OpenTelemetry)" — e.g. "Redis Metrics (OpenTelemetry)". Should reflect the selected signal types.
 - **description** (policy-description): One sentence: "Collect {Technology} {signal type} using OpenTelemetry Collector".
 - **signal types** (policy-signals): Which telemetry signals this handles. Most OTel receiver packages are "metrics" only. Some also produce "logs" or "traces". Choose based on what the OTel receiver actually emits.
-- **dynamic signal types** (policy-dynamic): Only available with format_version 3.6.0. When enabled, a single policy template handles multiple signal types. When disabled, only the first signal type is used as the manifest type field.
+- **dynamic signal types** (policy-signals): Available with format_version 3.6.0. When enabled alongside signal types, Fleet can enable additional signal types beyond the primary type. Both type and dynamic_signal_types coexist in the manifest.
 
 Only annotate fields that are empty, have wrong values, or could be improved. Skip fields that are correct.`;
 
@@ -139,12 +135,6 @@ Format version: "${formatVersion}"`;
             <Typography variant="body2" sx={{ fontWeight: 600 }} gutterBottom>
               Signal types
             </Typography>
-            {!pt.dynamicSignalTypes && (
-              <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: "block" }}>
-                Without dynamic signal types, only the first signal is used as the policy template
-                type.
-              </Typography>
-            )}
             <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
               {ALL_SIGNAL_TYPES.map((signal) => (
                 <Chip
@@ -155,31 +145,19 @@ Format version: "${formatVersion}"`;
                   onClick={() => handleToggleSignal(signal)}
                 />
               ))}
-            </Box>
-          </Box>
-        </InsightSlot>
-
-        <InsightSlot slotId="policy-dynamic">
-          <Box>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={pt.dynamicSignalTypes}
-                  onChange={(e) => setPolicyTemplate({ dynamicSignalTypes: e.target.checked })}
-                  disabled={!canUseDynamic}
+              {canUseDynamic && (
+                <Chip
+                  label="+ dynamic"
+                  color={pt.dynamicSignalTypes ? "secondary" : "default"}
+                  variant={pt.dynamicSignalTypes ? "filled" : "outlined"}
+                  onClick={() => setPolicyTemplate({ dynamicSignalTypes: !pt.dynamicSignalTypes })}
                 />
-              }
-              label="Dynamic signal types"
-            />
-            {!canUseDynamic && (
-              <Alert severity="info" sx={{ mt: 1 }}>
-                Dynamic signal types requires format_version 3.6.0. Update in the Identity step.
-              </Alert>
-            )}
-            {canUseDynamic && pt.dynamicSignalTypes && (
-              <Typography variant="caption" color="text.secondary" display="block" sx={{ ml: 4 }}>
-                A single policy template will handle multiple signal types. The type field is
-                omitted from the manifest.
+              )}
+            </Box>
+            {pt.dynamicSignalTypes && (
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>
+                Dynamic: Fleet can enable additional signal types from this receiver beyond the
+                primary type.
               </Typography>
             )}
           </Box>
