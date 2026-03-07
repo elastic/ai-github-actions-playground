@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
-import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -25,7 +24,8 @@ import WarningIcon from "@mui/icons-material/Warning";
 import { useClusterOverview } from "../hooks/useClusterOverview";
 
 import EmptyState from "./EmptyState";
-import PageHeader from "./PageHeader";
+import PageContainer from "./PageContainer";
+import PageHeaderSection from "./PageHeaderSection";
 
 // ── Role abbreviation map ─────────────────────────────────────────────────
 
@@ -206,24 +206,22 @@ export default function NodesPage() {
   }, [data?.nodesInfo?.nodes, data?.nodesStats?.nodes]);
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1, height: "100%", minHeight: 0 }}>
-      <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <PageHeader
-          title="Nodes"
-          description="Runtime health and capacity for all Elasticsearch nodes. Click a row to drill into thread pools, circuit breakers, and more."
-          actions={
-            <Button
-              size="small"
-              variant="outlined"
-              onClick={refresh}
-              disabled={loading}
-              startIcon={loading ? <CircularProgress size={14} aria-hidden="true" /> : undefined}
-            >
-              {loading ? "Refreshing..." : "Refresh"}
-            </Button>
-          }
-        />
-      </Paper>
+    <PageContainer>
+      <PageHeaderSection
+        title="Nodes"
+        description="Runtime health and capacity for all Elasticsearch nodes. Click a row to drill into thread pools, circuit breakers, and more."
+        actions={
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={refresh}
+            disabled={loading}
+            startIcon={loading ? <CircularProgress size={14} aria-hidden="true" /> : undefined}
+          >
+            {loading ? "Refreshing..." : "Refresh"}
+          </Button>
+        }
+      />
 
       {error && <Alert severity="error">{error}</Alert>}
       {!error && partialErrors.length > 0 && (
@@ -481,6 +479,6 @@ export default function NodesPage() {
           )}
         </Paper>
       )}
-    </Box>
+    </PageContainer>
   );
 }

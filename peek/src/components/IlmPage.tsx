@@ -3,7 +3,6 @@ import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import FormControlLabel from "@mui/material/FormControlLabel";
-import Paper from "@mui/material/Paper";
 import Switch from "@mui/material/Switch";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
@@ -26,7 +25,8 @@ import {
   type PolicySortField,
   type SortDirection,
 } from "./ilmSortUtils";
-import PageHeader from "./PageHeader";
+import PageContainer from "./PageContainer";
+import PageHeaderSection from "./PageHeaderSection";
 
 // Re-export so existing consumers still work
 export { parseDurationToMs, compareIndexRows, comparePolicyRows } from "./ilmSortUtils";
@@ -139,22 +139,20 @@ export default function IlmPage() {
   const hasFilters = Boolean(search || onlyErrors || managedOnly || phaseFilter);
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1, height: "100%", minHeight: 0 }}>
-      <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <PageHeader
-          title="Index Lifecycle Management"
-          actions={
-            <Button
-              size="small"
-              variant="outlined"
-              onClick={result.refresh}
-              aria-label={loading ? "Refreshing ILM data" : "Refresh ILM data"}
-            >
-              {loading ? "Refreshing..." : "Refresh"}
-            </Button>
-          }
-        />
-      </Paper>
+    <PageContainer>
+      <PageHeaderSection
+        title="Index Lifecycle Management"
+        actions={
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={result.refresh}
+            aria-label={loading ? "Refreshing ILM data" : "Refresh ILM data"}
+          >
+            {loading ? "Refreshing..." : "Refresh"}
+          </Button>
+        }
+      />
       <IlmKpiCards
         indexCount={indexRows.length}
         errorCount={errorCount}
@@ -245,6 +243,6 @@ export default function IlmPage() {
         onClose={() => setSelectedIndex(null)}
       />
       <IlmPolicyDetailDrawer policy={selectedPolicy} onClose={() => setSelectedPolicy(null)} />
-    </Box>
+    </PageContainer>
   );
 }

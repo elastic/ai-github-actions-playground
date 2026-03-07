@@ -22,6 +22,7 @@ import { useClusterSettings } from "../hooks/useClusterSettings";
 import { useTableSort } from "../hooks/useTableSort";
 
 import EmptyState from "./EmptyState";
+import PageContainer from "./PageContainer";
 import PageHeader from "./PageHeader";
 
 type SettingsSource = "persistent" | "transient" | "default";
@@ -108,7 +109,7 @@ export default function ClusterSettingsPage() {
   }, [allRows]);
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1, height: "100%", minHeight: 0 }}>
+    <PageContainer>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
         <PageHeader
           title="Cluster Settings"
@@ -236,6 +237,6 @@ export default function ClusterSettingsPage() {
           />
         )}
       </Paper>
-    </Box>
+    </PageContainer>
   );
 }

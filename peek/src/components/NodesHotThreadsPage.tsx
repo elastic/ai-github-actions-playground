@@ -30,6 +30,7 @@ import { parseHotThreadsText, type ParsedHotThread } from "../utils/parseHotThre
 import EmptyState from "./EmptyState";
 import InsightSlot from "./InsightSlot";
 import { InsightSlotProvider } from "./InsightSlotContext";
+import PageContainer from "./PageContainer";
 import PageHeader from "./PageHeader";
 import { HOT_THREADS_INSIGHT_SLOT_IDS, HOT_THREADS_INSIGHT_SLOTS } from "./hotThreadsInsightSlots";
 
@@ -210,7 +211,7 @@ export default function NodesHotThreadsPage() {
       error={slotInsights.error}
       refresh={slotInsights.refresh}
     >
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 1, height: "100%", minHeight: 0 }}>
+      <PageContainer>
         <Paper variant="outlined" sx={{ p: 1.5 }}>
           <PageHeader
             title="Hot Threads"
@@ -682,7 +683,7 @@ export default function NodesHotThreadsPage() {
             )}
           </Box>
         </Drawer>
-      </Box>
+      </PageContainer>
     </InsightSlotProvider>
   );
 }

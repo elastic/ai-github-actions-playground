@@ -27,7 +27,8 @@ import { useSimulatedIndexTemplate, useTemplates } from "../hooks/useTemplates";
 import { COMPONENT_HEIGHTS } from "../types/tokens";
 
 import EmptyState from "./EmptyState";
-import PageHeader from "./PageHeader";
+import PageContainer from "./PageContainer";
+import PageHeaderSection from "./PageHeaderSection";
 import { OverviewInfoCard } from "./OverviewInfoCard";
 import {
   compareIndexTpls,
@@ -196,22 +197,20 @@ export default function TemplatesPage() {
   }
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1, height: "100%", minHeight: 0 }}>
-      <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <PageHeader
-          title="Index Templates"
-          actions={
-            <Button
-              size="small"
-              variant="outlined"
-              onClick={result.refresh}
-              aria-label={loading ? "Refreshing templates" : "Refresh templates"}
-            >
-              {loading ? "Refreshing..." : "Refresh"}
-            </Button>
-          }
-        />
-      </Paper>
+    <PageContainer>
+      <PageHeaderSection
+        title="Index Templates"
+        actions={
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={result.refresh}
+            aria-label={loading ? "Refreshing templates" : "Refresh templates"}
+          >
+            {loading ? "Refreshing..." : "Refresh"}
+          </Button>
+        }
+      />
 
       {/* KPI cards */}
       <Grid container spacing={2}>
@@ -734,6 +733,6 @@ export default function TemplatesPage() {
           </>
         )}
       </Drawer>
-    </Box>
+    </PageContainer>
   );
 }

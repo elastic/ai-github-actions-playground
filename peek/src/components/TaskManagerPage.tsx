@@ -21,7 +21,8 @@ import type { TaskRow } from "../services/es";
 import { useTasks } from "../hooks/useTasks";
 
 import EmptyState from "./EmptyState";
-import PageHeader from "./PageHeader";
+import PageContainer from "./PageContainer";
+import PageHeaderSection from "./PageHeaderSection";
 import { KpiCards } from "./TaskKpiCards";
 import { NodeGroupHeader, TASK_TABLE_COLUMN_COUNT } from "./TaskNodeGroupHeader";
 import { TaskDetailDrawer } from "./TaskDetailDrawer";
@@ -127,22 +128,20 @@ export default function TaskManagerPage() {
   );
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1, height: "100%", minHeight: 0 }}>
-      <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <PageHeader
-          title="Task Manager"
-          actions={
-            <Button
-              size="small"
-              variant="outlined"
-              onClick={result.refresh}
-              aria-label={loading ? "Refreshing tasks" : "Refresh tasks"}
-            >
-              {loading ? "Refreshing..." : "Refresh"}
-            </Button>
-          }
-        />
-      </Paper>
+    <PageContainer>
+      <PageHeaderSection
+        title="Task Manager"
+        actions={
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={result.refresh}
+            aria-label={loading ? "Refreshing tasks" : "Refresh tasks"}
+          >
+            {loading ? "Refreshing..." : "Refresh"}
+          </Button>
+        }
+      />
 
       <KpiCards
         count={tasks.length}
@@ -248,6 +247,6 @@ export default function TaskManagerPage() {
       </Paper>
 
       <TaskDetailDrawer task={selectedTask} onClose={() => setSelectedTaskId(null)} />
-    </Box>
+    </PageContainer>
   );
 }
