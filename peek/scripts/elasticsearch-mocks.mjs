@@ -341,6 +341,76 @@ export async function registerElasticsearchMocks(
 
     if (path === "/" && method === "GET") return json(resolved.clusterInfo);
     if (path === "/_cluster/health") return json(resolved.clusterHealth);
+    if (path === "/_health_report") return json(resolved.healthReport ?? {
+      cluster_name: "mock-cluster",
+      status: "yellow",
+      indicators: {
+        master_is_stable: {
+          status: "green",
+          symptom: "The cluster has a stable master node.",
+          details: {},
+          impacts: [],
+          diagnosis: [],
+        },
+        shards_availability: {
+          status: "yellow",
+          symptom: "3 replica shards are not assigned.",
+          details: { unassigned_replicas: 3, started_primaries: 42 },
+          impacts: [
+            {
+              id: "search_availability",
+              severity: 2,
+              description: "Searches might be slower because fewer copies of data exist.",
+              impact_areas: ["search", "deployment_management"],
+            },
+          ],
+          diagnosis: [
+            {
+              id: "increase_shard_limit_index_setting",
+              cause: "An index has exceeded the maximum number of replicas.",
+              action: "Increase the value of the [index.routing.allocation.total_shards_per_node] setting.",
+              help_url: "https://ela.st/fix-shards-availability",
+              affected_resources: { indices: ["my-index-000001"] },
+            },
+          ],
+        },
+        disk: {
+          status: "green",
+          symptom: "The cluster has enough disk space.",
+          details: {},
+          impacts: [],
+          diagnosis: [],
+        },
+        ilm: {
+          status: "green",
+          symptom: "No ILM policies are in error.",
+          details: {},
+          impacts: [],
+          diagnosis: [],
+        },
+        slm: {
+          status: "green",
+          symptom: "Snapshot lifecycle management is healthy.",
+          details: {},
+          impacts: [],
+          diagnosis: [],
+        },
+        shards_capacity: {
+          status: "green",
+          symptom: "The cluster is within shard limits.",
+          details: {},
+          impacts: [],
+          diagnosis: [],
+        },
+        repo_integrity: {
+          status: "green",
+          symptom: "Snapshot repositories are intact.",
+          details: {},
+          impacts: [],
+          diagnosis: [],
+        },
+      },
+    });
     if (path === "/_cluster/stats") return json(resolved.clusterStats);
     if (path === "/_nodes" && method === "GET") return json(resolved.nodesInfo);
     if (path.startsWith("/_nodes/stats")) return json(resolved.nodesStats);

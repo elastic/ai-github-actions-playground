@@ -316,3 +316,36 @@ export interface ClusterAllocationExplainResponse {
     deciders?: Array<{ decider?: string; decision?: string; explanation?: string }>;
   }>;
 }
+
+// ---------------------------------------------------------------------------
+// Health Report API (GET /_health_report) — available in ES 8.7+
+// ---------------------------------------------------------------------------
+
+export interface HealthReportImpact {
+  id?: string;
+  severity?: number;
+  description?: string;
+  impact_areas?: string[];
+}
+
+export interface HealthReportDiagnosis {
+  id?: string;
+  cause?: string;
+  action?: string;
+  help_url?: string;
+  affected_resources?: Record<string, unknown>;
+}
+
+export interface HealthReportIndicator {
+  status?: "green" | "yellow" | "red" | "unknown";
+  symptom?: string;
+  details?: Record<string, unknown>;
+  impacts?: HealthReportImpact[];
+  diagnosis?: HealthReportDiagnosis[];
+}
+
+export interface HealthReportResponse {
+  cluster_name?: string;
+  status?: "green" | "yellow" | "red";
+  indicators?: Record<string, HealthReportIndicator>;
+}

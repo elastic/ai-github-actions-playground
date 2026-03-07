@@ -1,6 +1,7 @@
 import type { HealthCheckDefinition } from "../types";
 
 import { clusterChecks } from "./cluster";
+import { healthReportChecks } from "./healthReport";
 import { ilmChecks } from "./ilm";
 import { indicesChecks } from "./indices";
 import { ingestChecks } from "./ingest";
@@ -12,6 +13,7 @@ import { taskChecks } from "./tasks";
 
 export const INITIAL_HEALTH_CHECKS: HealthCheckDefinition[] = [
   ...clusterChecks,
+  ...healthReportChecks,
   ...shardChecks,
   ...nodeChecks,
   ...taskChecks,

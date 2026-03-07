@@ -30,6 +30,7 @@ import type {
   ClusterSettingsResponse,
   ClusterAllocationExplainResponse,
   TasksListResponse,
+  HealthReportResponse,
 } from "./clusterTypes";
 import type {
   ResolveIndexResponse,
@@ -99,6 +100,10 @@ export type {
   ClusterSettingsResponse,
   ClusterAllocationExplainResponse,
   TasksListResponse,
+  HealthReportResponse,
+  HealthReportIndicator,
+  HealthReportImpact,
+  HealthReportDiagnosis,
 } from "./clusterTypes";
 
 export type {
@@ -531,6 +536,10 @@ export class ElasticsearchClient {
       "/_cluster/settings?include_defaults=true&flat_settings=true",
       { signal },
     );
+  }
+
+  async getHealthReport(signal?: AbortSignal): Promise<HealthReportResponse> {
+    return this._fetch<HealthReportResponse>("/_health_report", { signal });
   }
 
   async getNodesHotThreads(

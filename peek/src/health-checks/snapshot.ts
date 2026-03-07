@@ -74,6 +74,23 @@ async function fetchGroup(
         const apiKeys = await client.getApiKeys(signal);
         return { group, data: { apiKeys } };
       }
+      case "healthReport": {
+        try {
+          const healthReport = await client.getHealthReport(signal);
+          return { group, data: { healthReport } };
+        } catch (innerError) {
+          if (isAbortError(innerError) || signal?.aborted) throw innerError;
+          const status =
+            typeof innerError === "object" && innerError !== null && "status" in innerError
+              ? Number((innerError as { status?: unknown }).status)
+              : undefined;
+          if (status === 400 || status === 404) {
+            // API not available on this cluster version — treat as empty
+            return { group, data: { healthReport: null } };
+          }
+          throw innerError;
+        }
+      }
       default:
         return { group, data: null };
     }
