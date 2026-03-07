@@ -244,6 +244,7 @@ if read -r _; then
   sh "$install_script"
 else
   printf '\nInstallation aborted: no interactive confirmation received.\n' >&2
+  exit 1
 fi
 
 echo "Step 2: Save the configuration above as /etc/fluent-bit/fluent-bit.conf"
