@@ -27,7 +27,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import StorageIcon from "@mui/icons-material/Storage";
 import { parseAsString, useQueryState } from "nuqs";
 
-import type { DataStreamInfo, FieldCapsResponse } from "../services/es";
+import type { DataStreamInfo } from "../services/es";
 import { useApiConsoleStore } from "../store/useApiConsoleStore";
 import { usePageContextStore } from "../store/usePageContextStore";
 import { PAGE_MANIFEST } from "../routes/manifest";
@@ -52,20 +52,7 @@ import {
   DATA_STREAMS_INSIGHT_SLOT_IDS,
   DATA_STREAMS_INSIGHT_SLOTS,
 } from "./dataStreamsInsightSlots";
-
-function toFieldRows(fieldCaps: FieldCapsResponse) {
-  return Object.entries(fieldCaps.fields ?? {})
-    .flatMap(([name, capabilities]) =>
-      Object.values(capabilities).map((cap) => ({ name, type: cap.type })),
-    )
-    .sort((a, b) => a.name.localeCompare(b.name));
-}
-
-const STATUS_CHIP_COLORS: Record<string, "success" | "warning" | "error" | "default"> = {
-  GREEN: "success",
-  YELLOW: "warning",
-  RED: "error",
-};
+import { getStatusChipColor, STREAM_STATUS_ORDER, toFieldRows } from "./dataStreamsUtils";
 
 // ---------------------------------------------------------------------------
 // Sorting helpers
@@ -74,7 +61,6 @@ const STATUS_CHIP_COLORS: Record<string, "success" | "warning" | "error" | "defa
 type StreamSortField = "name" | "status" | "indices" | "docs" | "size";
 type StreamSortDirection = "asc" | "desc";
 
-const STREAM_STATUS_ORDER: Record<string, number> = { GREEN: 0, YELLOW: 1, RED: 2 };
 const DATA_STREAM_INDEX_PREFIX = ".ds-";
 
 interface StreamStats {
@@ -685,10 +671,7 @@ export default function DataStreamsPage() {
                           <TableCell>
                             <Chip
                               label={row.stream?.status.toUpperCase() ?? "UNKNOWN"}
-                              color={
-                                STATUS_CHIP_COLORS[row.stream?.status.toUpperCase() ?? ""] ??
-                                "default"
-                              }
+                              color={getStatusChipColor(row.stream?.status ?? "")}
                               size="small"
                               sx={COMPACT_CHIP_SX}
                             />
