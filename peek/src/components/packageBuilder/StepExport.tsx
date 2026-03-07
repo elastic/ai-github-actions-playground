@@ -64,7 +64,7 @@ function useValidation(data: ReturnType<typeof selectPackageBuilderData>): Valid
     }
 
     // Version
-    if (/^\d+\.\d+\.\d+/.test(identity.version)) {
+    if (/^\d+\.\d+\.\d+(?:-[\w.]+)?(?:\+[\w.]+)?$/.test(identity.version)) {
       items.push({ label: "Version is valid semver", status: "pass" });
     } else {
       items.push({ label: "Version is not valid semver", status: "fail" });
@@ -119,7 +119,7 @@ function useValidation(data: ReturnType<typeof selectPackageBuilderData>): Valid
     } else {
       items.push({
         label: "Rendered template is invalid YAML",
-        status: "warn",
+        status: "fail",
         detail: result.yamlError ?? undefined,
       });
     }
