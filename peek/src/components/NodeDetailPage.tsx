@@ -15,7 +15,9 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
+import MemoryIcon from "@mui/icons-material/Memory";
 
+import { NODE_PERMISSION_HEADING, NODE_PERMISSION_DESCRIPTION } from "../constants/nodePermissions";
 import { useClusterOverview } from "../hooks/useClusterOverview";
 import { formatBytes } from "../utils/formatBytes";
 
@@ -306,10 +308,11 @@ export default function NodeDetailPage() {
 
       {error ? null : !details ? (
         <EmptyState
-          heading={nodeDataUnavailable ? "Node data unavailable" : "Node not found"}
+          icon={<MemoryIcon sx={{ fontSize: 28 }} />}
+          heading={nodeDataUnavailable ? NODE_PERMISSION_HEADING : "Node not found"}
           description={
             nodeDataUnavailable
-              ? "Node APIs are unavailable for this cluster or current permissions."
+              ? NODE_PERMISSION_DESCRIPTION
               : "The selected node could not be found in current cluster node data."
           }
         />

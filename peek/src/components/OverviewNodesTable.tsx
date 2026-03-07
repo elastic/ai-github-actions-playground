@@ -9,10 +9,12 @@ import Typography from "@mui/material/Typography";
 
 import { formatCompactNumber, formatPercent, type NodeRow } from "../utils/clusterOverviewUtils";
 
+import {
+  NODE_PERMISSION_HEADING,
+  NODE_PERMISSION_DESCRIPTION,
+  NODE_STAT_UNAVAILABLE_HINT,
+} from "../constants/nodePermissions";
 import EmptyState from "./EmptyState";
-
-const NODE_STAT_UNAVAILABLE_HINT =
-  "Node stats unavailable — requires the monitor cluster privilege";
 
 function renderNodeStat(formatted: string) {
   if (formatted === "Unavailable") {
@@ -36,8 +38,8 @@ export function OverviewNodesTable({ nodeRows }: OverviewNodesTableProps) {
     return (
       <EmptyState
         size="small"
-        heading="Nodes unavailable"
-        description="Requires the monitor cluster privilege"
+        heading={NODE_PERMISSION_HEADING}
+        description={NODE_PERMISSION_DESCRIPTION}
       />
     );
   }
