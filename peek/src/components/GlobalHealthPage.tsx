@@ -150,9 +150,18 @@ export default function GlobalHealthPage() {
                   sx={{ cursor: "pointer" }}
                 >
                   <TableCell>
-                    <Typography variant="body2" fontWeight={500}>
+                    <Button
+                      size="small"
+                      onClick={() => setSelectedCheck(check)}
+                      sx={{
+                        p: 0,
+                        minWidth: 0,
+                        justifyContent: "flex-start",
+                        textTransform: "none",
+                      }}
+                    >
                       {check.title}
-                    </Typography>
+                    </Button>
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2" color="text.secondary">

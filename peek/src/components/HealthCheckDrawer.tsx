@@ -17,6 +17,11 @@ function statusColor(status: HealthStatus): "success" | "warning" | "error" | "d
   return "default";
 }
 
+function statusAlertSeverity(status: HealthStatus): "success" | "warning" | "error" | "info" {
+  const color = statusColor(status);
+  return color === "default" ? "info" : color;
+}
+
 function severityColor(severity: HealthSeverity | null): "error" | "warning" | "info" | "default" {
   if (severity === "critical" || severity === "high") return "error";
   if (severity === "medium") return "warning";
@@ -72,9 +77,7 @@ export default function HealthCheckDrawer({ check, onClose }: HealthCheckDrawerP
             )}
           </Stack>
 
-          <Alert severity={check.status === "pass" ? "success" : "warning"}>
-            {check.summary}
-          </Alert>
+          <Alert severity={statusAlertSeverity(check.status)}>{check.summary}</Alert>
 
           {check.reason && <Alert severity="info">{check.reason}</Alert>}
 

@@ -21,7 +21,6 @@ const PERSISTENT_TASK_PREFIXES = [
 ];
 
 function isPersistentSystemTask(task: ClusterTaskInfo): boolean {
-  if (task.type === "persistent") return true;
   const action = task.action ?? "";
   return PERSISTENT_TASK_PREFIXES.some((prefix) => action.startsWith(prefix));
 }
@@ -76,8 +75,7 @@ export const INITIAL_HEALTH_CHECKS: HealthCheckDefinition[] = [
       if (status === "yellow") {
         return {
           status: "warn",
-          summary:
-            "Cluster health is YELLOW — all primaries assigned but some replicas are not.",
+          summary: "Cluster health is YELLOW — all primaries assigned but some replicas are not.",
           links: [{ label: "Cluster Health", to: "/cluster-health" }],
         };
       }
@@ -123,8 +121,7 @@ export const INITIAL_HEALTH_CHECKS: HealthCheckDefinition[] = [
     recommendation:
       "Delayed shards are waiting for a departed node to rejoin. If the node will not return, remove the delay with index.unassigned.node_left.delayed_timeout.",
     evaluate: (snapshot) => {
-      const delayed =
-        snapshot.data.clusterCore?.clusterHealth?.delayed_unassigned_shards ?? 0;
+      const delayed = snapshot.data.clusterCore?.clusterHealth?.delayed_unassigned_shards ?? 0;
       if (delayed > 0) {
         return {
           status: "warn",
@@ -144,8 +141,7 @@ export const INITIAL_HEALTH_CHECKS: HealthCheckDefinition[] = [
     severityOnFail: "medium",
     surfaces: ["global", "local"],
     dependsOn: ["clusterCore"],
-    docsUrl:
-      "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/cluster-pending-tasks",
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/cluster-pending-tasks",
     recommendation:
       "A small backlog is normal during heavy indexing. Persistent backlogs may indicate master node pressure — check master node CPU and heap.",
     evaluate: (snapshot) => {
@@ -342,8 +338,7 @@ export const INITIAL_HEALTH_CHECKS: HealthCheckDefinition[] = [
     severityOnFail: "high",
     surfaces: ["global", "local"],
     dependsOn: ["ilmCore"],
-    docsUrl:
-      "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/ilm-explain-lifecycle",
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/ilm-explain-lifecycle",
     recommendation:
       "Use the ILM Explain API to identify the failed step and error, then fix the root cause and retry the step.",
     evaluate: (snapshot) => {
