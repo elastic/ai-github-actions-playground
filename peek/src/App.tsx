@@ -40,6 +40,7 @@ import ContentSkeleton from "./components/ContentSkeleton";
 import ErrorBoundary from "./components/ErrorBoundary";
 import PersesProviders from "./components/perses/PersesProviders";
 import LLMKeyNudgeBanner from "./components/LLMKeyNudgeBanner";
+import InsightStatusFooter from "./components/InsightStatusFooter";
 import { PAGE_MANIFEST, type PageConfig } from "./routes/manifest";
 
 const currentYear = new Date().getFullYear();
@@ -254,6 +255,7 @@ export default function App() {
                     Elasticsearch B.V.
                   </Link>
                 </Typography>
+                {connected && <InsightStatusFooter />}
               </Box>
             </Box>
             {connected && (

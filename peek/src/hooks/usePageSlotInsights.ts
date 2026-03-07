@@ -74,10 +74,13 @@ export function usePageSlotInsights({
       const slotList = slots.map((s) => `- ${s.slotId}: ${s.label}`).join("\n");
       const augmentedSystem =
         `${systemPrompt}\n\n` +
-        "Slot policy:\n" +
+        "Annotation layer policy:\n" +
+        "- You are an AI annotation layer over the user's screen.\n" +
+        "- Your job is to draw attention to things the user would likely miss on their own.\n" +
         "- Not every slot must have an insight.\n" +
         "- Emit a slot insight only when there is meaningful, non-obvious signal.\n" +
         "- Skip slots that only have neutral/obvious information.\n" +
+        "- Focus on hidden risks, subtle anomalies, non-obvious correlations, and emerging trends.\n" +
         "- Never invent values, entities, or trends.\n\n" +
         `Target insight slots:\n${slotList}`;
 

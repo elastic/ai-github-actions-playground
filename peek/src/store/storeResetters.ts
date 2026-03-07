@@ -22,6 +22,7 @@ import { useSearchPanelUIStore } from "./useSearchPanelUIStore";
 import { useApiConsoleStore } from "./useApiConsoleStore";
 import { usePageContextStore } from "./usePageContextStore";
 import { useLogsStore } from "./useLogsStore";
+import { useInsightStatusStore } from "./useInsightStatusStore";
 
 const resetConnection = () => useConnectionStore.getState().resetConnectionState();
 const resetDashboard = () => useDashboardStore.getState().resetDashboardState();
@@ -41,6 +42,7 @@ const resetSearchPanelUi = () => useSearchPanelUIStore.getState().resetSearchPan
 const resetApiConsole = () => useApiConsoleStore.getState().resetApiConsoleState();
 const resetPageContext = () => usePageContextStore.getState().resetPageContext();
 const resetLogs = () => useLogsStore.getState().reset();
+const resetInsightStatus = () => useInsightStatusStore.getState().resetInsightStatus();
 
 export const storeResetters: ReadonlyArray<() => void> = [
   resetConnection,
@@ -55,6 +57,7 @@ export const storeResetters: ReadonlyArray<() => void> = [
   resetServices,
   resetTraces,
   resetLogs,
+  resetInsightStatus,
   resetUi,
   resetTheme,
   resetCommandPalette,
