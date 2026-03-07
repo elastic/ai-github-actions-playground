@@ -41,7 +41,7 @@ export default function LogsFieldSidebar({
     >
       <Box sx={{ p: 1 }}>
         <Typography variant="subtitle1">Field Filters</Typography>
-        <Typography variant="caption" color="text.secondary">
+        <Typography variant="caption" sx={{ color: "text.primary", opacity: 0.8 }}>
           Click + to include or - to exclude
         </Typography>
       </Box>

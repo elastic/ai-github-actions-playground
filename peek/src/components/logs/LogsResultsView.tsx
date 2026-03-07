@@ -54,6 +54,8 @@ export default function LogsResultsView({
           return traceCandidate != null && String(traceCandidate).trim() !== "";
         })?.[traceColIdx] ?? null)
       : null;
+  const maxHistogramCount =
+    histogramBuckets.length > 0 ? Math.max(...histogramBuckets.map((bucket) => bucket.count)) : 0;
 
   return (
     <Paper
@@ -156,12 +158,98 @@ export default function LogsResultsView({
 
       {result && viewMode === "chart" && (
         <Box sx={{ p: 2 }}>
-          <Typography variant="body2" sx={{ mb: 1 }}>
-            Chart view uses the shared query and highlights anomaly buckets from the timeline.
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            Click a timeline anomaly marker to append a `CHANGE_POINT` drill-in query.
-          </Typography>
+          {histogramBuckets.length === 0 ? (
+            <EmptyState
+              heading="No histogram data"
+              description="Run a query with a @timestamp field to see the log volume chart."
+              size="small"
+            />
+          ) : (
+            <>
+              <Typography variant="body2" sx={{ mb: 1 }}>
+                Log volume over time — click an anomaly bar to drill in with CHANGE_POINT.
+              </Typography>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "flex-end",
+                  gap: "2px",
+                  minHeight: 160,
+                  mt: 1,
+                }}
+              >
+                {/* Y-axis labels */}
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "space-between",
+                    height: 140,
+                    pr: 0.5,
+                    flexShrink: 0,
+                  }}
+                >
+                  <Typography variant="caption" color="text.secondary">
+                    {maxHistogramCount.toLocaleString()}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {Math.round(maxHistogramCount / 2).toLocaleString()}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    0
+                  </Typography>
+                </Box>
+                {/* Bars */}
+                {histogramBuckets.map((bucket) => {
+                  const barHeight =
+                    maxHistogramCount > 0 ? (bucket.count / maxHistogramCount) * 140 : 0;
+                  const renderedBarHeight = bucket.count > 0 ? Math.max(4, barHeight) : 0;
+                  const barTitle = `${new Date(bucket.start).toLocaleTimeString()} • ${bucket.count.toLocaleString()} events${bucket.anomaly ? " • anomaly" : ""}`;
+                  const barSx = {
+                    minWidth: 12,
+                    flex: 1,
+                    height: renderedBarHeight,
+                    py: 0,
+                    px: 0,
+                    borderRadius: "2px 2px 0 0",
+                  };
+                  if (bucket.anomaly) {
+                    return (
+                      <Button
+                        key={bucket.start}
+                        size="small"
+                        variant="contained"
+                        color="warning"
+                        onClick={() => onAnomalyDrillIn(bucket.start, bucket.end)}
+                        aria-label={`Anomaly: ${new Date(bucket.start).toLocaleTimeString()} – ${bucket.count.toLocaleString()} events`}
+                        title={barTitle}
+                        sx={{
+                          ...barSx,
+                          bgcolor: "warning.main",
+                          opacity: 1,
+                          "&:hover": { opacity: 1 },
+                        }}
+                      />
+                    );
+                  }
+                  return (
+                    <Box
+                      key={bucket.start}
+                      role="img"
+                      tabIndex={0}
+                      aria-label={`Bucket: ${new Date(bucket.start).toLocaleTimeString()} – ${bucket.count.toLocaleString()} events`}
+                      title={barTitle}
+                      sx={{
+                        ...barSx,
+                        bgcolor: "primary.main",
+                        opacity: 0.5,
+                      }}
+                    />
+                  );
+                })}
+              </Box>
+            </>
+          )}
         </Box>
       )}
       {result && viewMode === "patterns" && (
