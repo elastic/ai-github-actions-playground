@@ -12,8 +12,17 @@ import type {
 } from "../../types/packageBuilder";
 
 const VALID_VARIABLE_TYPES = new Set([
-  "bool", "email", "integer", "password", "select",
-  "text", "textarea", "time_zone", "url", "yaml", "duration",
+  "bool",
+  "email",
+  "integer",
+  "password",
+  "select",
+  "text",
+  "textarea",
+  "time_zone",
+  "url",
+  "yaml",
+  "duration",
 ]);
 
 const VALID_SIGNAL_TYPES = new Set(["metrics", "logs", "traces", "synthetics", "profiles"]);
@@ -29,10 +38,12 @@ interface ParsedFiles {
 function collectFiles(files: Map<string, Uint8Array>): ParsedFiles {
   const result: ParsedFiles = {};
   const decoder = new TextDecoder();
+  const packageFilePattern =
+    /^(manifest\.yml|agent\/input\/input\.yml\.hbs|docs\/README\.md|img\/.*\.(svg|png|jpg|jpeg))$/i;
 
   for (const [path, bytes] of files) {
-    // Normalize: strip leading package folder name (e.g. "redis_input_otel/manifest.yml" → "manifest.yml")
-    const normalized = path.replace(/^[^/]+\//, "");
+    // Strip a wrapper folder only when the original path is not already a known package path.
+    const normalized = packageFilePattern.test(path) ? path : path.replace(/^[^/]+\//, "");
 
     if (normalized === "manifest.yml") {
       result.manifest = decoder.decode(bytes);
@@ -87,7 +98,9 @@ function parseManifestVariable(raw: Record<string, unknown>): PackageVariable {
   };
 }
 
-function parseManifest(yamlContent: string): Omit<PackageBuilderData, "templateContent" | "readmeContent"> & { iconPath?: string } {
+function parseManifest(
+  yamlContent: string,
+): Omit<PackageBuilderData, "templateContent" | "readmeContent"> & { iconPath?: string } {
   const doc = YAML.parse(yamlContent) as Record<string, unknown>;
 
   // Identity
@@ -102,7 +115,7 @@ function parseManifest(yamlContent: string): Omit<PackageBuilderData, "templateC
   const kibanaVersion = String(conditions.kibana?.version ?? "^9.2.0");
   const subscription = String(conditions.elastic?.subscription ?? "basic");
 
-  const icons = Array.isArray(doc.icons) ? doc.icons as Record<string, unknown>[] : [];
+  const icons = Array.isArray(doc.icons) ? (doc.icons as Record<string, unknown>[]) : [];
   const firstIcon = icons[0];
   const iconPath = firstIcon ? String(firstIcon.src ?? "") : undefined;
 
@@ -113,10 +126,14 @@ function parseManifest(yamlContent: string): Omit<PackageBuilderData, "templateC
     version: String(doc.version ?? "0.1.0"),
     formatVersion,
     ownerGithub: String(owner.github ?? "elastic/ecosystem"),
-    ownerType: (["elastic", "partner", "community"].includes(ownerType) ? ownerType : "elastic") as OwnerType,
+    ownerType: (["elastic", "partner", "community"].includes(ownerType)
+      ? ownerType
+      : "elastic") as OwnerType,
     categories: Array.isArray(doc.categories) ? doc.categories.map(String) : ["opentelemetry"],
     kibanaVersion,
-    subscription: (["basic", "gold", "platinum", "enterprise"].includes(subscription) ? subscription : "basic") as SubscriptionLevel,
+    subscription: (["basic", "gold", "platinum", "enterprise"].includes(subscription)
+      ? subscription
+      : "basic") as SubscriptionLevel,
     icon: null as PackageIcon | null,
   };
 
@@ -127,9 +144,10 @@ function parseManifest(yamlContent: string): Omit<PackageBuilderData, "templateC
   const pt = policyTemplates[0] ?? {};
 
   const rawSignalType = pt.type ? String(pt.type) : null;
-  const signalTypes: SignalType[] = rawSignalType && VALID_SIGNAL_TYPES.has(rawSignalType)
-    ? [rawSignalType as SignalType]
-    : ["metrics"];
+  const signalTypes: SignalType[] =
+    rawSignalType && VALID_SIGNAL_TYPES.has(rawSignalType)
+      ? [rawSignalType as SignalType]
+      : ["metrics"];
 
   const policyTemplate = {
     name: String(pt.name ?? ""),

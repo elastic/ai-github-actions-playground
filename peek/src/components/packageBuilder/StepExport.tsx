@@ -98,7 +98,7 @@ function useValidation(): ValidationItem[] {
     } else {
       items.push({
         label: "Rendered template is invalid YAML",
-        status: "warn",
+        status: "fail",
         detail: result.yamlError ?? undefined,
       });
     }

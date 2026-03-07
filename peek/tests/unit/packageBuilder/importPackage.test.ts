@@ -5,7 +5,10 @@ import { REDIS_MANIFEST, REDIS_TEMPLATE } from "./fixtures/redis";
 
 const encoder = new TextEncoder();
 
-function makeFileMap(files: Record<string, string>, rootFolder = "package"): Map<string, Uint8Array> {
+function makeFileMap(
+  files: Record<string, string>,
+  rootFolder = "package",
+): Map<string, Uint8Array> {
   const map = new Map<string, Uint8Array>();
   for (const [path, content] of Object.entries(files)) {
     map.set(`${rootFolder}/${path}`, encoder.encode(content));
@@ -15,11 +18,14 @@ function makeFileMap(files: Record<string, string>, rootFolder = "package"): Map
 
 describe("importFromFileMap — Apache input package", () => {
   it("parses identity fields from manifest", async () => {
-    const fileMap = makeFileMap({
-      "manifest.yml": APACHE_MANIFEST,
-      "agent/input/input.yml.hbs": APACHE_TEMPLATE,
-      "docs/README.md": APACHE_README,
-    }, "apache_input_otel");
+    const fileMap = makeFileMap(
+      {
+        "manifest.yml": APACHE_MANIFEST,
+        "agent/input/input.yml.hbs": APACHE_TEMPLATE,
+        "docs/README.md": APACHE_README,
+      },
+      "apache_input_otel",
+    );
 
     const { data, warnings } = await importFromFileMap(fileMap);
 
@@ -32,31 +38,41 @@ describe("importFromFileMap — Apache input package", () => {
     expect(data.identity.kibanaVersion).toBe("^9.2.0");
     expect(data.identity.subscription).toBe("basic");
     expect(data.identity.categories).toEqual(["web", "observability", "opentelemetry"]);
-    expect(data.identity.description).toBe("Collect Apache HTTP Server status metrics using OpenTelemetry Collector");
+    expect(data.identity.description).toBe(
+      "Collect Apache HTTP Server status metrics using OpenTelemetry Collector",
+    );
     // Icon file not included → warning
     expect(warnings).toContainEqual(expect.stringContaining("logo_apache_otel.svg"));
   });
 
   it("parses policy template", async () => {
-    const fileMap = makeFileMap({
-      "manifest.yml": APACHE_MANIFEST,
-      "agent/input/input.yml.hbs": APACHE_TEMPLATE,
-    }, "apache_input_otel");
+    const fileMap = makeFileMap(
+      {
+        "manifest.yml": APACHE_MANIFEST,
+        "agent/input/input.yml.hbs": APACHE_TEMPLATE,
+      },
+      "apache_input_otel",
+    );
 
     const { data } = await importFromFileMap(fileMap);
 
     expect(data.policyTemplate.name).toBe("apachereceiver");
     expect(data.policyTemplate.title).toBe("Apache HTTP Server Metrics (OpenTelemetry)");
-    expect(data.policyTemplate.description).toBe("Collect Apache HTTP Server status metrics using OpenTelemetry Collector");
+    expect(data.policyTemplate.description).toBe(
+      "Collect Apache HTTP Server status metrics using OpenTelemetry Collector",
+    );
     expect(data.policyTemplate.signalTypes).toEqual(["metrics"]);
     expect(data.policyTemplate.dynamicSignalTypes).toBe(false);
   });
 
   it("parses all 11 variables with correct types and defaults", async () => {
-    const fileMap = makeFileMap({
-      "manifest.yml": APACHE_MANIFEST,
-      "agent/input/input.yml.hbs": APACHE_TEMPLATE,
-    }, "apache_input_otel");
+    const fileMap = makeFileMap(
+      {
+        "manifest.yml": APACHE_MANIFEST,
+        "agent/input/input.yml.hbs": APACHE_TEMPLATE,
+      },
+      "apache_input_otel",
+    );
 
     const { data } = await importFromFileMap(fileMap);
     const vars = data.variables;
@@ -102,21 +118,27 @@ describe("importFromFileMap — Apache input package", () => {
   });
 
   it("loads template content verbatim", async () => {
-    const fileMap = makeFileMap({
-      "manifest.yml": APACHE_MANIFEST,
-      "agent/input/input.yml.hbs": APACHE_TEMPLATE,
-    }, "apache_input_otel");
+    const fileMap = makeFileMap(
+      {
+        "manifest.yml": APACHE_MANIFEST,
+        "agent/input/input.yml.hbs": APACHE_TEMPLATE,
+      },
+      "apache_input_otel",
+    );
 
     const { data } = await importFromFileMap(fileMap);
     expect(data.templateContent).toBe(APACHE_TEMPLATE);
   });
 
   it("loads README content", async () => {
-    const fileMap = makeFileMap({
-      "manifest.yml": APACHE_MANIFEST,
-      "agent/input/input.yml.hbs": APACHE_TEMPLATE,
-      "docs/README.md": APACHE_README,
-    }, "apache_input_otel");
+    const fileMap = makeFileMap(
+      {
+        "manifest.yml": APACHE_MANIFEST,
+        "agent/input/input.yml.hbs": APACHE_TEMPLATE,
+        "docs/README.md": APACHE_README,
+      },
+      "apache_input_otel",
+    );
 
     const { data } = await importFromFileMap(fileMap);
     expect(data.readmeContent).toBe(APACHE_README);
@@ -125,10 +147,13 @@ describe("importFromFileMap — Apache input package", () => {
 
 describe("importFromFileMap — Redis input package", () => {
   it("parses identity and strips _input_otel suffix from name", async () => {
-    const fileMap = makeFileMap({
-      "manifest.yml": REDIS_MANIFEST,
-      "agent/input/input.yml.hbs": REDIS_TEMPLATE,
-    }, "redis_input_otel");
+    const fileMap = makeFileMap(
+      {
+        "manifest.yml": REDIS_MANIFEST,
+        "agent/input/input.yml.hbs": REDIS_TEMPLATE,
+      },
+      "redis_input_otel",
+    );
 
     const { data } = await importFromFileMap(fileMap);
     expect(data.identity.name).toBe("redis");
@@ -137,10 +162,13 @@ describe("importFromFileMap — Redis input package", () => {
   });
 
   it("parses select-type variables with options", async () => {
-    const fileMap = makeFileMap({
-      "manifest.yml": REDIS_MANIFEST,
-      "agent/input/input.yml.hbs": REDIS_TEMPLATE,
-    }, "redis_input_otel");
+    const fileMap = makeFileMap(
+      {
+        "manifest.yml": REDIS_MANIFEST,
+        "agent/input/input.yml.hbs": REDIS_TEMPLATE,
+      },
+      "redis_input_otel",
+    );
 
     const { data } = await importFromFileMap(fileMap);
 
@@ -160,10 +188,13 @@ describe("importFromFileMap — Redis input package", () => {
   });
 
   it("parses password-type variables", async () => {
-    const fileMap = makeFileMap({
-      "manifest.yml": REDIS_MANIFEST,
-      "agent/input/input.yml.hbs": REDIS_TEMPLATE,
-    }, "redis_input_otel");
+    const fileMap = makeFileMap(
+      {
+        "manifest.yml": REDIS_MANIFEST,
+        "agent/input/input.yml.hbs": REDIS_TEMPLATE,
+      },
+      "redis_input_otel",
+    );
 
     const { data } = await importFromFileMap(fileMap);
     const password = data.variables.find((v) => v.name === "password")!;
@@ -172,10 +203,13 @@ describe("importFromFileMap — Redis input package", () => {
   });
 
   it("parses all 16 Redis variables", async () => {
-    const fileMap = makeFileMap({
-      "manifest.yml": REDIS_MANIFEST,
-      "agent/input/input.yml.hbs": REDIS_TEMPLATE,
-    }, "redis_input_otel");
+    const fileMap = makeFileMap(
+      {
+        "manifest.yml": REDIS_MANIFEST,
+        "agent/input/input.yml.hbs": REDIS_TEMPLATE,
+      },
+      "redis_input_otel",
+    );
 
     const { data } = await importFromFileMap(fileMap);
     expect(data.variables).toHaveLength(16);
@@ -201,10 +235,13 @@ describe("importFromFileMap — Redis input package", () => {
   });
 
   it("loads Redis template content verbatim", async () => {
-    const fileMap = makeFileMap({
-      "manifest.yml": REDIS_MANIFEST,
-      "agent/input/input.yml.hbs": REDIS_TEMPLATE,
-    }, "redis_input_otel");
+    const fileMap = makeFileMap(
+      {
+        "manifest.yml": REDIS_MANIFEST,
+        "agent/input/input.yml.hbs": REDIS_TEMPLATE,
+      },
+      "redis_input_otel",
+    );
 
     const { data } = await importFromFileMap(fileMap);
     expect(data.templateContent).toBe(REDIS_TEMPLATE);
@@ -267,5 +304,18 @@ owner:
     expect(data.identity.name).toBe("empty");
     expect(data.policyTemplate.name).toBe("");
     expect(data.variables).toEqual([]);
+  });
+
+  it("imports flat-root package paths without stripping required segments", async () => {
+    const fileMap = new Map<string, Uint8Array>();
+    fileMap.set("manifest.yml", encoder.encode(APACHE_MANIFEST));
+    fileMap.set("agent/input/input.yml.hbs", encoder.encode(APACHE_TEMPLATE));
+    fileMap.set("docs/README.md", encoder.encode(APACHE_README));
+
+    const { data, warnings } = await importFromFileMap(fileMap);
+    expect(data.templateContent).toBe(APACHE_TEMPLATE);
+    expect(data.readmeContent).toBe(APACHE_README);
+    expect(warnings).not.toContainEqual(expect.stringContaining("input.yml.hbs"));
+    expect(warnings).not.toContainEqual(expect.stringContaining("README.md"));
   });
 });
