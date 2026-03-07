@@ -4,7 +4,7 @@ import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
-import CircularProgress from "@mui/material/CircularProgress";
+import LoadingButton from "../LoadingButton";
 import Collapse from "@mui/material/Collapse";
 import Paper from "@mui/material/Paper";
 import Table from "@mui/material/Table";
@@ -450,9 +450,9 @@ export default function ProfilingPage() {
           }}
         />
         <Box sx={{ display: "flex", gap: 1, alignItems: "center", mt: 1 }}>
-          <Button variant="contained" size="small" onClick={handleRun} disabled={loading}>
-            {loading ? <CircularProgress size={14} color="inherit" /> : "Run"}
-          </Button>
+          <LoadingButton variant="contained" size="small" onClick={handleRun} loading={loading}>
+            Run
+          </LoadingButton>
         </Box>
       </Paper>
 
