@@ -117,7 +117,7 @@ export default function FieldStatsPanel({
 
       {/* Body */}
       <Box
-        aria-busy={loading}
+        aria-busy={loading || undefined}
         sx={{ display: "flex", flex: 1, flexDirection: "column", gap: 1, overflow: "auto", p: 1.5 }}
       >
         {loading && (
