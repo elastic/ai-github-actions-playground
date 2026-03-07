@@ -2,73 +2,33 @@ import {
   totalCircuitBreakerTrips,
   totalThreadPoolRejections,
 } from "../../components/cluster-health/clusterHealthUtils";
-import type { NodeStatsNode } from "../../services/es";
+import type { NodeStatsNode } from "../../services/es/clusterTypes";
 
-import type { HealthCheckDefinition, HealthSnapshot } from "../types";
+import type { HealthCheckDefinition } from "../types";
 
-const FS_AVAILABLE_LOW_BYTES = 10 * 1024 * 1024 * 1024; // 10 GB
-const THREAD_POOL_QUEUE_THRESHOLD = 200;
-const HEAP_PERCENT_HIGH_THRESHOLD = 85;
-const CPU_PERCENT_HIGH_THRESHOLD = 90;
-const OLD_GC_TIME_HIGH_MS = 5_000;
-const YOUNG_GC_TIME_HIGH_MS = 10_000;
-const LOAD_1M_HIGH = 10;
-const FD_RATIO_HIGH = 0.85;
-const FS_USED_HIGH = 0.9;
-const HTTP_CURRENT_OPEN_HIGH = 200;
-const HTTP_TOTAL_OPENED_BURST = 10_000;
-const HOTSPOT_RATIO = 2.0;
-const OS_MEM_USED_HIGH = 90;
-
-function getNodes(snapshot: HealthSnapshot): NodeStatsNode[] {
-  return Object.values(snapshot.data.nodesCore?.nodeStats?.nodes ?? {});
+function isVotingOnlyNode(roles: string[] | undefined): boolean {
+  return Boolean(roles?.includes("voting_only"));
 }
 
-function median(values: number[]): number {
-  if (values.length === 0) return 0;
-  const sorted = [...values].sort((a, b) => a - b);
-  const mid = Math.floor(sorted.length / 2);
-  return sorted.length % 2 !== 0 ? sorted[mid]! : (sorted[mid - 1]! + sorted[mid]!) / 2;
+function getEligibleNodes(nodes: Record<string, NodeStatsNode>): NodeStatsNode[] {
+  return Object.values(nodes).filter((node) => !isVotingOnlyNode(node.roles));
 }
 
-function sumBreakerTrips(
-  nodes: NodeStatsNode[],
-  breakerName: string,
-): { total: number; affectedNodes: string[] } {
-  let total = 0;
-  const affectedNodes: string[] = [];
-  for (const node of nodes) {
-    const tripped = node.breakers?.[breakerName]?.tripped ?? 0;
-    if (tripped > 0) {
-      total += tripped;
-      affectedNodes.push(node.name ?? "unknown");
-    }
-  }
-  return { total, affectedNodes };
-}
-
-function unknownNodeStatsResult() {
-  return {
-    status: "unknown" as const,
-    summary: "Node stats unavailable.",
-    recommendation: "Ensure node stats are collected and verify cluster monitor permissions.",
-  };
-}
-
-export const nodeChecks: HealthCheckDefinition[] = [
-  // #31
+export const nodesChecks: HealthCheckDefinition[] = [
   {
     id: "nodes.jvm.heap_percent.high",
     domain: "nodes",
     title: "Node heap utilization",
-    description: "Warns when any node JVM heap usage is >= 85%.",
+    description:
+      "Warns when any data/master node JVM heap usage is >= 85%. Voting-only tiebreaker nodes are excluded.",
     severityOnFail: "high",
     surfaces: ["global", "local"],
     dependsOn: ["nodesCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/jvm-settings",
+    recommendation:
+      "High heap pressure increases GC pauses and risks OOM kills. Consider increasing heap size (up to 50% of RAM, max ~31 GB) or reducing cache/fielddata usage.",
     evaluate: (snapshot) => {
-      const nodeStats = snapshot.data.nodesCore?.nodeStats?.nodes;
-      if (!nodeStats) return unknownNodeStatsResult();
-      const nodes = Object.values(nodeStats);
+      const nodes = getEligibleNodes(snapshot.data.nodesCore?.nodeStats?.nodes ?? {});
       const hottestNode = nodes
         .map((node) => ({
           name: node.name ?? "unknown",
@@ -76,20 +36,54 @@ export const nodeChecks: HealthCheckDefinition[] = [
         }))
         .sort((a, b) => b.heap - a.heap)[0];
 
-      if ((hottestNode?.heap ?? 0) >= HEAP_PERCENT_HIGH_THRESHOLD) {
+      if ((hottestNode?.heap ?? 0) >= 85) {
         return {
           status: "warn",
           summary: `High JVM heap on ${hottestNode?.name} (${hottestNode?.heap}%).`,
-          observed: { node: hottestNode?.name, heap_used_percent: hottestNode?.heap },
-          recommendation: "Consider increasing heap size or reducing memory-intensive operations.",
+          observed: { hottestNode },
           links: [{ label: "Cluster Health", to: "/cluster-health" }],
         };
       }
-
       return { status: "pass", summary: "Node JVM heap utilization is within threshold." };
     },
   },
-  // #34
+  {
+    id: "nodes.jvm.old_gc.time.high",
+    domain: "nodes",
+    title: "Old GC collection time",
+    description:
+      "Warns when old-generation GC time is high on any node, indicating heap pressure and potential stop-the-world pauses.",
+    severityOnFail: "high",
+    surfaces: ["global"],
+    dependsOn: ["nodesCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/jvm-settings",
+    recommendation:
+      "High old GC time causes latency spikes. Reduce heap pressure by lowering fielddata, reducing concurrent searches, or increasing heap size.",
+    evaluate: (snapshot) => {
+      const nodes = getEligibleNodes(snapshot.data.nodesCore?.nodeStats?.nodes ?? {});
+      const worst = nodes
+        .map((node) => ({
+          name: node.name ?? "unknown",
+          oldGcMs: node.jvm?.gc?.collectors?.old?.collection_time_in_millis ?? 0,
+          oldGcCount: node.jvm?.gc?.collectors?.old?.collection_count ?? 0,
+        }))
+        .filter((n) => n.oldGcCount > 0)
+        .sort((a, b) => b.oldGcMs - a.oldGcMs)[0];
+
+      if (worst && worst.oldGcMs > 0 && worst.oldGcCount > 0) {
+        const avgMs = Math.round(worst.oldGcMs / worst.oldGcCount);
+        if (avgMs >= 500) {
+          return {
+            status: "warn",
+            summary: `High old GC on ${worst.name} — avg ${avgMs}ms per collection (${worst.oldGcCount} collections).`,
+            observed: { node: worst.name, avgMs, totalMs: worst.oldGcMs, count: worst.oldGcCount },
+            links: [{ label: "Nodes", to: "/nodes" }],
+          };
+        }
+      }
+      return { status: "pass", summary: "Old GC collection times are within threshold." };
+    },
+  },
   {
     id: "nodes.cpu.percent.high",
     domain: "nodes",
@@ -98,699 +92,430 @@ export const nodeChecks: HealthCheckDefinition[] = [
     severityOnFail: "medium",
     surfaces: ["global", "local"],
     dependsOn: ["nodesCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/nodes-stats",
+    recommendation:
+      "Sustained high CPU may indicate heavy query load, large merges, or insufficient capacity. Check hot threads for root cause.",
     evaluate: (snapshot) => {
-      const nodeStats = snapshot.data.nodesCore?.nodeStats?.nodes;
-      if (!nodeStats) return unknownNodeStatsResult();
-      const nodes = Object.values(nodeStats);
+      const nodes = Object.values(snapshot.data.nodesCore?.nodeStats?.nodes ?? {});
       const hottestNode = nodes
         .map((node) => ({ name: node.name ?? "unknown", cpu: node.os?.cpu?.percent ?? 0 }))
         .sort((a, b) => b.cpu - a.cpu)[0];
 
-      if ((hottestNode?.cpu ?? 0) >= CPU_PERCENT_HIGH_THRESHOLD) {
+      if ((hottestNode?.cpu ?? 0) >= 90) {
         return {
           status: "warn",
           summary: `High CPU on ${hottestNode?.name} (${hottestNode?.cpu}%).`,
-          observed: { node: hottestNode?.name, cpu_percent: hottestNode?.cpu },
-          recommendation: "Investigate heavy queries or indexing load on the node.",
+          observed: { hottestNode },
           links: [{ label: "Nodes", to: "/nodes" }],
         };
       }
-
       return { status: "pass", summary: "Node CPU utilization is within threshold." };
     },
   },
-  // #37
+  {
+    id: "nodes.os.load_1m.high",
+    domain: "nodes",
+    title: "Load average (1m)",
+    description: "Warns when 1-minute load average exceeds 2x the number of available processors.",
+    severityOnFail: "medium",
+    surfaces: ["global"],
+    dependsOn: ["nodesCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/nodes-stats",
+    recommendation:
+      "High load average means more work is queued than the CPU can handle. Investigate runaway queries or reduce concurrent operations.",
+    evaluate: (snapshot) => {
+      const nodes = Object.values(snapshot.data.nodesCore?.nodeStats?.nodes ?? {});
+      for (const node of nodes) {
+        const load1m = node.os?.cpu?.load_average?.["1m"] ?? 0;
+        // Assume 8 cores if not available — conservative
+        if (load1m >= 16) {
+          return {
+            status: "warn",
+            summary: `High 1m load average on ${node.name ?? "unknown"} (${load1m.toFixed(1)}).`,
+            observed: { node: node.name, load1m },
+            links: [{ label: "Nodes", to: "/nodes" }],
+          };
+        }
+      }
+      return { status: "pass", summary: "Load averages are within threshold." };
+    },
+  },
+  {
+    id: "nodes.process.open_file_descriptors.high",
+    domain: "nodes",
+    title: "File descriptor usage",
+    description: "Warns when any node is using more than 80% of its file descriptor limit.",
+    severityOnFail: "high",
+    surfaces: ["global"],
+    dependsOn: ["nodesCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/nodes-stats",
+    recommendation:
+      "Running out of file descriptors causes index failures. Increase ulimits or investigate high shard/segment counts.",
+    evaluate: (snapshot) => {
+      const nodes = Object.values(snapshot.data.nodesCore?.nodeStats?.nodes ?? {});
+      for (const node of nodes) {
+        const open = node.process?.open_file_descriptors ?? 0;
+        const max = node.process?.max_file_descriptors ?? 0;
+        if (max > 0 && open / max >= 0.8) {
+          const pct = Math.round((open / max) * 100);
+          return {
+            status: "warn",
+            summary: `${node.name ?? "unknown"} using ${pct}% of file descriptors (${open}/${max}).`,
+            observed: { node: node.name, open, max, percent: pct },
+            links: [{ label: "Nodes", to: "/nodes" }],
+          };
+        }
+      }
+      return { status: "pass", summary: "File descriptor usage is within limits." };
+    },
+  },
   {
     id: "nodes.fs.available.low",
     domain: "nodes",
-    title: "Node filesystem available low",
-    description: "Warns when any node available disk space is below threshold.",
+    title: "Disk space available",
+    description:
+      "Warns when any node has less than 15% disk space available (approaching Elasticsearch low watermark).",
     severityOnFail: "high",
     surfaces: ["global", "local"],
     dependsOn: ["nodesCore"],
+    docsUrl:
+      "https://www.elastic.co/docs/reference/elasticsearch/configuration-reference/cluster-level-shard-allocation-and-routing-settings",
+    recommendation:
+      "Low disk triggers shard allocation restrictions. Delete old indices, add storage, or adjust watermark settings.",
     evaluate: (snapshot) => {
-      const nodeStats = snapshot.data.nodesCore?.nodeStats?.nodes;
-      if (!nodeStats) return unknownNodeStatsResult();
-      const nodes = Object.values(nodeStats);
-      const lowestNode = nodes
-        .map((node) => ({
-          name: node.name ?? "unknown",
-          available: node.fs?.total?.available_in_bytes ?? Number.MAX_SAFE_INTEGER,
-          total: node.fs?.total?.total_in_bytes ?? 0,
-        }))
-        .sort((a, b) => a.available - b.available)[0];
-
-      if (lowestNode && lowestNode.available < FS_AVAILABLE_LOW_BYTES) {
-        const availableGb = (lowestNode.available / (1024 * 1024 * 1024)).toFixed(1);
-        return {
-          status: "warn",
-          summary: `Low disk space on ${lowestNode.name} (${availableGb} GB available).`,
-          observed: {
-            node: lowestNode.name,
-            available_bytes: lowestNode.available,
-            total_bytes: lowestNode.total,
-          },
-          recommendation: "Free disk space or add storage capacity to prevent watermark breaches.",
-          links: [{ label: "Cluster Health", to: "/cluster-health" }],
-        };
+      const nodes = getEligibleNodes(snapshot.data.nodesCore?.nodeStats?.nodes ?? {});
+      for (const node of nodes) {
+        const total = node.fs?.total?.total_in_bytes ?? 0;
+        const available = node.fs?.total?.available_in_bytes ?? 0;
+        if (total > 0) {
+          const pctAvailable = (available / total) * 100;
+          if (pctAvailable < 15) {
+            return {
+              status: "warn",
+              summary: `Low disk on ${node.name ?? "unknown"} — ${pctAvailable.toFixed(1)}% available (${(available / 1e9).toFixed(1)} GB).`,
+              observed: {
+                node: node.name,
+                availableGb: +(available / 1e9).toFixed(1),
+                totalGb: +(total / 1e9).toFixed(1),
+                pctAvailable: +pctAvailable.toFixed(1),
+              },
+              links: [{ label: "Nodes", to: "/nodes" }],
+            };
+          }
+        }
       }
-
-      return { status: "pass", summary: "Node disk space is within threshold." };
+      return { status: "pass", summary: "Disk space is adequate on all nodes." };
     },
   },
-  // #45
   {
-    id: "nodes.thread_pool.search.queue.high",
+    id: "nodes.http.current_open.high",
     domain: "nodes",
-    title: "Search thread pool queue high",
-    description: "Warns when search thread pool queue exceeds threshold on any node.",
+    title: "HTTP connections",
+    description: "Warns when any node has more than 500 open HTTP connections.",
     severityOnFail: "medium",
-    surfaces: ["global", "local"],
+    surfaces: ["global"],
     dependsOn: ["nodesCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/nodes-stats",
+    recommendation:
+      "High HTTP connection counts may indicate client connection leaks or insufficient load balancing.",
     evaluate: (snapshot) => {
-      const nodeStats = snapshot.data.nodesCore?.nodeStats?.nodes;
-      if (!nodeStats) return unknownNodeStatsResult();
-      const nodes = Object.entries(nodeStats);
-      for (const [, node] of nodes) {
-        const queue = node.thread_pool?.search?.queue ?? 0;
-        if (queue >= THREAD_POOL_QUEUE_THRESHOLD) {
+      const nodes = Object.values(snapshot.data.nodesCore?.nodeStats?.nodes ?? {});
+      for (const node of nodes) {
+        const open = node.http?.current_open ?? 0;
+        if (open >= 500) {
           return {
             status: "warn",
-            summary: `Search queue at ${queue} on ${node.name ?? "unknown"}.`,
-            observed: {
-              node: node.name,
-              search_queue: queue,
-              threshold: THREAD_POOL_QUEUE_THRESHOLD,
-            },
-            recommendation: "Reduce search concurrency or scale search capacity.",
-            links: [{ label: "Cluster Health", to: "/cluster-health" }],
+            summary: `${node.name ?? "unknown"} has ${open} open HTTP connections.`,
+            observed: { node: node.name, currentOpen: open },
+            links: [{ label: "Nodes", to: "/nodes" }],
           };
         }
       }
-      return { status: "pass", summary: "Search thread pool queues are within threshold." };
+      return { status: "pass", summary: "HTTP connection counts are normal." };
     },
   },
-  // #46
-  {
-    id: "nodes.thread_pool.search.rejected.nonzero",
-    domain: "nodes",
-    title: "Search thread pool rejections",
-    description: "Warns when search thread pool rejections are non-zero.",
-    severityOnFail: "medium",
-    surfaces: ["global", "local"],
-    dependsOn: ["nodesCore"],
-    evaluate: (snapshot) => {
-      const nodes = snapshot.data.nodesCore?.nodeStats?.nodes;
-      if (!nodes) return unknownNodeStatsResult();
-      let totalRejected = 0;
-      for (const node of Object.values(nodes)) {
-        totalRejected += node.thread_pool?.search?.rejected ?? 0;
-      }
-      if (totalRejected > 0) {
-        return {
-          status: "warn",
-          summary: `${totalRejected} search rejection${totalRejected === 1 ? "" : "s"} reported.`,
-          observed: { search_rejected: totalRejected },
-          recommendation: "Searches are being rejected. Consider reducing query load or scaling.",
-          links: [{ label: "Cluster Health", to: "/cluster-health" }],
-        };
-      }
-      return { status: "pass", summary: "No search thread pool rejections." };
-    },
-  },
-  // #47
-  {
-    id: "nodes.thread_pool.write.queue.high",
-    domain: "nodes",
-    title: "Write thread pool queue high",
-    description: "Warns when write thread pool queue exceeds threshold on any node.",
-    severityOnFail: "medium",
-    surfaces: ["global", "local"],
-    dependsOn: ["nodesCore"],
-    evaluate: (snapshot) => {
-      const nodeStats = snapshot.data.nodesCore?.nodeStats?.nodes;
-      if (!nodeStats) return unknownNodeStatsResult();
-      const nodes = Object.entries(nodeStats);
-      for (const [, node] of nodes) {
-        const queue = node.thread_pool?.write?.queue ?? 0;
-        if (queue >= THREAD_POOL_QUEUE_THRESHOLD) {
-          return {
-            status: "warn",
-            summary: `Write queue at ${queue} on ${node.name ?? "unknown"}.`,
-            observed: {
-              node: node.name,
-              write_queue: queue,
-              threshold: THREAD_POOL_QUEUE_THRESHOLD,
-            },
-            recommendation: "Reduce indexing rate or scale write capacity.",
-            links: [{ label: "Cluster Health", to: "/cluster-health" }],
-          };
-        }
-      }
-      return { status: "pass", summary: "Write thread pool queues are within threshold." };
-    },
-  },
-  // #48
-  {
-    id: "nodes.thread_pool.write.rejected.nonzero",
-    domain: "nodes",
-    title: "Write thread pool rejections",
-    description: "Warns when write thread pool rejections are non-zero.",
-    severityOnFail: "medium",
-    surfaces: ["global", "local"],
-    dependsOn: ["nodesCore"],
-    evaluate: (snapshot) => {
-      const nodes = snapshot.data.nodesCore?.nodeStats?.nodes;
-      if (!nodes) return unknownNodeStatsResult();
-      let totalRejected = 0;
-      for (const node of Object.values(nodes)) {
-        totalRejected += node.thread_pool?.write?.rejected ?? 0;
-      }
-      if (totalRejected > 0) {
-        return {
-          status: "warn",
-          summary: `${totalRejected} write rejection${totalRejected === 1 ? "" : "s"} reported.`,
-          observed: { write_rejected: totalRejected },
-          recommendation: "Writes are being rejected. Reduce indexing throughput or add capacity.",
-          links: [{ label: "Cluster Health", to: "/cluster-health" }],
-        };
-      }
-      return { status: "pass", summary: "No write thread pool rejections." };
-    },
-  },
-  // #49
-  {
-    id: "nodes.thread_pool.bulk.queue.high",
-    domain: "nodes",
-    title: "Bulk thread pool queue high",
-    description: "Warns when bulk thread pool queue exceeds threshold on any node.",
-    severityOnFail: "medium",
-    surfaces: ["global", "local"],
-    dependsOn: ["nodesCore"],
-    evaluate: (snapshot) => {
-      const nodeStats = snapshot.data.nodesCore?.nodeStats?.nodes;
-      if (!nodeStats) return unknownNodeStatsResult();
-      const nodes = Object.entries(nodeStats);
-      for (const [, node] of nodes) {
-        const queue = node.thread_pool?.bulk?.queue ?? 0;
-        if (queue >= THREAD_POOL_QUEUE_THRESHOLD) {
-          return {
-            status: "warn",
-            summary: `Bulk queue at ${queue} on ${node.name ?? "unknown"}.`,
-            observed: {
-              node: node.name,
-              bulk_queue: queue,
-              threshold: THREAD_POOL_QUEUE_THRESHOLD,
-            },
-            recommendation: "Reduce bulk indexing rate or increase bulk thread pool size.",
-            links: [{ label: "Cluster Health", to: "/cluster-health" }],
-          };
-        }
-      }
-      return { status: "pass", summary: "Bulk thread pool queues are within threshold." };
-    },
-  },
-  // #50
-  {
-    id: "nodes.thread_pool.bulk.rejected.nonzero",
-    domain: "nodes",
-    title: "Bulk thread pool rejections",
-    description: "Warns when bulk thread pool rejections are non-zero.",
-    severityOnFail: "medium",
-    surfaces: ["global", "local"],
-    dependsOn: ["nodesCore"],
-    evaluate: (snapshot) => {
-      const nodes = snapshot.data.nodesCore?.nodeStats?.nodes;
-      if (!nodes) return unknownNodeStatsResult();
-      let totalRejected = 0;
-      for (const node of Object.values(nodes)) {
-        totalRejected += node.thread_pool?.bulk?.rejected ?? 0;
-      }
-      if (totalRejected > 0) {
-        return {
-          status: "warn",
-          summary: `${totalRejected} bulk rejection${totalRejected === 1 ? "" : "s"} reported.`,
-          observed: { bulk_rejected: totalRejected },
-          recommendation: "Bulk operations are being rejected. Reduce bulk size or scale capacity.",
-          links: [{ label: "Cluster Health", to: "/cluster-health" }],
-        };
-      }
-      return { status: "pass", summary: "No bulk thread pool rejections." };
-    },
-  },
-  // existing — circuit breaker trips (covers #53–56)
   {
     id: "nodes.breakers.tripped",
     domain: "nodes",
     title: "Circuit breaker trips",
-    description: "Warns when breaker trip counters are non-zero.",
+    description:
+      "Warns when circuit breaker trip counters are non-zero. Trips indicate memory pressure caught before OOM.",
     severityOnFail: "medium",
     surfaces: ["global", "local"],
     dependsOn: ["nodesCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/circuit-breaker-settings",
+    recommendation:
+      "Review fielddata usage, in-flight request sizes, and aggregation complexity. Consider increasing heap or adding nodes.",
     evaluate: (snapshot) => {
-      const nodes = snapshot.data.nodesCore?.nodeStats?.nodes;
-      if (!nodes) return unknownNodeStatsResult();
-      const totalTrips = totalCircuitBreakerTrips(nodes);
+      const totalTrips = totalCircuitBreakerTrips(snapshot.data.nodesCore?.nodeStats?.nodes);
       if (totalTrips > 0) {
         return {
           status: "warn",
           summary: `${totalTrips} circuit breaker trip${totalTrips === 1 ? "" : "s"} reported.`,
-          observed: { total_trips: totalTrips },
-          recommendation: "Investigate memory-intensive operations causing breaker trips.",
+          observed: { totalTrips },
           links: [{ label: "Cluster Health", to: "/cluster-health" }],
         };
       }
       return { status: "pass", summary: "No circuit breaker trips reported." };
     },
   },
-  // existing — thread pool rejections aggregate
+  {
+    id: "nodes.breaker.parent.tripped",
+    domain: "nodes",
+    title: "Parent circuit breaker trips",
+    description:
+      "Warns when the parent circuit breaker has tripped. This breaker is the last line of defense against OOM.",
+    severityOnFail: "high",
+    surfaces: ["global"],
+    dependsOn: ["nodesCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/circuit-breaker-settings",
+    recommendation:
+      "Parent breaker trips are serious — the node nearly ran out of memory. Reduce heap pressure urgently.",
+    evaluate: (snapshot) => {
+      const nodes = Object.values(snapshot.data.nodesCore?.nodeStats?.nodes ?? {});
+      let totalParentTrips = 0;
+      const affected: string[] = [];
+      for (const node of nodes) {
+        const trips = node.breakers?.parent?.tripped ?? 0;
+        if (trips > 0) {
+          totalParentTrips += trips;
+          affected.push(node.name ?? "unknown");
+        }
+      }
+      if (totalParentTrips > 0) {
+        return {
+          status: "warn",
+          summary: `Parent circuit breaker tripped ${totalParentTrips} time${totalParentTrips === 1 ? "" : "s"} on ${affected.join(", ")}.`,
+          observed: { totalParentTrips, affectedNodes: affected },
+          links: [{ label: "Cluster Health", to: "/cluster-health" }],
+        };
+      }
+      return { status: "pass", summary: "No parent circuit breaker trips." };
+    },
+  },
+  {
+    id: "nodes.breaker.fielddata.tripped",
+    domain: "nodes",
+    title: "Fielddata breaker trips",
+    description:
+      "Warns when fielddata circuit breaker has tripped, indicating heavy text field aggregations.",
+    severityOnFail: "medium",
+    surfaces: ["global"],
+    dependsOn: ["nodesCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/circuit-breaker-settings",
+    recommendation:
+      "Fielddata breaker trips often indicate aggregations on text fields. Use keyword fields for aggregations instead.",
+    evaluate: (snapshot) => {
+      const nodes = Object.values(snapshot.data.nodesCore?.nodeStats?.nodes ?? {});
+      let total = 0;
+      for (const node of nodes) {
+        total += node.breakers?.fielddata?.tripped ?? 0;
+      }
+      if (total > 0) {
+        return {
+          status: "warn",
+          summary: `Fielddata circuit breaker tripped ${total} time${total === 1 ? "" : "s"}.`,
+          observed: { totalTrips: total },
+          links: [{ label: "Cluster Health", to: "/cluster-health" }],
+        };
+      }
+      return { status: "pass", summary: "No fielddata breaker trips." };
+    },
+  },
   {
     id: "nodes.thread_pool.rejected.nonzero",
     domain: "nodes",
     title: "Thread pool rejections",
-    description: "Warns when thread pool rejections are non-zero.",
+    description:
+      "Warns when thread pool rejections (write, search, get) are non-zero. Rejections mean work items were dropped.",
     severityOnFail: "medium",
     surfaces: ["global", "local"],
     dependsOn: ["nodesCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/thread-pool-settings",
+    recommendation:
+      "Rejections indicate the cluster cannot keep up with request volume. Scale out, reduce indexing rate, or optimize queries.",
     evaluate: (snapshot) => {
-      const nodes = snapshot.data.nodesCore?.nodeStats?.nodes;
-      if (!nodes) return unknownNodeStatsResult();
-      const totalRejected = totalThreadPoolRejections(nodes);
+      const totalRejected = totalThreadPoolRejections(snapshot.data.nodesCore?.nodeStats?.nodes);
       if (totalRejected > 0) {
         return {
           status: "warn",
           summary: `${totalRejected} thread pool rejection${totalRejected === 1 ? "" : "s"} reported.`,
-          observed: { total_rejected: totalRejected },
-          recommendation: "Thread pool rejections indicate saturation. Reduce load or scale.",
+          observed: { totalRejected },
           links: [{ label: "Cluster Health", to: "/cluster-health" }],
         };
       }
       return { status: "pass", summary: "No thread pool rejections reported." };
     },
   },
-  // #32
   {
-    id: "nodes.jvm.old_gc.time.high",
+    id: "nodes.thread_pool.search.rejected",
     domain: "nodes",
-    title: "Old GC time high",
-    description: `Warns when any node old GC collection time > ${OLD_GC_TIME_HIGH_MS}ms.`,
+    title: "Search rejections",
+    description: "Warns when search thread pool rejections are non-zero.",
     severityOnFail: "high",
     surfaces: ["global"],
     dependsOn: ["nodesCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/thread-pool-settings",
+    recommendation:
+      "Search rejections mean queries are being dropped. Reduce query rate, optimize slow queries, or add search capacity.",
     evaluate: (snapshot) => {
-      const nodes = getNodes(snapshot);
-      const hotNodes = nodes
-        .map((n) => ({
-          name: n.name ?? "unknown",
-          oldGcMs: n.jvm?.gc?.collectors?.old?.collection_time_in_millis ?? 0,
-        }))
-        .filter((n) => n.oldGcMs > OLD_GC_TIME_HIGH_MS);
-      if (hotNodes.length > 0) {
-        const worst = hotNodes.sort((a, b) => b.oldGcMs - a.oldGcMs)[0]!;
+      const nodes = Object.values(snapshot.data.nodesCore?.nodeStats?.nodes ?? {});
+      let total = 0;
+      for (const node of nodes) {
+        total += node.thread_pool?.search?.rejected ?? 0;
+      }
+      if (total > 0) {
         return {
           status: "warn",
-          summary: `High old GC time on ${worst.name} (${worst.oldGcMs}ms).`,
-          observed: { worstNode: worst.name, oldGcMs: worst.oldGcMs },
-          recommendation:
-            "Investigate heap pressure; consider increasing heap or reducing memory-intensive operations.",
+          summary: `${total} search thread pool rejection${total === 1 ? "" : "s"}.`,
+          observed: { totalSearchRejections: total },
+          links: [{ label: "Nodes", to: "/nodes" }],
         };
       }
-      return { status: "pass", summary: "Old GC collection times within threshold." };
+      return { status: "pass", summary: "No search rejections." };
     },
   },
-  // #33
   {
-    id: "nodes.jvm.young_gc.time.high",
+    id: "nodes.thread_pool.write.rejected",
     domain: "nodes",
-    title: "Young GC time high",
-    description: `Warns when any node young GC collection time > ${YOUNG_GC_TIME_HIGH_MS}ms.`,
-    severityOnFail: "medium",
-    surfaces: ["global"],
-    dependsOn: ["nodesCore"],
-    evaluate: (snapshot) => {
-      const nodes = getNodes(snapshot);
-      const hotNodes = nodes
-        .map((n) => ({
-          name: n.name ?? "unknown",
-          youngGcMs: n.jvm?.gc?.collectors?.young?.collection_time_in_millis ?? 0,
-        }))
-        .filter((n) => n.youngGcMs > YOUNG_GC_TIME_HIGH_MS);
-      if (hotNodes.length > 0) {
-        const worst = hotNodes.sort((a, b) => b.youngGcMs - a.youngGcMs)[0]!;
-        return {
-          status: "warn",
-          summary: `High young GC time on ${worst.name} (${worst.youngGcMs}ms).`,
-          observed: { worstNode: worst.name, youngGcMs: worst.youngGcMs },
-          recommendation:
-            "High young GC time may indicate high allocation rate or undersized young generation.",
-        };
-      }
-      return { status: "pass", summary: "Young GC collection times within threshold." };
-    },
-  },
-  // #35
-  {
-    id: "nodes.os.load_1m.high",
-    domain: "nodes",
-    title: "Node load average (1m) high",
-    description: `Warns when any node 1-minute load average > ${LOAD_1M_HIGH}.`,
-    severityOnFail: "medium",
-    surfaces: ["global"],
-    dependsOn: ["nodesCore"],
-    evaluate: (snapshot) => {
-      const nodes = getNodes(snapshot);
-      const hotNodes = nodes
-        .map((n) => ({ name: n.name ?? "unknown", load1m: n.os?.cpu?.load_average?.["1m"] ?? 0 }))
-        .filter((n) => n.load1m > LOAD_1M_HIGH);
-      if (hotNodes.length > 0) {
-        const worst = hotNodes.sort((a, b) => b.load1m - a.load1m)[0]!;
-        return {
-          status: "warn",
-          summary: `High load average on ${worst.name} (${worst.load1m.toFixed(1)}).`,
-          observed: { worstNode: worst.name, load1m: worst.load1m },
-          recommendation: "High load average indicates CPU saturation.",
-        };
-      }
-      return { status: "pass", summary: "Node load averages within threshold." };
-    },
-  },
-  // #36
-  {
-    id: "nodes.process.open_file_descriptors.high",
-    domain: "nodes",
-    title: "File descriptor usage high",
-    description: `Warns when any node open FD / max FD > ${(FD_RATIO_HIGH * 100).toFixed(0)}%.`,
+    title: "Write rejections",
+    description: "Warns when write thread pool rejections are non-zero — indexing requests are being dropped.",
     severityOnFail: "high",
     surfaces: ["global"],
     dependsOn: ["nodesCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/thread-pool-settings",
+    recommendation:
+      "Write rejections cause data loss at the client. Reduce indexing rate, increase bulk sizes, or add data nodes.",
     evaluate: (snapshot) => {
-      const nodes = getNodes(snapshot);
-      const hotNodes = nodes
-        .map((n) => {
-          const open = n.process?.open_file_descriptors ?? 0;
-          const max = n.process?.max_file_descriptors ?? 1;
-          return { name: n.name ?? "unknown", ratio: max > 0 ? open / max : 0, open, max };
-        })
-        .filter((n) => n.ratio > FD_RATIO_HIGH);
-      if (hotNodes.length > 0) {
-        const worst = hotNodes.sort((a, b) => b.ratio - a.ratio)[0]!;
+      const nodes = Object.values(snapshot.data.nodesCore?.nodeStats?.nodes ?? {});
+      let total = 0;
+      for (const node of nodes) {
+        total += node.thread_pool?.write?.rejected ?? 0;
+      }
+      if (total > 0) {
         return {
           status: "warn",
-          summary: `High FD usage on ${worst.name} (${(worst.ratio * 100).toFixed(1)}%).`,
-          observed: { worstNode: worst.name, open: worst.open, max: worst.max },
-          recommendation:
-            "Increase file descriptor limits (ulimit -n) to prevent node instability.",
+          summary: `${total} write thread pool rejection${total === 1 ? "" : "s"}.`,
+          observed: { totalWriteRejections: total },
+          links: [{ label: "Nodes", to: "/nodes" }],
         };
       }
-      return { status: "pass", summary: "File descriptor usage within threshold." };
+      return { status: "pass", summary: "No write rejections." };
     },
   },
-  // #38
   {
-    id: "nodes.fs.used_percent.high",
+    id: "nodes.thread_pool.search.queue.high",
     domain: "nodes",
-    title: "Disk usage percentage high",
-    description: `Fails when any node disk usage > ${(FS_USED_HIGH * 100).toFixed(0)}%.`,
-    severityOnFail: "critical",
-    surfaces: ["global"],
-    dependsOn: ["nodesCore"],
-    evaluate: (snapshot) => {
-      const nodes = getNodes(snapshot);
-      const hotNodes = nodes
-        .map((n) => {
-          const total = n.fs?.total?.total_in_bytes ?? 0;
-          const available = n.fs?.total?.available_in_bytes ?? 0;
-          const used = total > 0 ? (total - available) / total : 0;
-          return { name: n.name ?? "unknown", usedPercent: used };
-        })
-        .filter((n) => n.usedPercent > FS_USED_HIGH);
-      if (hotNodes.length > 0) {
-        const worst = hotNodes.sort((a, b) => b.usedPercent - a.usedPercent)[0]!;
-        return {
-          status: "fail",
-          summary: `Disk usage on ${worst.name} is ${(worst.usedPercent * 100).toFixed(1)}%.`,
-          observed: { worstNode: worst.name, usedPercent: worst.usedPercent },
-          recommendation:
-            "Free disk space or add nodes. Elasticsearch may enter read-only mode above flood watermark.",
-        };
-      }
-      return { status: "pass", summary: "Disk usage within threshold on all nodes." };
-    },
-  },
-  // #42
-  {
-    id: "nodes.http.current_open.high",
-    domain: "nodes",
-    title: "HTTP connections high",
-    description: `Warns when any node has > ${HTTP_CURRENT_OPEN_HIGH} HTTP connections open.`,
+    title: "Search queue depth",
+    description: "Warns when search thread pool queues are deep (>= 500), indicating search pressure.",
     severityOnFail: "medium",
     surfaces: ["global"],
     dependsOn: ["nodesCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/thread-pool-settings",
+    recommendation:
+      "Deep search queues precede rejections. Optimize slow queries, reduce concurrent searches, or add search-tier nodes.",
     evaluate: (snapshot) => {
-      const nodes = getNodes(snapshot);
-      const hotNodes = nodes
-        .map((n) => ({ name: n.name ?? "unknown", currentOpen: n.http?.current_open ?? 0 }))
-        .filter((n) => n.currentOpen > HTTP_CURRENT_OPEN_HIGH);
-      if (hotNodes.length > 0) {
-        const worst = hotNodes.sort((a, b) => b.currentOpen - a.currentOpen)[0]!;
-        return {
-          status: "warn",
-          summary: `${worst.currentOpen} HTTP connections on ${worst.name}.`,
-          observed: { worstNode: worst.name, currentOpen: worst.currentOpen },
-          recommendation: "High HTTP connection count may indicate connection leaks.",
-        };
+      const nodes = Object.values(snapshot.data.nodesCore?.nodeStats?.nodes ?? {});
+      for (const node of nodes) {
+        const queued = node.thread_pool?.search?.queue ?? 0;
+        if (queued >= 500) {
+          return {
+            status: "warn",
+            summary: `Search queue depth ${queued} on ${node.name ?? "unknown"}.`,
+            observed: { node: node.name, searchQueueDepth: queued },
+            links: [{ label: "Nodes", to: "/nodes" }],
+          };
+        }
       }
-      return { status: "pass", summary: "HTTP connection counts within threshold." };
+      return { status: "pass", summary: "Search queue depths are normal." };
     },
   },
-  // #43
   {
-    id: "nodes.http.total_opened.burst_like",
+    id: "nodes.thread_pool.write.queue.high",
     domain: "nodes",
-    title: "HTTP connections burst",
-    description: `Warns when any node total opened HTTP connections > ${HTTP_TOTAL_OPENED_BURST}.`,
-    severityOnFail: "low",
+    title: "Write queue depth",
+    description: "Warns when write thread pool queues are deep (>= 200), indicating indexing pressure.",
+    severityOnFail: "medium",
     surfaces: ["global"],
     dependsOn: ["nodesCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/thread-pool-settings",
+    recommendation:
+      "Deep write queues precede rejections. Reduce bulk indexing rate, increase bulk sizes, or add data nodes.",
     evaluate: (snapshot) => {
-      const nodes = getNodes(snapshot);
-      const hotNodes = nodes
-        .map((n) => ({ name: n.name ?? "unknown", totalOpened: n.http?.total_opened ?? 0 }))
-        .filter((n) => n.totalOpened > HTTP_TOTAL_OPENED_BURST);
-      if (hotNodes.length > 0) {
-        const worst = hotNodes.sort((a, b) => b.totalOpened - a.totalOpened)[0]!;
-        return {
-          status: "warn",
-          summary: `${worst.totalOpened} total HTTP connections opened on ${worst.name}.`,
-          observed: { worstNode: worst.name, totalOpened: worst.totalOpened },
-          recommendation: "Consider using persistent connections to reduce churn.",
-        };
+      const nodes = Object.values(snapshot.data.nodesCore?.nodeStats?.nodes ?? {});
+      for (const node of nodes) {
+        const queued = node.thread_pool?.write?.queue ?? 0;
+        if (queued >= 200) {
+          return {
+            status: "warn",
+            summary: `Write queue depth ${queued} on ${node.name ?? "unknown"}.`,
+            observed: { node: node.name, writeQueueDepth: queued },
+            links: [{ label: "Nodes", to: "/nodes" }],
+          };
+        }
       }
-      return { status: "pass", summary: "HTTP total opened connections within threshold." };
+      return { status: "pass", summary: "Write queue depths are normal." };
     },
   },
-  // #44
   {
     id: "nodes.distribution.hotspotting",
     domain: "nodes",
-    title: "Node resource hotspotting",
-    description: "Warns when a single node CPU or heap significantly exceeds the cluster median.",
+    title: "Node hotspotting",
+    description:
+      "Warns when one node has significantly higher CPU or heap than the median, indicating uneven load distribution.",
     severityOnFail: "medium",
     surfaces: ["global"],
     dependsOn: ["nodesCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/nodes-stats",
+    recommendation:
+      "Hotspotting may indicate uneven shard distribution, hot indices on a single node, or client routing issues.",
     evaluate: (snapshot) => {
-      const nodes = getNodes(snapshot);
-      if (nodes.length < 3)
-        return { status: "pass", summary: "Too few nodes to detect hotspotting." };
-      const cpuValues = nodes.map((n) => n.os?.cpu?.percent ?? 0);
-      const heapValues = nodes.map((n) => n.jvm?.mem?.heap_used_percent ?? 0);
-      const cpuMed = median(cpuValues);
-      const heapMed = median(heapValues);
-      const hotspots: string[] = [];
+      const nodes = getEligibleNodes(snapshot.data.nodesCore?.nodeStats?.nodes ?? {});
+      if (nodes.length < 3) {
+        return { status: "pass", summary: "Too few nodes to assess hotspotting." };
+      }
+      const cpus = nodes.map((n) => n.os?.cpu?.percent ?? 0).sort((a, b) => a - b);
+      const median = cpus[Math.floor(cpus.length / 2)] ?? 0;
+      const max = cpus[cpus.length - 1] ?? 0;
+      if (median > 0 && max > 50 && max / median >= 3) {
+        const hotNode = nodes.find((n) => (n.os?.cpu?.percent ?? 0) === max);
+        return {
+          status: "warn",
+          summary: `CPU hotspot: ${hotNode?.name ?? "unknown"} at ${max}% vs median ${median}%.`,
+          observed: { hotNode: hotNode?.name, maxCpu: max, medianCpu: median },
+          links: [{ label: "Nodes", to: "/nodes" }],
+        };
+      }
+      return { status: "pass", summary: "No significant node hotspotting detected." };
+    },
+  },
+  {
+    id: "nodes.ingest.pipeline.failures",
+    domain: "nodes",
+    title: "Ingest pipeline failures",
+    description: "Warns when ingest pipeline failure counts are non-zero across nodes.",
+    severityOnFail: "medium",
+    surfaces: ["global"],
+    dependsOn: ["nodesCore"],
+    docsUrl:
+      "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/nodes-stats",
+    recommendation:
+      "Ingest failures mean documents are being rejected. Check pipeline processor configurations and input data quality.",
+    evaluate: (snapshot) => {
+      const nodes = Object.values(snapshot.data.nodesCore?.nodeStats?.nodes ?? {});
+      let totalFailed = 0;
       for (const node of nodes) {
-        const cpu = node.os?.cpu?.percent ?? 0;
-        const heap = node.jvm?.mem?.heap_used_percent ?? 0;
-        const name = node.name ?? "unknown";
-        if (cpuMed > 0 && cpu / cpuMed >= HOTSPOT_RATIO && cpu > 50) hotspots.push(`${name} (CPU)`);
-        if (heapMed > 0 && heap / heapMed >= HOTSPOT_RATIO && heap > 50)
-          hotspots.push(`${name} (Heap)`);
+        totalFailed += node.ingest?.total?.failed ?? 0;
       }
-      if (hotspots.length > 0) {
+      if (totalFailed > 0) {
         return {
           status: "warn",
-          summary: `Resource hotspot detected: ${hotspots[0]}.`,
-          observed: { hotspots },
-          recommendation: "Check for uneven shard distribution or query routing bias.",
+          summary: `${totalFailed} ingest pipeline failure${totalFailed === 1 ? "" : "s"} across cluster.`,
+          observed: { totalFailed },
+          links: [{ label: "Ingest Pipelines", to: "/ingest-pipelines" }],
         };
       }
-      return { status: "pass", summary: "No resource hotspotting detected." };
-    },
-  },
-  // #51
-  {
-    id: "nodes.thread_pool.management.queue.high",
-    domain: "nodes",
-    title: "Management thread pool queue high",
-    description: `Warns when management thread pool queue > ${THREAD_POOL_QUEUE_THRESHOLD} on any node.`,
-    severityOnFail: "medium",
-    surfaces: ["global"],
-    dependsOn: ["nodesCore"],
-    evaluate: (snapshot) => {
-      const nodes = getNodes(snapshot);
-      for (const node of nodes) {
-        const queue = node.thread_pool?.management?.queue ?? 0;
-        if (queue > THREAD_POOL_QUEUE_THRESHOLD) {
-          return {
-            status: "warn",
-            summary: `Management pool queue ${queue} on ${node.name ?? "unknown"}.`,
-            observed: { node: node.name, queue },
-            recommendation:
-              "High management queue indicates master/coordination thread saturation.",
-          };
-        }
-      }
-      return { status: "pass", summary: "Management thread pool queues within threshold." };
-    },
-  },
-  // #52
-  {
-    id: "nodes.thread_pool.snapshot.queue.high",
-    domain: "nodes",
-    title: "Snapshot thread pool queue high",
-    description: `Warns when snapshot thread pool queue > ${THREAD_POOL_QUEUE_THRESHOLD} on any node.`,
-    severityOnFail: "low",
-    surfaces: ["global"],
-    dependsOn: ["nodesCore"],
-    evaluate: (snapshot) => {
-      const nodes = getNodes(snapshot);
-      for (const node of nodes) {
-        const queue = node.thread_pool?.snapshot?.queue ?? 0;
-        if (queue > THREAD_POOL_QUEUE_THRESHOLD) {
-          return {
-            status: "warn",
-            summary: `Snapshot pool queue ${queue} on ${node.name ?? "unknown"}.`,
-            observed: { node: node.name, queue },
-            recommendation:
-              "High snapshot queue may indicate too many concurrent snapshot operations.",
-          };
-        }
-      }
-      return { status: "pass", summary: "Snapshot thread pool queues within threshold." };
-    },
-  },
-  // #53
-  {
-    id: "nodes.breaker.parent.tripped.nonzero",
-    domain: "nodes",
-    title: "Parent circuit breaker tripped",
-    description: "Warns when the parent circuit breaker has been tripped.",
-    severityOnFail: "high",
-    surfaces: ["global"],
-    dependsOn: ["nodesCore"],
-    evaluate: (snapshot) => {
-      const { total, affectedNodes } = sumBreakerTrips(getNodes(snapshot), "parent");
-      if (total > 0) {
-        return {
-          status: "warn",
-          summary: `Parent breaker tripped ${total} time${total === 1 ? "" : "s"}.`,
-          observed: { total, affectedNodes },
-          recommendation: "Parent breaker trips indicate total memory pressure.",
-        };
-      }
-      return { status: "pass", summary: "No parent circuit breaker trips." };
-    },
-  },
-  // #54
-  {
-    id: "nodes.breaker.request.tripped.nonzero",
-    domain: "nodes",
-    title: "Request circuit breaker tripped",
-    description: "Warns when the request circuit breaker has been tripped.",
-    severityOnFail: "medium",
-    surfaces: ["global"],
-    dependsOn: ["nodesCore"],
-    evaluate: (snapshot) => {
-      const { total, affectedNodes } = sumBreakerTrips(getNodes(snapshot), "request");
-      if (total > 0) {
-        return {
-          status: "warn",
-          summary: `Request breaker tripped ${total} time${total === 1 ? "" : "s"}.`,
-          observed: { total, affectedNodes },
-          recommendation:
-            "Request breaker trips indicate individual requests consuming too much memory.",
-        };
-      }
-      return { status: "pass", summary: "No request circuit breaker trips." };
-    },
-  },
-  // #55
-  {
-    id: "nodes.breaker.fielddata.tripped.nonzero",
-    domain: "nodes",
-    title: "Fielddata circuit breaker tripped",
-    description: "Warns when the fielddata circuit breaker has been tripped.",
-    severityOnFail: "medium",
-    surfaces: ["global"],
-    dependsOn: ["nodesCore"],
-    evaluate: (snapshot) => {
-      const { total, affectedNodes } = sumBreakerTrips(getNodes(snapshot), "fielddata");
-      if (total > 0) {
-        return {
-          status: "warn",
-          summary: `Fielddata breaker tripped ${total} time${total === 1 ? "" : "s"}.`,
-          observed: { total, affectedNodes },
-          recommendation: "Consider using doc values instead of fielddata.",
-        };
-      }
-      return { status: "pass", summary: "No fielddata circuit breaker trips." };
-    },
-  },
-  // #56
-  {
-    id: "nodes.breaker.inflight_requests.tripped.nonzero",
-    domain: "nodes",
-    title: "In-flight requests breaker tripped",
-    description: "Warns when the in-flight requests circuit breaker has been tripped.",
-    severityOnFail: "medium",
-    surfaces: ["global"],
-    dependsOn: ["nodesCore"],
-    evaluate: (snapshot) => {
-      const { total, affectedNodes } = sumBreakerTrips(getNodes(snapshot), "in_flight_requests");
-      if (total > 0) {
-        return {
-          status: "warn",
-          summary: `In-flight requests breaker tripped ${total} time${total === 1 ? "" : "s"}.`,
-          observed: { total, affectedNodes },
-          recommendation: "Reduce concurrent request volume.",
-        };
-      }
-      return { status: "pass", summary: "No in-flight requests circuit breaker trips." };
-    },
-  },
-  // nodes.os.mem.used_percent.high
-  {
-    id: "nodes.os.mem.used_percent.high",
-    domain: "nodes",
-    title: "Node OS memory usage high",
-    description: "Warns when any node OS memory usage >= 90%.",
-    severityOnFail: "high",
-    surfaces: ["global"],
-    dependsOn: ["nodesCore"],
-    evaluate: (snapshot) => {
-      const nodes = getNodes(snapshot);
-      const hotNodes = nodes
-        .map((n) => ({ name: n.name ?? "unknown", memPct: n.os?.mem?.used_percent ?? 0 }))
-        .filter((n) => n.memPct >= OS_MEM_USED_HIGH);
-      if (hotNodes.length > 0) {
-        const worst = hotNodes.sort((a, b) => b.memPct - a.memPct)[0]!;
-        return {
-          status: "warn",
-          summary: `High OS memory on ${worst.name} (${worst.memPct}%).`,
-          observed: { worstNode: worst.name, memPercent: worst.memPct },
-          recommendation: "High OS memory usage may trigger OOM killer.",
-        };
-      }
-      return { status: "pass", summary: "OS memory usage within threshold." };
+      return { status: "pass", summary: "No ingest pipeline failures." };
     },
   },
 ];

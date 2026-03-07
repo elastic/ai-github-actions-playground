@@ -3,325 +3,275 @@ import type { ClusterTaskInfo, TasksListResponse } from "../../services/es";
 import type { HealthCheckDefinition } from "../types";
 
 const LONG_TASK_NANOS = 300_000_000_000; // 5 minutes
+const VERY_LONG_TASK_NANOS = 3_600_000_000_000; // 1 hour
+
+/** Well-known persistent/system task action prefixes that run for the cluster lifetime. */
+const PERSISTENT_TASK_PREFIXES = [
+  "health-node",
+  "data_frame/transforms",
+  "geoip-downloader",
+  "eis-authorization-poller",
+  "monitoring/bulk",
+  "logstash/pipeline",
+  "ml/anomaly_detectors",
+  "ml/datafeeds",
+  "ml/analytics",
+  "enrich/coordinator",
+  "rollup/job",
+  "ccr/",
+  "slm/retention",
+  "ilm/move_to_step",
+];
+
+function isPersistentSystemTask(task: ClusterTaskInfo): boolean {
+  if (task.type === "persistent") return true;
+  const action = task.action ?? "";
+  return PERSISTENT_TASK_PREFIXES.some((prefix) => action.startsWith(prefix));
+}
 
 function flattenTasks(tasksCore: TasksListResponse | null | undefined): ClusterTaskInfo[] {
   const nodes = tasksCore?.nodes ?? {};
   return Object.values(nodes).flatMap((node) => Object.values(node.tasks ?? {}));
 }
 
-export const taskChecks: HealthCheckDefinition[] = [
-  // #59
+function getNonPersistentLongRunning(tasks: ClusterTaskInfo[]): ClusterTaskInfo[] {
+  return tasks.filter(
+    (task) =>
+      Number(task.running_time_in_nanos ?? 0) >= LONG_TASK_NANOS &&
+      !isPersistentSystemTask(task),
+  );
+}
+
+export const tasksChecks: HealthCheckDefinition[] = [
   {
     id: "tasks.running.count.high",
     domain: "tasks",
     title: "Running task count",
-    description: "Warns when there are many concurrent running tasks.",
+    description: "Warns when there are many concurrent running tasks (>= 100).",
     severityOnFail: "medium",
     surfaces: ["global"],
     dependsOn: ["tasksCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/list-tasks",
+    recommendation:
+      "A high task count may indicate heavy concurrent activity. Check for runaway queries or bulk indexing storms.",
     evaluate: (snapshot) => {
       const tasks = flattenTasks(snapshot.data.tasksCore?.tasks ?? null);
       if (tasks.length >= 100) {
         return {
           status: "warn",
           summary: `${tasks.length} tasks are currently running.`,
-          observed: { task_count: tasks.length, threshold: 100 },
-          recommendation: "High task count may indicate queue saturation or runaway operations.",
+          observed: { taskCount: tasks.length },
           links: [{ label: "Task Manager", to: "/cluster-tasks" }],
         };
       }
       return { status: "pass", summary: `${tasks.length} running tasks (within threshold).` };
     },
   },
-  // #60
   {
     id: "tasks.long_running.absolute",
     domain: "tasks",
     title: "Long-running tasks",
-    description: "Fails when tasks exceed the absolute runtime threshold.",
-    severityOnFail: "high",
+    description:
+      "Warns when non-persistent tasks exceed 5 minutes. Persistent system tasks (transforms, health-node, geoip-downloader, etc.) are excluded.",
+    severityOnFail: "medium",
     surfaces: ["global"],
     dependsOn: ["tasksCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/list-tasks",
+    recommendation:
+      "Long-running non-persistent tasks may be stuck queries or bulk operations. Consider cancelling them if they are not making progress.",
     evaluate: (snapshot) => {
       const tasks = flattenTasks(snapshot.data.tasksCore?.tasks ?? null);
-      const longRunning = tasks.filter(
-        (task) => Number(task.running_time_in_nanos ?? 0) >= LONG_TASK_NANOS,
-      );
+      const longRunning = getNonPersistentLongRunning(tasks);
       if (longRunning.length > 0) {
         return {
-          status: "fail",
-          summary: `${longRunning.length} long-running task${longRunning.length === 1 ? "" : "s"} detected.`,
-          observed: { long_running_count: longRunning.length, threshold_nanos: LONG_TASK_NANOS },
-          recommendation: "Investigate or cancel long-running tasks to free cluster resources.",
+          status: "warn",
+          summary: `${longRunning.length} long-running task${longRunning.length === 1 ? "" : "s"} detected (excluding persistent system tasks).`,
+          observed: {
+            longRunning: longRunning.slice(0, 5).map((t) => ({
+              action: t.action,
+              running_time_in_nanos: t.running_time_in_nanos,
+              cancellable: t.cancellable,
+            })),
+          },
           links: [{ label: "Task Manager", to: "/cluster-tasks" }],
         };
       }
       return { status: "pass", summary: "No long-running tasks beyond threshold." };
     },
   },
-  // #61
+  {
+    id: "tasks.long_running.very_long",
+    domain: "tasks",
+    title: "Very long-running tasks",
+    description:
+      "Fails when non-persistent tasks exceed 1 hour — likely stuck or stalled operations.",
+    severityOnFail: "high",
+    surfaces: ["global"],
+    dependsOn: ["tasksCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/list-tasks",
+    recommendation:
+      "Tasks running over an hour are almost certainly stuck. Cancel them if possible and investigate the root cause.",
+    evaluate: (snapshot) => {
+      const tasks = flattenTasks(snapshot.data.tasksCore?.tasks ?? null);
+      const veryLong = tasks.filter(
+        (task) =>
+          Number(task.running_time_in_nanos ?? 0) >= VERY_LONG_TASK_NANOS &&
+          !isPersistentSystemTask(task),
+      );
+      if (veryLong.length > 0) {
+        return {
+          status: "fail",
+          summary: `${veryLong.length} task${veryLong.length === 1 ? "" : "s"} running over 1 hour.`,
+          observed: {
+            veryLongRunning: veryLong.slice(0, 5).map((t) => ({
+              action: t.action,
+              running_time_in_nanos: t.running_time_in_nanos,
+              cancellable: t.cancellable,
+            })),
+          },
+          links: [{ label: "Task Manager", to: "/cluster-tasks" }],
+        };
+      }
+      return { status: "pass", summary: "No tasks running over 1 hour." };
+    },
+  },
   {
     id: "tasks.long_running.search",
     domain: "tasks",
     title: "Long-running search tasks",
-    description: "Warns when long-running search tasks are present.",
+    description: "Warns when search tasks exceed 5 minutes — may indicate unoptimized queries.",
     severityOnFail: "medium",
     surfaces: ["global"],
     dependsOn: ["tasksCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/list-tasks",
+    recommendation:
+      "Long search tasks can exhaust resources. Check slow query logs and optimize expensive aggregations or wildcards.",
     evaluate: (snapshot) => {
       const tasks = flattenTasks(snapshot.data.tasksCore?.tasks ?? null);
       const longSearches = tasks.filter(
-        (task) =>
-          Number(task.running_time_in_nanos ?? 0) >= LONG_TASK_NANOS &&
-          (task.action ?? "").includes("search"),
+        (t) =>
+          Number(t.running_time_in_nanos ?? 0) >= LONG_TASK_NANOS &&
+          (t.action?.includes("search") ?? false) &&
+          !isPersistentSystemTask(t),
       );
       if (longSearches.length > 0) {
         return {
           status: "warn",
-          summary: `${longSearches.length} long-running search task${longSearches.length === 1 ? "" : "s"} detected.`,
+          summary: `${longSearches.length} long-running search task${longSearches.length === 1 ? "" : "s"}.`,
           observed: {
-            long_search_count: longSearches.length,
-            sample: longSearches.slice(0, 5).map((t) => ({
+            longSearches: longSearches.slice(0, 5).map((t) => ({
               action: t.action,
-              running_nanos: t.running_time_in_nanos,
+              running_time_in_nanos: t.running_time_in_nanos,
             })),
           },
-          recommendation: "Review slow search queries. Consider cancelling or optimizing them.",
           links: [{ label: "Task Manager", to: "/cluster-tasks" }],
         };
       }
       return { status: "pass", summary: "No long-running search tasks." };
     },
   },
-  // #62
   {
     id: "tasks.long_running.reindex",
     domain: "tasks",
     title: "Long-running reindex tasks",
-    description: "Warns when long-running reindex tasks are detected.",
-    severityOnFail: "medium",
-    surfaces: ["global"],
-    dependsOn: ["tasksCore"],
-    evaluate: (snapshot) => {
-      const tasks = flattenTasks(snapshot.data.tasksCore?.tasks ?? null);
-      const matched = tasks.filter(
-        (t) =>
-          (t.action ?? "").includes("reindex") &&
-          Number(t.running_time_in_nanos ?? 0) >= LONG_TASK_NANOS,
-      );
-      if (matched.length > 0) {
-        return {
-          status: "warn",
-          summary: `${matched.length} long-running reindex task${matched.length === 1 ? "" : "s"}.`,
-          observed: { count: matched.length },
-          recommendation:
-            "Monitor reindex progress; consider slicing for large reindex operations.",
-          links: [{ label: "Task Manager", to: "/cluster-tasks" }],
-        };
-      }
-      return { status: "pass", summary: "No long-running reindex tasks." };
-    },
-  },
-  // #63
-  {
-    id: "tasks.long_running.update_by_query",
-    domain: "tasks",
-    title: "Long-running update-by-query tasks",
-    description: "Warns when long-running update_by_query tasks are detected.",
-    severityOnFail: "medium",
-    surfaces: ["global"],
-    dependsOn: ["tasksCore"],
-    evaluate: (snapshot) => {
-      const tasks = flattenTasks(snapshot.data.tasksCore?.tasks ?? null);
-      const matched = tasks.filter(
-        (t) =>
-          (t.action ?? "").includes("update_by_query") &&
-          Number(t.running_time_in_nanos ?? 0) >= LONG_TASK_NANOS,
-      );
-      if (matched.length > 0) {
-        return {
-          status: "warn",
-          summary: `${matched.length} long-running update_by_query task${matched.length === 1 ? "" : "s"}.`,
-          observed: { count: matched.length },
-          recommendation: "Large update_by_query operations can consume significant resources.",
-          links: [{ label: "Task Manager", to: "/cluster-tasks" }],
-        };
-      }
-      return { status: "pass", summary: "No long-running update_by_query tasks." };
-    },
-  },
-  // #64
-  {
-    id: "tasks.long_running.delete_by_query",
-    domain: "tasks",
-    title: "Long-running delete-by-query tasks",
-    description: "Warns when long-running delete_by_query tasks are detected.",
-    severityOnFail: "medium",
-    surfaces: ["global"],
-    dependsOn: ["tasksCore"],
-    evaluate: (snapshot) => {
-      const tasks = flattenTasks(snapshot.data.tasksCore?.tasks ?? null);
-      const matched = tasks.filter(
-        (t) =>
-          (t.action ?? "").includes("delete_by_query") &&
-          Number(t.running_time_in_nanos ?? 0) >= LONG_TASK_NANOS,
-      );
-      if (matched.length > 0) {
-        return {
-          status: "warn",
-          summary: `${matched.length} long-running delete_by_query task${matched.length === 1 ? "" : "s"}.`,
-          observed: { count: matched.length },
-          recommendation: "Large delete_by_query operations can cause significant merge overhead.",
-          links: [{ label: "Task Manager", to: "/cluster-tasks" }],
-        };
-      }
-      return { status: "pass", summary: "No long-running delete_by_query tasks." };
-    },
-  },
-  // #65
-  {
-    id: "tasks.long_running.snapshot",
-    domain: "tasks",
-    title: "Long-running snapshot tasks",
-    description: "Warns when long-running snapshot tasks are detected.",
+    description: "Warns when reindex/update-by-query/delete-by-query tasks exceed 5 minutes.",
     severityOnFail: "low",
     surfaces: ["global"],
     dependsOn: ["tasksCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/list-tasks",
+    recommendation:
+      "Long-running bulk mutation tasks consume cluster resources. Check progress and consider using slicing for large operations.",
     evaluate: (snapshot) => {
       const tasks = flattenTasks(snapshot.data.tasksCore?.tasks ?? null);
-      const matched = tasks.filter(
+      const bulkMutations = tasks.filter(
         (t) =>
-          (t.action ?? "").includes("snapshot") &&
-          Number(t.running_time_in_nanos ?? 0) >= LONG_TASK_NANOS,
+          Number(t.running_time_in_nanos ?? 0) >= LONG_TASK_NANOS &&
+          (t.action?.includes("reindex") ||
+            t.action?.includes("update_by_query") ||
+            t.action?.includes("delete_by_query")) &&
+          !isPersistentSystemTask(t),
       );
-      if (matched.length > 0) {
+      if (bulkMutations.length > 0) {
         return {
           status: "warn",
-          summary: `${matched.length} long-running snapshot task${matched.length === 1 ? "" : "s"}.`,
-          observed: { count: matched.length },
-          recommendation: "Long snapshot operations may impact cluster performance.",
+          summary: `${bulkMutations.length} long-running bulk mutation task${bulkMutations.length === 1 ? "" : "s"}.`,
+          observed: {
+            tasks: bulkMutations.slice(0, 5).map((t) => ({
+              action: t.action,
+              running_time_in_nanos: t.running_time_in_nanos,
+            })),
+          },
           links: [{ label: "Task Manager", to: "/cluster-tasks" }],
         };
       }
-      return { status: "pass", summary: "No long-running snapshot tasks." };
+      return { status: "pass", summary: "No long-running bulk mutation tasks." };
     },
   },
-  // #66
   {
-    id: "tasks.cancellable.long_running",
-    domain: "tasks",
-    title: "Cancellable long-running tasks",
-    description: "Warns when cancellable tasks have been running beyond threshold.",
-    severityOnFail: "low",
-    surfaces: ["global"],
-    dependsOn: ["tasksCore"],
-    evaluate: (snapshot) => {
-      const tasks = flattenTasks(snapshot.data.tasksCore?.tasks ?? null);
-      const matched = tasks.filter(
-        (t) => t.cancellable === true && Number(t.running_time_in_nanos ?? 0) >= LONG_TASK_NANOS,
-      );
-      if (matched.length > 0) {
-        return {
-          status: "warn",
-          summary: `${matched.length} cancellable long-running task${matched.length === 1 ? "" : "s"}.`,
-          observed: { count: matched.length },
-          recommendation: "Consider cancelling stale tasks to free resources.",
-          links: [{ label: "Task Manager", to: "/cluster-tasks" }],
-        };
-      }
-      return { status: "pass", summary: "No cancellable long-running tasks." };
-    },
-  },
-  // #68
-  {
-    id: "tasks.node_concentration.high",
+    id: "tasks.node_concentration",
     domain: "tasks",
     title: "Task node concentration",
-    description: "Warns when tasks are heavily concentrated on a single node.",
+    description:
+      "Warns when one node has significantly more tasks than others (>= 3x the median), indicating uneven workload.",
     severityOnFail: "medium",
     surfaces: ["global"],
     dependsOn: ["tasksCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/list-tasks",
+    recommendation:
+      "Task concentration may indicate client affinity to one node or uneven shard distribution. Check routing and balancing.",
     evaluate: (snapshot) => {
       const nodeEntries = Object.entries(snapshot.data.tasksCore?.tasks?.nodes ?? {});
-      if (nodeEntries.length < 2)
-        return { status: "pass", summary: "Single node; concentration check not applicable." };
-      const totalTasks = nodeEntries.reduce(
-        (sum, [, n]) => sum + Object.keys(n.tasks ?? {}).length,
-        0,
-      );
-      if (totalTasks === 0) return { status: "pass", summary: "No running tasks." };
-      const maxNode = nodeEntries.reduce(
-        (max, [, n]) => {
-          const count = Object.keys(n.tasks ?? {}).length;
-          return count > max.count ? { name: n.name ?? "unknown", count } : max;
-        },
-        { name: "unknown", count: 0 },
-      );
-      const ratio = maxNode.count / totalTasks;
-      if (ratio >= 0.7 && totalTasks >= 20) {
+      if (nodeEntries.length < 2) {
+        return { status: "pass", summary: "Too few nodes to assess task concentration." };
+      }
+      const counts = nodeEntries
+        .map(([, node]) => ({
+          name: node.name ?? "unknown",
+          count: Object.keys(node.tasks ?? {}).length,
+        }))
+        .sort((a, b) => a.count - b.count);
+      const median = counts[Math.floor(counts.length / 2)]?.count ?? 0;
+      const max = counts[counts.length - 1] ?? { name: "unknown", count: 0 };
+      if (median > 0 && max.count >= 10 && max.count / median >= 3) {
         return {
           status: "warn",
-          summary: `${maxNode.name} has ${maxNode.count}/${totalTasks} tasks (${(ratio * 100).toFixed(0)}%).`,
-          observed: { node: maxNode.name, nodeCount: maxNode.count, totalTasks },
-          recommendation: "Check for uneven query routing or a coordinator bottleneck.",
+          summary: `Task concentration: ${max.name} has ${max.count} tasks vs median ${median}.`,
+          observed: { hotNode: max.name, maxTasks: max.count, medianTasks: median },
+          links: [{ label: "Task Manager", to: "/cluster-tasks" }],
         };
       }
       return { status: "pass", summary: "Task distribution across nodes is balanced." };
     },
   },
-  // #69
   {
-    id: "tasks.action.risky.count.high",
+    id: "tasks.cancellable.long_running",
     domain: "tasks",
-    title: "Risky task actions running",
+    title: "Cancellable long-running tasks",
     description:
-      "Warns when risky actions (delete_by_query, reindex, etc.) are running concurrently.",
-    severityOnFail: "medium",
-    surfaces: ["global"],
-    dependsOn: ["tasksCore"],
-    evaluate: (snapshot) => {
-      const tasks = flattenTasks(snapshot.data.tasksCore?.tasks ?? null);
-      const riskyPatterns = ["delete_by_query", "reindex", "force_merge", "update_by_query"];
-      const risky = tasks.filter((t) => {
-        const action = t.action ?? "";
-        return riskyPatterns.some((p) => action.includes(p));
-      });
-      if (risky.length >= 3) {
-        return {
-          status: "warn",
-          summary: `${risky.length} risky task actions running concurrently.`,
-          observed: { count: risky.length },
-          recommendation: "Multiple concurrent risky operations may destabilize the cluster.",
-          links: [{ label: "Task Manager", to: "/cluster-tasks" }],
-        };
-      }
-      return { status: "pass", summary: `Risky task actions (${risky.length}) within threshold.` };
-    },
-  },
-  // #70
-  {
-    id: "tasks.description.large_fanout",
-    domain: "tasks",
-    title: "Large fan-out tasks",
-    description: "Warns when task descriptions indicate wildcard or multi-index fan-out.",
+      "Informs when long-running non-persistent tasks are cancellable, enabling easy cleanup.",
     severityOnFail: "low",
     surfaces: ["global"],
     dependsOn: ["tasksCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/cancel-task",
+    recommendation:
+      "These tasks can be cancelled via the Task Cancel API if they are no longer needed.",
     evaluate: (snapshot) => {
       const tasks = flattenTasks(snapshot.data.tasksCore?.tasks ?? null);
-      const fanout = tasks.filter((t) => {
-        const desc = t.description ?? "";
-        return desc.includes("*") || (desc.match(/,/g) ?? []).length >= 5;
-      });
-      if (fanout.length > 0) {
+      const cancellable = getNonPersistentLongRunning(tasks).filter((t) => t.cancellable);
+      if (cancellable.length > 0) {
         return {
           status: "warn",
-          summary: `${fanout.length} task${fanout.length === 1 ? "" : "s"} with large fan-out patterns.`,
-          observed: { count: fanout.length },
-          recommendation: "Wildcard or many-index operations cause fan-out. Use targeted patterns.",
+          summary: `${cancellable.length} cancellable long-running task${cancellable.length === 1 ? "" : "s"}.`,
+          observed: {
+            cancellable: cancellable.slice(0, 5).map((t) => ({
+              action: t.action,
+              running_time_in_nanos: t.running_time_in_nanos,
+            })),
+          },
+          links: [{ label: "Task Manager", to: "/cluster-tasks" }],
         };
       }
-      return { status: "pass", summary: "No large fan-out task patterns detected." };
+      return { status: "pass", summary: "No cancellable long-running tasks." };
     },
   },
 ];
