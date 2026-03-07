@@ -35,6 +35,8 @@ const ChatPage = lazy(() => import("../components/ChatPage"));
 const ClusterCapacityPage = lazy(() => import("../components/ClusterCapacityPage"));
 const ClusterHealthPage = lazy(() => import("../components/ClusterHealthPage"));
 const ClusterOverviewPage = lazy(() => import("../components/ClusterOverviewPage"));
+const ClusterSettingsPage = lazy(() => import("../components/ClusterSettingsPage"));
+const NodesHotThreadsPage = lazy(() => import("../components/NodesHotThreadsPage"));
 const ClusterResiliencePage = lazy(() => import("../components/ClusterResiliencePage"));
 const ClusterShardsPage = lazy(() => import("../components/ClusterShardsPage"));
 const ClusterTasksPage = lazy(() => import("../components/ClusterTasksPage"));
@@ -60,6 +62,7 @@ const ProfilingPage = lazy(() => import("../components/profiling/ProfilingPage")
 const ProfilingGuidedPage = lazy(() => import("../components/profiling/ProfilingGuidedPage"));
 const InvestigatePage = lazy(() => import("../components/InvestigatePage"));
 const UsersPage = lazy(() => import("../components/UsersPage"));
+const WatcherGetWatchPage = lazy(() => import("../components/WatcherGetWatchPage"));
 const KubernetesPage = lazy(() => import("../components/kubernetes/KubernetesPage"));
 const K8sClusterDashboardPage = lazy(
   () => import("../components/kubernetes/K8sClusterDashboardPage"),
@@ -422,7 +425,7 @@ export const PAGE_MANIFEST = {
     nav: {
       label: "Data Streams",
       group: "System",
-      order: 20,
+      order: 23,
       showInSidebar: true,
       icon: createElement(DatasetIcon, { fontSize: "small" }),
     },
@@ -436,7 +439,7 @@ export const PAGE_MANIFEST = {
     nav: {
       label: "Nodes",
       group: "System",
-      order: 24,
+      order: 20,
       showInSidebar: true,
       icon: createElement(MemoryIcon, { fontSize: "small" }),
     },
@@ -482,6 +485,48 @@ export const PAGE_MANIFEST = {
       order: 26,
       showInSidebar: true,
       icon: createElement(AccountTreeIcon, { fontSize: "small" }),
+    },
+  },
+  clusterSettings: {
+    path: "/cluster-settings",
+    component: ClusterSettingsPage,
+    requiresConnection: true,
+    showTimeControls: false,
+    skeletonVariant: "table",
+    nav: {
+      label: "Cluster Settings",
+      group: "System",
+      order: 21,
+      showInSidebar: true,
+      icon: createElement(SettingsIcon, { fontSize: "small" }),
+    },
+  },
+  nodesHotThreads: {
+    path: "/nodes-hot-threads",
+    component: NodesHotThreadsPage,
+    requiresConnection: true,
+    showTimeControls: false,
+    skeletonVariant: "table",
+    nav: {
+      label: "Hot Threads",
+      group: "System",
+      order: 28,
+      showInSidebar: true,
+      icon: createElement(SpeedIcon, { fontSize: "small" }),
+    },
+  },
+  watcherGetWatch: {
+    path: "/watcher-get-watch",
+    component: WatcherGetWatchPage,
+    requiresConnection: true,
+    showTimeControls: false,
+    skeletonVariant: "detail-panel",
+    nav: {
+      label: "Get Watch",
+      group: "System",
+      order: 29,
+      showInSidebar: true,
+      icon: createElement(PendingActionsIcon, { fontSize: "small" }),
     },
   },
   fleet: {

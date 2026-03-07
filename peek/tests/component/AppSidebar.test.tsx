@@ -183,6 +183,36 @@ describe("AppSidebar", () => {
     expect(screen.getByTestId("location")).toHaveTextContent("/cluster-health");
   });
 
+  it("navigates to Cluster Settings when clicked while connected", async () => {
+    useConnectionStore.getState().setConnected(true);
+    const user = userEvent.setup();
+    renderSidebar();
+
+    await user.click(screen.getByRole("button", { name: /cluster settings/i }));
+
+    expect(screen.getByTestId("location")).toHaveTextContent("/cluster-settings");
+  });
+
+  it("navigates to Hot Threads when clicked while connected", async () => {
+    useConnectionStore.getState().setConnected(true);
+    const user = userEvent.setup();
+    renderSidebar();
+
+    await user.click(screen.getByRole("button", { name: /hot threads/i }));
+
+    expect(screen.getByTestId("location")).toHaveTextContent("/nodes-hot-threads");
+  });
+
+  it("navigates to Get Watch when clicked while connected", async () => {
+    useConnectionStore.getState().setConnected(true);
+    const user = userEvent.setup();
+    renderSidebar();
+
+    await user.click(screen.getByRole("button", { name: /get watch/i }));
+
+    expect(screen.getByTestId("location")).toHaveTextContent("/watcher-get-watch");
+  });
+
   it("keeps detail cluster pages out of sidebar", () => {
     useConnectionStore.getState().setConnected(true);
     renderSidebar();
@@ -266,7 +296,7 @@ describe("AppSidebar", () => {
     const user = userEvent.setup();
     renderSidebar();
 
-    await user.click(screen.getByRole("button", { name: /settings/i }));
+    await user.click(screen.getByRole("button", { name: /^settings$/i }));
     await user.click(screen.getByRole("menuitem", { name: /llm settings/i }));
 
     expect(screen.getByTestId("location")).toHaveTextContent("/settings");
@@ -277,7 +307,7 @@ describe("AppSidebar", () => {
     const user = userEvent.setup();
     renderSidebar();
 
-    await user.click(screen.getByRole("button", { name: /settings/i }));
+    await user.click(screen.getByRole("button", { name: /^settings$/i }));
     await user.click(screen.getByRole("menuitem", { name: /dark\/light mode/i }));
 
     expect(useThemeStore.getState().themeMode).toBe("light");
@@ -293,7 +323,7 @@ describe("AppSidebar", () => {
       </MemoryRouter>,
     );
 
-    await user.click(screen.getByRole("button", { name: /settings/i }));
+    await user.click(screen.getByRole("button", { name: /^settings$/i }));
     await user.click(screen.getByRole("menuitem", { name: /reset all state/i }));
 
     expect(onRequestReset).toHaveBeenCalledTimes(1);

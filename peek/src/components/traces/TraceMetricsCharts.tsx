@@ -41,7 +41,7 @@ export interface TraceMetricsChartsProps {
   timeseriesLoading: boolean;
   traceRows: TraceRow[];
   searchLoading: boolean;
-  onSelectTrace?: (traceId: string) => void;
+  onSelectTracePoint?: (point: { traceId: string; spanId?: string; timestamp: string }) => void;
   collapsed: boolean;
   onToggleCollapsed: () => void;
   timeFrom: string | null;
@@ -53,7 +53,7 @@ export default function TraceMetricsCharts({
   timeseriesLoading,
   traceRows,
   searchLoading,
-  onSelectTrace,
+  onSelectTracePoint,
   collapsed,
   onToggleCollapsed,
   timeFrom,
@@ -68,6 +68,7 @@ export default function TraceMetricsCharts({
     durationUs: r.durationUs,
     serviceName: r.serviceName,
     traceId: r.traceId,
+    spanId: r.spanId,
   }));
   const requestData = timeseriesResult ? sliceForMetric(timeseriesResult, "request_count") : null;
   const errorData = timeseriesResult ? toErrorsBarData(timeseriesResult) : null;
@@ -155,7 +156,7 @@ export default function TraceMetricsCharts({
                 <Box sx={{ height: CHART_HEIGHT }}>
                   <TraceScatterChart
                     data={scatterData}
-                    onPointClick={onSelectTrace}
+                    onPointClick={onSelectTracePoint}
                     compact
                     timeRange={timeRange}
                   />

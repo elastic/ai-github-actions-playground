@@ -338,7 +338,7 @@ export function useTracesOrchestrator() {
 
   const handleFormatQuery = useCallback(() => {
     const formatted = formatEsqlQuery(effectiveQuery);
-    if (formatted === formatEsqlQuery(generatedQuery)) {
+    if (formatted === generatedQuery) {
       setRawQuery(null);
     } else if (formatted !== effectiveQuery) {
       setRawQuery(formatted);

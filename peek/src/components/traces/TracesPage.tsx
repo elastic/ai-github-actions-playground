@@ -198,7 +198,10 @@ export default function TracesPage() {
           timeseriesLoading={orchestrator.timeseriesLoading}
           traceRows={orchestrator.traceRows}
           searchLoading={orchestrator.searchLoading}
-          onSelectTrace={(traceId) => orchestrator.handleSelectTrace(traceId, undefined, undefined)}
+          onSelectTracePoint={(point) => {
+            orchestrator.handleSelectTrace(point.traceId, point.spanId, point.timestamp);
+            if (point.spanId) orchestrator.handleSelectSpan(point.spanId);
+          }}
           collapsed={orchestrator.traceMetricsChartsCollapsed}
           onToggleCollapsed={() =>
             orchestrator.setTraceMetricsChartsCollapsed(!orchestrator.traceMetricsChartsCollapsed)

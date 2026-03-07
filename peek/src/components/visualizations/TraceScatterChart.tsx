@@ -14,11 +14,12 @@ interface ScatterDataPoint {
   durationUs: number;
   serviceName: string;
   traceId: string;
+  spanId?: string;
 }
 
 interface TraceScatterChartProps {
   data: ScatterDataPoint[];
-  onPointClick?: (traceId: string) => void;
+  onPointClick?: (point: { traceId: string; spanId?: string; timestamp: string }) => void;
   /** Tighter grid for small containers (e.g. trace metrics) */
   compact?: boolean;
   /** Fixed time range for x-axis (ms). When set, shows full window instead of data extent. */
@@ -64,6 +65,8 @@ export default function TraceScatterChart({
           .map((point) => ({
             value: [new Date(point.timestamp).getTime(), point.durationUs / 1000],
             traceId: point.traceId,
+            spanId: point.spanId,
+            timestamp: point.timestamp,
           })),
         itemStyle: {
           color: colorMap.get(serviceName) ?? getServiceColor(serviceName),
@@ -86,11 +89,14 @@ export default function TraceScatterChart({
         formatter: (params: {
           seriesName: string;
           value: [number, number];
-          data: { traceId: string };
+          data: { traceId: string; spanId?: string };
         }) => {
           const ts = formatTimestamp(params.value[0]);
           const duration = formatSpanDuration(params.value[1] * 1000);
-          return `<strong>${escapeHtml(params.seriesName)}</strong><br/>Time: ${escapeHtml(ts)}<br/>Duration: ${escapeHtml(duration)}<br/>Trace: ${escapeHtml(params.data.traceId.slice(0, 16))}…`;
+          const spanSnippet = params.data.spanId
+            ? `<br/>Span: ${escapeHtml(params.data.spanId.slice(0, 16))}…`
+            : "";
+          return `<strong>${escapeHtml(params.seriesName)}</strong><br/>Time: ${escapeHtml(ts)}<br/>Duration: ${escapeHtml(duration)}<br/>Trace: ${escapeHtml(params.data.traceId.slice(0, 16))}…${spanSnippet}`;
         },
       },
       legend: {
@@ -135,9 +141,15 @@ export default function TraceScatterChart({
 
   const handleClick = useCallback(
     (params: { data: unknown }) => {
-      const point = params.data as { traceId?: string } | undefined;
+      const point = params.data as
+        | { traceId?: string; spanId?: string; timestamp?: string }
+        | undefined;
       if (point?.traceId && onPointClick) {
-        onPointClick(point.traceId);
+        onPointClick({
+          traceId: point.traceId,
+          spanId: point.spanId,
+          timestamp: point.timestamp ?? "",
+        });
       }
     },
     [onPointClick],

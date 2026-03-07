@@ -47,6 +47,7 @@ import type {
 } from "./securityTypes";
 import type { GetIngestPipelinesResponse, SimulateIngestPipelineResponse } from "./ingestTypes";
 import type { ProfilingTopFunctionsRequest } from "./profilingTypes";
+import type { GetWatchResponse } from "./watcherTypes";
 
 // ---------------------------------------------------------------------------
 // Re-export domain types so existing `import … from "./client"` keeps working.
@@ -124,6 +125,7 @@ export type {
 } from "./ingestTypes";
 
 export type { ProfilingTopFunctionsRequest } from "./profilingTypes";
+export type { GetWatchResponse } from "./watcherTypes";
 
 // ---------------------------------------------------------------------------
 // Types that are NOT in the OpenAPI spec (our own)
@@ -298,6 +300,65 @@ export class ElasticsearchClient {
     );
   }
 
+  private async _fetchText(
+    path: string,
+    options?: RequestInit & { signal?: AbortSignal },
+  ): Promise<string> {
+    const url = `${this.baseUrl}${path}`;
+    const mergedHeaders = {
+      ...this.headers,
+      ...(options?.headers as Record<string, string>),
+    };
+
+    let lastError: ElasticsearchError | undefined;
+    const signal = options?.signal;
+
+    /* eslint-disable no-await-in-loop -- sequential retry with backoff */
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      let response: Response;
+      try {
+        response = await this._doFetch(url, mergedHeaders, options);
+      } catch (err: unknown) {
+        throw {
+          status: 0,
+          message: err instanceof Error ? err.message : String(err),
+        } satisfies ElasticsearchError;
+      }
+
+      if (response.ok) {
+        return await response.text();
+      }
+
+      const body = await response.json().catch(() => ({}));
+      const esError: ElasticsearchError = {
+        status: response.status,
+        message:
+          body?.error?.reason ??
+          body?.error?.root_cause?.[0]?.reason ??
+          body?.message ??
+          response.statusText,
+        cause: body?.error?.caused_by?.reason,
+      };
+
+      if (!RETRY_STATUSES.has(response.status) || attempt === MAX_RETRIES - 1) {
+        throw esError;
+      }
+
+      lastError = esError;
+      const backoff = INITIAL_BACKOFF_MS * Math.pow(2, attempt);
+      await sleepWithJitter(backoff, signal);
+    }
+    /* eslint-enable no-await-in-loop */
+
+    throw (
+      lastError ??
+      ({
+        status: 0,
+        message: "Unexpected error while contacting Elasticsearch",
+      } satisfies ElasticsearchError)
+    );
+  }
+
   /**
    * Like `_fetch`, but validates the response against a zod schema before
    * returning.  Validation failures are thrown as `ElasticsearchError` so
@@ -437,6 +498,41 @@ export class ElasticsearchClient {
     );
   }
 
+  async getNodesHotThreads(
+    options?: {
+      nodeId?: string;
+      ignoreIdleThreads?: boolean;
+      interval?: string;
+      snapshots?: number;
+      threads?: number;
+      timeout?: string;
+      type?: "cpu" | "wait" | "block" | "gpu" | "mem";
+      sort?: "cpu" | "wait" | "block" | "gpu" | "mem";
+    },
+    signal?: AbortSignal,
+  ): Promise<string> {
+    const basePath = options?.nodeId?.trim()
+      ? `/_nodes/${encodeURIComponent(options.nodeId.trim())}/hot_threads`
+      : "/_nodes/hot_threads";
+    const params = new URLSearchParams();
+    if (options?.ignoreIdleThreads !== undefined) {
+      params.set("ignore_idle_threads", String(options.ignoreIdleThreads));
+    }
+    if (options?.interval) params.set("interval", options.interval);
+    if (options?.snapshots !== undefined) params.set("snapshots", String(options.snapshots));
+    if (options?.threads !== undefined) params.set("threads", String(options.threads));
+    if (options?.timeout) params.set("timeout", options.timeout);
+    if (options?.type) params.set("type", options.type);
+    if (options?.sort) params.set("sort", options.sort);
+    const query = params.toString();
+    return this._fetchText(query ? `${basePath}?${query}` : basePath, {
+      signal,
+      headers: {
+        Accept: "text/plain",
+      },
+    });
+  }
+
   async getAllocationExplain(signal?: AbortSignal): Promise<ClusterAllocationExplainResponse> {
     return this._fetch<ClusterAllocationExplainResponse>("/_cluster/allocation/explain", {
       method: "POST",
@@ -558,6 +654,10 @@ export class ElasticsearchClient {
         signal,
       },
     );
+  }
+
+  async getWatcherWatch(id: string, signal?: AbortSignal): Promise<GetWatchResponse> {
+    return this._fetch<GetWatchResponse>(`/_watcher/watch/${encodeURIComponent(id)}`, { signal });
   }
 
   // -------------------------------------------------------------------------

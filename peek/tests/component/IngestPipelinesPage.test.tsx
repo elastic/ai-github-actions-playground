@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 
@@ -7,15 +7,17 @@ import IngestPipelinesPage from "../../src/components/IngestPipelinesPage";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { resetAllStores } from "../fixtures/test-utils";
 
-const { getIngestPipelinesMock, simulateIngestPipelineMock } = vi.hoisted(() => ({
+const { getIngestPipelinesMock, simulateIngestPipelineMock, getNodeStatsMock } = vi.hoisted(() => ({
   getIngestPipelinesMock: vi.fn(),
   simulateIngestPipelineMock: vi.fn(),
+  getNodeStatsMock: vi.fn(),
 }));
 
 vi.mock("../../src/services/es", () => ({
   ElasticsearchClient: vi.fn().mockImplementation(() => ({
     getIngestPipelines: getIngestPipelinesMock,
     simulateIngestPipeline: simulateIngestPipelineMock,
+    getNodeStats: getNodeStatsMock,
   })),
   isElasticsearchError: (err: unknown) => {
     if (typeof err !== "object" || err === null) return false;
@@ -37,16 +39,21 @@ const PIPELINES_RESPONSE = {
 
 const INPUT_LABEL = "Input documents (JSON, JSON array, or NDJSON)";
 
+async function selectPipeline(name: string) {
+  await userEvent.click(screen.getByLabelText(`Select pipeline ${name}`));
+}
+
 describe("IngestPipelinesPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    getNodeStatsMock.mockResolvedValue({ nodes: {} });
     resetAllStores();
     useConnectionStore
       .getState()
       .setConnection({ url: "https://example.es.local:9200", apiKey: "key" });
   });
 
-  it("renders the pipeline list sorted alphabetically and selects the first entry", async () => {
+  it("renders the pipeline list and keeps detail flyout closed by default", async () => {
     getIngestPipelinesMock.mockResolvedValue(PIPELINES_RESPONSE);
 
     render(
@@ -55,8 +62,10 @@ describe("IngestPipelinesPage", () => {
       </MemoryRouter>,
     );
 
-    // First alphabetically is "another-pipeline" — shown as heading in the detail panel
-    await screen.findByRole("heading", { level: 6, name: "another-pipeline" });
+    await screen.findByText("another-pipeline");
+    expect(
+      screen.queryByRole("heading", { level: 6, name: "another-pipeline" }),
+    ).not.toBeInTheDocument();
     // Both pipelines should appear in the left-panel list
     expect(screen.getAllByText("another-pipeline").length).toBeGreaterThan(0);
     expect(screen.getAllByText("my-pipeline").length).toBeGreaterThan(0);
@@ -73,7 +82,7 @@ describe("IngestPipelinesPage", () => {
 
     // Select "my-pipeline" (second alphabetically)
     await screen.findByText("my-pipeline");
-    await userEvent.click(screen.getByRole("button", { name: /my-pipeline/i }));
+    await selectPipeline("my-pipeline");
 
     await screen.findByRole("heading", { level: 6, name: "my-pipeline" });
     expect(screen.getByTestId("pipeline-meta-description")).toHaveTextContent(
@@ -94,7 +103,7 @@ describe("IngestPipelinesPage", () => {
 
     // Select "my-pipeline" which has a "set" processor
     await screen.findByText("my-pipeline");
-    await userEvent.click(screen.getByRole("button", { name: /my-pipeline/i }));
+    await selectPipeline("my-pipeline");
     await screen.findByRole("heading", { level: 6, name: "my-pipeline" });
 
     // Verify the processor list exists and contains fieldset/legend structure
@@ -124,8 +133,8 @@ describe("IngestPipelinesPage", () => {
     await user.type(screen.getByPlaceholderText("Search pipelines"), "my-");
 
     await waitFor(() => {
-      expect(screen.queryByRole("button", { name: /another-pipeline/i })).not.toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /my-pipeline/i })).toBeInTheDocument();
+      expect(screen.queryByLabelText("Select pipeline another-pipeline")).not.toBeInTheDocument();
+      expect(screen.getByLabelText("Select pipeline my-pipeline")).toBeInTheDocument();
     });
   });
 
@@ -145,7 +154,7 @@ describe("IngestPipelinesPage", () => {
     await screen.findByText("No pipelines found");
   });
 
-  it("clears the detail panel when search excludes the selected pipeline", async () => {
+  it("keeps detail flyout closed when search excludes all pipelines", async () => {
     const user = userEvent.setup();
     getIngestPipelinesMock.mockResolvedValue(PIPELINES_RESPONSE);
 
@@ -155,8 +164,7 @@ describe("IngestPipelinesPage", () => {
       </MemoryRouter>,
     );
 
-    // Wait for detail panel to show the first pipeline
-    await screen.findByRole("heading", { level: 6, name: "another-pipeline" });
+    await screen.findByLabelText("Select pipeline another-pipeline");
 
     // Type a search that matches nothing
     await user.type(screen.getByPlaceholderText("Search pipelines"), "does-not-exist");
@@ -165,7 +173,7 @@ describe("IngestPipelinesPage", () => {
       expect(
         screen.queryByRole("heading", { level: 6, name: "another-pipeline" }),
       ).not.toBeInTheDocument();
-      expect(screen.getByText("Select a pipeline")).toBeInTheDocument();
+      expect(screen.getByText("No pipelines found")).toBeInTheDocument();
     });
   });
 
@@ -179,6 +187,46 @@ describe("IngestPipelinesPage", () => {
     );
 
     await screen.findByText("permission_denied");
+  });
+
+  it("shows n/a runtime columns when node stats are unavailable", async () => {
+    getIngestPipelinesMock.mockResolvedValue(PIPELINES_RESPONSE);
+    getNodeStatsMock.mockRejectedValue({ status: 403, message: "forbidden_node_stats" });
+
+    render(
+      <MemoryRouter>
+        <IngestPipelinesPage />
+      </MemoryRouter>,
+    );
+
+    await screen.findByText(/Runtime counters unavailable: forbidden_node_stats/i);
+    const pipelineRow = screen.getByLabelText("Select pipeline another-pipeline");
+    expect(pipelineRow).toHaveTextContent("n/a");
+  });
+
+  it("closes the pipeline detail flyout when close is clicked", async () => {
+    const user = userEvent.setup();
+    getIngestPipelinesMock.mockResolvedValue(PIPELINES_RESPONSE);
+
+    render(
+      <MemoryRouter>
+        <IngestPipelinesPage />
+      </MemoryRouter>,
+    );
+
+    await screen.findByText("another-pipeline");
+    await selectPipeline("another-pipeline");
+    await screen.findByRole("heading", { level: 6, name: "another-pipeline" });
+    await user.click(screen.getByRole("button", { name: /close pipeline details/i }));
+
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("heading", { level: 6, name: "another-pipeline" }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: /close pipeline details/i }),
+      ).not.toBeInTheDocument();
+    });
   });
 
   it("runs simulate and displays the structured result with status chips", async () => {
@@ -195,7 +243,7 @@ describe("IngestPipelinesPage", () => {
     );
 
     await screen.findByText("my-pipeline");
-    await user.click(screen.getByRole("button", { name: /my-pipeline/i }));
+    await user.click(screen.getByLabelText("Select pipeline my-pipeline"));
     await screen.findByRole("heading", { level: 6, name: "my-pipeline" });
 
     await user.click(screen.getByRole("button", { name: /simulate/i }));
@@ -232,7 +280,7 @@ describe("IngestPipelinesPage", () => {
     );
 
     await screen.findByText("my-pipeline");
-    await user.click(screen.getByRole("button", { name: /my-pipeline/i }));
+    await user.click(screen.getByLabelText("Select pipeline my-pipeline"));
     await user.click(screen.getByRole("button", { name: /simulate/i }));
 
     await screen.findByTestId("simulate-result");
@@ -255,7 +303,7 @@ describe("IngestPipelinesPage", () => {
     );
 
     await screen.findByText("my-pipeline");
-    await user.click(screen.getByRole("button", { name: /my-pipeline/i }));
+    await user.click(screen.getByLabelText("Select pipeline my-pipeline"));
     await screen.findByRole("heading", { level: 6, name: "my-pipeline" });
 
     // Replace input with a JSON array
@@ -295,7 +343,7 @@ describe("IngestPipelinesPage", () => {
     );
 
     await screen.findByText("my-pipeline");
-    await user.click(screen.getByRole("button", { name: /my-pipeline/i }));
+    await user.click(screen.getByLabelText("Select pipeline my-pipeline"));
 
     const input = screen.getByLabelText(INPUT_LABEL);
     fireEvent.change(input, { target: { value: '{"a": 1}\n{"b": 2}' } });
@@ -333,7 +381,7 @@ describe("IngestPipelinesPage", () => {
     );
 
     await screen.findByText("my-pipeline");
-    await user.click(screen.getByRole("button", { name: /my-pipeline/i }));
+    await user.click(screen.getByLabelText("Select pipeline my-pipeline"));
 
     // Enable verbose trace
     await user.click(screen.getByRole("checkbox", { name: /verbose processor trace/i }));
@@ -366,7 +414,7 @@ describe("IngestPipelinesPage", () => {
     );
 
     await screen.findByText("my-pipeline");
-    await user.click(screen.getByRole("button", { name: /my-pipeline/i }));
+    await user.click(screen.getByLabelText("Select pipeline my-pipeline"));
     await screen.findByRole("heading", { level: 6, name: "my-pipeline" });
 
     await user.click(screen.getByRole("button", { name: /simulate/i }));
@@ -385,7 +433,7 @@ describe("IngestPipelinesPage", () => {
     );
 
     await screen.findByText("my-pipeline");
-    await user.click(screen.getByRole("button", { name: /my-pipeline/i }));
+    await user.click(screen.getByLabelText("Select pipeline my-pipeline"));
     await screen.findByRole("heading", { level: 6, name: "my-pipeline" });
 
     const input = screen.getByLabelText(INPUT_LABEL);
@@ -394,6 +442,141 @@ describe("IngestPipelinesPage", () => {
     await user.click(screen.getByRole("button", { name: /simulate/i }));
 
     await screen.findByText(/invalid json/i);
+  });
+
+  it("renders detailed runtime stats with hot nodes and processor hotspots", async () => {
+    const user = userEvent.setup();
+    getIngestPipelinesMock.mockResolvedValue(PIPELINES_RESPONSE);
+    getNodeStatsMock.mockResolvedValue({
+      nodes: {
+        nodeA: {
+          name: "ingest-a",
+          ingest: {
+            pipelines: {
+              "my-pipeline": {
+                count: 200,
+                failed: 4,
+                current: 1,
+                time_in_millis: 1000,
+                processors: [
+                  {
+                    "set:set-env": {
+                      type: "set",
+                      stats: { count: 200, failed: 0, current: 0, time_in_millis: 200 },
+                    },
+                  },
+                  {
+                    "grok:parse-message": {
+                      type: "grok",
+                      stats: { count: 200, failed: 4, current: 1, time_in_millis: 650 },
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        },
+        nodeB: {
+          name: "ingest-b",
+          ingest: {
+            pipelines: {
+              "my-pipeline": {
+                count: 100,
+                failed: 1,
+                current: 0,
+                time_in_millis: 700,
+                processors: [
+                  {
+                    "set:set-env": {
+                      type: "set",
+                      stats: { count: 100, failed: 0, current: 0, time_in_millis: 120 },
+                    },
+                  },
+                  {
+                    "grok:parse-message": {
+                      type: "grok",
+                      stats: { count: 100, failed: 1, current: 0, time_in_millis: 530 },
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+    });
+
+    render(
+      <MemoryRouter>
+        <IngestPipelinesPage />
+      </MemoryRouter>,
+    );
+
+    await screen.findByText("my-pipeline");
+    await user.click(screen.getByLabelText("Select pipeline my-pipeline"));
+    await screen.findByRole("heading", { level: 6, name: "my-pipeline" });
+
+    const runtimeSection = await screen.findByTestId("pipeline-runtime-stats");
+    expect(runtimeSection).toHaveTextContent("Docs processed");
+    expect(runtimeSection).toHaveTextContent("300");
+    expect(runtimeSection).toHaveTextContent("Failed");
+    expect(runtimeSection).toHaveTextContent("5");
+    expect(runtimeSection).toHaveTextContent("Hot nodes");
+    expect(runtimeSection).toHaveTextContent("ingest-a");
+    expect(runtimeSection).toHaveTextContent("Processor hotspots");
+    expect(runtimeSection).toHaveTextContent("grok:parse-message");
+    expect(screen.getByText("Active pipelines")).toBeInTheDocument();
+    expect(screen.getAllByText("Current in-flight").length).toBeGreaterThan(0);
+    const activePipelinesCard = screen.getByText("Active pipelines").closest(".MuiPaper-root");
+    expect(activePipelinesCard).not.toBeNull();
+    expect(within(activePipelinesCard as HTMLElement).getByText("1")).toBeInTheDocument();
+
+    const processorTable = screen.getByRole("table", { name: /pipeline processor runtime stats/i });
+    const rows = within(processorTable).getAllByRole("row");
+    expect(rows[1]).toHaveTextContent("set:set-env");
+    expect(rows[2]).toHaveTextContent("grok:parse-message");
+  });
+
+  it("sorts pipelines by Avg ms/doc when the header is clicked", async () => {
+    const user = userEvent.setup();
+    getIngestPipelinesMock.mockResolvedValue({
+      "fast-pipeline": { processors: [{ set: { field: "a", value: 1 } }] },
+      "slow-pipeline": { processors: [{ set: { field: "b", value: 2 } }] },
+    });
+    getNodeStatsMock.mockResolvedValue({
+      nodes: {
+        nodeA: {
+          name: "ingest-a",
+          ingest: {
+            pipelines: {
+              "fast-pipeline": { count: 200, failed: 0, current: 0, time_in_millis: 400 },
+              "slow-pipeline": { count: 100, failed: 0, current: 0, time_in_millis: 700 },
+            },
+          },
+        },
+      },
+    });
+
+    render(
+      <MemoryRouter>
+        <IngestPipelinesPage />
+      </MemoryRouter>,
+    );
+
+    await screen.findByLabelText("Select pipeline fast-pipeline");
+    const pipelineTable = screen.getByRole("table", { name: /ingest pipeline list/i });
+
+    // First click switches to avg sort ascending.
+    await user.click(screen.getByRole("button", { name: "Avg ms/doc" }));
+    let rows = within(pipelineTable).getAllByRole("row");
+    expect(rows[1]).toHaveAttribute("aria-label", "Select pipeline fast-pipeline");
+    expect(rows[2]).toHaveAttribute("aria-label", "Select pipeline slow-pipeline");
+
+    // Second click toggles descending.
+    await user.click(screen.getByRole("button", { name: "Avg ms/doc" }));
+    rows = within(pipelineTable).getAllByRole("row");
+    expect(rows[1]).toHaveAttribute("aria-label", "Select pipeline slow-pipeline");
+    expect(rows[2]).toHaveAttribute("aria-label", "Select pipeline fast-pipeline");
   });
 
   it("refreshes pipelines when Refresh button is clicked", async () => {
@@ -408,11 +591,11 @@ describe("IngestPipelinesPage", () => {
       </MemoryRouter>,
     );
 
-    await screen.findByRole("heading", { level: 6, name: "another-pipeline" });
-    await user.click(screen.getByRole("button", { name: /refresh/i }));
+    await screen.findByLabelText("Select pipeline my-pipeline");
+    await user.click(screen.getByRole("button", { name: "Refresh" }));
 
-    await screen.findByRole("heading", { level: 6, name: "new-pipeline" });
-    expect(screen.queryByRole("button", { name: /my-pipeline/i })).not.toBeInTheDocument();
+    await screen.findByLabelText("Select pipeline new-pipeline");
+    expect(screen.queryByLabelText("Select pipeline my-pipeline")).not.toBeInTheDocument();
   });
 
   it("clears simulate results when switching to a different pipeline", async () => {
@@ -428,13 +611,15 @@ describe("IngestPipelinesPage", () => {
       </MemoryRouter>,
     );
 
-    // Select and simulate on "another-pipeline" (first alphabetically)
+    // Select and simulate on "another-pipeline"
+    await screen.findByLabelText("Select pipeline another-pipeline");
+    await selectPipeline("another-pipeline");
     await screen.findByRole("heading", { level: 6, name: "another-pipeline" });
     await user.click(screen.getByRole("button", { name: /simulate/i }));
     await screen.findByTestId("simulate-result");
 
     // Switch to "my-pipeline"
-    await user.click(screen.getByRole("button", { name: /my-pipeline/i }));
+    await user.click(screen.getByLabelText("Select pipeline my-pipeline"));
 
     await waitFor(() => {
       expect(screen.queryByTestId("simulate-result")).not.toBeInTheDocument();

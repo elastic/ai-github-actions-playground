@@ -35,6 +35,7 @@ function Harness({ initial, updated }: { initial: ProcessorInput[]; updated: Pro
         selectedPipeline={makePipeline("p", types)}
         connection={null}
         pipelinesExist
+        ingestNodeStatsResult={{ status: "idle" }}
       />
     </div>
   );
