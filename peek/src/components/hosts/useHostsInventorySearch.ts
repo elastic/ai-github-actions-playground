@@ -1,11 +1,8 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
-import { useQueryClient, useQuery } from "@tanstack/react-query";
 
-import { useEsqlQuery } from "../../hooks/useEsqlQuery";
-import { useConnectionStore } from "../../store/useConnectionStore";
+import { useSimpleEsqlQuery } from "../../hooks/useSimpleEsqlQuery";
 import { usePageFiltersStore } from "../../store/usePageFiltersStore";
-import type { EsqlResponse } from "../../types";
 import type { HostOsType, HostRow } from "./hostTypes";
 
 import { buildHostInventoryQuery, type HostQueryFilters } from "./hostQueryBuilder";
@@ -14,8 +11,6 @@ import { parseHostInventory } from "./hostHelpers";
 export type HostSortDirection = "asc" | "desc";
 
 export function useHostsInventorySearch(osTypeOverride?: HostOsType) {
-  const queryClient = useQueryClient();
-  const connection = useConnectionStore((s) => s.connection);
   const { filters, updateFilters, resetFilters } = usePageFiltersStore(
     useShallow((s) => ({
       filters: s.hostsFilters,
@@ -24,26 +19,8 @@ export function useHostsInventorySearch(osTypeOverride?: HostOsType) {
     })),
   );
 
-  const cacheKey = useMemo(
-    () => ["hosts-search", connection?.url, osTypeOverride ?? filters.osFilter] as const,
-    [connection?.url, osTypeOverride, filters.osFilter],
-  );
-
-  const { data: searchResult = null } = useQuery<EsqlResponse | null>({
-    queryKey: cacheKey,
-    queryFn: () => null,
-    enabled: false,
-    initialData: null,
-  });
-  const setSearchResult = useCallback(
-    (result: EsqlResponse | null) => queryClient.setQueryData(cacheKey, result),
-    [queryClient, cacheKey],
-  );
-
   const [sortField, setSortField] = useState<keyof HostRow>("lastSeen");
   const [sortDirection, setSortDirection] = useState<HostSortDirection>("desc");
-  const latestQueryRef = useRef<string | null>(null);
-  const dispatchedConnectionRef = useRef<string | null>(null);
 
   const handleSort = useCallback(
     (field: keyof HostRow) => {
@@ -57,33 +34,8 @@ export function useHostsInventorySearch(osTypeOverride?: HostOsType) {
     [sortField],
   );
 
-  const handleSuccess = useCallback(
-    (data: EsqlResponse, executedQuery: string) => {
-      if (executedQuery !== latestQueryRef.current) return;
-      if (dispatchedConnectionRef.current !== connection?.url) return;
-      setSearchResult(data);
-    },
-    [setSearchResult, connection?.url],
-  );
-  const handleFailure = useCallback(
-    (failedQuery: string) => {
-      if (failedQuery !== latestQueryRef.current) return;
-      if (dispatchedConnectionRef.current !== connection?.url) return;
-      setSearchResult(null);
-    },
-    [setSearchResult, connection?.url],
-  );
-  const { runQuery, loading, error, clearError } = useEsqlQuery({
-    connection,
-    onSuccess: handleSuccess,
-    onFailure: handleFailure,
-  });
-
-  const cancelSearch = useCallback(() => {
-    latestQueryRef.current = null;
-  }, []);
-
-  const handleSearch = useCallback(() => {
+  // Build the query declaratively — it auto-executes via useSimpleEsqlQuery.
+  const esqlQuery = useMemo(() => {
     const effectiveOsType =
       osTypeOverride ?? (filters.osFilter === "all" ? undefined : filters.osFilter);
     const queryFilters: HostQueryFilters = {
@@ -92,19 +44,14 @@ export function useHostsInventorySearch(osTypeOverride?: HostOsType) {
       osType: effectiveOsType,
       search: filters.search || undefined,
     };
-    const query = buildHostInventoryQuery(queryFilters);
-    latestQueryRef.current = query.trim();
-    dispatchedConnectionRef.current = connection?.url ?? null;
-    runQuery(query);
-  }, [filters, osTypeOverride, runQuery, connection?.url]);
+    return buildHostInventoryQuery(queryFilters);
+  }, [filters, osTypeOverride]);
+
+  const { data: searchResult, loading, error, refetch } = useSimpleEsqlQuery({ query: esqlQuery });
 
   const handleReset = useCallback(() => {
-    if (loading) return;
-    latestQueryRef.current = null;
-    clearError();
-    setSearchResult(null);
     resetFilters();
-  }, [clearError, resetFilters, loading, setSearchResult]);
+  }, [resetFilters]);
 
   const hostRows = useMemo<HostRow[]>(() => {
     if (!searchResult) return [];
@@ -122,9 +69,8 @@ export function useHostsInventorySearch(osTypeOverride?: HostOsType) {
     loading,
     error,
     handleSort,
-    handleSearch,
     handleReset,
-    cancelSearch,
+    refetch,
   };
 }
 

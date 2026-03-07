@@ -1,6 +1,5 @@
-import { useCallback, useMemo, useRef } from "react";
+import { useMemo } from "react";
 import { useParams, Link as RouterLink } from "react-router-dom";
-import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useShallow } from "zustand/react/shallow";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -12,17 +11,17 @@ import Typography from "@mui/material/Typography";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
 
-import { useEsqlQuery } from "../../hooks/useEsqlQuery";
-import { useConnectionStore } from "../../store/useConnectionStore";
+import { useSimpleEsqlQuery } from "../../hooks/useSimpleEsqlQuery";
 import { usePageFiltersStore } from "../../store/usePageFiltersStore";
-import type { EsqlResponse } from "../../types";
+import DateRangePicker from "../DateRangePicker";
 import EmptyState from "../EmptyState";
 import PageHeader from "../PageHeader";
 
-import { buildHostDetailQuery } from "./hostQueryBuilder";
+import { buildHostDetailQuery, type HostQueryFilters } from "./hostQueryBuilder";
 import { fmtPct, fmtCount, fmtTimestamp, MetricCard } from "./hostFormatters";
 import { parseHostInventory } from "./hostHelpers";
 import { osLabel } from "./hostTypes";
+import HostDetailMetricsGrid from "./HostDetailMetricsGrid";
 
 export default function HostDetailPage() {
   const { hostId } = useParams<{ hostId: string }>();
@@ -34,67 +33,33 @@ export default function HostDetailPage() {
       return hostId;
     }
   }, [hostId]);
-  const queryClient = useQueryClient();
-  const connection = useConnectionStore((s) => s.connection);
-  const { filters } = usePageFiltersStore(useShallow((s) => ({ filters: s.hostsFilters })));
 
-  const cacheKey = useMemo(
-    () =>
-      ["host-detail", connection?.url, decodedHostId, filters.timeFrom, filters.timeTo] as const,
-    [connection?.url, decodedHostId, filters.timeFrom, filters.timeTo],
-  );
-  const { data: searchResult = null } = useQuery<EsqlResponse | null>({
-    queryKey: cacheKey,
-    queryFn: () => null,
-    enabled: false,
-    initialData: null,
-  });
-  const setSearchResult = useCallback(
-    (result: EsqlResponse | null) => queryClient.setQueryData(cacheKey, result),
-    [queryClient, cacheKey],
+  const { filters, updateFilters } = usePageFiltersStore(
+    useShallow((s) => ({ filters: s.hostsFilters, updateFilters: s.updateHostsFilters })),
   );
 
-  const latestQueryRef = useRef<string | null>(null);
-  const dispatchedConnectionRef = useRef<string | null>(null);
-
-  const handleSuccess = useCallback(
-    (data: EsqlResponse, executedQuery: string) => {
-      if (executedQuery !== latestQueryRef.current) return;
-      if (dispatchedConnectionRef.current !== connection?.url) return;
-      setSearchResult(data);
-    },
-    [setSearchResult, connection?.url],
+  const queryFilters = useMemo<HostQueryFilters>(
+    () => ({ timeFrom: filters.timeFrom, timeTo: filters.timeTo }),
+    [filters.timeFrom, filters.timeTo],
   );
-  const handleFailure = useCallback(
-    (failedQuery: string) => {
-      if (failedQuery !== latestQueryRef.current) return;
-      if (dispatchedConnectionRef.current !== connection?.url) return;
-      setSearchResult(null);
-    },
-    [setSearchResult, connection?.url],
-  );
-  const { runQuery, loading, error } = useEsqlQuery({
-    connection,
-    onSuccess: handleSuccess,
-    onFailure: handleFailure,
-  });
 
-  const handleSearch = useCallback(() => {
-    if (!decodedHostId) return;
-    const query = buildHostDetailQuery(decodedHostId, {
-      timeFrom: filters.timeFrom,
-      timeTo: filters.timeTo,
-    });
-    latestQueryRef.current = query.trim();
-    dispatchedConnectionRef.current = connection?.url ?? null;
-    runQuery(query);
-  }, [decodedHostId, filters, runQuery, connection?.url]);
+  const detailQuery = useMemo(
+    () => (decodedHostId ? buildHostDetailQuery(decodedHostId, queryFilters) : null),
+    [decodedHostId, queryFilters],
+  );
+  const { data: searchResult, loading, error } = useSimpleEsqlQuery({ query: detailQuery });
 
   const hostRow = useMemo(() => {
     if (!searchResult) return null;
     const rows = parseHostInventory(searchResult);
     return rows[0] ?? null;
   }, [searchResult]);
+
+  const descriptionText = hostRow
+    ? [osLabel(hostRow.osType), [hostRow.osName, hostRow.osVersion].filter(Boolean).join(" ")]
+        .filter(Boolean)
+        .join(" — ")
+    : "Loading host details...";
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2, minHeight: "100%" }}>
@@ -111,23 +76,15 @@ export default function HostDetailPage() {
             Hosts
           </Button>
         }
-        description={
-          hostRow
-            ? [
-                osLabel(hostRow.osType),
-                [hostRow.osName, hostRow.osVersion].filter(Boolean).join(" "),
-              ]
-                .filter(Boolean)
-                .join(" — ")
-            : "Load host details to view resource metrics."
-        }
+        description={descriptionText}
       />
-
       <Paper variant="outlined" sx={{ p: 1.5 }}>
         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center" }}>
-          <Button variant="contained" onClick={handleSearch} disabled={loading}>
-            {loading ? <CircularProgress size={14} color="inherit" /> : "Load Host Data"}
-          </Button>
+          <DateRangePicker
+            value={{ from: filters.timeFrom, to: filters.timeTo }}
+            onChange={(range) => updateFilters({ timeFrom: range.from, timeTo: range.to })}
+          />
+          {loading && <CircularProgress size={16} />}
         </Box>
       </Paper>
 
@@ -137,8 +94,8 @@ export default function HostDetailPage() {
         <Paper variant="outlined" sx={{ flex: 1, minHeight: 200, overflow: "auto" }}>
           <EmptyState
             icon={<SearchOffIcon />}
-            heading="No host data loaded"
-            description="Click Load Host Data to fetch the latest snapshot for this host."
+            heading="No host data found"
+            description="No data was found for this host in the selected time range."
           />
         </Paper>
       )}
@@ -187,6 +144,11 @@ export default function HostDetailPage() {
               <MetricCard label="Processes" value={fmtCount(hostRow.processCount)} />
             )}
           </Box>
+
+          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+            Metrics Over Time
+          </Typography>
+          <HostDetailMetricsGrid hostId={decodedHostId} filters={queryFilters} />
         </Box>
       )}
     </Box>

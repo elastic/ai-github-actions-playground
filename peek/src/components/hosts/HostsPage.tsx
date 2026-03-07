@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import Alert from "@mui/material/Alert";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
 import Box from "@mui/material/Box";
@@ -9,14 +10,18 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 
 import { PAGE_MANIFEST } from "../../routes/manifest";
+import DateRangePicker from "../DateRangePicker";
 import EmptyState from "../EmptyState";
 import PageHeader from "../PageHeader";
 
+import HostHoneycombChart from "./HostHoneycombChart";
 import HostInventoryTable from "./HostInventoryTable";
+import HostMetricsCharts from "./HostMetricsCharts";
 import HostOverviewCards from "./HostOverviewCards";
 import { useHostsInventorySearch } from "./useHostsInventorySearch";
 import type { HostOsType } from "./hostTypes";
 import { osLabel } from "./hostTypes";
+import type { HostQueryFilters } from "./hostQueryBuilder";
 
 interface HostsPageProps {
   /** When set, restricts the page to a single OS type. */
@@ -27,16 +32,13 @@ export default function HostsPage({ osType }: HostsPageProps) {
   const {
     filters,
     updateFilters,
-    searchResult,
     hostRows,
     sortField,
     sortDirection,
     loading,
     error,
     handleSort,
-    handleSearch,
     handleReset,
-    cancelSearch,
   } = useHostsInventorySearch(osType);
 
   const title = osType ? `${osLabel(osType)} Hosts` : "Hosts";
@@ -44,9 +46,23 @@ export default function HostsPage({ osType }: HostsPageProps) {
     ? `Inventory and health snapshot of your ${osLabel(osType)} hosts.`
     : "Inventory and health snapshot of all monitored hosts.";
 
+  const metricsFilters = useMemo<HostQueryFilters>(
+    () => ({
+      timeFrom: filters.timeFrom,
+      timeTo: filters.timeTo,
+      osType: osType ?? (filters.osFilter === "all" ? undefined : filters.osFilter),
+      search: filters.search || undefined,
+    }),
+    [filters, osType],
+  );
+
+  const hasData = hostRows.length > 0;
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2, minHeight: "100%" }}>
       <PageHeader title={title} description={description} />
+
+      {/* Toolbar */}
       <Paper variant="outlined" sx={{ p: 1.5 }}>
         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center" }}>
           <TextField
@@ -54,19 +70,18 @@ export default function HostsPage({ osType }: HostsPageProps) {
             label="Search hosts"
             placeholder="Filter by host name"
             value={filters.search}
-            onChange={(e) => {
-              cancelSearch();
-              updateFilters({ search: e.target.value });
-            }}
+            onChange={(e) => updateFilters({ search: e.target.value })}
             sx={{ minWidth: 200 }}
           />
-          <Button variant="contained" onClick={handleSearch} disabled={loading}>
-            {loading ? <CircularProgress size={14} color="inherit" /> : "Search"}
-          </Button>
+          <DateRangePicker
+            value={{ from: filters.timeFrom, to: filters.timeTo }}
+            onChange={(range) => updateFilters({ timeFrom: range.from, timeTo: range.to })}
+          />
           <Button variant="text" onClick={handleReset} disabled={loading}>
             Reset
           </Button>
-          {searchResult && (
+          {loading && <CircularProgress size={16} />}
+          {hasData && (
             <Typography variant="body2" color="text.secondary">
               {hostRows.length} {hostRows.length === 1 ? "host" : "hosts"} found
             </Typography>
@@ -76,18 +91,7 @@ export default function HostsPage({ osType }: HostsPageProps) {
 
       {error && <Alert severity="error">{error}</Alert>}
 
-      {!loading && !searchResult && (
-        <Paper variant="outlined" sx={{ flex: 1, minHeight: 200, overflow: "auto" }}>
-          <EmptyState
-            icon={<SearchOffIcon />}
-            heading="No host data loaded"
-            description="Click Search to discover hosts from your host metrics data."
-            addDataHref={PAGE_MANIFEST.addData.path}
-          />
-        </Paper>
-      )}
-
-      {!loading && searchResult && hostRows.length === 0 && (
+      {!loading && !hasData && (
         <Paper variant="outlined" sx={{ flex: 1, minHeight: 200, overflow: "auto" }}>
           <EmptyState
             icon={<SearchOffIcon />}
@@ -98,9 +102,18 @@ export default function HostsPage({ osType }: HostsPageProps) {
         </Paper>
       )}
 
-      {hostRows.length > 0 && (
+      {hasData && (
         <Stack spacing={2}>
+          {/* Overview stat cards */}
           <HostOverviewCards hostRows={hostRows} />
+
+          {/* Hero: Honeycomb / treemap chart */}
+          <HostHoneycombChart hostRows={hostRows} />
+
+          {/* Time-series metric charts */}
+          <HostMetricsCharts filters={metricsFilters} />
+
+          {/* Inventory table */}
           <Paper variant="outlined" sx={{ overflow: "auto" }}>
             <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
               <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>

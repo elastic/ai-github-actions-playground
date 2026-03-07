@@ -88,3 +88,123 @@ export function buildHostDetailQuery(hostId: string, filters: HostQueryFilters):
     host_ip = host.ip
 | KEEP host_key, host_name, os_type, os_name, os_version, last_seen, cpu_utilization, memory_utilization, process_count, host_ip`;
 }
+
+/**
+ * Supported metric fields for time-series queries.
+ */
+export type HostTimeSeriesMetric =
+  | "system.cpu.utilization"
+  | "system.memory.utilization"
+  | "system.disk.io"
+  | "system.network.io"
+  | "system.filesystem.utilization"
+  | "system.cpu.load_average.1m"
+  | "system.cpu.load_average.5m"
+  | "system.cpu.load_average.15m";
+
+/**
+ * Builds an ES|QL query returning time-bucketed averages for a single
+ * metric across all hosts. Results include a `bucket` timestamp column
+ * and one `metric_value` column.
+ */
+export function buildHostTimeSeriesQuery(
+  metricField: HostTimeSeriesMetric,
+  filters: HostQueryFilters,
+  bucketSize = "30 seconds",
+): string {
+  const whereConditions: string[] = [
+    `@timestamp >= ${filters.timeFrom}`,
+    `@timestamp <= ${filters.timeTo}`,
+  ];
+
+  if (filters.osType && filters.osType !== "unknown") {
+    const osValue = filters.osType === "macos" ? "darwin" : filters.osType;
+    whereConditions.push(`os.type == "${osValue}"`);
+  }
+
+  if (filters.search) {
+    const escaped = escapeEsql(filters.search);
+    whereConditions.push(`host.name LIKE "*${escaped}*"`);
+  }
+
+  return `FROM metrics-hostmetricsreceiver*
+| WHERE ${whereConditions.join(" AND ")}
+| EVAL bucket = DATE_TRUNC(${bucketSize}, @timestamp)
+| STATS metric_value = AVG(${metricField}) BY bucket
+| SORT bucket ASC`;
+}
+
+/**
+ * Builds a multi-metric time-series query for load averages (1m, 5m, 15m)
+ * which need to be returned as separate columns.
+ */
+export function buildHostLoadAverageTimeSeriesQuery(
+  filters: HostQueryFilters,
+  bucketSize = "30 seconds",
+): string {
+  const whereConditions: string[] = [
+    `@timestamp >= ${filters.timeFrom}`,
+    `@timestamp <= ${filters.timeTo}`,
+  ];
+
+  if (filters.osType && filters.osType !== "unknown") {
+    const osValue = filters.osType === "macos" ? "darwin" : filters.osType;
+    whereConditions.push(`os.type == "${osValue}"`);
+  }
+
+  if (filters.search) {
+    const escaped = escapeEsql(filters.search);
+    whereConditions.push(`host.name LIKE "*${escaped}*"`);
+  }
+
+  return `FROM metrics-hostmetricsreceiver*
+| WHERE ${whereConditions.join(" AND ")}
+| EVAL bucket = DATE_TRUNC(${bucketSize}, @timestamp)
+| STATS
+    load_1m = AVG(system.cpu.load_average.1m),
+    load_5m = AVG(system.cpu.load_average.5m),
+    load_15m = AVG(system.cpu.load_average.15m)
+  BY bucket
+| SORT bucket ASC`;
+}
+
+/**
+ * Builds a time-series query for a single host and a single metric.
+ */
+export function buildHostDetailTimeSeriesQuery(
+  hostId: string,
+  metricField: HostTimeSeriesMetric,
+  filters: HostQueryFilters,
+  bucketSize = "30 seconds",
+): string {
+  const escaped = escapeEsql(hostId);
+  return `FROM metrics-hostmetricsreceiver*
+| WHERE @timestamp >= ${filters.timeFrom}
+  AND @timestamp <= ${filters.timeTo}
+  AND ${STABLE_HOST_ID_EXPRESSION} == "${escaped}"
+| EVAL bucket = DATE_TRUNC(${bucketSize}, @timestamp)
+| STATS metric_value = AVG(${metricField}) BY bucket
+| SORT bucket ASC`;
+}
+
+/**
+ * Builds a load-average time-series query for a single host.
+ */
+export function buildHostDetailLoadAverageQuery(
+  hostId: string,
+  filters: HostQueryFilters,
+  bucketSize = "30 seconds",
+): string {
+  const escaped = escapeEsql(hostId);
+  return `FROM metrics-hostmetricsreceiver*
+| WHERE @timestamp >= ${filters.timeFrom}
+  AND @timestamp <= ${filters.timeTo}
+  AND ${STABLE_HOST_ID_EXPRESSION} == "${escaped}"
+| EVAL bucket = DATE_TRUNC(${bucketSize}, @timestamp)
+| STATS
+    load_1m = AVG(system.cpu.load_average.1m),
+    load_5m = AVG(system.cpu.load_average.5m),
+    load_15m = AVG(system.cpu.load_average.15m)
+  BY bucket
+| SORT bucket ASC`;
+}
