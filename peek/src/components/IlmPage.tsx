@@ -2,33 +2,23 @@ import { useCallback, useDeferredValue, useMemo, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Chip from "@mui/material/Chip";
-import Drawer from "@mui/material/Drawer";
 import FormControlLabel from "@mui/material/FormControlLabel";
-import Grid from "@mui/material/Grid";
-import IconButton from "@mui/material/IconButton";
-import LinearProgress from "@mui/material/LinearProgress";
 import Paper from "@mui/material/Paper";
 import Switch from "@mui/material/Switch";
 import Tab from "@mui/material/Tab";
-import Table from "@mui/material/Table";
-import TableBody from "@mui/material/TableBody";
-import TableCell from "@mui/material/TableCell";
-import TableContainer from "@mui/material/TableContainer";
-import TableHead from "@mui/material/TableHead";
-import TableRow from "@mui/material/TableRow";
-import TableSortLabel from "@mui/material/TableSortLabel";
 import Tabs from "@mui/material/Tabs";
 import TextField from "@mui/material/TextField";
-import Typography from "@mui/material/Typography";
-import CloseIcon from "@mui/icons-material/Close";
-import PolicyIcon from "@mui/icons-material/Policy";
 import { parseAsBoolean, parseAsString, parseAsStringEnum, useQueryStates } from "nuqs";
 
 import { useIlm } from "../hooks/useIlm";
+import type { IlmPolicyRow } from "../services/es/ilmTypes";
 import { COMPONENT_HEIGHTS } from "../types/tokens";
 
-import EmptyState from "./EmptyState";
+import IlmIndexDetailDrawer from "./IlmIndexDetailDrawer";
+import IlmIndicesTable from "./IlmIndicesTable";
+import IlmKpiCards from "./IlmKpiCards";
+import IlmPoliciesTable from "./IlmPoliciesTable";
+import IlmPolicyDetailDrawer from "./IlmPolicyDetailDrawer";
 import {
   compareIndexRows,
   comparePolicyRows,
@@ -37,42 +27,26 @@ import {
   type SortDirection,
 } from "./ilmSortUtils";
 import PageHeader from "./PageHeader";
-import { OverviewInfoCard } from "./OverviewInfoCard";
 
 // Re-export so existing consumers still work
 export { parseDurationToMs, compareIndexRows, comparePolicyRows } from "./ilmSortUtils";
 export type { IndexSortField, PolicySortField, SortDirection } from "./ilmSortUtils";
-
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
 
 const ILM_TABS: Array<"indices" | "policies"> = ["indices", "policies"];
 const INDEX_SORT_FIELDS: IndexSortField[] = ["index", "policy", "phase", "step", "age", "error"];
 const POLICY_SORT_FIELDS: PolicySortField[] = ["name", "version", "modifiedDate", "indexCount"];
 const SORT_DIRECTIONS: SortDirection[] = ["asc", "desc"];
 
-const PHASE_COLORS: Record<string, "info" | "success" | "warning" | "error" | "default"> = {
-  hot: "error",
-  warm: "warning",
-  cold: "info",
-  frozen: "info",
-  delete: "default",
-};
-
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
-
 export default function IlmPage() {
   const result = useIlm();
   const loading = result.status === "loading";
-  const indexRows = result.status === "success" ? result.data.indexRows : [];
-  const policyRows = result.status === "success" ? result.data.policyRows : [];
+  const resultData = result.status === "success" ? result.data : null;
+  const indexRows = useMemo(() => resultData?.indexRows ?? [], [resultData]);
+  const policyRows = useMemo(() => resultData?.policyRows ?? [], [resultData]);
 
   const [urlState, setUrlState] = useQueryStates(
     {
-      tab: parseAsStringEnum<"indices" | "policies">(ILM_TABS).withDefault("indices"),
+      tab: parseAsStringEnum<"indices" | "policies">(ILM_TABS).withDefault("policies"),
       q: parseAsString.withDefault(""),
       onlyErrors: parseAsBoolean.withDefault(false),
       managedOnly: parseAsBoolean.withDefault(false),
@@ -85,38 +59,27 @@ export default function IlmPage() {
     { history: "replace" },
   );
 
-  const activeTab = urlState.tab;
-  const search = urlState.q;
+  const { tab: activeTab, q: search, onlyErrors, managedOnly, phase: phaseFilter } = urlState;
+  const { indexSortField, indexSortDir, policySortField, policySortDir } = urlState;
   const deferredSearch = useDeferredValue(search);
-  const onlyErrors = urlState.onlyErrors;
-  const managedOnly = urlState.managedOnly;
-  const phaseFilter = urlState.phase;
-  const indexSortField = urlState.indexSortField;
-  const indexSortDir = urlState.indexSortDir;
-  const policySortField = urlState.policySortField;
-  const policySortDir = urlState.policySortDir;
 
-  // Index table sort — default: errors first
   const handleIndexSort = useCallback(
     (field: IndexSortField) => {
-      const nextDir: SortDirection =
+      const dir: SortDirection =
         indexSortField === field && indexSortDir === "asc" ? "desc" : "asc";
-      void setUrlState({ indexSortField: field, indexSortDir: nextDir });
+      void setUrlState({ indexSortField: field, indexSortDir: dir });
     },
     [indexSortField, indexSortDir, setUrlState],
   );
-
-  // Policy table sort
   const handlePolicySort = useCallback(
     (field: PolicySortField) => {
-      const nextDir: SortDirection =
+      const dir: SortDirection =
         policySortField === field && policySortDir === "asc" ? "desc" : "asc";
-      void setUrlState({ policySortField: field, policySortDir: nextDir });
+      void setUrlState({ policySortField: field, policySortDir: dir });
     },
     [policySortField, policySortDir, setUrlState],
   );
 
-  // Detail flyover
   const [selectedIndex, setSelectedIndex] = useState<string | null>(null);
   const selectedRow = useMemo(
     () => indexRows.find((r) => r.index === selectedIndex) ?? null,
@@ -126,31 +89,28 @@ export default function IlmPage() {
     () => policyRows.find((r) => r.name === selectedRow?.policy) ?? null,
     [policyRows, selectedRow],
   );
+  const [selectedPolicy, setSelectedPolicy] = useState<IlmPolicyRow | null>(null);
 
-  // Derived metrics
   const errorCount = useMemo(() => indexRows.filter((r) => r.isError).length, [indexRows]);
   const phaseDistribution = useMemo(() => {
-    const dist: Record<string, number> = {};
-    for (const row of indexRows) {
-      const p = row.phase || "unknown";
-      dist[p] = (dist[p] ?? 0) + 1;
-    }
-    return dist;
+    const d: Record<string, number> = {};
+    for (const r of indexRows) d[r.phase || "unknown"] = (d[r.phase || "unknown"] ?? 0) + 1;
+    return d;
   }, [indexRows]);
 
-  // Filter + sort
   const filteredIndexRows = useMemo(() => {
     const term = deferredSearch.trim().toLowerCase();
-    const phase = phaseFilter.trim().toLowerCase();
-    let filtered = indexRows.filter((r) => {
-      if (onlyErrors && !r.isError) return false;
-      if (managedOnly && !r.raw?.managed) return false;
-      if (phase && r.phase.toLowerCase() !== phase) return false;
-      if (!term) return true;
-      return r.index.toLowerCase().includes(term) || r.policy.toLowerCase().includes(term);
-    });
-    filtered = [...filtered].sort((a, b) => compareIndexRows(a, b, indexSortField, indexSortDir));
-    return filtered;
+    const ph = phaseFilter.trim().toLowerCase();
+    return [...indexRows]
+      .filter((r) => {
+        if (onlyErrors && !r.isError) return false;
+        if (managedOnly && !r.raw?.managed) return false;
+        if (ph && r.phase.toLowerCase() !== ph) return false;
+        return (
+          !term || r.index.toLowerCase().includes(term) || r.policy.toLowerCase().includes(term)
+        );
+      })
+      .sort((a, b) => compareIndexRows(a, b, indexSortField, indexSortDir));
   }, [
     indexRows,
     deferredSearch,
@@ -163,14 +123,9 @@ export default function IlmPage() {
 
   const filteredPolicyRows = useMemo(() => {
     const term = deferredSearch.trim().toLowerCase();
-    let filtered = policyRows.filter((r) => {
-      if (!term) return true;
-      return r.name.toLowerCase().includes(term);
-    });
-    filtered = [...filtered].sort((a, b) =>
-      comparePolicyRows(a, b, policySortField, policySortDir),
-    );
-    return filtered;
+    return [...policyRows]
+      .filter((r) => !term || r.name.toLowerCase().includes(term))
+      .sort((a, b) => comparePolicyRows(a, b, policySortField, policySortDir));
   }, [policyRows, deferredSearch, policySortField, policySortDir]);
 
   if (result.status === "error") {
@@ -181,11 +136,13 @@ export default function IlmPage() {
     );
   }
 
+  const hasFilters = Boolean(search || onlyErrors || managedOnly || phaseFilter);
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, height: "100%", minHeight: 0 }}>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
         <PageHeader
-          title="ILM Troubleshooting"
+          title="Index Lifecycle Management"
           actions={
             <Button
               size="small"
@@ -198,53 +155,12 @@ export default function IlmPage() {
           }
         />
       </Paper>
-
-      {/* KPI cards */}
-      <Grid container spacing={2}>
-        <Grid item xs={6} sm={3}>
-          <OverviewInfoCard title="Managed Indices">
-            <Typography variant="h5" component="p">
-              {indexRows.length}
-            </Typography>
-          </OverviewInfoCard>
-        </Grid>
-        <Grid item xs={6} sm={3}>
-          <OverviewInfoCard title="Indices in ERROR">
-            <Typography variant="h5" component="p" color={errorCount > 0 ? "error" : undefined}>
-              {errorCount}
-            </Typography>
-          </OverviewInfoCard>
-        </Grid>
-        <Grid item xs={6} sm={3}>
-          <OverviewInfoCard title="Policies">
-            <Typography variant="h5" component="p">
-              {policyRows.length}
-            </Typography>
-          </OverviewInfoCard>
-        </Grid>
-        <Grid item xs={6} sm={3}>
-          <OverviewInfoCard title="Phase Distribution">
-            <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
-              {Object.entries(phaseDistribution).map(([phase, count]) => (
-                <Chip
-                  key={phase}
-                  label={`${phase}: ${count}`}
-                  size="small"
-                  color={PHASE_COLORS[phase] ?? "default"}
-                  variant="outlined"
-                />
-              ))}
-              {Object.keys(phaseDistribution).length === 0 && (
-                <Typography variant="body2" color="text.secondary">
-                  —
-                </Typography>
-              )}
-            </Box>
-          </OverviewInfoCard>
-        </Grid>
-      </Grid>
-
-      {/* Tabs + Search */}
+      <IlmKpiCards
+        indexCount={indexRows.length}
+        errorCount={errorCount}
+        policyCount={policyRows.length}
+        phaseDistribution={phaseDistribution}
+      />
       <Box sx={{ display: "flex", gap: 1, alignItems: "center", flexWrap: "wrap" }}>
         <Tabs
           value={activeTab}
@@ -297,366 +213,38 @@ export default function IlmPage() {
           </>
         )}
       </Box>
-
-      {/* Indices table */}
       {activeTab === "indices" && (
-        <Paper variant="outlined" sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
-          <TableContainer>
-            <Table size="small" stickyHeader aria-label="ILM indices">
-              <TableHead>
-                <TableRow>
-                  <TableCell>
-                    <TableSortLabel
-                      active={indexSortField === "index"}
-                      direction={indexSortField === "index" ? indexSortDir : "asc"}
-                      onClick={() => handleIndexSort("index")}
-                    >
-                      Index
-                    </TableSortLabel>
-                  </TableCell>
-                  <TableCell>
-                    <TableSortLabel
-                      active={indexSortField === "policy"}
-                      direction={indexSortField === "policy" ? indexSortDir : "asc"}
-                      onClick={() => handleIndexSort("policy")}
-                    >
-                      Policy
-                    </TableSortLabel>
-                  </TableCell>
-                  <TableCell>
-                    <TableSortLabel
-                      active={indexSortField === "phase"}
-                      direction={indexSortField === "phase" ? indexSortDir : "asc"}
-                      onClick={() => handleIndexSort("phase")}
-                    >
-                      Phase
-                    </TableSortLabel>
-                  </TableCell>
-                  <TableCell>Action</TableCell>
-                  <TableCell>
-                    <TableSortLabel
-                      active={indexSortField === "step"}
-                      direction={indexSortField === "step" ? indexSortDir : "asc"}
-                      onClick={() => handleIndexSort("step")}
-                    >
-                      Step
-                    </TableSortLabel>
-                  </TableCell>
-                  <TableCell>
-                    <TableSortLabel
-                      active={indexSortField === "age"}
-                      direction={indexSortField === "age" ? indexSortDir : "asc"}
-                      onClick={() => handleIndexSort("age")}
-                    >
-                      Age
-                    </TableSortLabel>
-                  </TableCell>
-                  <TableCell>
-                    <TableSortLabel
-                      active={indexSortField === "error"}
-                      direction={indexSortField === "error" ? indexSortDir : "asc"}
-                      onClick={() => handleIndexSort("error")}
-                    >
-                      Error
-                    </TableSortLabel>
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {loading && indexRows.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={7} sx={{ py: 0, border: 0 }}>
-                      <LinearProgress />
-                    </TableCell>
-                  </TableRow>
-                )}
-                {filteredIndexRows.map((row) => (
-                  <TableRow
-                    key={row.index}
-                    hover
-                    selected={row.index === selectedIndex}
-                    tabIndex={0}
-                    role="button"
-                    aria-label={`Open ILM details for ${row.index}`}
-                    onClick={() => setSelectedIndex(row.index)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter" || event.key === " " || event.key === "Spacebar") {
-                        event.preventDefault();
-                        setSelectedIndex(row.index);
-                      }
-                    }}
-                    sx={{ cursor: "pointer" }}
-                  >
-                    <TableCell>
-                      <Typography
-                        variant="body2"
-                        sx={{ fontFamily: "monospace", fontSize: "0.8rem" }}
-                      >
-                        {row.index}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>{row.policy}</TableCell>
-                    <TableCell>
-                      <Chip
-                        label={row.phase || "—"}
-                        size="small"
-                        color={PHASE_COLORS[row.phase] ?? "default"}
-                        variant="outlined"
-                      />
-                    </TableCell>
-                    <TableCell>{row.action || "—"}</TableCell>
-                    <TableCell>{row.step || "—"}</TableCell>
-                    <TableCell>{row.age || "—"}</TableCell>
-                    <TableCell>
-                      {row.isError ? (
-                        <Chip label="ERROR" size="small" color="error" />
-                      ) : (
-                        <Chip label="OK" size="small" color="success" variant="outlined" />
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {!loading && filteredIndexRows.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={7} sx={{ border: 0 }}>
-                      <EmptyState
-                        size="small"
-                        icon={<PolicyIcon sx={{ fontSize: 28 }} />}
-                        heading="No ILM indices found"
-                        description={
-                          search || onlyErrors || managedOnly || phaseFilter
-                            ? "Try adjusting your filters."
-                            : "No ILM-managed indices detected."
-                        }
-                      />
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Paper>
+        <IlmIndicesTable
+          loading={loading}
+          totalCount={indexRows.length}
+          filteredRows={filteredIndexRows}
+          selectedIndex={selectedIndex}
+          sortField={indexSortField}
+          sortDir={indexSortDir}
+          onSort={handleIndexSort}
+          onSelect={setSelectedIndex}
+          hasFilters={hasFilters}
+        />
       )}
-
-      {/* Policies table */}
       {activeTab === "policies" && (
-        <Paper variant="outlined" sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
-          <TableContainer>
-            <Table size="small" stickyHeader aria-label="ILM policies">
-              <TableHead>
-                <TableRow>
-                  <TableCell>
-                    <TableSortLabel
-                      active={policySortField === "name"}
-                      direction={policySortField === "name" ? policySortDir : "asc"}
-                      onClick={() => handlePolicySort("name")}
-                    >
-                      Policy
-                    </TableSortLabel>
-                  </TableCell>
-                  <TableCell>
-                    <TableSortLabel
-                      active={policySortField === "version"}
-                      direction={policySortField === "version" ? policySortDir : "asc"}
-                      onClick={() => handlePolicySort("version")}
-                    >
-                      Version
-                    </TableSortLabel>
-                  </TableCell>
-                  <TableCell>
-                    <TableSortLabel
-                      active={policySortField === "modifiedDate"}
-                      direction={policySortField === "modifiedDate" ? policySortDir : "asc"}
-                      onClick={() => handlePolicySort("modifiedDate")}
-                    >
-                      Modified
-                    </TableSortLabel>
-                  </TableCell>
-                  <TableCell>Phases</TableCell>
-                  <TableCell>
-                    <TableSortLabel
-                      active={policySortField === "indexCount"}
-                      direction={policySortField === "indexCount" ? policySortDir : "asc"}
-                      onClick={() => handlePolicySort("indexCount")}
-                    >
-                      In Use By
-                    </TableSortLabel>
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {loading && policyRows.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={5} sx={{ py: 0, border: 0 }}>
-                      <LinearProgress />
-                    </TableCell>
-                  </TableRow>
-                )}
-                {filteredPolicyRows.map((row) => (
-                  <TableRow key={row.name} hover>
-                    <TableCell>
-                      <Typography
-                        variant="body2"
-                        sx={{ fontFamily: "monospace", fontSize: "0.8rem" }}
-                      >
-                        {row.name}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>{row.version}</TableCell>
-                    <TableCell>{row.modifiedDate || "—"}</TableCell>
-                    <TableCell>
-                      <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
-                        {row.phases.map((p) => (
-                          <Chip
-                            key={p}
-                            label={p}
-                            size="small"
-                            color={PHASE_COLORS[p] ?? "default"}
-                            variant="outlined"
-                          />
-                        ))}
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      {row.indexCount} indices, {row.dataStreamCount} data streams,{" "}
-                      {row.templateCount} templates
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {!loading && filteredPolicyRows.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={5} sx={{ border: 0 }}>
-                      <EmptyState
-                        size="small"
-                        icon={<PolicyIcon sx={{ fontSize: 28 }} />}
-                        heading="No ILM policies found"
-                        description={
-                          search ? "Try adjusting your search." : "No ILM policies configured."
-                        }
-                      />
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Paper>
+        <IlmPoliciesTable
+          loading={loading}
+          totalCount={policyRows.length}
+          filteredRows={filteredPolicyRows}
+          selectedPolicy={selectedPolicy}
+          sortField={policySortField}
+          sortDir={policySortDir}
+          onSort={handlePolicySort}
+          onSelect={setSelectedPolicy}
+          search={search}
+        />
       )}
-
-      {/* Detail flyover (index-focused) */}
-      <Drawer
-        anchor="right"
-        open={Boolean(selectedRow)}
+      <IlmIndexDetailDrawer
+        selectedRow={selectedRow}
+        selectedPolicyRow={selectedPolicyRow}
         onClose={() => setSelectedIndex(null)}
-        PaperProps={{
-          sx: {
-            width: { xs: "100%", md: 560 },
-            p: 1,
-            backgroundColor: "background.default",
-          },
-        }}
-      >
-        {selectedRow && (
-          <>
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                px: 1,
-              }}
-            >
-              <Typography variant="subtitle1">ILM Index Details</Typography>
-              <IconButton
-                size="small"
-                aria-label="Close ILM details"
-                onClick={() => setSelectedIndex(null)}
-              >
-                <CloseIcon fontSize="small" />
-              </IconButton>
-            </Box>
-            <Box sx={{ flex: 1, minHeight: 0, overflow: "auto", px: 1, py: 1 }}>
-              <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
-                INDEX
-              </Typography>
-              <Typography variant="body2" gutterBottom sx={{ fontFamily: "monospace" }}>
-                {selectedRow.index}
-              </Typography>
-
-              <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
-                POLICY
-              </Typography>
-              <Typography variant="body2" gutterBottom>
-                {selectedRow.policy}
-              </Typography>
-
-              <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
-                PHASE
-              </Typography>
-              <Chip
-                label={selectedRow.phase || "—"}
-                size="small"
-                color={PHASE_COLORS[selectedRow.phase] ?? "default"}
-                variant="outlined"
-                sx={{ mb: 1 }}
-              />
-
-              <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
-                ACTION
-              </Typography>
-              <Typography variant="body2" gutterBottom>
-                {selectedRow.action || "—"}
-              </Typography>
-
-              <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
-                STEP
-              </Typography>
-              <Typography variant="body2" gutterBottom>
-                {selectedRow.step || "—"}
-              </Typography>
-
-              <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
-                AGE
-              </Typography>
-              <Typography variant="body2" gutterBottom>
-                {selectedRow.age || "—"}
-              </Typography>
-
-              {selectedRow.isError && (
-                <>
-                  <Alert severity="error" sx={{ mt: 1, mb: 1 }}>
-                    <Typography variant="body2" fontWeight={600}>
-                      Failed Step: {selectedRow.failedStep}
-                    </Typography>
-                    <Typography variant="body2">{selectedRow.stepReason}</Typography>
-                  </Alert>
-                </>
-              )}
-
-              <Box sx={{ mt: 2 }}>
-                <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
-                  RAW JSON
-                </Typography>
-                <Paper
-                  variant="outlined"
-                  sx={{ p: 1, maxHeight: 300, overflow: "auto", fontSize: "0.75rem" }}
-                >
-                  <pre style={{ margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-                    {JSON.stringify(
-                      {
-                        explain: selectedRow.raw ?? selectedRow,
-                        policy: selectedPolicyRow?.raw ?? null,
-                      },
-                      null,
-                      2,
-                    )}
-                  </pre>
-                </Paper>
-              </Box>
-            </Box>
-          </>
-        )}
-      </Drawer>
+      />
+      <IlmPolicyDetailDrawer policy={selectedPolicy} onClose={() => setSelectedPolicy(null)} />
     </Box>
   );
 }

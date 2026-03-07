@@ -569,7 +569,7 @@ export const PAGE_MANIFEST = {
     showTimeControls: false,
     skeletonVariant: "table",
     nav: {
-      label: "ILM",
+      label: "Index Lifecycle Management",
       group: "System",
       order: 31,
       showInSidebar: true,
