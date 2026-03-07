@@ -3,6 +3,14 @@ import type { HealthCheckDefinition } from "../types";
 const ACTIVE_RECOVERY_HIGH = 5;
 const SLOW_RECOVERY_STAGE_HIGH = 3;
 
+function unknownRecoveryDataResult() {
+  return {
+    status: "unknown" as const,
+    summary: "Recovery data unavailable.",
+    recommendation: "Ensure recovery data is collected and verify cluster permissions.",
+  };
+}
+
 export const recoveryChecks: HealthCheckDefinition[] = [
   // #29
   {
@@ -14,7 +22,9 @@ export const recoveryChecks: HealthCheckDefinition[] = [
     surfaces: ["global"],
     dependsOn: ["recoveryCore"],
     evaluate: (snapshot) => {
-      const recovery = snapshot.data.recoveryCore?.recovery ?? {};
+      const recoveryData = snapshot.data.recoveryCore;
+      if (!recoveryData) return unknownRecoveryDataResult();
+      const recovery = recoveryData.recovery ?? {};
       let activeCount = 0;
       for (const indexRecovery of Object.values(recovery)) {
         const shards = indexRecovery.shards ?? [];
@@ -41,7 +51,9 @@ export const recoveryChecks: HealthCheckDefinition[] = [
     surfaces: ["global"],
     dependsOn: ["recoveryCore"],
     evaluate: (snapshot) => {
-      const recovery = snapshot.data.recoveryCore?.recovery ?? {};
+      const recoveryData = snapshot.data.recoveryCore;
+      if (!recoveryData) return unknownRecoveryDataResult();
+      const recovery = recoveryData.recovery ?? {};
       let slowStageCount = 0;
       for (const indexRecovery of Object.values(recovery)) {
         const shards = indexRecovery.shards ?? [];

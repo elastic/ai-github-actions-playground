@@ -10,6 +10,15 @@ const PENDING_TASKS_SHARD_STARTED_BACKLOG = 10;
 const ACTIVE_SHARDS_PERCENT_THRESHOLD = 100;
 const IN_FLIGHT_FETCH_HIGH = 10;
 
+function unknownClusterDataResult() {
+  return {
+    status: "unknown" as const,
+    summary: "Cluster health unknown.",
+    recommendation: "Ensure cluster health data is collected and retry the health snapshot.",
+    links: [{ label: "Cluster Health", to: "/cluster-health" }],
+  };
+}
+
 export const clusterChecks: HealthCheckDefinition[] = [
   // #1
   {
@@ -24,11 +33,8 @@ export const clusterChecks: HealthCheckDefinition[] = [
       const status = snapshot.data.clusterCore?.clusterHealth?.status;
       if (!status) {
         return {
-          status: "unknown",
-          summary: "Cluster health unknown.",
+          ...unknownClusterDataResult(),
           observed: { status },
-          recommendation: "Ensure cluster health data is collected and retry the health snapshot.",
-          links: [{ label: "Cluster Health", to: "/cluster-health" }],
         };
       }
       if (status === "red") {
@@ -53,7 +59,13 @@ export const clusterChecks: HealthCheckDefinition[] = [
     surfaces: ["global", "local"],
     dependsOn: ["clusterCore"],
     evaluate: (snapshot) => {
-      const status = snapshot.data.clusterCore?.clusterHealth?.status ?? "unknown";
+      const status = snapshot.data.clusterCore?.clusterHealth?.status;
+      if (!status) {
+        return {
+          ...unknownClusterDataResult(),
+          observed: { status },
+        };
+      }
       if (status === "yellow") {
         return {
           status: "warn",
@@ -76,7 +88,9 @@ export const clusterChecks: HealthCheckDefinition[] = [
     surfaces: ["global", "local"],
     dependsOn: ["clusterCore"],
     evaluate: (snapshot) => {
-      const unassigned = snapshot.data.clusterCore?.clusterHealth?.unassigned_shards ?? 0;
+      const clusterHealth = snapshot.data.clusterCore?.clusterHealth;
+      if (!clusterHealth) return unknownClusterDataResult();
+      const unassigned = clusterHealth.unassigned_shards ?? 0;
       if (unassigned > 0) {
         return {
           status: "fail",
@@ -126,7 +140,9 @@ export const clusterChecks: HealthCheckDefinition[] = [
     surfaces: ["global", "local"],
     dependsOn: ["clusterCore"],
     evaluate: (snapshot) => {
-      const initializing = snapshot.data.clusterCore?.clusterHealth?.initializing_shards ?? 0;
+      const clusterHealth = snapshot.data.clusterCore?.clusterHealth;
+      if (!clusterHealth) return unknownClusterDataResult();
+      const initializing = clusterHealth.initializing_shards ?? 0;
       if (initializing >= INITIALIZING_SHARDS_THRESHOLD) {
         return {
           status: "warn",
@@ -150,7 +166,9 @@ export const clusterChecks: HealthCheckDefinition[] = [
     surfaces: ["global", "local"],
     dependsOn: ["clusterCore"],
     evaluate: (snapshot) => {
-      const relocating = snapshot.data.clusterCore?.clusterHealth?.relocating_shards ?? 0;
+      const clusterHealth = snapshot.data.clusterCore?.clusterHealth;
+      if (!clusterHealth) return unknownClusterDataResult();
+      const relocating = clusterHealth.relocating_shards ?? 0;
       if (relocating >= RELOCATING_SHARDS_THRESHOLD) {
         return {
           status: "warn",

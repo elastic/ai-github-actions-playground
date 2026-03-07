@@ -1556,7 +1556,7 @@ describe("check metadata", () => {
         pendingTasks: { tasks: [{ source: "test" }] },
       },
     });
-    for (const check of clusterChecks) {
+    for (const check of INITIAL_HEALTH_CHECKS) {
       if (check.dependsOn.includes("shards")) continue; // skip shard-dependent
       const result = check.evaluate(snap);
       if (result.status === "fail" || result.status === "warn") {

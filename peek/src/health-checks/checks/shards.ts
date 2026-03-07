@@ -225,7 +225,8 @@ export const shardChecks: HealthCheckDefinition[] = [
     surfaces: ["global"],
     dependsOn: ["shards"],
     evaluate: (snapshot) => {
-      const shards = snapshot.data.shards?.catShards ?? [];
+      const shards = snapshot.data.shards?.catShards;
+      if (!shards) return unknownShardsDataResult();
       const initializing = shards.filter((s) => s.state === "INITIALIZING");
       if (initializing.length >= INITIALIZING_SHARDS_HIGH) {
         return {
@@ -251,7 +252,8 @@ export const shardChecks: HealthCheckDefinition[] = [
     surfaces: ["global"],
     dependsOn: ["shards"],
     evaluate: (snapshot) => {
-      const shards = snapshot.data.shards?.catShards ?? [];
+      const shards = snapshot.data.shards?.catShards;
+      if (!shards) return unknownShardsDataResult();
       const relocating = shards.filter((s) => s.state === "RELOCATING");
       if (relocating.length >= RELOCATING_SHARDS_HIGH) {
         return {
@@ -277,7 +279,8 @@ export const shardChecks: HealthCheckDefinition[] = [
     surfaces: ["global"],
     dependsOn: ["shards"],
     evaluate: (snapshot) => {
-      const shards = snapshot.data.shards?.catShards ?? [];
+      const shards = snapshot.data.shards?.catShards;
+      if (!shards) return unknownShardsDataResult();
       const matched = shards.filter(
         (s) =>
           s.state === "UNASSIGNED" && (s["unassigned.reason"] ?? "").includes("ALLOCATION_FAILED"),
@@ -304,7 +307,8 @@ export const shardChecks: HealthCheckDefinition[] = [
     surfaces: ["global"],
     dependsOn: ["shards"],
     evaluate: (snapshot) => {
-      const shards = snapshot.data.shards?.catShards ?? [];
+      const shards = snapshot.data.shards?.catShards;
+      if (!shards) return unknownShardsDataResult();
       const matched = shards.filter(
         (s) =>
           s.state === "UNASSIGNED" && (s["unassigned.reason"] ?? "").includes("PRIMARY_FAILED"),
@@ -331,7 +335,8 @@ export const shardChecks: HealthCheckDefinition[] = [
     surfaces: ["global"],
     dependsOn: ["shards"],
     evaluate: (snapshot) => {
-      const shards = snapshot.data.shards?.catShards ?? [];
+      const shards = snapshot.data.shards?.catShards;
+      if (!shards) return unknownShardsDataResult();
       const matched = shards.filter((s) => {
         if (s.state !== "UNASSIGNED") return false;
         const reason = s["unassigned.reason"] ?? "";
@@ -358,7 +363,8 @@ export const shardChecks: HealthCheckDefinition[] = [
     surfaces: ["global"],
     dependsOn: ["shards"],
     evaluate: (snapshot) => {
-      const shards = snapshot.data.shards?.catShards ?? [];
+      const shards = snapshot.data.shards?.catShards;
+      if (!shards) return unknownShardsDataResult();
       const matched = shards.filter(
         (s) => s.state === "UNASSIGNED" && (s["unassigned.reason"] ?? "").includes("INDEX_CLOSED"),
       );
