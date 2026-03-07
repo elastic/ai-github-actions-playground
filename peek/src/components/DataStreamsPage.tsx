@@ -25,7 +25,7 @@ import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import CloseIcon from "@mui/icons-material/Close";
 import StorageIcon from "@mui/icons-material/Storage";
-import { parseAsString, useQueryState } from "nuqs";
+import { useSearchParam } from "../hooks/useSearchParam";
 
 import type { DataStreamInfo } from "../services/es";
 import { useApiConsoleStore } from "../store/useApiConsoleStore";
@@ -123,10 +123,7 @@ export default function DataStreamsPage() {
   const setConsoleDraft = useApiConsoleStore((s) => s.setConsoleDraft);
   const navigate = useNavigate();
 
-  const [search, setSearch] = useQueryState(
-    "search",
-    parseAsString.withDefault("").withOptions({ history: "replace" }),
-  );
+  const [search, setSearch] = useSearchParam();
   const [fieldSearch, setFieldSearch] = useState("");
   const deferredSearch = useDeferredValue(search);
   const deferredFieldSearch = useDeferredValue(fieldSearch);
