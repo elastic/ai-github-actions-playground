@@ -14,6 +14,8 @@ import { useCopyFeedbackTimeout } from "../../../hooks/useCopyFeedbackTimeout";
 
 import { CODE_BLOCK_SX } from "./sharedStyles";
 
+const API_KEY_PLACEHOLDER = "<YOUR_API_KEY>";
+
 export interface AwsDeployInstallProps {
   target: AwsDeployTarget;
   esUrl: string;
@@ -30,7 +32,8 @@ export default function AwsDeployInstall({
   const [activeTab, setActiveTab] = useState<"quick" | "manual">("quick");
   const [copied, setCopied] = useState(false);
   const scheduleReset = useCopyFeedbackTimeout(() => setCopied(false));
-  const hasApiKey = apiKey.trim().length > 0;
+  const normalizedApiKey = apiKey.trim();
+  const hasApiKey = normalizedApiKey.length > 0 && normalizedApiKey !== API_KEY_PLACEHOLDER;
   const quickCreateUrl = useMemo(
     () =>
       buildCloudFormationQuickCreateUrl(target, {
