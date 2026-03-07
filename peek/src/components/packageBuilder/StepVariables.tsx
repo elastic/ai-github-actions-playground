@@ -66,10 +66,20 @@ function VariableCard({
       <CardContent sx={{ pb: "12px !important" }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
           <Box sx={{ display: "flex", flexDirection: "column" }}>
-            <IconButton size="small" disabled={index === 0} onClick={() => onMove(-1)}>
+            <IconButton
+              size="small"
+              disabled={index === 0}
+              onClick={() => onMove(-1)}
+              aria-label="Move variable up"
+            >
               <ArrowUpwardIcon fontSize="small" />
             </IconButton>
-            <IconButton size="small" disabled={index === total - 1} onClick={() => onMove(1)}>
+            <IconButton
+              size="small"
+              disabled={index === total - 1}
+              onClick={() => onMove(1)}
+              aria-label="Move variable down"
+            >
               <ArrowDownwardIcon fontSize="small" />
             </IconButton>
           </Box>
@@ -77,7 +87,9 @@ function VariableCard({
           <TextField
             label="Variable name"
             value={variable.name}
-            onChange={(e) => onUpdate({ name: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "_") })}
+            onChange={(e) =>
+              onUpdate({ name: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "_") })
+            }
             size="small"
             sx={{ flex: 1 }}
           />
@@ -90,11 +102,13 @@ function VariableCard({
             size="small"
             sx={{ width: 180 }}
           >
-            {(Object.entries(VARIABLE_TYPE_LABELS) as [VariableType, string][]).map(([value, label]) => (
-              <MenuItem key={value} value={value}>
-                {label}
-              </MenuItem>
-            ))}
+            {(Object.entries(VARIABLE_TYPE_LABELS) as [VariableType, string][]).map(
+              ([value, label]) => (
+                <MenuItem key={value} value={value}>
+                  {label}
+                </MenuItem>
+              ),
+            )}
           </TextField>
 
           {variable.name && (
@@ -116,7 +130,7 @@ function VariableCard({
             </Tooltip>
           )}
 
-          <IconButton size="small" color="error" onClick={onRemove}>
+          <IconButton size="small" color="error" onClick={onRemove} aria-label="Remove variable">
             <DeleteIcon fontSize="small" />
           </IconButton>
         </Box>
@@ -162,19 +176,43 @@ function VariableCard({
           )}
 
           <FormControlLabel
-            control={<Switch checked={variable.required} onChange={(e) => onUpdate({ required: e.target.checked })} size="small" />}
+            control={
+              <Switch
+                checked={variable.required}
+                onChange={(e) => onUpdate({ required: e.target.checked })}
+                size="small"
+              />
+            }
             label="Required"
           />
           <FormControlLabel
-            control={<Switch checked={variable.showUser} onChange={(e) => onUpdate({ showUser: e.target.checked })} size="small" />}
+            control={
+              <Switch
+                checked={variable.showUser}
+                onChange={(e) => onUpdate({ showUser: e.target.checked })}
+                size="small"
+              />
+            }
             label="Show user"
           />
           <FormControlLabel
-            control={<Switch checked={variable.multi} onChange={(e) => onUpdate({ multi: e.target.checked })} size="small" />}
+            control={
+              <Switch
+                checked={variable.multi}
+                onChange={(e) => onUpdate({ multi: e.target.checked })}
+                size="small"
+              />
+            }
             label="Multi"
           />
           <FormControlLabel
-            control={<Switch checked={variable.secret} onChange={(e) => onUpdate({ secret: e.target.checked })} size="small" />}
+            control={
+              <Switch
+                checked={variable.secret}
+                onChange={(e) => onUpdate({ secret: e.target.checked })}
+                size="small"
+              />
+            }
             label="Secret"
           />
         </Box>
@@ -203,12 +241,21 @@ function VariableCard({
                     size="small"
                     sx={{ flex: 1 }}
                   />
-                  <IconButton size="small" onClick={() => handleRemoveOption(optIdx)}>
+                  <IconButton
+                    size="small"
+                    onClick={() => handleRemoveOption(optIdx)}
+                    aria-label="Remove select option"
+                  >
                     <DeleteIcon fontSize="small" />
                   </IconButton>
                 </Box>
               ))}
-              <Button size="small" startIcon={<AddIcon />} onClick={handleAddOption} sx={{ alignSelf: "flex-start" }}>
+              <Button
+                size="small"
+                startIcon={<AddIcon />}
+                onClick={handleAddOption}
+                sx={{ alignSelf: "flex-start" }}
+              >
                 Add option
               </Button>
             </Stack>

@@ -56,7 +56,10 @@ const insightField = StateField.define<InsightMap>({
 /* ── Gutter marker: coloured dot ── */
 
 class InsightDot extends GutterMarker {
-  constructor(readonly severity: string, readonly text: string) {
+  constructor(
+    readonly severity: string,
+    readonly text: string,
+  ) {
     super();
   }
 
@@ -210,12 +213,14 @@ export function insightGutterExtension() {
     },
   });
 
-  const insightPopoverCleanup = ViewPlugin.fromClass(class {
-    destroy() {
-      cleanupPopover?.();
-      cleanupPopover = null;
-    }
-  });
+  const insightPopoverCleanup = ViewPlugin.fromClass(
+    class {
+      destroy() {
+        cleanupPopover?.();
+        cleanupPopover = null;
+      }
+    },
+  );
 
   return [
     insightField,

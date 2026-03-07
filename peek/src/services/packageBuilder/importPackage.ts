@@ -114,7 +114,9 @@ function parseManifest(
   try {
     doc = YAML.parse(yamlContent) as Record<string, unknown>;
   } catch (err) {
-    throw new Error(`Invalid manifest.yml: ${err instanceof Error ? err.message : String(err)}`, { cause: err });
+    throw new Error(`Invalid manifest.yml: ${err instanceof Error ? err.message : String(err)}`, {
+      cause: err,
+    });
   }
 
   // Identity

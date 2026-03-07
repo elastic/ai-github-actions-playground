@@ -12,7 +12,9 @@ function sanitizeIconBaseName(name: string): string {
   return sanitized || "package";
 }
 
-export function resolveIconExtension(icon: PackageBuilderData["identity"]["icon"]): "svg" | "png" | "jpg" | "jpeg" {
+export function resolveIconExtension(
+  icon: PackageBuilderData["identity"]["icon"],
+): "svg" | "png" | "jpg" | "jpeg" {
   if (!icon) return "svg";
 
   const byMime = ICON_MIME_TO_EXT[icon.mimeType.toLowerCase()];
@@ -41,7 +43,13 @@ function serializeVariable(v: PackageVariable) {
   };
   if (v.description) out.description = v.description;
   if (v.required) out.required = true;
-  if (v.default !== "") out.default = v.type === "integer" ? Number(v.default) : v.type === "bool" ? v.default === "true" : v.default;
+  if (v.default !== "")
+    out.default =
+      v.type === "integer"
+        ? Number(v.default)
+        : v.type === "bool"
+          ? v.default === "true"
+          : v.default;
   if (!v.showUser) out.show_user = false;
   if (v.multi) out.multi = true;
   if (v.secret) out.secret = true;
@@ -158,7 +166,9 @@ export function generateReadmeScaffold(data: PackageBuilderData): string {
     );
     for (const v of variables) {
       const def = v.secret ? "\\*\\*\\*" : v.default || "-";
-      lines.push(`| ${v.title || v.name} | ${v.description || "-"} | ${def} | ${v.required ? "Yes" : "No"} |`);
+      lines.push(
+        `| ${v.title || v.name} | ${v.description || "-"} | ${def} | ${v.required ? "Yes" : "No"} |`,
+      );
     }
     lines.push("");
   }

@@ -66,7 +66,15 @@ export default function PackageBuilderPage() {
       </Box>
 
       {/* Navigation */}
-      <Box sx={{ display: "flex", justifyContent: "space-between", pt: 2, borderTop: 1, borderColor: "divider" }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          pt: 2,
+          borderTop: 1,
+          borderColor: "divider",
+        }}
+      >
         <Button
           variant="outlined"
           disabled={!canGoBack}
