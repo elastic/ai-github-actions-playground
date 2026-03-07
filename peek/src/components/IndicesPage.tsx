@@ -57,7 +57,7 @@ function compareIndices(
   a: { index: string; health: string; "docs.count": string | null; "store.size": string | null },
   b: { index: string; health: string; "docs.count": string | null; "store.size": string | null },
   field: IndexSortField,
-  dir: "asc" | "desc",
+  direction: "asc" | "desc",
 ): number {
   let cmp: number;
   switch (field) {
@@ -76,7 +76,7 @@ function compareIndices(
     default:
       cmp = 0;
   }
-  return dir === "asc" ? cmp : -cmp;
+  return direction === "asc" ? cmp : -cmp;
 }
 
 // ---------------------------------------------------------------------------

@@ -22,8 +22,8 @@ export function useTableSort<F extends string>(
 
   const handleSort = useCallback(
     (field: F) => {
-      setSortDirection((prev) => (sortField === field && prev === "asc" ? "desc" : "asc"));
       setSortField(field);
+      setSortDirection((prev) => (sortField === field && prev === "asc" ? "desc" : "asc"));
     },
     [sortField],
   );

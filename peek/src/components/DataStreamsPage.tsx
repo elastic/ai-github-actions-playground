@@ -79,7 +79,7 @@ function compareStreams(
   a: { name: string; status: string; indices: unknown[]; docs: number; sizeBytes: number },
   b: { name: string; status: string; indices: unknown[]; docs: number; sizeBytes: number },
   field: StreamSortField,
-  dir: "asc" | "desc",
+  direction: "asc" | "desc",
 ): number {
   let cmp: number;
   switch (field) {
@@ -103,7 +103,7 @@ function compareStreams(
     default:
       cmp = 0;
   }
-  return dir === "asc" ? cmp : -cmp;
+  return direction === "asc" ? cmp : -cmp;
 }
 
 function streamGroupName(streamName: string): string | null {
