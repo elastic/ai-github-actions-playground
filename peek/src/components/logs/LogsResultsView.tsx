@@ -203,11 +203,12 @@ export default function LogsResultsView({
                 {histogramBuckets.map((bucket) => {
                   const barHeight =
                     maxHistogramCount > 0 ? (bucket.count / maxHistogramCount) * 140 : 0;
+                  const renderedBarHeight = bucket.count > 0 ? Math.max(4, barHeight) : 0;
                   const barTitle = `${new Date(bucket.start).toLocaleTimeString()} • ${bucket.count.toLocaleString()} events${bucket.anomaly ? " • anomaly" : ""}`;
                   const barSx = {
                     minWidth: 12,
                     flex: 1,
-                    height: Math.max(4, barHeight),
+                    height: renderedBarHeight,
                     py: 0,
                     px: 0,
                     borderRadius: "2px 2px 0 0",
