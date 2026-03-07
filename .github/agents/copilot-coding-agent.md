@@ -74,11 +74,13 @@ cd peek && npm run dev &
 DEV_PID=$!
 for i in $(seq 1 30); do curl -sf http://localhost:3000/ai-github-actions-playground/ >/dev/null && break; sleep 1; done
 node scripts/screenshot-preflight.mjs \
-  --url "http://127.0.0.1:3000/ai-github-actions-playground/#<path-from-manifest>" \
+  --url "http://127.0.0.1:3000/ai-github-actions-playground/#/package-builder" \
   --output screenshot-preflight.json \
   --screenshot screenshot.png
 kill $DEV_PID
 ```
+
+Replace `/package-builder` with the route `path` value from `peek/src/routes/manifest.ts`.
 
 #### Pages that need mocked screenshots (connection required)
 

@@ -3,6 +3,7 @@ import YAML from "yaml";
 import {
   generateManifest,
   generateChangelog,
+  generateReadmeScaffold,
 } from "../../../src/services/packageBuilder/generateManifest";
 import type { PackageBuilderData } from "../../../src/types/packageBuilder";
 
@@ -133,6 +134,27 @@ describe("generateManifest", () => {
     expect(parsed.policy_templates[0].vars[0].default).toBe(6379);
   });
 
+  it("omits invalid integer defaults instead of serializing NaN", () => {
+    const data = makeData({
+      variables: [
+        {
+          name: "workers",
+          type: "integer",
+          title: "Workers",
+          description: "",
+          default: "auto",
+          required: false,
+          showUser: true,
+          multi: false,
+          secret: false,
+          options: [],
+        },
+      ],
+    });
+    const parsed = YAML.parse(generateManifest(data));
+    expect(parsed.policy_templates[0].vars[0].default).toBeUndefined();
+  });
+
   it("includes select options", () => {
     const data = makeData({
       variables: [
@@ -244,5 +266,28 @@ describe("generateChangelog", () => {
     expect(parsed[0].changes).toHaveLength(1);
     expect(parsed[0].changes[0].type).toBe("enhancement");
     expect(parsed[0].changes[0].description).toContain("redis_input_otel");
+  });
+});
+
+describe("generateReadmeScaffold", () => {
+  it("escapes markdown table pipes in variable fields", () => {
+    const data = makeData({
+      variables: [
+        {
+          name: "api_key",
+          type: "text",
+          title: "API | key",
+          description: "Use value_a|value_b",
+          default: "a|b",
+          required: true,
+          showUser: true,
+          multi: false,
+          secret: false,
+          options: [],
+        },
+      ],
+    });
+    const markdown = generateReadmeScaffold(data);
+    expect(markdown).toContain("| API \\| key | Use value_a\\|value_b | a\\|b | Yes |");
   });
 });

@@ -1,11 +1,6 @@
 import YAML from "yaml";
 import type { PackageBuilderData, PackageVariable } from "../../types/packageBuilder";
-
-function iconExtensionFromMimeType(mimeType: string | undefined): "svg" | "png" | "jpg" {
-  if (mimeType === "image/png") return "png";
-  if (mimeType === "image/jpeg") return "jpg";
-  return "svg";
-}
+import { iconExtensionFromMimeType } from "./iconExtension";
 
 function serializeVariable(v: PackageVariable) {
   const out: Record<string, unknown> = {
@@ -15,13 +10,18 @@ function serializeVariable(v: PackageVariable) {
   };
   if (v.description) out.description = v.description;
   if (v.required) out.required = true;
-  if (v.default !== "")
-    out.default =
-      v.type === "integer"
-        ? Number(v.default)
-        : v.type === "bool"
-          ? v.default === "true"
-          : v.default;
+  if (v.default !== "") {
+    if (v.type === "integer") {
+      const parsed = Number.parseInt(v.default.trim(), 10);
+      if (Number.isFinite(parsed)) {
+        out.default = parsed;
+      }
+    } else if (v.type === "bool") {
+      out.default = v.default === "true";
+    } else {
+      out.default = v.default;
+    }
+  }
   if (!v.showUser) out.show_user = false;
   if (v.multi) out.multi = true;
   if (v.secret) out.secret = true;
@@ -131,6 +131,7 @@ export function generateReadmeScaffold(data: PackageBuilderData): string {
   ];
 
   if (variables.length > 0) {
+    const escapeCell = (value: string) => value.replace(/\|/g, "\\|");
     lines.push(
       "## Configuration",
       "",
@@ -140,7 +141,7 @@ export function generateReadmeScaffold(data: PackageBuilderData): string {
     for (const v of variables) {
       const def = v.secret ? "\\*\\*\\*" : v.default || "-";
       lines.push(
-        `| ${v.title || v.name} | ${v.description || "-"} | ${def} | ${v.required ? "Yes" : "No"} |`,
+        `| ${escapeCell(v.title || v.name)} | ${escapeCell(v.description || "-")} | ${escapeCell(def)} | ${v.required ? "Yes" : "No"} |`,
       );
     }
     lines.push("");

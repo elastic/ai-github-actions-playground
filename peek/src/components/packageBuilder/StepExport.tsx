@@ -25,12 +25,7 @@ import {
 } from "../../services/packageBuilder/generateManifest";
 import { renderTemplate, findUndefinedVars } from "../../services/packageBuilder/renderTemplate";
 import { exportPackageZip, downloadBlob } from "../../services/packageBuilder/exportPackage";
-
-function iconExtensionFromMimeType(mimeType: string | undefined): "svg" | "png" | "jpg" {
-  if (mimeType === "image/png") return "png";
-  if (mimeType === "image/jpeg") return "jpg";
-  return "svg";
-}
+import { iconExtensionFromMimeType } from "../../services/packageBuilder/iconExtension";
 
 interface ValidationItem {
   label: string;

@@ -1,12 +1,7 @@
 import JSZip from "jszip";
 import type { PackageBuilderData } from "../../types/packageBuilder";
 import { generateManifest, generateChangelog } from "./generateManifest";
-
-function iconExtensionFromMimeType(mimeType: string | undefined): "svg" | "png" | "jpg" {
-  if (mimeType === "image/png") return "png";
-  if (mimeType === "image/jpeg") return "jpg";
-  return "svg";
-}
+import { iconExtensionFromMimeType } from "./iconExtension";
 
 export async function exportPackageZip(data: PackageBuilderData): Promise<Blob> {
   const zip = new JSZip();
