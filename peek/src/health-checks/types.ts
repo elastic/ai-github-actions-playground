@@ -1,4 +1,6 @@
 import type {
+  CatShardRecord,
+  ClusterAllocationExplainResponse,
   ClusterHealthResponse,
   ClusterPendingTasksResponse,
   IlmExplainResponse,
@@ -29,8 +31,12 @@ export interface HealthSnapshot {
       clusterHealth: ClusterHealthResponse | null;
       pendingTasks: ClusterPendingTasksResponse | null;
     };
-    shards: unknown | null;
-    allocationSample: unknown | null;
+    shards: {
+      catShards: CatShardRecord[] | null;
+    };
+    allocationSample: {
+      allocationExplain: ClusterAllocationExplainResponse | null;
+    };
     nodesCore: {
       nodeStats: NodesStatsResponse | null;
     };

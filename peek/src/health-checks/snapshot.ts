@@ -41,6 +41,20 @@ async function fetchGroup(
         ]);
         return { group, data: { ilmExplain, ilmPolicies } };
       }
+      case "shards": {
+        const catShards = await client.getCatShards(signal);
+        return { group, data: { catShards } };
+      }
+      case "allocationSample": {
+        try {
+          const allocationExplain = await client.getAllocationExplain(signal);
+          return { group, data: { allocationExplain } };
+        } catch (innerError) {
+          if (isAbortError(innerError) || signal?.aborted) throw innerError;
+          // 400 when no unassigned shards exist — treat as empty
+          return { group, data: { allocationExplain: null } };
+        }
+      }
       default:
         return { group, data: null };
     }
@@ -76,6 +90,12 @@ export async function buildHealthSnapshot(
 
     if (result.group === "clusterCore" && result.data) {
       data.clusterCore = result.data as HealthSnapshot["data"]["clusterCore"];
+    }
+    if (result.group === "shards" && result.data) {
+      data.shards = result.data as HealthSnapshot["data"]["shards"];
+    }
+    if (result.group === "allocationSample" && result.data) {
+      data.allocationSample = result.data as HealthSnapshot["data"]["allocationSample"];
     }
     if (result.group === "nodesCore" && result.data) {
       data.nodesCore = result.data as HealthSnapshot["data"]["nodesCore"];
