@@ -82,7 +82,14 @@ function compareIndexRows(
       cmp = a.step.localeCompare(b.step);
       break;
     case "age":
-      cmp = parseDurationToMs(a.age) - parseDurationToMs(b.age);
+      {
+        const aMs = parseDurationToMs(a.age);
+        const bMs = parseDurationToMs(b.age);
+        const aMissing = !Number.isFinite(aMs);
+        const bMissing = !Number.isFinite(bMs);
+        if (aMissing || bMissing) return aMissing === bMissing ? 0 : aMissing ? 1 : -1;
+        cmp = aMs - bMs;
+      }
       break;
     case "error":
       cmp = Number(a.isError) - Number(b.isError);
@@ -146,6 +153,7 @@ export default function IlmPage() {
 
   // Only errors toggle
   const [onlyErrors, setOnlyErrors] = useState(false);
+  const [managedOnly, setManagedOnly] = useState(false);
 
   // Index table sort — default: errors first
   const [indexSortField, setIndexSortField] = useState<IndexSortField>("error");
@@ -175,6 +183,10 @@ export default function IlmPage() {
     () => indexRows.find((r) => r.index === selectedIndex) ?? null,
     [indexRows, selectedIndex],
   );
+  const selectedPolicyRow = useMemo(
+    () => policyRows.find((r) => r.name === selectedRow?.policy) ?? null,
+    [policyRows, selectedRow],
+  );
 
   // Derived metrics
   const errorCount = useMemo(() => indexRows.filter((r) => r.isError).length, [indexRows]);
@@ -192,12 +204,13 @@ export default function IlmPage() {
     const term = deferredSearch.trim().toLowerCase();
     let filtered = indexRows.filter((r) => {
       if (onlyErrors && !r.isError) return false;
+      if (managedOnly && !r.raw?.managed) return false;
       if (!term) return true;
       return r.index.toLowerCase().includes(term) || r.policy.toLowerCase().includes(term);
     });
     filtered = [...filtered].sort((a, b) => compareIndexRows(a, b, indexSortField, indexSortDir));
     return filtered;
-  }, [indexRows, deferredSearch, onlyErrors, indexSortField, indexSortDir]);
+  }, [indexRows, deferredSearch, onlyErrors, managedOnly, indexSortField, indexSortDir]);
 
   const filteredPolicyRows = useMemo(() => {
     const term = deferredSearch.trim().toLowerCase();
@@ -303,16 +316,28 @@ export default function IlmPage() {
           aria-label="Filter ILM"
         />
         {activeTab === "indices" && (
-          <FormControlLabel
-            control={
-              <Switch
-                size="small"
-                checked={onlyErrors}
-                onChange={(e) => setOnlyErrors(e.target.checked)}
-              />
-            }
-            label="Only errors"
-          />
+          <>
+            <FormControlLabel
+              control={
+                <Switch
+                  size="small"
+                  checked={managedOnly}
+                  onChange={(e) => setManagedOnly(e.target.checked)}
+                />
+              }
+              label="Managed only"
+            />
+            <FormControlLabel
+              control={
+                <Switch
+                  size="small"
+                  checked={onlyErrors}
+                  onChange={(e) => setOnlyErrors(e.target.checked)}
+                />
+              }
+              label="Only errors"
+            />
+          </>
         )}
       </Box>
 
@@ -442,7 +467,7 @@ export default function IlmPage() {
                         icon={<PolicyIcon sx={{ fontSize: 28 }} />}
                         heading="No ILM indices found"
                         description={
-                          search || onlyErrors
+                          search || onlyErrors || managedOnly
                             ? "Try adjusting your filters."
                             : "No ILM-managed indices detected."
                         }
@@ -660,7 +685,14 @@ export default function IlmPage() {
                   sx={{ p: 1, maxHeight: 300, overflow: "auto", fontSize: "0.75rem" }}
                 >
                   <pre style={{ margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-                    {JSON.stringify(selectedRow.raw ?? selectedRow, null, 2)}
+                    {JSON.stringify(
+                      {
+                        explain: selectedRow.raw ?? selectedRow,
+                        policy: selectedPolicyRow?.raw ?? null,
+                      },
+                      null,
+                      2,
+                    )}
                   </pre>
                 </Paper>
               </Box>

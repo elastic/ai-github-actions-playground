@@ -57,13 +57,12 @@ function compareCompTpls(
         const aMissing = aText.trim() === "—";
         const bMissing = bText.trim() === "—";
         if (aMissing || bMissing) {
-          cmp = aMissing === bMissing ? 0 : aMissing ? 1 : -1;
-        } else {
-          cmp =
-            Number.isFinite(aNum) && Number.isFinite(bNum)
-              ? aNum - bNum
-              : aText.localeCompare(bText, undefined, { numeric: true });
+          return aMissing === bMissing ? 0 : aMissing ? 1 : -1;
         }
+        cmp =
+          Number.isFinite(aNum) && Number.isFinite(bNum)
+            ? aNum - bNum
+            : aText.localeCompare(bText, undefined, { numeric: true });
       }
       break;
     default:
@@ -165,6 +164,16 @@ describe("TemplatesPage component template sorting", () => {
     ];
     const sorted = [...withMissing].sort((a, b) => compareCompTpls(a, b, "version", "asc"));
     expect(sorted.map((c) => c.version)).toEqual(["2", "10", "—"]);
+  });
+
+  it("sorts missing version placeholders after real versions in desc", () => {
+    const withMissing = [
+      makeComponentTemplate({ name: "a", version: "—" }),
+      makeComponentTemplate({ name: "b", version: "2" }),
+      makeComponentTemplate({ name: "c", version: "10" }),
+    ];
+    const sorted = [...withMissing].sort((a, b) => compareCompTpls(a, b, "version", "desc"));
+    expect(sorted.map((c) => c.version)).toEqual(["10", "2", "—"]);
   });
 });
 

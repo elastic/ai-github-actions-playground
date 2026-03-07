@@ -40,6 +40,7 @@ function toIlmData(results: [GetIlmPoliciesResponse, IlmExplainDetailResponse]):
     indexCount: policy.in_use_by?.indices?.length ?? 0,
     dataStreamCount: policy.in_use_by?.data_streams?.length ?? 0,
     templateCount: policy.in_use_by?.composable_templates?.length ?? 0,
+    raw: policy,
   }));
 
   return { indexRows, policyRows };

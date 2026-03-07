@@ -83,4 +83,5 @@ export interface IlmPolicyRow {
   indexCount: number;
   dataStreamCount: number;
   templateCount: number;
+  raw?: IlmPolicy;
 }

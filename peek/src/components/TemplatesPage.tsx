@@ -87,13 +87,12 @@ function compareCompTpls(
         const aMissing = aText.trim() === "—";
         const bMissing = bText.trim() === "—";
         if (aMissing || bMissing) {
-          cmp = aMissing === bMissing ? 0 : aMissing ? 1 : -1;
-        } else {
-          cmp =
-            Number.isFinite(aNum) && Number.isFinite(bNum)
-              ? aNum - bNum
-              : aText.localeCompare(bText, undefined, { numeric: true });
+          return aMissing === bMissing ? 0 : aMissing ? 1 : -1;
         }
+        cmp =
+          Number.isFinite(aNum) && Number.isFinite(bNum)
+            ? aNum - bNum
+            : aText.localeCompare(bText, undefined, { numeric: true });
       }
       break;
     default:

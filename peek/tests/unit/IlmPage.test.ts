@@ -30,7 +30,14 @@ function compareIndexRows(
       cmp = a.step.localeCompare(b.step);
       break;
     case "age":
-      cmp = parseDurationToMs(a.age) - parseDurationToMs(b.age);
+      {
+        const aMs = parseDurationToMs(a.age);
+        const bMs = parseDurationToMs(b.age);
+        const aMissing = !Number.isFinite(aMs);
+        const bMissing = !Number.isFinite(bMs);
+        if (aMissing || bMissing) return aMissing === bMissing ? 0 : aMissing ? 1 : -1;
+        cmp = aMs - bMs;
+      }
       break;
     case "error":
       cmp = Number(a.isError) - Number(b.isError);
@@ -120,6 +127,16 @@ describe("IlmPage index sorting", () => {
     const sorted = [...withAges].sort((a, b) => compareIndexRows(a, b, "age", "asc"));
     expect(sorted.map((r) => r.index)).toEqual(["c", "b", "a"]);
   });
+
+  it("keeps unknown age values at the bottom when sorting desc", () => {
+    const withAges = [
+      makeIndexRow({ index: "a", age: "10d" }),
+      makeIndexRow({ index: "b", age: "" }),
+      makeIndexRow({ index: "c", age: "2d" }),
+    ];
+    const sorted = [...withAges].sort((a, b) => compareIndexRows(a, b, "age", "desc"));
+    expect(sorted.map((r) => r.index)).toEqual(["a", "c", "b"]);
+  });
 });
 
 describe("IlmPage policy sorting", () => {
@@ -170,6 +187,17 @@ describe("IlmPage filtering", () => {
     const filtered = rows.filter((r) => !onlyErrors || r.isError);
     expect(filtered).toHaveLength(1);
     expect(filtered[0]!.index).toBe("metrics-cpu-2026.01");
+  });
+
+  it("managed-only toggle filters to managed rows", () => {
+    const managedRows = [
+      makeIndexRow({ index: "a", raw: { managed: true } }),
+      makeIndexRow({ index: "b", raw: { managed: false } }),
+      makeIndexRow({ index: "c", raw: {} }),
+    ];
+    const managedOnly = true;
+    const filtered = managedRows.filter((r) => !managedOnly || Boolean(r.raw?.managed));
+    expect(filtered.map((r) => r.index)).toEqual(["a"]);
   });
 });
 
