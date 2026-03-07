@@ -308,7 +308,7 @@ export default function NodeDetailPage() {
 
       {error ? null : !details ? (
         <EmptyState
-          icon={nodeDataUnavailable ? <MemoryIcon sx={{ fontSize: 28 }} /> : undefined}
+          icon={<MemoryIcon sx={{ fontSize: 28 }} />}
           heading={nodeDataUnavailable ? NODE_PERMISSION_HEADING : "Node not found"}
           description={
             nodeDataUnavailable
