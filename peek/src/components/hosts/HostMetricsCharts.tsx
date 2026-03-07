@@ -37,23 +37,16 @@ export default function HostMetricsCharts({ filters }: HostMetricsChartsProps) {
           color="#ab47bc"
         />
         <MetricChartCard
-          title="Disk I/O (bytes)"
+          title="Disk I/O (bytes/s)"
           metricField="system.disk.io"
           filters={filters}
           color="#66bb6a"
         />
         <MetricChartCard
-          title="Network I/O (bytes)"
+          title="Network I/O (bytes/s)"
           metricField="system.network.io"
           filters={filters}
           color="#ffa726"
-        />
-        <MetricChartCard
-          title="Filesystem Utilization"
-          metricField="system.filesystem.utilization"
-          filters={filters}
-          asPercent
-          color="#ef5350"
         />
         <LoadAverageChartCard filters={filters} />
       </Box>

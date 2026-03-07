@@ -34,10 +34,13 @@ export function parseHostInventory(data: EsqlResponse): HostRow[] {
   const iOsType = col(columns, "os_type");
   const iOsName = col(columns, "os_name");
   const iOsVersion = col(columns, "os_version");
+  const iOsFull = col(columns, "os_full");
   const iLastSeen = col(columns, "last_seen");
   const iCpu = col(columns, "cpu_utilization");
   const iMem = col(columns, "memory_utilization");
   const iProc = col(columns, "process_count");
+  const iLoadAvg1m = col(columns, "load_avg_1m");
+  const iHostArch = col(columns, "host_arch");
   const iHostIp = col(columns, "host_ip");
 
   return values.map((row) => ({
@@ -46,10 +49,13 @@ export function parseHostInventory(data: EsqlResponse): HostRow[] {
     osType: normalizeOsType(str(row, iOsType)),
     osName: str(row, iOsName),
     osVersion: str(row, iOsVersion),
+    osFull: str(row, iOsFull),
     lastSeen: str(row, iLastSeen),
     cpuUtilization: num(row, iCpu),
     memoryUtilization: num(row, iMem),
     processCount: num(row, iProc),
+    loadAvg1m: num(row, iLoadAvg1m),
+    hostArch: str(row, iHostArch),
     hostIp: str(row, iHostIp) || undefined,
   }));
 }

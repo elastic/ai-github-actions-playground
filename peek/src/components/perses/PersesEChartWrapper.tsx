@@ -6,8 +6,8 @@
  * We add GraphChart for the service-map / drift-radar graph visualizations.
  */
 import { use as echartsUse } from "echarts/core";
-import { GraphChart } from "echarts/charts";
+import { GraphChart, TreemapChart } from "echarts/charts";
 
-echartsUse([GraphChart]);
+echartsUse([GraphChart, TreemapChart]);
 
 export { EChart } from "@perses-dev/components";

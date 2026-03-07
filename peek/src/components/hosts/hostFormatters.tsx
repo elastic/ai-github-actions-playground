@@ -18,6 +18,12 @@ export function fmtTimestamp(value: string): string {
   return date.toLocaleString();
 }
 
+export function fmtLoadAvg(value: number | null): string {
+  if (value == null) return "—";
+  return value.toFixed(2);
+}
+
+
 interface MetricCardProps {
   label: string;
   value: string;

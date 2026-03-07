@@ -1,6 +1,8 @@
 import { useMemo } from "react";
+import { Link as RouterLink } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
+import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -61,7 +63,21 @@ export default function HostsPage({ osType }: HostsPageProps) {
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2, minHeight: "100%" }}>
-      <PageHeader title={title} description={description} />
+      <PageHeader
+        title={title}
+        description={description}
+        actions={
+          <Button
+            component={RouterLink}
+            to={PAGE_MANIFEST.addData.path}
+            startIcon={<AddCircleOutlineIcon />}
+            size="small"
+            variant="outlined"
+          >
+            Add hosts
+          </Button>
+        }
+      />
 
       {/* Toolbar */}
       <Paper variant="outlined" sx={{ p: 1.5 }}>

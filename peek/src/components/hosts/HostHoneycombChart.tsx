@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
-import { EChart } from "@perses-dev/components";
+import { EChart } from "../perses/PersesEChartWrapper";
 
 import { useEChartTheme } from "../visualizations/useEChartTheme";
 

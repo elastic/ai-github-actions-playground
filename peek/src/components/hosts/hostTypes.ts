@@ -31,10 +31,16 @@ export interface HostRow {
   osType: HostOsType;
   osName: string;
   osVersion: string;
+  /** Full OS description string (e.g. "Ubuntu 24.04.3 LTS (Noble Numbat)"). */
+  osFull: string;
   lastSeen: string;
   cpuUtilization: number | null;
   memoryUtilization: number | null;
   processCount: number | null;
+  /** 1-minute CPU load average. */
+  loadAvg1m: number | null;
+  /** CPU architecture (e.g. "arm64", "amd64"). */
+  hostArch: string;
   /** Optional enricher — first `host.ip` when available. */
   hostIp?: string;
 }

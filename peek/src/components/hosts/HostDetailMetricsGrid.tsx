@@ -34,26 +34,18 @@ export default function HostDetailMetricsGrid({ hostId, filters }: HostDetailMet
         color="#ab47bc"
       />
       <HostDetailMetricChart
-        title="Disk I/O (bytes)"
+        title="Disk I/O (bytes/s)"
         hostId={hostId}
         metricField="system.disk.io"
         filters={filters}
         color="#66bb6a"
       />
       <HostDetailMetricChart
-        title="Network I/O (bytes)"
+        title="Network I/O (bytes/s)"
         hostId={hostId}
         metricField="system.network.io"
         filters={filters}
         color="#ffa726"
-      />
-      <HostDetailMetricChart
-        title="Filesystem Utilization"
-        hostId={hostId}
-        metricField="system.filesystem.utilization"
-        filters={filters}
-        asPercent
-        color="#ef5350"
       />
       <HostDetailLoadChart hostId={hostId} filters={filters} />
     </Box>

@@ -113,22 +113,42 @@ export default function HostDetailPage() {
             <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
               <Box>
                 <Typography variant="body2" color="text.secondary">
-                  Host ID
-                </Typography>
-                <Typography variant="body1">{hostRow.hostId}</Typography>
-              </Box>
-              <Box>
-                <Typography variant="body2" color="text.secondary">
                   Host Name
                 </Typography>
                 <Typography variant="body1">{hostRow.hostName || "—"}</Typography>
               </Box>
+              {hostRow.hostIp && (
+                <Box>
+                  <Typography variant="body2" color="text.secondary">
+                    IP Address
+                  </Typography>
+                  <Typography variant="body1">{hostRow.hostIp}</Typography>
+                </Box>
+              )}
               <Box>
                 <Typography variant="body2" color="text.secondary">
                   OS
                 </Typography>
                 <Chip label={osLabel(hostRow.osType)} size="small" variant="outlined" />
               </Box>
+              {hostRow.osFull && (
+                <Box sx={{ minWidth: 200 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    OS Version
+                  </Typography>
+                  <Typography variant="body1" sx={{ fontSize: "0.85rem" }}>
+                    {hostRow.osFull}
+                  </Typography>
+                </Box>
+              )}
+              {hostRow.hostArch && (
+                <Box>
+                  <Typography variant="body2" color="text.secondary">
+                    Architecture
+                  </Typography>
+                  <Typography variant="body1">{hostRow.hostArch}</Typography>
+                </Box>
+              )}
               <Box>
                 <Typography variant="body2" color="text.secondary">
                   Last Seen
@@ -144,6 +164,9 @@ export default function HostDetailPage() {
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
             <MetricCard label="CPU Utilization" value={fmtPct(hostRow.cpuUtilization)} />
             <MetricCard label="Memory Utilization" value={fmtPct(hostRow.memoryUtilization)} />
+            {hostRow.loadAvg1m != null && (
+              <MetricCard label="Load Avg (1m)" value={hostRow.loadAvg1m.toFixed(2)} />
+            )}
             {hostRow.processCount != null && (
               <MetricCard label="Processes" value={fmtCount(hostRow.processCount)} />
             )}

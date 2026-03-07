@@ -52,9 +52,86 @@ ROW x = 1, y = "hello", z = [1, 2, 3]
 Returns system information.
 SHOW INFO
 
+### TS (Time Series) — ES 9.2+
+Optimized source command for time series data streams. Required for RATE(), IRATE(),
+and *_OVER_TIME() functions. Use instead of FROM for metrics queries.
+
+TS metrics-*
+| WHERE @timestamp >= NOW() - 1 hour
+| STATS cpu = MAX(AVG_OVER_TIME(system.cpu.utilization))
+    BY bucket = BUCKET(@timestamp, 20, NOW() - 1 hour, NOW())
+| SORT bucket ASC
+
 ---
 
-## 3. Processing Commands
+## 3. Time Series Functions (requires TS source command)
+
+### Counter Metrics — use RATE() or IRATE()
+Counter metrics are monotonically increasing (e.g. disk I/O bytes, network bytes).
+Using MAX/AVG/SUM directly gives the cumulative total, not a useful rate.
+
+RATE(field)   — per-second rate of increase across the bucket (most common)
+IRATE(field)  — instantaneous rate from last two data points
+INCREASE(field) — total absolute increase within the bucket
+
+Example (disk throughput):
+TS metrics-hostmetricsreceiver*
+| STATS disk_rate = SUM(RATE(system.disk.io))
+    BY bucket = BUCKET(@timestamp, 20, ?_tstart, ?_tend)
+| SORT bucket ASC
+
+### Gauge Metrics — use *_OVER_TIME()
+Gauge metrics represent point-in-time values (CPU %, memory %). Choose based on
+what question you need to answer:
+
+AVG_OVER_TIME(field)  — typical value (CPU %, memory % — "what was the average?")
+LAST_OVER_TIME(field) — most recent value (connections, queue depth — "what is it now?")
+MAX_OVER_TIME(field)  — peak within bucket (memory high-water, latency spikes)
+MIN_OVER_TIME(field)  — minimum within bucket (available resources)
+
+All *_OVER_TIME() functions MUST be wrapped in an outer aggregate (MAX, SUM, etc.):
+
+// CORRECT
+TS metrics-*
+| STATS cpu = MAX(AVG_OVER_TIME(system.cpu.utilization))
+    BY bucket = BUCKET(@timestamp, 20, ?_tstart, ?_tend)
+
+// WRONG — *_OVER_TIME must be wrapped
+TS metrics-*
+| STATS cpu = AVG_OVER_TIME(system.cpu.utilization)  // Error
+
+### Dynamic Bucketing — always use 4-param BUCKET()
+Always use BUCKET(@timestamp, N, start, end) for time series charts.
+Fixed DATE_TRUNC intervals create too many points for long time ranges.
+
+// CORRECT — scales with time range
+BY bucket = BUCKET(@timestamp, 20, ?_tstart, ?_tend)
+// In direct API calls, inject your actual timestamps:
+BY bucket = BUCKET(@timestamp, 20, NOW() - 1 hour, NOW())
+
+// AVOID — fixed interval creates 1440 buckets for a 1-day view
+| EVAL bucket = DATE_TRUNC(1 minute, @timestamp)
+
+### Field Names with Numeric Suffixes — backtick-quote them
+Field names containing numeric segments must be backtick-quoted:
+
+// WRONG
+| STATS load = AVG(AVG_OVER_TIME(system.cpu.load_average.1m))
+
+// CORRECT
+| STATS load = MAX(AVG_OVER_TIME(\`system.cpu.load_average.1m\`))
+
+### OTel hostmetricsreceiver Field Reference
+Gauges (use AVG_OVER_TIME):  system.cpu.utilization, system.memory.utilization,
+  \`system.cpu.load_average.1m\`, \`system.cpu.load_average.5m\`, \`system.cpu.load_average.15m\`,
+  system.processes.count
+Counters (use RATE):  system.disk.io, system.network.io, system.network.errors,
+  system.paging.faults, system.paging.operations
+Host metadata: host.name (keyword), host.ip (ip), host.arch (keyword),
+  host.os.full (keyword), os.type (keyword)
+Identity key: CONCAT(COALESCE(host.name, TO_STRING(host.ip), "unknown"), "::", COALESCE(os.type, "unknown"))
+
+---
 
 ### WHERE — Filter rows
 
