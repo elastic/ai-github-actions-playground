@@ -19,6 +19,7 @@ import useMediaQuery from "@mui/material/useMediaQuery";
 import { Toaster, toast } from "sonner";
 
 import { lightTheme, darkTheme } from "./theme";
+import { COMPONENT_HEIGHTS, MOBILE_OR_COARSE_QUERY } from "./types/tokens";
 import { useConnectionStore } from "./store/useConnectionStore";
 import { useThemeStore } from "./store/useThemeStore";
 import { useUIStore } from "./store/useUIStore";
@@ -250,6 +251,13 @@ export default function App() {
                     rel="noopener noreferrer"
                     color="inherit"
                     underline="hover"
+                    sx={{
+                      [MOBILE_OR_COARSE_QUERY]: {
+                        display: "inline-flex",
+                        alignItems: "center",
+                        minHeight: COMPONENT_HEIGHTS.touchTarget,
+                      },
+                    }}
                   >
                     Elasticsearch B.V.
                   </Link>
