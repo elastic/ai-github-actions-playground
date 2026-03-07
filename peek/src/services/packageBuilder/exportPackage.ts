@@ -73,7 +73,13 @@ export async function exportPackageToDirectory(
   data: PackageBuilderData,
   existingDir?: FileSystemDirectoryHandle,
 ): Promise<FileSystemDirectoryHandle> {
-  const dir = existingDir ?? (await (window as any).showDirectoryPicker({ mode: "readwrite" }));
+  const dir =
+    existingDir ??
+    (await (
+      window as unknown as {
+        showDirectoryPicker: (opts: { mode: string }) => Promise<FileSystemDirectoryHandle>;
+      }
+    ).showDirectoryPicker({ mode: "readwrite" }));
   const root = await dir.getDirectoryHandle(getFullName(data), { create: true });
 
   await writeFile(root, "manifest.yml", generateManifest(data));
