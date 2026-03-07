@@ -1,8 +1,11 @@
 import { createTheme, type ThemeOptions } from "@mui/material/styles";
 
-import { COMPONENT_HEIGHTS, STATUS_COLORS, type SpaceToken } from "./types/tokens";
-
-const MOBILE_OR_COARSE_QUERY = "@media (max-width:767.95px), (pointer: coarse)";
+import {
+  COMPONENT_HEIGHTS,
+  MOBILE_OR_COARSE_QUERY,
+  STATUS_COLORS,
+  type SpaceToken,
+} from "./types/tokens";
 const MOBILE_ICON_BUTTON_VISUAL_SIZE = 20;
 const MOBILE_BUTTON_VERTICAL_PADDING_SPACE: SpaceToken = 1.5;
 const MOBILE_ICON_BUTTON_PADDING =
@@ -141,7 +144,13 @@ const baseOptions: ThemeOptions = {
     },
     MuiTab: {
       styleOverrides: {
-        root: { textTransform: "none", minHeight: COMPONENT_HEIGHTS.tab },
+        root: {
+          textTransform: "none",
+          minHeight: COMPONENT_HEIGHTS.tab,
+          [MOBILE_OR_COARSE_QUERY]: {
+            minHeight: COMPONENT_HEIGHTS.touchTarget,
+          },
+        },
       },
     },
     MuiTypography: {
