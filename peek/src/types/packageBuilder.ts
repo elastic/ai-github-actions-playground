@@ -171,8 +171,8 @@ service:
 `,
   apache: `receivers:
   apache:
-    endpoint: {{endpoint}}
-    collection_interval: {{collection_interval}}
+    endpoint: {{yaml endpoint}}
+    collection_interval: {{yaml collection_interval}}
 
 processors:
   resourcedetection/system:
@@ -186,10 +186,10 @@ service:
 `,
   redis: `receivers:
   redis:
-    endpoint: {{endpoint}}
-    collection_interval: {{collection_interval}}
+    endpoint: {{yaml endpoint}}
+    collection_interval: {{yaml collection_interval}}
 {{#if password}}
-    password: {{password}}
+    password: {{yaml password}}
 {{/if}}
 
 processors:
@@ -204,15 +204,15 @@ service:
 `,
   mysql: `receivers:
   mysql:
-    endpoint: {{endpoint}}
-    username: {{username}}
-    password: {{password}}
-    collection_interval: {{collection_interval}}
+    endpoint: {{yaml endpoint}}
+    username: {{yaml username}}
+    password: {{yaml password}}
+    collection_interval: {{yaml collection_interval}}
 {{#if tls_enabled}}
     tls:
       insecure: false
 {{#if tls_ca_file}}
-      ca_file: {{tls_ca_file}}
+      ca_file: {{yaml tls_ca_file}}
 {{/if}}
 {{/if}}
 
@@ -230,10 +230,10 @@ service:
   prometheus:
     config:
       scrape_configs:
-        - job_name: "{{job_name}}"
-          scrape_interval: {{scrape_interval}}
+        - job_name: {{yaml job_name}}
+          scrape_interval: {{yaml scrape_interval}}
           static_configs:
-            - targets: ["{{endpoint}}"]
+            - targets: [{{yaml endpoint}}]
 
 processors:
   resourcedetection/system:
@@ -247,7 +247,7 @@ service:
 `,
   hostmetrics: `receivers:
   hostmetrics:
-    collection_interval: {{collection_interval}}
+    collection_interval: {{yaml collection_interval}}
     scrapers:
       cpu: {}
       disk: {}

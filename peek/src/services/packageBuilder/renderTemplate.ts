@@ -2,6 +2,22 @@ import Handlebars from "handlebars";
 import YAML from "yaml";
 import type { PackageVariable } from "../../types/packageBuilder";
 
+/**
+ * Register a "yaml" helper that YAML-escapes scalar values.
+ * Usage in templates: {{yaml endpoint}} instead of {{endpoint}}
+ * This ensures values containing #, :, quotes, or YAML sigils are properly quoted.
+ */
+Handlebars.registerHelper("yaml", function (value: unknown) {
+  if (value == null || value === "") return "";
+  const str = String(value);
+  // If value is safe for YAML plain scalar, return as-is
+  if (/^[a-zA-Z0-9_./ -]+$/.test(str) && !/^[&*!|>{}[\]@`]/.test(str)) {
+    return str;
+  }
+  // Otherwise, double-quote and escape
+  return `"${str.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+});
+
 export interface RenderResult {
   rendered: string;
   yamlValid: boolean;
@@ -25,23 +41,39 @@ function autoIndentMultilineValues(
   );
   if (multilineVars.length === 0) return rendered;
 
-  // For each multi-line variable, find where it appears in the template
-  // to determine the indentation column, then fix the rendered output.
+  // For each multi-line variable, find every occurrence of the tag in the
+  // template to determine the indentation column at each position, then
+  // fix the corresponding occurrence in the rendered output.
   let result = rendered;
   for (const [name, value] of multilineVars) {
-    const tag = `{{${name}}}`;
-    // Find the tag in the template to determine its column offset
-    const tagIdx = templateSource.indexOf(tag);
-    if (tagIdx === -1) continue;
-    // Find the start of the line containing the tag
-    const lineStart = templateSource.lastIndexOf("\n", tagIdx) + 1;
-    const column = tagIdx - lineStart;
-    const indent = " ".repeat(column);
-    // In the rendered output, find the raw value and re-indent its lines
+    // Look for both {{name}} and {{yaml name}} tags
+    const tags = [`{{${name}}}`, `{{yaml ${name}}}`];
     const rawVal = value as string;
-    const indentedVal = rawVal.split("\n").join("\n" + indent);
-    if (rawVal !== indentedVal) {
-      result = result.replace(rawVal, indentedVal);
+
+    // Collect indent columns for every occurrence of any matching tag in the template
+    const indents: number[] = [];
+    for (const tag of tags) {
+      let searchFrom = 0;
+      while (true) {
+        const tagIdx = templateSource.indexOf(tag, searchFrom);
+        if (tagIdx === -1) break;
+        const lineStart = templateSource.lastIndexOf("\n", tagIdx) + 1;
+        indents.push(tagIdx - lineStart);
+        searchFrom = tagIdx + tag.length;
+      }
+    }
+    if (indents.length === 0) continue;
+
+    // Replace each raw value occurrence in the rendered output with its
+    // properly indented version, tracking offset to handle later occurrences.
+    let offset = 0;
+    for (const column of indents) {
+      const pos = result.indexOf(rawVal, offset);
+      if (pos === -1) break;
+      const indent = " ".repeat(column);
+      const indentedVal = rawVal.split("\n").join("\n" + indent);
+      result = result.slice(0, pos) + indentedVal + result.slice(pos + rawVal.length);
+      offset = pos + indentedVal.length;
     }
   }
   return result;
@@ -57,9 +89,11 @@ export function renderTemplate(
   for (const v of variables) {
     const raw = mockOverrides[v.name] ?? v.default;
     if (v.type === "bool") {
-      context[v.name] = raw === "true";
+      // Preserve "unset" state: empty/null -> undefined (falsy for {{#if}})
+      context[v.name] = raw === "" || raw == null ? undefined : raw === "true";
     } else if (v.type === "integer") {
-      context[v.name] = raw ? Number(raw) : 0;
+      // Preserve "unset" state: empty/null -> undefined instead of coercing to 0
+      context[v.name] = raw === "" || raw == null ? undefined : Number(raw);
     } else {
       context[v.name] = raw;
     }
@@ -98,13 +132,19 @@ export function renderTemplate(
   return { rendered, yamlValid, yamlError, templateError: null };
 }
 
-/** Find template variables referenced as {{name}} but not defined in the variable list. */
+/** Find template variables referenced as {{name}}, {{yaml name}}, or {{#if name}} etc. but not defined in the variable list. */
 export function findUndefinedVars(templateSource: string, variables: PackageVariable[]): string[] {
   const defined = new Set(variables.map((v) => v.name));
   const referenced = new Set<string>();
-  const re = /\{\{(?!#|\/|!|>)([a-zA-Z_][a-zA-Z0-9_]*)\}\}/g;
+  // Match plain {{name}} and helper calls like {{yaml name}}
+  const rePlain = /\{\{(?!#|\/|!|>)(?:yaml\s+)?([a-zA-Z_][a-zA-Z0-9_]*)\}\}/g;
   let m: RegExpExecArray | null;
-  while ((m = re.exec(templateSource)) !== null) {
+  while ((m = rePlain.exec(templateSource)) !== null) {
+    if (m[1]) referenced.add(m[1]);
+  }
+  // Match block helpers like {{#if name}}, {{#each name}}, {{#unless name}}, {{#with name}}
+  const reBlock = /\{\{[#/]\s*(?:if|each|unless|with)\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\}\}/g;
+  while ((m = reBlock.exec(templateSource)) !== null) {
     if (m[1]) referenced.add(m[1]);
   }
   return [...referenced].filter((name) => !defined.has(name));
@@ -119,8 +159,8 @@ export function findUnusedVars(templateSource: string, variables: PackageVariabl
   while ((m = re.exec(templateSource)) !== null) {
     if (m[1]) referenced.add(m[1]);
   }
-  // Also match plain {{name}}
-  const rePlain = /\{\{(?!#|\/|!|>)([a-zA-Z_][a-zA-Z0-9_]*)\}\}/g;
+  // Also match plain {{name}} and helper calls like {{yaml name}}
+  const rePlain = /\{\{(?!#|\/|!|>)(?:yaml\s+)?([a-zA-Z_][a-zA-Z0-9_]*)\}\}/g;
   while ((m = rePlain.exec(templateSource)) !== null) {
     if (m[1]) referenced.add(m[1]);
   }

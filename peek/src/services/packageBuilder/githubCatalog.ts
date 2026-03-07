@@ -67,8 +67,8 @@ export async function fetchPackageFiles(
     if (!manifestRes.ok) return;
     const manifestText = await manifestRes.text();
 
-    // Quick regex to find icon src path
-    const iconMatch = manifestText.match(/src:\s*\/img\/(.+)/);
+    // Quick regex to find icon src path — handle both unquoted and quoted YAML values
+    const iconMatch = manifestText.match(/src:\s*["']?\/?img\/(.+?)["']?\s*$/m);
     if (!iconMatch) return;
 
     const iconFileName = iconMatch[1]?.trim();

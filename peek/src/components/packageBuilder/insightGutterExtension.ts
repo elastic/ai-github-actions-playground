@@ -67,6 +67,9 @@ class InsightDot extends GutterMarker {
     const dot = document.createElement("span");
     dot.className = "cm-insight-dot";
     dot.title = this.text;
+    dot.setAttribute("role", "button");
+    dot.setAttribute("tabindex", "0");
+    dot.setAttribute("aria-label", this.text);
     const color = SEVERITY_DOT[this.severity] ?? SEVERITY_DOT.info;
     dot.style.cssText = `
       display: inline-block;
@@ -77,6 +80,13 @@ class InsightDot extends GutterMarker {
       cursor: pointer;
       margin: 3px 2px;
     `;
+    // Allow keyboard activation with Enter/Space
+    dot.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        dot.click();
+      }
+    });
     return dot;
   }
 }

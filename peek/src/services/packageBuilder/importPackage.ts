@@ -143,11 +143,14 @@ function parseManifest(
     : [];
   const pt = policyTemplates[0] ?? {};
 
+  const isDynamic = Boolean(pt.dynamic_signal_types);
   const rawSignalType = pt.type ? String(pt.type) : null;
   const signalTypes: SignalType[] =
     rawSignalType && VALID_SIGNAL_TYPES.has(rawSignalType)
       ? [rawSignalType as SignalType]
-      : ["metrics"];
+      : isDynamic
+        ? []
+        : ["metrics"];
 
   const policyTemplate = {
     name: String(pt.name ?? ""),

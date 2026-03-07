@@ -8,7 +8,11 @@ import type { PackageVariable } from "../../../src/types/packageBuilder";
 import { APACHE_TEMPLATE } from "./fixtures/apache";
 import { REDIS_TEMPLATE } from "./fixtures/redis";
 
-const makeVar = (name: string, type: PackageVariable["type"] = "text", defaultVal = ""): PackageVariable => ({
+const makeVar = (
+  name: string,
+  type: PackageVariable["type"] = "text",
+  defaultVal = "",
+): PackageVariable => ({
   name,
   type,
   title: name,
@@ -52,11 +56,7 @@ describe("renderTemplate", () => {
   });
 
   it("renders integer variables as numbers", () => {
-    const result = renderTemplate(
-      "port: {{port}}",
-      [makeVar("port", "integer", "6379")],
-      {},
-    );
+    const result = renderTemplate("port: {{port}}", [makeVar("port", "integer", "6379")], {});
     expect(result.rendered).toContain("port: 6379");
   });
 
@@ -79,11 +79,7 @@ describe("renderTemplate", () => {
   });
 
   it("reports template compilation errors", () => {
-    const result = renderTemplate(
-      "{{#if}}broken{{/if}}",
-      [],
-      {},
-    );
+    const result = renderTemplate("{{#if}}broken{{/if}}", [], {});
     expect(result.templateError).toBeTruthy();
   });
 
@@ -102,11 +98,7 @@ describe("renderTemplate", () => {
 
   it("collapses excessive blank lines from false {{#if}} blocks", () => {
     const template = "top: val\n{{#if flag}}\nconditional: yes\n{{/if}}\nbottom: val";
-    const result = renderTemplate(
-      template,
-      [makeVar("flag", "bool", "false")],
-      {},
-    );
+    const result = renderTemplate(template, [makeVar("flag", "bool", "false")], {});
     expect(result.templateError).toBeNull();
     // Should not have 3+ consecutive newlines
     expect(result.rendered).not.toMatch(/\n{3,}/);
@@ -115,14 +107,15 @@ describe("renderTemplate", () => {
   });
 
   it("detects invalid YAML in rendered output", () => {
+    // Use a template that produces definitively invalid YAML (duplicate key with bad indent)
     const result = renderTemplate(
-      "key: {{value}}\n  bad indent",
+      "key: {{value}}\n  key: [unbalanced",
       [makeVar("value", "text", "test")],
       {},
     );
-    // This may or may not be invalid depending on YAML parser leniency,
-    // but the point is yamlError is checked
     expect(result.rendered).toBeTruthy();
+    expect(result.yamlValid).toBe(false);
+    expect(result.yamlError).toBeTruthy();
   });
 
   it("renders the real Apache template with defaults to valid YAML", () => {
@@ -202,26 +195,19 @@ describe("renderTemplate", () => {
 
 describe("findUndefinedVars", () => {
   it("finds variables referenced but not defined", () => {
-    const result = findUndefinedVars(
-      "endpoint: {{endpoint}}\nport: {{port}}",
-      [makeVar("endpoint")],
-    );
+    const result = findUndefinedVars("endpoint: {{endpoint}}\nport: {{port}}", [
+      makeVar("endpoint"),
+    ]);
     expect(result).toEqual(["port"]);
   });
 
   it("returns empty when all vars are defined", () => {
-    const result = findUndefinedVars(
-      "endpoint: {{endpoint}}",
-      [makeVar("endpoint")],
-    );
+    const result = findUndefinedVars("endpoint: {{endpoint}}", [makeVar("endpoint")]);
     expect(result).toEqual([]);
   });
 
   it("ignores block helpers like {{#if}}", () => {
-    const result = findUndefinedVars(
-      "{{#if tls}}\ntls: true\n{{/if}}",
-      [makeVar("tls")],
-    );
+    const result = findUndefinedVars("{{#if tls}}\ntls: true\n{{/if}}", [makeVar("tls")]);
     expect(result).toEqual([]);
   });
 
@@ -236,26 +222,33 @@ describe("findUndefinedVars", () => {
 
 describe("findUnusedVars", () => {
   it("finds variables defined but not referenced", () => {
-    const result = findUnusedVars(
-      "endpoint: {{endpoint}}",
-      [makeVar("endpoint"), makeVar("unused_var")],
-    );
+    const result = findUnusedVars("endpoint: {{endpoint}}", [
+      makeVar("endpoint"),
+      makeVar("unused_var"),
+    ]);
     expect(result).toEqual(["unused_var"]);
   });
 
   it("counts {{#if var}} as a reference", () => {
-    const result = findUnusedVars(
-      "{{#if tls_enabled}}\ntls: true\n{{/if}}",
-      [makeVar("tls_enabled")],
-    );
+    const result = findUnusedVars("{{#if tls_enabled}}\ntls: true\n{{/if}}", [
+      makeVar("tls_enabled"),
+    ]);
     expect(result).toEqual([]);
   });
 
   it("returns empty for the Apache template with all vars defined", () => {
     const apacheVars = [
-      "endpoint", "collection_interval", "initial_delay", "timeout",
-      "tls_enabled", "tls_insecure", "tls_insecure_skip_verify",
-      "tls_ca_file", "tls_cert_file", "tls_key_file", "tls_server_name_override",
+      "endpoint",
+      "collection_interval",
+      "initial_delay",
+      "timeout",
+      "tls_enabled",
+      "tls_insecure",
+      "tls_insecure_skip_verify",
+      "tls_ca_file",
+      "tls_cert_file",
+      "tls_key_file",
+      "tls_server_name_override",
     ].map((n) => makeVar(n));
 
     const result = findUnusedVars(APACHE_TEMPLATE, apacheVars);

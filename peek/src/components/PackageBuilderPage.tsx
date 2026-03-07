@@ -1,6 +1,11 @@
 import { useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogActions from "@mui/material/DialogActions";
 import Typography from "@mui/material/Typography";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import FolderOpenIcon from "@mui/icons-material/FolderOpen";
@@ -21,6 +26,7 @@ export default function PackageBuilderPage() {
   const setStep = usePackageBuilderStore((s) => s.setStep);
   const reset = usePackageBuilderStore((s) => s.reset);
   const [importOpen, setImportOpen] = useState(false);
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
 
   const canGoBack = currentStep > 1;
   const canGoForward = currentStep < 6;
@@ -36,13 +42,41 @@ export default function PackageBuilderPage() {
           <Button size="small" startIcon={<FolderOpenIcon />} onClick={() => setImportOpen(true)}>
             Open Package
           </Button>
-          <Button size="small" startIcon={<RestartAltIcon />} onClick={reset} color="warning">
+          <Button
+            size="small"
+            startIcon={<RestartAltIcon />}
+            onClick={() => setResetConfirmOpen(true)}
+            color="warning"
+          >
             Reset
           </Button>
         </Box>
       </Box>
 
       <ImportPackageDialog open={importOpen} onClose={() => setImportOpen(false)} />
+
+      {/* Reset confirmation dialog */}
+      <Dialog open={resetConfirmOpen} onClose={() => setResetConfirmOpen(false)}>
+        <DialogTitle>Clear draft?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            This will discard all wizard progress and start fresh. This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setResetConfirmOpen(false)}>Cancel</Button>
+          <Button
+            onClick={() => {
+              reset();
+              setResetConfirmOpen(false);
+            }}
+            color="warning"
+            variant="contained"
+          >
+            Reset
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Stepper */}
       <PackageBuilderStepper currentStep={currentStep} onStepClick={(step) => setStep(step)} />

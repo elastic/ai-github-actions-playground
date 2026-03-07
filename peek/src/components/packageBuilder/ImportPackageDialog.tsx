@@ -49,23 +49,19 @@ export default function ImportPackageDialog({ open, onClose }: Props) {
   // Load catalog when dialog opens
   useEffect(() => {
     if (!open) return;
-    let cancelled = false;
+    const controller = new AbortController();
     setCatalogLoading(true);
     setCatalogError(null);
-    listInputPackages()
-      .then((entries) => {
-        if (!cancelled) setCatalog(entries);
-      })
+    listInputPackages(controller.signal)
+      .then((entries) => setCatalog(entries))
       .catch((err) => {
-        if (!cancelled)
-          setCatalogError(err instanceof Error ? err.message : "Failed to load catalog");
+        if (err instanceof Error && err.name === "AbortError") return;
+        setCatalogError(err instanceof Error ? err.message : "Failed to load catalog");
       })
       .finally(() => {
-        if (!cancelled) setCatalogLoading(false);
+        if (!controller.signal.aborted) setCatalogLoading(false);
       });
-    return () => {
-      cancelled = true;
-    };
+    return () => controller.abort();
   }, [open]);
 
   const handleResult = useCallback(
@@ -111,11 +107,17 @@ export default function ImportPackageDialog({ open, onClose }: Props) {
     [handleResult],
   );
 
+  const catalogSelectControllerRef = useRef<AbortController | null>(null);
+
   const handleCatalogSelect = useCallback(
     (_: unknown, entry: CatalogEntry | null) => {
       if (!entry) return;
+      // Abort any previous in-flight catalog select fetch
+      catalogSelectControllerRef.current?.abort();
+      const controller = new AbortController();
+      catalogSelectControllerRef.current = controller;
       handleResult(async () => {
-        const fileMap = await fetchPackageFiles(entry.dirName);
+        const fileMap = await fetchPackageFiles(entry.dirName, controller.signal);
         return importFromFileMap(fileMap);
       });
     },

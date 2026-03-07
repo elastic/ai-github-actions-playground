@@ -31,6 +31,7 @@ function VariableCard({
   variable,
   index,
   total,
+  allNames,
   onUpdate,
   onRemove,
   onMove,
@@ -38,6 +39,7 @@ function VariableCard({
   variable: PackageVariable;
   index: number;
   total: number;
+  allNames: string[];
   onUpdate: (updates: Partial<PackageVariable>) => void;
   onRemove: () => void;
   onMove: (dir: -1 | 1) => void;
@@ -86,8 +88,20 @@ function VariableCard({
           <TextField
             label="Variable name"
             value={variable.name}
-            onChange={(e) =>
-              onUpdate({ name: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "_") })
+            onChange={(e) => {
+              const sanitized = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "_");
+              onUpdate({ name: sanitized });
+            }}
+            error={
+              (variable.name !== "" && /^\d/.test(variable.name)) ||
+              (variable.name !== "" && allNames.filter((n) => n === variable.name).length > 1)
+            }
+            helperText={
+              variable.name !== "" && /^\d/.test(variable.name)
+                ? "Name must start with a letter or underscore"
+                : variable.name !== "" && allNames.filter((n) => n === variable.name).length > 1
+                  ? "Duplicate variable name"
+                  : undefined
             }
             size="small"
             sx={{ flex: 1 }}
@@ -313,6 +327,7 @@ export default function StepVariables() {
             variable={variable}
             index={index}
             total={variables.length}
+            allNames={variables.map((v) => v.name)}
             onUpdate={(updates) => updateVariable(index, updates)}
             onRemove={() => removeVariable(index)}
             onMove={(dir) => moveVariable(index, index + dir)}

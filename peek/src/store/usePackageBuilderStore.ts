@@ -210,7 +210,12 @@ export const usePackageBuilderStore = create<PackageBuilderState>()(
       {
         name: "package-builder",
         partialize: (state) => ({
-          identity: state.identity,
+          identity: {
+            ...state.identity,
+            // Exclude icon from persistence — Uint8Array doesn't survive
+            // JSON round-trip and would break JSZip on rehydration.
+            icon: null,
+          },
           policyTemplate: state.policyTemplate,
           variables: state.variables,
           templateContent: state.templateContent,

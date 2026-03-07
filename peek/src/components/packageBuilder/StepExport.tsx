@@ -54,8 +54,8 @@ function useValidation(): ValidationItem[] {
       });
     }
 
-    // Version
-    if (/^\d+\.\d+\.\d+/.test(identity.version)) {
+    // Version — full semver match (no trailing junk like "1.2.3foo")
+    if (/^\d+\.\d+\.\d+(-[a-zA-Z0-9.]+)?(\+[a-zA-Z0-9.]+)?$/.test(identity.version)) {
       items.push({ label: "Version is valid semver", status: "pass" });
     } else {
       items.push({ label: "Version is not valid semver", status: "fail" });
