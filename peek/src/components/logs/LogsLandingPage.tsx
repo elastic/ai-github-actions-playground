@@ -1,0 +1,137 @@
+import { useCallback } from "react";
+import { parseAsString, useQueryState } from "nuqs";
+import Box from "@mui/material/Box";
+import Card from "@mui/material/Card";
+import CardActionArea from "@mui/material/CardActionArea";
+import CardContent from "@mui/material/CardContent";
+import Grid from "@mui/material/Grid2";
+import Paper from "@mui/material/Paper";
+import Typography from "@mui/material/Typography";
+import AppsIcon from "@mui/icons-material/Apps";
+import ComputerIcon from "@mui/icons-material/Computer";
+import DescriptionIcon from "@mui/icons-material/Description";
+import LayersIcon from "@mui/icons-material/Layers";
+import TerminalIcon from "@mui/icons-material/Terminal";
+
+import { useConnectionStore } from "../../store/useConnectionStore";
+import { useOpenInDiscover } from "../../hooks/useOpenInDiscover";
+import { interactiveCardSx } from "../interactiveCardSx";
+
+import LogsDimensionListPage from "./LogsDimensionListPage";
+
+export type LogsFocusDimension = "service.name" | "host.name" | "process.name" | "log.file.path";
+
+export const LOGS_DIMENSION_LABELS: Record<LogsFocusDimension, string> = {
+  "service.name": "Service",
+  "host.name": "Host",
+  "process.name": "Process",
+  "log.file.path": "File",
+};
+
+interface FocusOption {
+  dimension: LogsFocusDimension | null;
+  label: string;
+  subtext: string;
+  icon: React.ReactNode;
+}
+
+const FOCUS_OPTIONS: FocusOption[] = [
+  {
+    dimension: "service.name",
+    label: "Services",
+    subtext: "Browse log volume by service name",
+    icon: <LayersIcon fontSize="large" color="primary" />,
+  },
+  {
+    dimension: "host.name",
+    label: "Hosts",
+    subtext: "Browse log volume by host",
+    icon: <ComputerIcon fontSize="large" color="primary" />,
+  },
+  {
+    dimension: "process.name",
+    label: "Processes",
+    subtext: "Browse log volume by process name",
+    icon: <TerminalIcon fontSize="large" color="primary" />,
+  },
+  {
+    dimension: "log.file.path",
+    label: "Files",
+    subtext: "Browse log volume by file path",
+    icon: <DescriptionIcon fontSize="large" color="primary" />,
+  },
+  {
+    dimension: null,
+    label: "All logs",
+    subtext: "Open all logs in Query Lab",
+    icon: <AppsIcon fontSize="large" color="primary" />,
+  },
+];
+
+function isLogsFocusDimension(value: string | null): value is LogsFocusDimension {
+  return !!value && Object.prototype.hasOwnProperty.call(LOGS_DIMENSION_LABELS, value);
+}
+
+export default function LogsLandingPage() {
+  const connection = useConnectionStore((s) => s.connection);
+  const openInDiscover = useOpenInDiscover();
+
+  const [urlDimension, setUrlDimension] = useQueryState("focus", parseAsString);
+  const dimension = isLogsFocusDimension(urlDimension) ? urlDimension : null;
+
+  const handleSelect = useCallback(
+    async (dim: LogsFocusDimension | null) => {
+      if (dim === null) {
+        openInDiscover("FROM logs-* | SORT @timestamp DESC | LIMIT 500");
+        return;
+      }
+      await setUrlDimension(dim);
+    },
+    [openInDiscover, setUrlDimension],
+  );
+
+  const handleBack = useCallback(async () => {
+    await setUrlDimension(null);
+  }, [setUrlDimension]);
+
+  // Step 2: Show dimension list
+  if (dimension && connection) {
+    return (
+      <LogsDimensionListPage dimension={dimension} connection={connection} onBack={handleBack} />
+    );
+  }
+
+  // Step 1: Focus picker
+  return (
+    <Paper variant="outlined" sx={{ p: 3 }}>
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="h6">What logs are you looking for?</Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+          Pick a dimension to browse, or open all logs in Query Lab.
+        </Typography>
+      </Box>
+      <Grid container spacing={2}>
+        {FOCUS_OPTIONS.map((option) => (
+          <Grid key={option.dimension ?? "all"} size={{ xs: 12, sm: 6, md: 4 }}>
+            <Card variant="outlined" sx={{ height: "100%", ...interactiveCardSx }}>
+              <CardActionArea
+                onClick={() => void handleSelect(option.dimension)}
+                sx={{ height: "100%", p: 1 }}
+              >
+                <CardContent>
+                  <Box sx={{ mb: 1 }}>{option.icon}</Box>
+                  <Typography variant="subtitle1" fontWeight={600}>
+                    {option.label}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                    {option.subtext}
+                  </Typography>
+                </CardContent>
+              </CardActionArea>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
+    </Paper>
+  );
+}
