@@ -69,7 +69,9 @@ export default function LogsFocusPicker({ onSelect }: LogsFocusPickerProps) {
   return (
     <Paper variant="outlined" sx={{ p: 3 }}>
       <Box sx={{ mb: 3 }}>
-        <Typography variant="h6">What are you investigating?</Typography>
+        <Typography variant="h6" component="h2">
+          What are you investigating?
+        </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
           Choose a starting point to explore your logs. You can always refine your query later.
         </Typography>
