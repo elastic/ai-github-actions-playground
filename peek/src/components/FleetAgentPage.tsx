@@ -4,7 +4,7 @@ import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
-import CircularProgress from "@mui/material/CircularProgress";
+import LoadingButton from "./LoadingButton";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Tab from "@mui/material/Tab";
@@ -124,14 +124,14 @@ export default function FleetAgentPage() {
               <Button size="small" variant="text" onClick={() => navigate("/fleet")}>
                 ← Fleet
               </Button>
-              <Button
+              <LoadingButton
                 size="small"
                 variant="outlined"
                 onClick={() => void agentResult.refresh()}
-                disabled={loading}
+                loading={loading}
               >
-                {loading ? <CircularProgress size={16} /> : "Refresh"}
-              </Button>
+                Refresh
+              </LoadingButton>
             </>
           }
         />

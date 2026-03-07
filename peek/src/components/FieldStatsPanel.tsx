@@ -3,7 +3,7 @@ import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
-import LinearProgress from "@mui/material/LinearProgress";
+import ContentSkeleton from "./ContentSkeleton";
 import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
 import Paper from "@mui/material/Paper";
@@ -119,7 +119,7 @@ export default function FieldStatsPanel({
       <Box
         sx={{ display: "flex", flex: 1, flexDirection: "column", gap: 1, overflow: "auto", p: 1.5 }}
       >
-        {loading && <LinearProgress sx={{ my: 2 }} />}
+        {loading && <ContentSkeleton variant="list" />}
 
         {!loading && error && <Alert severity="error">{error}</Alert>}
 

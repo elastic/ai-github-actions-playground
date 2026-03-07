@@ -1,8 +1,7 @@
 import { useMemo, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import CircularProgress from "@mui/material/CircularProgress";
+import LoadingButton from "./LoadingButton";
 import Drawer from "@mui/material/Drawer";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import IconButton from "@mui/material/IconButton";
@@ -216,15 +215,14 @@ export default function NodesHotThreadsPage() {
             title="Hot Threads"
             description="Inspect node hot threads from /_nodes/hot_threads for CPU or contention hotspots."
             actions={
-              <Button
+              <LoadingButton
                 size="small"
                 variant="outlined"
                 onClick={result.refresh}
-                disabled={loading}
-                startIcon={loading ? <CircularProgress size={14} aria-hidden="true" /> : undefined}
+                loading={loading}
               >
                 {loading ? "Refreshing..." : "Refresh"}
-              </Button>
+              </LoadingButton>
             }
           />
           <InsightSlot slotId={HOT_THREADS_INSIGHT_SLOT_IDS.controls}>

@@ -4,7 +4,7 @@ import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
-import CircularProgress from "@mui/material/CircularProgress";
+import LoadingButton from "./LoadingButton";
 import Drawer from "@mui/material/Drawer";
 import IconButton from "@mui/material/IconButton";
 import Paper from "@mui/material/Paper";
@@ -263,17 +263,15 @@ export default function IndicesPage() {
             title="Indices"
             actions={
               <>
-                <Button
+                <LoadingButton
                   size="small"
                   variant="outlined"
                   onClick={indicesResult.refresh}
-                  startIcon={
-                    loadingIndices ? <CircularProgress size={14} aria-hidden="true" /> : undefined
-                  }
+                  loading={loadingIndices}
                   aria-label={loadingIndices ? "Refreshing indices" : "Refresh indices"}
                 >
                   {loadingIndices ? "Refreshing..." : "Refresh"}
-                </Button>
+                </LoadingButton>
                 <Tooltip title={!displayedIndex ? "Select an index first" : ""}>
                   <span>
                     <Button

@@ -1,9 +1,9 @@
 import Box from "@mui/material/Box";
-import Skeleton from "@mui/material/Skeleton";
 import Typography from "@mui/material/Typography";
 import ShowChartIcon from "@mui/icons-material/ShowChart";
 
 import type { EsqlResponse } from "../../types";
+import ContentSkeleton from "../ContentSkeleton";
 import EmptyState from "../EmptyState";
 import BarChart from "../visualizations/BarChart";
 import TimeSeriesChart from "../visualizations/TimeSeriesChart";
@@ -57,7 +57,7 @@ export function ErrorsBarCell({ data, loading, timeRange }: ErrorsBarCellProps) 
         Errors
       </Typography>
       {loading ? (
-        <Skeleton variant="rounded" height={CHART_HEIGHT} sx={{ borderRadius: 1 }} />
+        <ContentSkeleton variant="chart-cell" height={CHART_HEIGHT} />
       ) : barData && barData.values.length > 0 ? (
         <Box sx={{ height: CHART_HEIGHT }}>
           <BarChart
@@ -81,7 +81,7 @@ export function ChartCell({ title, data, metricColumn, loading, timeRange }: Cha
         {title}
       </Typography>
       {loading ? (
-        <Skeleton variant="rounded" height={CHART_HEIGHT} sx={{ borderRadius: 1 }} />
+        <ContentSkeleton variant="chart-cell" height={CHART_HEIGHT} />
       ) : sliced && sliced.values.length > 0 ? (
         <Box sx={{ height: CHART_HEIGHT }}>
           <TimeSeriesChart

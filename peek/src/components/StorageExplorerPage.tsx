@@ -4,7 +4,7 @@ import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
-import CircularProgress from "@mui/material/CircularProgress";
+import LoadingButton from "./LoadingButton";
 import Drawer from "@mui/material/Drawer";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import IconButton from "@mui/material/IconButton";
@@ -374,17 +374,17 @@ export default function StorageExplorerPage() {
                   Change View
                 </Button>
               )}
-              <Button
+              <LoadingButton
                 size="small"
                 variant="outlined"
                 onClick={refresh}
-                startIcon={loading ? <CircularProgress size={14} aria-hidden="true" /> : undefined}
+                loading={loading}
                 aria-label={
                   loading ? "Refreshing storage explorer data" : "Refresh storage explorer data"
                 }
               >
                 {loading ? "Refreshing..." : "Refresh"}
-              </Button>
+              </LoadingButton>
             </>
           }
         />

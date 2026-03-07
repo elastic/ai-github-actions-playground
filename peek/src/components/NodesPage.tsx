@@ -2,9 +2,8 @@ import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
-import CircularProgress from "@mui/material/CircularProgress";
+import LoadingButton from "./LoadingButton";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Table from "@mui/material/Table";
@@ -212,15 +211,9 @@ export default function NodesPage() {
           title="Nodes"
           description="Runtime health and capacity for all Elasticsearch nodes. Click a row to drill into thread pools, circuit breakers, and more."
           actions={
-            <Button
-              size="small"
-              variant="outlined"
-              onClick={refresh}
-              disabled={loading}
-              startIcon={loading ? <CircularProgress size={14} aria-hidden="true" /> : undefined}
-            >
+            <LoadingButton size="small" variant="outlined" onClick={refresh} loading={loading}>
               {loading ? "Refreshing..." : "Refresh"}
-            </Button>
+            </LoadingButton>
           }
         />
       </Paper>

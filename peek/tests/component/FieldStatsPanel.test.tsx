@@ -88,7 +88,7 @@ describe("FieldStatsPanel", () => {
     resetAllStores();
   });
 
-  it("shows a loading spinner while fetching stats", () => {
+  it("shows a loading skeleton while fetching stats", () => {
     fetchFieldStatsMock.mockReturnValue(new Promise(() => {}));
 
     render(
@@ -104,7 +104,7 @@ describe("FieldStatsPanel", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole("progressbar")).toBeInTheDocument();
+    expect(document.querySelector(".MuiSkeleton-root")).toBeInTheDocument();
   });
 
   it("displays counts and top values for a keyword field", async () => {

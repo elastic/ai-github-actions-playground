@@ -1,8 +1,7 @@
 import { useMemo, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import CircularProgress from "@mui/material/CircularProgress";
+import LoadingButton from "./LoadingButton";
 import Chip from "@mui/material/Chip";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Paper from "@mui/material/Paper";
@@ -114,15 +113,14 @@ export default function ClusterSettingsPage() {
           title="Cluster Settings"
           description="Flattened settings from /_cluster/settings with transient, persistent, and defaults."
           actions={
-            <Button
+            <LoadingButton
               size="small"
               variant="outlined"
               onClick={result.refresh}
-              disabled={loading}
-              startIcon={loading ? <CircularProgress size={14} aria-hidden="true" /> : undefined}
+              loading={loading}
             >
               {loading ? "Refreshing..." : "Refresh"}
-            </Button>
+            </LoadingButton>
           }
         />
         <Stack direction="row" spacing={1} sx={{ mt: 1 }} flexWrap="wrap" useFlexGap>

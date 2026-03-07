@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import CircularProgress from "@mui/material/CircularProgress";
+import LoadingButton from "./LoadingButton";
 import Collapse from "@mui/material/Collapse";
 import Drawer from "@mui/material/Drawer";
 import IconButton from "@mui/material/IconButton";
@@ -176,17 +176,17 @@ export default function IngestPipelinesPage() {
         <PageHeader
           title="Ingest Pipelines"
           actions={
-            <Button
+            <LoadingButton
               size="small"
               variant="outlined"
               onClick={() => {
                 pipelinesResult.refresh();
                 ingestNodeStatsResult.refresh();
               }}
-              disabled={loading}
+              loading={loading}
             >
-              {loading ? <CircularProgress size={16} /> : "Refresh"}
-            </Button>
+              Refresh
+            </LoadingButton>
           }
         />
       </Paper>
