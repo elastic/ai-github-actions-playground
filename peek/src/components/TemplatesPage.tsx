@@ -505,8 +505,8 @@ export default function TemplatesPage() {
                 INDEX PATTERNS
               </Typography>
               <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap", mb: 1 }}>
-                {selectedTemplate.indexPatterns.map((p) => (
-                  <Chip key={p} label={p} size="small" variant="outlined" />
+                {selectedTemplate.indexPatterns.map((p, i) => (
+                  <Chip key={`${p}-${i}`} label={p} size="small" variant="outlined" />
                 ))}
               </Box>
 
@@ -538,7 +538,12 @@ export default function TemplatesPage() {
                   </Typography>
                   <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap", mb: 1 }}>
                     {selectedTemplate.composedOf.map((c, i) => (
-                      <Chip key={c} label={`${i + 1}. ${c}`} size="small" variant="outlined" />
+                      <Chip
+                        key={`${c}-${i}`}
+                        label={`${i + 1}. ${c}`}
+                        size="small"
+                        variant="outlined"
+                      />
                     ))}
                   </Box>
                 </>

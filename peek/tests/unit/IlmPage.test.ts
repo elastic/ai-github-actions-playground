@@ -1,33 +1,13 @@
 import { describe, it, expect } from "vitest";
 
 import type { IlmIndexRow, IlmPolicyRow } from "../../src/services/es";
+import { parseDurationToMs } from "../../src/components/IlmPage";
 
 // Replicate sorting/filtering logic from IlmPage.tsx for unit testing.
 
 type IndexSortField = "index" | "policy" | "phase" | "step" | "age" | "error";
 type PolicySortField = "name" | "version" | "modifiedDate" | "indexCount";
 type SortDirection = "asc" | "desc";
-
-function parseDurationToMs(value: string): number {
-  const match = value.trim().match(/^(\d+(?:\.\d+)?)(ms|s|m|h|d)$/i);
-  if (!match) return Number.POSITIVE_INFINITY;
-  const [, amountText, unitText] = match;
-  if (!amountText || !unitText) return Number.POSITIVE_INFINITY;
-  const amount = Number(amountText);
-  if (Number.isNaN(amount)) return Number.POSITIVE_INFINITY;
-  const unit = unitText.toLowerCase();
-  const factor =
-    unit === "ms"
-      ? 1
-      : unit === "s"
-        ? 1000
-        : unit === "m"
-          ? 60_000
-          : unit === "h"
-            ? 3_600_000
-            : 86_400_000;
-  return amount * factor;
-}
 
 function compareIndexRows(
   a: IlmIndexRow,

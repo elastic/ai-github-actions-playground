@@ -40,7 +40,7 @@ type IndexSortField = "index" | "policy" | "phase" | "step" | "age" | "error";
 type PolicySortField = "name" | "version" | "modifiedDate" | "indexCount";
 type SortDirection = "asc" | "desc";
 
-function parseDurationToMs(value: string): number {
+export function parseDurationToMs(value: string): number {
   const match = value.trim().match(/^(\d+(?:\.\d+)?)(ms|s|m|h|d)$/i);
   if (!match) return Number.POSITIVE_INFINITY;
   const [, amountText, unitText] = match;
