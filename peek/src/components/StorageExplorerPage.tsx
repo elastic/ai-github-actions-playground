@@ -170,7 +170,9 @@ function aggregateTree(shards: StorageExplorerShard[], groupBy: GroupBy) {
 
   const addShardToNode = (node: TreeNode, shard: StorageExplorerShard) => {
     node.storeBytes += shard.storeBytes;
-    node.docs += shard.docs;
+    if (node.level === "shard" || shard.prirep.toLowerCase() === "p") {
+      node.docs += shard.docs;
+    }
     node.shardCopies += 1;
     if (shard.prirep.toLowerCase() === "p") node.primaries += 1;
     if (shard.prirep.toLowerCase() === "r") node.replicas += 1;
@@ -261,6 +263,7 @@ export default function StorageExplorerPage() {
         !showSystemIndices &&
         !dataStreamsUnavailable &&
         shard.index.startsWith(".") &&
+        !shard.index.startsWith(".ds-") &&
         !shard.dataStream
       ) {
         return false;

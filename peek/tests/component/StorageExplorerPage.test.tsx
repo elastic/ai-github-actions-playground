@@ -160,6 +160,30 @@ describe("StorageExplorerPage", () => {
     });
   });
 
+  it("keeps backing shards visible when data stream metadata is partially unavailable", async () => {
+    const user = userEvent.setup();
+    getDataStreamsMock.mockResolvedValue({
+      data_streams: [
+        {
+          name: "metrics-elastic_agent.default-default",
+          status: "GREEN",
+          generation: 1,
+          template: "metrics",
+        },
+      ],
+    });
+
+    render(
+      <MemoryRouter>
+        <StorageExplorerPage />
+      </MemoryRouter>,
+    );
+
+    await selectInstanceGrouping(user);
+    expect(await screen.findByTestId("storage-shard-copies")).toHaveTextContent("2");
+    expect(screen.queryByText(".security-7")).not.toBeInTheDocument();
+  });
+
   it("opens and closes a details flyout when selecting a row", async () => {
     const user = userEvent.setup();
     render(
@@ -173,6 +197,7 @@ describe("StorageExplorerPage", () => {
     await user.click(screen.getByText("elastic_agent.default"));
 
     expect(await screen.findByText("Storage details")).toBeInTheDocument();
+    expect(screen.getByText(/^100$/)).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /close storage details/i }));
     await waitFor(() => {
       expect(
