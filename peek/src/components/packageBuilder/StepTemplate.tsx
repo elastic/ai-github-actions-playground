@@ -282,9 +282,9 @@ export default function StepTemplate() {
           <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
             {variables
               .filter((v) => v.name)
-              .map((v) => (
+              .map((v, idx) => (
                 <TextField
-                  key={v.name}
+                  key={`mock-${idx}-${v.name}`}
                   label={v.title || v.name}
                   value={mockValues[v.name] ?? v.default}
                   onChange={(e) => setMockValue(v.name, e.target.value)}

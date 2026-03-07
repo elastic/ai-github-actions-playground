@@ -23,6 +23,7 @@ import { usePackageBuilderStore } from "../../store/usePackageBuilderStore";
 import {
   generateManifest,
   generateChangelog,
+  getIconFileName,
 } from "../../services/packageBuilder/generateManifest";
 import { renderTemplate, findUndefinedVars } from "../../services/packageBuilder/renderTemplate";
 import { exportPackageZip, downloadBlob } from "../../services/packageBuilder/exportPackage";
@@ -309,7 +310,7 @@ export default function StepExport() {
                     <ImageIcon fontSize="small" />
                   </ListItemIcon>
                   <ListItemText
-                    primary={`img/logo_${identity.name}.svg`}
+                    primary={`img/${getIconFileName(identity.name, identity.icon)}`}
                     primaryTypographyProps={{ fontSize: 13 }}
                   />
                 </ListItemButton>
