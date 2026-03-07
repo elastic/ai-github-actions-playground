@@ -1,0 +1,2 @@
+import{r}from"./mui-D9ri9i_d.js";function k(S,o="asc"){const[s,e]=r.useState(S),[c,n]=r.useState(o),a=r.useCallback(t=>{e(t),n(p=>s===t?p==="asc"?"desc":"asc":o)},[s,o]),b=r.useCallback(t=>({active:s===t,direction:s===t?c:o,onClick:()=>a(t)}),[s,c,o,a]);return{sortField:s,sortDirection:c,handleSort:a,getSortLabelProps:b,setSortField:e,setSortDirection:n}}export{k as u};
+//# sourceMappingURL=useTableSort-CJZaqUAv.js.map
