@@ -45,3 +45,19 @@ export const DEFAULT_KUBERNETES_FILTERS: KubernetesFilters = {
   namespace: null,
   activeTab: "clusters",
 };
+
+export type HostsOsFilter = "all" | "linux" | "windows" | "macos";
+
+export interface HostsFilters {
+  timeFrom: string;
+  timeTo: string;
+  osFilter: HostsOsFilter;
+  search: string;
+}
+
+export const DEFAULT_HOSTS_FILTERS: HostsFilters = {
+  timeFrom: "NOW() - 5 minutes",
+  timeTo: "NOW()",
+  osFilter: "all",
+  search: "",
+};
