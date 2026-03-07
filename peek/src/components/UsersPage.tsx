@@ -17,6 +17,7 @@ import Typography from "@mui/material/Typography";
 import { parseAsString, useQueryState } from "nuqs";
 
 import { useCopyFeedbackTimeout } from "../hooks/useCopyFeedbackTimeout";
+import { useSearchParam } from "../hooks/useSearchParam";
 import { useSecurityUsers } from "../hooks/useSecurityUsers";
 import { usePageContextStore } from "../store/usePageContextStore";
 import { INSIGHT_GUARDRAIL } from "../hooks/insightPromptUtils";
@@ -29,10 +30,7 @@ export default function UsersPage() {
   const { users, loading, error, accessNotice, refresh } = useSecurityUsers();
   const navigate = useNavigate();
   const [urlUsername, setUrlUsername] = useQueryState("username", parseAsString);
-  const [search, setSearch] = useQueryState(
-    "search",
-    parseAsString.withDefault("").withOptions({ history: "replace" }),
-  );
+  const [search, setSearch] = useSearchParam();
   const [copied, setCopied] = useState(false);
   const scheduleCopyFeedbackReset = useCopyFeedbackTimeout(() => setCopied(false));
 
