@@ -327,8 +327,18 @@ helm install opentelemetry-kube-stack open-telemetry/opentelemetry-kube-stack \\
       - OTEL_EXPORTER_OTLP_HEADERS`
         : `      - ELASTIC_API_KEY
       - ELASTIC_ENDPOINT`;
-      return `echo "Step 1: Create an otel-collector-config.yml file (see official docs for full reference)"
-test -f ./otel-collector-config.yml || { echo "Expected ./otel-collector-config.yml to be a file."; exit 1; }
+      const sampleConfigPath = isOtlp
+        ? "otel_samples/managed_otlp/platformlogs_hostmetrics.yml"
+        : "otel_samples/platformlogs_hostmetrics.yml";
+      return `echo "Step 1: Ensure otel-collector-config.yml is a file"
+if [ -d ./otel-collector-config.yml ]; then
+  echo "Expected ./otel-collector-config.yml to be a file, but found a directory."
+  exit 1
+fi
+if [ ! -f ./otel-collector-config.yml ]; then
+  echo "Downloading starter config to ./otel-collector-config.yml"
+  curl -fsSL ${ARTIFACTS_BASE}/${sampleConfigPath} -o ./otel-collector-config.yml
+fi
 
 echo "Step 2: Create a .env file"
 cat > .env << 'DOTENV'
