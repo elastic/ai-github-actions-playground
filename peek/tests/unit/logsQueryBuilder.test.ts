@@ -78,6 +78,18 @@ describe("buildLogsQuery", () => {
     expect(query).not.toContain('service.name == "*"');
   });
 
+  it("trims whitespace around wildcard before existence check", () => {
+    const query = buildLogsQuery({
+      indexPattern: "logs-*",
+      searchText: "",
+      filters: [{ field: "service.name", value: "  *  " }],
+      selectedColumns: ["@timestamp", "message"],
+    });
+
+    expect(query).toContain("service.name IS NOT NULL");
+    expect(query).not.toContain('service.name == "*"');
+  });
+
   it("renders excluded wildcard filter as IS NULL", () => {
     const query = buildLogsQuery({
       indexPattern: "logs-*",

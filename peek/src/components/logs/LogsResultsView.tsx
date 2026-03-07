@@ -234,7 +234,6 @@ export default function LogsResultsView({
                   return (
                     <Box
                       key={bucket.start}
-                      component="div"
                       role="img"
                       tabIndex={0}
                       aria-label={`Bucket: ${new Date(bucket.start).toLocaleTimeString()} – ${bucket.count.toLocaleString()} events`}
