@@ -6,6 +6,7 @@ import { NuqsAdapter } from "nuqs/adapters/react-router/v7";
 
 import App from "./App";
 import ErrorBoundary from "./components/ErrorBoundary";
+import { initializeHealthChecks } from "./health-checks/bootstrap";
 import { useConnectionStore } from "./store/useConnectionStore";
 import {
   getTracingConnectionSnapshot,
@@ -14,6 +15,7 @@ import {
 } from "./services/telemetry/browserTracing";
 
 const queryClient = new QueryClient();
+initializeHealthChecks();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

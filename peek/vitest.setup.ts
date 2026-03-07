@@ -3,8 +3,10 @@ import { vi, afterEach, expect } from "vitest";
 import { cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import * as matchers from "vitest-axe/matchers";
+import { initializeHealthChecks } from "./src/health-checks/bootstrap";
 
 expect.extend(matchers);
+initializeHealthChecks();
 
 vi.mock("@testing-library/react", async () => {
   const actual = await vi.importActual("@testing-library/react");

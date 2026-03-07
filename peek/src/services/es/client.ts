@@ -25,10 +25,13 @@ import type {
   CatAllocationRecord,
   CatShardRecord,
   RecoveryResponse,
+  IlmExplainResponse,
+  IlmPolicyResponse,
   SlmStatsResponse,
   SnapshotStatusResponse,
   ClusterSettingsResponse,
   ClusterAllocationExplainResponse,
+  TasksListResponse,
 } from "./clusterTypes";
 import type {
   ResolveIndexResponse,
@@ -86,6 +89,7 @@ export type {
   RecoveryResponse,
   IlmExplainIndexStatus,
   IlmExplainResponse,
+  IlmPolicyResponse,
   SlmPolicyStats,
   SlmStatsResponse,
   SnapshotShardStats,
@@ -96,6 +100,8 @@ export type {
   NodesIngestStatsResponse,
   ClusterSettingsResponse,
   ClusterAllocationExplainResponse,
+  TaskInfo,
+  TasksListResponse,
 } from "./clusterTypes";
 
 export type {
@@ -507,6 +513,10 @@ export class ElasticsearchClient {
 
   async getIlmExplainAll(signal?: AbortSignal): Promise<IlmExplainDetailResponse> {
     return this.getIlmExplain(signal);
+  }
+
+  async getTasksDetailed(signal?: AbortSignal): Promise<TasksListResponse> {
+    return this._fetch<TasksListResponse>("/_tasks?detailed=true", { signal });
   }
 
   async getSlmStats(signal?: AbortSignal): Promise<SlmStatsResponse> {

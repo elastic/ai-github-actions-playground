@@ -239,7 +239,13 @@ trap 'rm -f "$install_script"' EXIT
 curl -fsSL -o "$install_script" https://raw.githubusercontent.com/fluent/fluent-bit/master/install.sh
 echo "Reviewing installer script before execution"
 cat "$install_script"
-sh "$install_script"
+printf "Press Enter to proceed with installation, or Ctrl+C to abort..."
+if read -r _; then
+  sh "$install_script"
+else
+  printf '\nInstallation aborted: no interactive confirmation received.\n' >&2
+  exit 1
+fi
 
 echo "Step 2: Save the configuration above as /etc/fluent-bit/fluent-bit.conf"
 

@@ -10,6 +10,7 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
 import { useClusterOverview } from "../hooks/useClusterOverview";
+import { useHealthChecks } from "../hooks/useHealthChecks";
 import { usePageContextStore } from "../store/usePageContextStore";
 import { formatBytes } from "../utils/formatBytes";
 import { formatCompactNumber, toNodeRows } from "../utils/clusterOverviewUtils";
@@ -82,6 +83,16 @@ export default function ClusterOverviewPage() {
   const clusterIndexCount = clusterStats?.indices?.count ?? null;
 
   const fleetTotal = data?.fleetStatus?.total ?? data?.agentInventoryCount ?? null;
+  const {
+    checks: localChecks,
+    loading: localChecksLoading,
+    error: localChecksError,
+    refresh: refreshLocalChecks,
+  } = useHealthChecks({
+    surface: "local",
+    checkIds: ["cluster.status.red", "cluster.status.yellow", "cluster.unassigned_shards"],
+  });
+  const nonPassingLocalChecks = localChecks.filter((check) => check.status !== "pass");
 
   const partialErrorsKey = partialErrors.join("|");
 
@@ -137,6 +148,7 @@ export default function ClusterOverviewPage() {
                 onClick={() => {
                   setDismissedPartialErrorsKey(null);
                   refresh();
+                  refreshLocalChecks();
                 }}
                 startIcon={loading ? <CircularProgress size={14} aria-hidden="true" /> : undefined}
                 aria-label={loading ? "Refreshing cluster overview" : "Refresh cluster overview"}
@@ -263,7 +275,29 @@ export default function ClusterOverviewPage() {
                           label={`Unassigned shards: ${clusterHealth.unassigned_shards}`}
                         />
                       )}
+                      <Chip
+                        size="small"
+                        color={
+                          localChecksLoading || localChecksError
+                            ? "default"
+                            : nonPassingLocalChecks.length > 0
+                              ? "warning"
+                              : "success"
+                        }
+                        label={
+                          localChecksLoading
+                            ? "Snapshot checks: loading"
+                            : localChecksError
+                              ? "Snapshot checks: unavailable"
+                              : `Snapshot checks: ${nonPassingLocalChecks.length} alert${nonPassingLocalChecks.length === 1 ? "" : "s"}`
+                        }
+                      />
                     </Stack>
+                    {!localChecksLoading && !localChecksError && nonPassingLocalChecks[0] ? (
+                      <Typography variant="body2" color="text.secondary">
+                        {nonPassingLocalChecks[0].summary}
+                      </Typography>
+                    ) : null}
                   </Stack>
                 ) : (
                   <Typography variant="body2" color="text.secondary">
