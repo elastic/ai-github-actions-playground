@@ -124,6 +124,7 @@ export default function AddDataStepSetup(p: AddDataStepSetupProps) {
   const [installExpanded, setInstallExpanded] = useState(true);
   const installAutoCollapseTimeoutRef = useRef<number | null>(null);
   const installVisibleSinceRef = useRef<number | null>(null);
+  const hadApiKeyRef = useRef(p.hasApiKey);
   const autoGenerateRequestedRef = useRef(false);
   const autoExpandDoneRef = useRef(false);
   const MIN_INSTALL_VISIBLE_MS = 3000;
@@ -231,6 +232,13 @@ export default function AddDataStepSetup(p: AddDataStepSetupProps) {
   }, [showInstallSection]);
 
   useEffect(() => {
+    if (showInstallSection && !hadApiKeyRef.current && hasAnyApiKey) {
+      installVisibleSinceRef.current = Date.now();
+    }
+    hadApiKeyRef.current = hasAnyApiKey;
+  }, [showInstallSection, hasAnyApiKey]);
+
+  useEffect(() => {
     if (!showInstallSection || !p.verification.overallDetected) return;
     const shownAt = installVisibleSinceRef.current ?? Date.now();
     const elapsed = Date.now() - shownAt;
@@ -252,7 +260,7 @@ export default function AddDataStepSetup(p: AddDataStepSetupProps) {
         installAutoCollapseTimeoutRef.current = null;
       }
     };
-  }, [showInstallSection, p.verification.overallDetected]);
+  }, [showInstallSection, hasAnyApiKey, p.verification.overallDetected]);
 
   useEffect(() => {
     if (!showCredentialsSection) {
