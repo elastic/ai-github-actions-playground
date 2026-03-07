@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { EditorView } from "@codemirror/view";
+import { useQueries } from "@tanstack/react-query";
 
 import { ElasticsearchClient, getFieldValues } from "../../services/es";
 import { useConnectionStore } from "../../store/useConnectionStore";
@@ -73,12 +74,7 @@ export function useLogsPageState() {
     })),
   );
   const [queryContextView, setQueryContextView] = useState<EditorView | null>(null);
-  const [fieldValues, setFieldValues] = useState<
-    Record<string, Array<{ value: string; count: number }>>
-  >({});
   const [extractedSidebarFields, setExtractedSidebarFields] = useState<string[]>([]);
-  const [fieldValuesError, setFieldValuesError] = useState<string | null>(null);
-  const [fieldValuesLoading, setFieldValuesLoading] = useState(false);
   const [viewMode, setViewMode] = useState<LogsViewMode>("lines");
   const [extractDialogOpen, setExtractDialogOpen] = useState(false);
   const [extractMethod, setExtractMethod] = useState<ExtractMethod>("DISSECT");
@@ -253,49 +249,39 @@ export function useLogsPageState() {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [setLogsSearchCollapsed]);
 
-  useEffect(() => {
-    if (!connection) {
-      setFieldValues({});
-      setFieldValuesError(null);
-      setFieldValuesLoading(false);
-      return;
+  const activeProfileId = useConnectionStore((s) => s.activeProfileId);
+  const fieldValueQueries = useQueries({
+    queries: SIDEBAR_FIELDS.map((field) => ({
+      queryKey: ["field-values", activeProfileId, connection?.url, indexPattern, field] as const,
+      queryFn: async ({ signal }: { signal: AbortSignal }) => {
+        const client = new ElasticsearchClient(connection!);
+        return getFieldValues(client, indexPattern, field, 8, signal);
+      },
+      enabled: Boolean(connection),
+      retry: false,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+    })),
+  });
+
+  const fieldValues = useMemo<Record<string, Array<{ value: string; count: number }>>>(() => {
+    const entries: Array<[string, Array<{ value: string; count: number }>]> = [];
+    for (const [index, query] of fieldValueQueries.entries()) {
+      if (!query.data) continue;
+      const field = SIDEBAR_FIELDS[index];
+      if (!field) continue;
+      entries.push([field, query.data]);
     }
-    const client = new ElasticsearchClient(connection);
-    const controller = new AbortController();
-    let mounted = true;
-    const loadValues = async () => {
-      setFieldValuesLoading(true);
-      setFieldValuesError(null);
-      try {
-        const settled = await Promise.allSettled(
-          SIDEBAR_FIELDS.map((field) =>
-            getFieldValues(client, indexPattern, field, 8, controller.signal),
-          ),
-        );
-        if (!mounted) return;
-        const entries: Array<[string, Array<{ value: string; count: number }>]> = [];
-        for (const [index, settledResult] of settled.entries()) {
-          if (settledResult.status !== "fulfilled") continue;
-          const field = SIDEBAR_FIELDS[index];
-          if (!field) continue;
-          entries.push([field, settledResult.value]);
-        }
-        setFieldValues(Object.fromEntries(entries));
-      } catch (e: unknown) {
-        if (!mounted) return;
-        setFieldValuesError(String(e));
-      } finally {
-        if (mounted) {
-          setFieldValuesLoading(false);
-        }
-      }
-    };
-    void loadValues();
-    return () => {
-      mounted = false;
-      controller.abort();
-    };
-  }, [connection, indexPattern]);
+    return Object.fromEntries(entries);
+  }, [fieldValueQueries]);
+
+  const fieldValuesLoading = fieldValueQueries.some((q) => q.isFetching);
+  const fieldValuesError = fieldValueQueries.find((q) => q.error)?.error;
+  const fieldValuesErrorMessage = fieldValuesError
+    ? fieldValuesError instanceof Error
+      ? fieldValuesError.message
+      : String(fieldValuesError)
+    : null;
 
   const handleCellFilter = useCallback(
     (field: string, value: string, exclude = false) => {
@@ -473,7 +459,7 @@ export function useLogsPageState() {
     // Local state
     setQueryContextView,
     fieldValues,
-    fieldValuesError,
+    fieldValuesError: fieldValuesErrorMessage,
     fieldValuesLoading,
     viewMode,
     setViewMode,

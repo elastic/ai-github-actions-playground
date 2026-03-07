@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useCallback } from "react";
 import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
@@ -9,6 +9,7 @@ import Typography from "@mui/material/Typography";
 import FormControl from "@mui/material/FormControl";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import { useQuery } from "@tanstack/react-query";
 
 import type { DashboardParameter } from "../../types";
 import { COMPONENT_HEIGHTS } from "../../types/tokens";
@@ -38,39 +39,25 @@ export default function ParameterControl({
   onEdit,
   onDelete,
 }: ParameterControlProps) {
-  const [esqlOptions, setEsqlOptions] = useState<string[]>([]);
   const [validationError, setValidationError] = useState<string | null>(null);
-  const abortRef = useRef<AbortController | null>(null);
   const hasQueryableEsqlSource =
     param.source.mode === "esql" && Boolean(param.source.query.trim()) && Boolean(connection);
 
   // Fetch options from ES|QL when source mode is esql
-  useEffect(() => {
-    if (!hasQueryableEsqlSource || param.source.mode !== "esql" || !connection) return;
-    const esqlQuery = param.source.query;
-
-    abortRef.current?.abort();
-    const ctrl = new AbortController();
-    abortRef.current = ctrl;
-
-    void (async () => {
-      try {
-        const datasource = createPersesEsqlDatasource(connection);
-        const request = buildPersesEsqlRequest(esqlQuery, { parameters });
-        const result = await datasource.execute(request, ctrl.signal);
-        if (!ctrl.signal.aborted) {
-          setEsqlOptions(result.values?.map((row) => String(row[0] ?? "")).filter(Boolean) ?? []);
-        }
-      } catch (err: unknown) {
-        if (!ctrl.signal.aborted) {
-          setEsqlOptions([]);
-          console.error("ES|QL options fetch failed:", err);
-        }
-      }
-    })();
-
-    return () => ctrl.abort();
-  }, [param.source, connection, hasQueryableEsqlSource, parameters]);
+  const esqlQuery = param.source.mode === "esql" ? param.source.query : "";
+  const { data: esqlOptions = [] } = useQuery<string[]>({
+    queryKey: ["parameter-options", connection?.url, esqlQuery, parameters],
+    queryFn: async ({ signal }) => {
+      const datasource = createPersesEsqlDatasource(connection!);
+      const request = buildPersesEsqlRequest(esqlQuery, { parameters });
+      const result = await datasource.execute(request, signal);
+      return result.values?.map((row) => String(row[0] ?? "")).filter(Boolean) ?? [];
+    },
+    enabled: hasQueryableEsqlSource,
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
 
   const optionStrings =
     param.source.mode === "options"
