@@ -16,6 +16,14 @@ function makeFileMap(
   return map;
 }
 
+function makeRootFileMap(files: Record<string, string>): Map<string, Uint8Array> {
+  const map = new Map<string, Uint8Array>();
+  for (const [path, content] of Object.entries(files)) {
+    map.set(path, encoder.encode(content));
+  }
+  return map;
+}
+
 function expectVariable(
   vars: Awaited<ReturnType<typeof importFromFileMap>>["data"]["variables"],
   name: string,
@@ -261,6 +269,20 @@ describe("importFromFileMap — Redis input package", () => {
 });
 
 describe("importFromFileMap — error handling", () => {
+  it("supports root-level package paths without stripping segments", async () => {
+    const fileMap = makeRootFileMap({
+      "manifest.yml": APACHE_MANIFEST,
+      "agent/input/input.yml.hbs": APACHE_TEMPLATE,
+      "docs/README.md": APACHE_README,
+    });
+
+    const { data, warnings } = await importFromFileMap(fileMap);
+    expect(data.identity.name).toBe("apache");
+    expect(data.templateContent).toBe(APACHE_TEMPLATE);
+    expect(data.readmeContent).toBe(APACHE_README);
+    expect(warnings).toContainEqual(expect.stringContaining("logo_apache_otel.svg"));
+  });
+
   it("throws when no manifest.yml is found", async () => {
     const fileMap = makeFileMap({ "README.md": "hello" });
     await expect(importFromFileMap(fileMap)).rejects.toThrow("No manifest.yml found");

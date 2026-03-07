@@ -12,8 +12,17 @@ import type {
 } from "../../types/packageBuilder";
 
 const VALID_VARIABLE_TYPES = new Set([
-  "bool", "email", "integer", "password", "select",
-  "text", "textarea", "time_zone", "url", "yaml", "duration",
+  "bool",
+  "email",
+  "integer",
+  "password",
+  "select",
+  "text",
+  "textarea",
+  "time_zone",
+  "url",
+  "yaml",
+  "duration",
 ]);
 
 const VALID_SIGNAL_TYPES = new Set(["metrics", "logs", "traces", "synthetics", "profiles"]);
@@ -31,8 +40,19 @@ function collectFiles(files: Map<string, Uint8Array>): ParsedFiles {
   const decoder = new TextDecoder();
 
   for (const [path, bytes] of files) {
-    // Normalize: strip leading package folder name (e.g. "redis_input_otel/manifest.yml" → "manifest.yml")
-    const normalized = path.replace(/^[^/]+\//, "");
+    // Support both wrapped ("pkg-name/...") and root-level package file maps.
+    const normalizedPath = path.replace(/^\/+/, "");
+    const strippedPath = normalizedPath.replace(/^[^/]+\//, "");
+    const candidates =
+      normalizedPath === strippedPath ? [normalizedPath] : [normalizedPath, strippedPath];
+    const normalized = candidates.find(
+      (candidate) =>
+        candidate === "manifest.yml" ||
+        candidate === "agent/input/input.yml.hbs" ||
+        candidate === "docs/README.md" ||
+        /^img\/.*\.(svg|png|jpg|jpeg)$/i.test(candidate),
+    );
+    if (!normalized) continue;
 
     if (normalized === "manifest.yml") {
       result.manifest = decoder.decode(bytes);
@@ -87,12 +107,14 @@ function parseManifestVariable(raw: Record<string, unknown>): PackageVariable {
   };
 }
 
-function parseManifest(yamlContent: string): Omit<PackageBuilderData, "templateContent" | "readmeContent"> & { iconPath?: string } {
+function parseManifest(
+  yamlContent: string,
+): Omit<PackageBuilderData, "templateContent" | "readmeContent"> & { iconPath?: string } {
   let doc: Record<string, unknown>;
   try {
     doc = YAML.parse(yamlContent) as Record<string, unknown>;
   } catch (err) {
-    throw new Error(`Invalid manifest.yml: ${err instanceof Error ? err.message : String(err)}`);
+    throw new Error(`Invalid manifest.yml: ${err instanceof Error ? err.message : String(err)}`, { cause: err });
   }
 
   // Identity
@@ -107,7 +129,7 @@ function parseManifest(yamlContent: string): Omit<PackageBuilderData, "templateC
   const kibanaVersion = String(conditions.kibana?.version ?? "^9.2.0");
   const subscription = String(conditions.elastic?.subscription ?? "basic");
 
-  const icons = Array.isArray(doc.icons) ? doc.icons as Record<string, unknown>[] : [];
+  const icons = Array.isArray(doc.icons) ? (doc.icons as Record<string, unknown>[]) : [];
   const firstIcon = icons[0];
   const iconPath = firstIcon ? String(firstIcon.src ?? "") : undefined;
 
@@ -118,10 +140,14 @@ function parseManifest(yamlContent: string): Omit<PackageBuilderData, "templateC
     version: String(doc.version ?? "0.1.0"),
     formatVersion,
     ownerGithub: String(owner.github ?? "elastic/ecosystem"),
-    ownerType: (["elastic", "partner", "community"].includes(ownerType) ? ownerType : "elastic") as OwnerType,
+    ownerType: (["elastic", "partner", "community"].includes(ownerType)
+      ? ownerType
+      : "elastic") as OwnerType,
     categories: Array.isArray(doc.categories) ? doc.categories.map(String) : ["opentelemetry"],
     kibanaVersion,
-    subscription: (["basic", "gold", "platinum", "enterprise"].includes(subscription) ? subscription : "basic") as SubscriptionLevel,
+    subscription: (["basic", "gold", "platinum", "enterprise"].includes(subscription)
+      ? subscription
+      : "basic") as SubscriptionLevel,
     icon: null as PackageIcon | null,
   };
 
@@ -133,11 +159,12 @@ function parseManifest(yamlContent: string): Omit<PackageBuilderData, "templateC
 
   const dynamicSignalTypes = Boolean(pt.dynamic_signal_types);
   const rawSignalType = pt.type ? String(pt.type) : null;
-  const signalTypes: SignalType[] = rawSignalType && VALID_SIGNAL_TYPES.has(rawSignalType)
-    ? [rawSignalType as SignalType]
-    : dynamicSignalTypes
-      ? []
-      : ["metrics"];
+  const signalTypes: SignalType[] =
+    rawSignalType && VALID_SIGNAL_TYPES.has(rawSignalType)
+      ? [rawSignalType as SignalType]
+      : dynamicSignalTypes
+        ? []
+        : ["metrics"];
 
   const policyTemplate = {
     name: String(pt.name ?? ""),
@@ -229,11 +256,7 @@ export async function importFromFileMap(fileMap: Map<string, Uint8Array>): Promi
   } else if (parsed.iconFiles.size > 0) {
     const firstIcon = parsed.iconFiles.values().next().value;
     if (firstIcon) {
-      identity.icon = await bytesToPackageIcon(
-        firstIcon.name,
-        firstIcon.bytes,
-        firstIcon.mimeType,
-      );
+      identity.icon = await bytesToPackageIcon(firstIcon.name, firstIcon.bytes, firstIcon.mimeType);
     }
   }
 
