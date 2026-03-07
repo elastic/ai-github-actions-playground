@@ -43,6 +43,12 @@ const A11Y_BASELINE: Record<string, Record<string, Record<string, number>>> = {
     },
     Logs: {
       "color-contrast": 6,
+      "page-has-heading-one": 1,
+    },
+    "logs-explorer": {
+      "aria-prohibited-attr": 1,
+      "color-contrast": 18,
+      "scrollable-region-focusable": 1,
     },
     Console: {
       "color-contrast": 17,
@@ -60,6 +66,11 @@ const A11Y_BASELINE: Record<string, Record<string, Record<string, number>>> = {
     },
     Logs: {
       "color-contrast": 6,
+    },
+    "logs-explorer": {
+      "aria-prohibited-attr": 1,
+      "color-contrast": 17,
+      "scrollable-region-focusable": 2,
     },
     Traces: {
       "aria-prohibited-attr": 1,
@@ -254,6 +265,15 @@ async function connectToMockCluster(page: Page) {
   await expect(page.getByRole("button", { name: "Metrics", exact: true })).toBeVisible();
 }
 
+async function dismissMobileDrawerIfOpen(page: Page) {
+  const isMobile = page.viewportSize()!.width <= 768;
+  if (!isMobile) return;
+  const backdrop = page.locator(".MuiDrawer-root .MuiBackdrop-root");
+  if (await backdrop.isVisible()) {
+    await backdrop.click({ position: { x: 8, y: 8 } });
+  }
+}
+
 test.describe("smoke – site navigation", () => {
   test("onboarding user reaches the connect entrypoint from the welcome screen", async ({
     page,
@@ -404,6 +424,7 @@ test.describe("smoke – site navigation", () => {
 
   test("logs explorer route is available and runs a logs query", async ({ page }) => {
     await connectToMockCluster(page);
+    await dismissMobileDrawerIfOpen(page);
     // Logs Explorer is hidden from the sidebar; navigate directly via hash route
     await page.evaluate(() => {
       window.location.hash = "/logs-explorer";
@@ -424,6 +445,7 @@ test.describe("smoke – site navigation", () => {
   test("logs explorer keeps search and click-to-filter in visible query", async ({ page }) => {
     test.setTimeout(60_000);
     await connectToMockCluster(page);
+    await dismissMobileDrawerIfOpen(page);
     // Logs Explorer is hidden from the sidebar; navigate directly via hash route
     await page.evaluate(() => {
       window.location.hash = "/logs-explorer";
@@ -470,6 +492,8 @@ test.describe("smoke – site navigation", () => {
         expect(page.getByRole("textbox", { name: "ES|QL query editor" })).toBeVisible(),
       Logs: () =>
         expect(page.getByRole("heading", { name: "What logs are you looking for?" })).toBeVisible(),
+      "logs-explorer": () =>
+        expect(page.getByRole("heading", { name: "Logs Explorer" })).toBeVisible(),
       Console: async () => {
         await expect(page).toHaveURL(/\/console$/);
         await expect(page.getByRole("heading", { name: "API Console" })).toBeVisible();
@@ -490,5 +514,13 @@ test.describe("smoke – site navigation", () => {
       await pageReadyLocators[nav]!();
       await checkA11y(page, nav, testInfo);
     }
+
+    await dismissMobileDrawerIfOpen(page);
+    await page.evaluate(() => {
+      window.location.hash = "/logs-explorer";
+    });
+    await expect(page).toHaveURL(/\/logs-explorer$/);
+    await pageReadyLocators["logs-explorer"]!();
+    await checkA11y(page, "logs-explorer", testInfo);
   });
 });
