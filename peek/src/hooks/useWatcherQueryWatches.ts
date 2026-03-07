@@ -22,7 +22,7 @@ export function useWatcherQueryWatches({
     queryKey: ["watcher-query-watches", connection?.url, from, size],
     queryFn: createQueryFn(async (client) => {
       try {
-        return await client.queryWatcherWatches({ from, size, sort: ["_id"] });
+        return await client.queryWatcherWatches({ from, size });
       } catch (error: unknown) {
         if (isElasticsearchError(error) && error.status === 403) {
           throw new Error("Forbidden: missing permission to query watcher watches.", {

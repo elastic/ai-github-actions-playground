@@ -16,7 +16,9 @@ export function useClusterSettings(): DataFetchResult<ClusterSettingsResponse> &
         return await client.getClusterSettings();
       } catch (error: unknown) {
         if (isElasticsearchError(error) && error.status === 403) {
-          throw new Error("Forbidden: missing permission to read cluster settings.", { cause: error });
+          throw new Error("Forbidden: missing permission to read cluster settings.", {
+            cause: error,
+          });
         }
         throw error;
       }

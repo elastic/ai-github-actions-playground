@@ -203,12 +203,12 @@ describe("AppSidebar", () => {
     expect(screen.getByTestId("location")).toHaveTextContent("/nodes-hot-threads");
   });
 
-  it("navigates to Get Watch when clicked while connected", async () => {
+  it("navigates to Watchers when clicked while connected", async () => {
     useConnectionStore.getState().setConnected(true);
     const user = userEvent.setup();
     renderSidebar();
 
-    await user.click(screen.getByRole("button", { name: /get watch/i }));
+    await user.click(screen.getByRole("button", { name: /watchers/i }));
 
     expect(screen.getByTestId("location")).toHaveTextContent("/watcher-get-watch");
   });

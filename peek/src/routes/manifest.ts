@@ -522,7 +522,7 @@ export const PAGE_MANIFEST = {
     showTimeControls: false,
     skeletonVariant: "detail-panel",
     nav: {
-      label: "Get Watch",
+      label: "Watchers",
       group: "System",
       order: 29,
       showInSidebar: true,

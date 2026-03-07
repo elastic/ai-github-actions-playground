@@ -359,7 +359,7 @@ test.describe("smoke – site navigation", () => {
     await page.getByRole("button", { name: "Cancel" }).click();
 
     await connectToMockCluster(page);
-    await page.getByRole("button", { name: /Settings/i }).click();
+    await page.getByRole("button", { name: /^Settings$/i }).click();
     await page.getByRole("menuitem", { name: /Reset All State/i }).click();
     await expect(page.getByRole("dialog", { name: /Reset all application state/i })).toBeVisible();
     await page.getByRole("button", { name: "Reset", exact: true }).click();

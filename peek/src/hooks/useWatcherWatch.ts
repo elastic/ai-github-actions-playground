@@ -20,7 +20,9 @@ export function useWatcherWatch(watchId: string): DataFetchResult<GetWatchRespon
           throw new Error(`Watch "${trimmedId}" not found.`, { cause: error });
         }
         if (isElasticsearchError(error) && error.status === 403) {
-          throw new Error("Forbidden: missing permission to read watcher watches.", { cause: error });
+          throw new Error("Forbidden: missing permission to read watcher watches.", {
+            cause: error,
+          });
         }
         throw error;
       }
