@@ -1,7 +1,10 @@
 import Button, { type ButtonProps } from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
 
-interface LoadingButtonProps extends ButtonProps {
+interface LoadingButtonProps extends Omit<
+  ButtonProps,
+  "loading" | "loadingIndicator" | "loadingPosition"
+> {
   loading?: boolean;
 }
 
