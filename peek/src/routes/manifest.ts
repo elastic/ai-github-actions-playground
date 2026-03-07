@@ -374,7 +374,7 @@ export const PAGE_MANIFEST = {
     nav: {
       label: "Tasks",
       group: "System",
-      order: 12,
+      order: 18,
       showInSidebar: true,
       icon: createElement(PendingActionsIcon, { fontSize: "small" }),
     },
