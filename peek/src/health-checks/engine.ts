@@ -60,9 +60,17 @@ export function evaluateHealthChecks(
   });
 
   return evaluated.sort((a, b) => {
+    // Non-passing checks first, passing last
+    const aFailing = a.status === "fail" || a.status === "warn" || a.status === "unknown" ? 0 : 1;
+    const bFailing = b.status === "fail" || b.status === "warn" || b.status === "unknown" ? 0 : 1;
+    if (aFailing !== bFailing) return aFailing - bFailing;
+
+    // Sort by severity (critical first)
     const aRank = a.severity ? SEVERITY_RANK[a.severity] : Number.MAX_SAFE_INTEGER;
     const bRank = b.severity ? SEVERITY_RANK[b.severity] : Number.MAX_SAFE_INTEGER;
     if (aRank !== bRank) return aRank - bRank;
+
+    // Then by domain, then title
     if (a.domain !== b.domain) return a.domain.localeCompare(b.domain);
     return a.title.localeCompare(b.title);
   });

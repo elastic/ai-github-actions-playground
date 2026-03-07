@@ -275,23 +275,17 @@ export default function ClusterOverviewPage() {
                           label={`Unassigned shards: ${clusterHealth.unassigned_shards}`}
                         />
                       )}
-                      <Chip
-                        size="small"
-                        color={
-                          localChecksLoading || localChecksError
-                            ? "default"
-                            : nonPassingLocalChecks.length > 0
-                              ? "warning"
-                              : "success"
-                        }
-                        label={
-                          localChecksLoading
-                            ? "Snapshot checks: loading"
-                            : localChecksError
-                              ? "Snapshot checks: unavailable"
-                              : `Snapshot checks: ${nonPassingLocalChecks.length} alert${nonPassingLocalChecks.length === 1 ? "" : "s"}`
-                        }
-                      />
+                      {localChecksLoading ? (
+                        <Chip size="small" color="default" label="Snapshot checks: loading" />
+                      ) : localChecksError ? (
+                        <Chip size="small" color="default" label="Snapshot checks: unavailable" />
+                      ) : localChecks.length > 0 ? (
+                        <Chip
+                          size="small"
+                          color={nonPassingLocalChecks.length > 0 ? "warning" : "success"}
+                          label={`Snapshot checks: ${nonPassingLocalChecks.length} alert${nonPassingLocalChecks.length === 1 ? "" : "s"}`}
+                        />
+                      ) : null}
                     </Stack>
                     {!localChecksLoading && !localChecksError && nonPassingLocalChecks[0] ? (
                       <Typography variant="body2" color="text.secondary">

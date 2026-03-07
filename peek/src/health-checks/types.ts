@@ -24,27 +24,24 @@ export type HealthQueryGroup =
 
 export interface HealthSnapshot {
   fetchedAt: string;
-  data: Partial<{
-    clusterCore: {
-      clusterHealth: ClusterHealthResponse | null;
-      pendingTasks: ClusterPendingTasksResponse | null;
-    };
-    shards: unknown | null;
-    allocationSample: unknown | null;
-    nodesCore: {
-      nodeStats: NodesStatsResponse | null;
-    };
-    tasksCore: {
-      tasks: TasksListResponse | null;
-    };
-    indicesCore: unknown | null;
-    indexSettings: unknown | null;
-    ilmCore: {
-      ilmExplain: IlmExplainResponse | null;
-      ilmPolicies: IlmPolicyResponse | null;
-    };
-    templatesCore: unknown | null;
-  }>;
+  data: Partial<
+    Record<HealthQueryGroup, unknown> & {
+      clusterCore: {
+        clusterHealth: ClusterHealthResponse | null;
+        pendingTasks: ClusterPendingTasksResponse | null;
+      };
+      nodesCore: {
+        nodeStats: NodesStatsResponse | null;
+      };
+      tasksCore: {
+        tasks: TasksListResponse | null;
+      };
+      ilmCore: {
+        ilmExplain: IlmExplainResponse | null;
+        ilmPolicies: IlmPolicyResponse | null;
+      };
+    }
+  >;
   errors: Partial<Record<HealthQueryGroup, string>>;
 }
 

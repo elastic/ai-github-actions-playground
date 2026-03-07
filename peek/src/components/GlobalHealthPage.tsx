@@ -48,10 +48,16 @@ export default function GlobalHealthPage() {
   const orderedChecks = useMemo(
     () =>
       [...checks].sort((a, b) => {
-        if (a.domain !== b.domain) return a.domain.localeCompare(b.domain);
+        // Non-passing checks first
+        const aFailing = a.status === "fail" || a.status === "warn" || a.status === "unknown" ? 0 : 1;
+        const bFailing = b.status === "fail" || b.status === "warn" || b.status === "unknown" ? 0 : 1;
+        if (aFailing !== bFailing) return aFailing - bFailing;
+
         const aSeverity = a.severity ? SEVERITY_ORDER[a.severity] : Number.MAX_SAFE_INTEGER;
         const bSeverity = b.severity ? SEVERITY_ORDER[b.severity] : Number.MAX_SAFE_INTEGER;
         if (aSeverity !== bSeverity) return aSeverity - bSeverity;
+
+        if (a.domain !== b.domain) return a.domain.localeCompare(b.domain);
         return a.title.localeCompare(b.title);
       }),
     [checks],

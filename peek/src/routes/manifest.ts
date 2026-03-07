@@ -413,7 +413,7 @@ export const PAGE_MANIFEST = {
     nav: {
       label: "Resilience",
       group: "System",
-      order: 15,
+      order: 16,
       showInSidebar: false,
       icon: createElement(ShieldIcon, { fontSize: "small" }),
     },
@@ -568,7 +568,7 @@ export const PAGE_MANIFEST = {
     nav: {
       label: "Fleet",
       group: "System",
-      order: 15,
+      order: 17,
       showInSidebar: true,
       icon: createElement(SecurityIcon, { fontSize: "small" }),
     },
@@ -582,7 +582,7 @@ export const PAGE_MANIFEST = {
     nav: {
       label: "Fleet Agent Detail",
       group: "System",
-      order: 16,
+      order: 18,
       showInSidebar: false,
       icon: createElement(SecurityIcon, { fontSize: "small" }),
     },

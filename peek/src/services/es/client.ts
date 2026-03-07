@@ -491,7 +491,7 @@ export class ElasticsearchClient {
   }
 
   async getTasksDetailed(signal?: AbortSignal): Promise<TasksListResponse> {
-    return this._fetch<TasksListResponse>("/_tasks?detailed=true", { signal });
+    return this._fetch<TasksListResponse>("/_tasks?detailed=true&group_by=nodes", { signal });
   }
 
   async getSlmStats(signal?: AbortSignal): Promise<SlmStatsResponse> {
