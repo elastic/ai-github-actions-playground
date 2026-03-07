@@ -250,30 +250,38 @@ export function useTracesOrchestrator() {
     onFailure: () => setDriftRadarBaselineSpans(null),
   });
 
+  const hasCustomRawQuery = useCallback((updatedFilters: TraceFilters): boolean => {
+    const currentRawQuery = useTracesStore.getState().rawQuery;
+    if (currentRawQuery == null) return false;
+    const generatedForFilters = buildTraceSearchQuery(updatedFilters, DEFAULT_FIELD_MAPPING, {
+      limit: 500,
+    });
+    return formatEsqlQuery(currentRawQuery) !== formatEsqlQuery(generatedForFilters);
+  }, []);
+
   const runTraceQueries = useCallback(
     (query: string, updatedFilters = filters) => {
       setSearchResult(null);
       setSearchTraceSpans([]);
       setTimeseriesResult(null);
       runSearchQuery(query);
-      // Always run timeseries for charts; use time-only filters when user has raw query.
-      // Read rawQuery from store at execution time to avoid stale closure after filter resets.
-      const chartFilters =
-        useTracesStore.getState().rawQuery != null
-          ? {
-              ...updatedFilters,
-              services: [],
-              operations: [],
-              statusCodes: [],
-              minDurationMs: null,
-              maxDurationMs: null,
-              tags: [],
-            }
-          : updatedFilters;
+      // Always run timeseries for charts; use time-only filters when user has a custom raw query.
+      const chartFilters = hasCustomRawQuery(updatedFilters)
+        ? {
+            ...updatedFilters,
+            services: [],
+            operations: [],
+            statusCodes: [],
+            minDurationMs: null,
+            maxDurationMs: null,
+            tags: [],
+          }
+        : updatedFilters;
       runTimeseriesQuery(buildTraceTimeseriesQuery(chartFilters));
     },
     [
       filters,
+      hasCustomRawQuery,
       runSearchQuery,
       runTimeseriesQuery,
       setSearchResult,
@@ -284,7 +292,7 @@ export function useTracesOrchestrator() {
 
   const runDriftRadarQueries = useCallback(
     (updatedFilters: TraceFilters, baselineEnabled = driftRadarBaselineEnabled) => {
-      if (viewMode !== "driftRadar" || rawQuery != null) return;
+      if (viewMode !== "driftRadar" || hasCustomRawQuery(updatedFilters)) return;
 
       setDriftRadarSpans([]);
       setDriftRadarBaselineSpans(null);
@@ -305,7 +313,13 @@ export function useTracesOrchestrator() {
         }
       }
     },
-    [viewMode, rawQuery, driftRadarBaselineEnabled, runDriftRadarQuery, runDriftRadarBaselineQuery],
+    [
+      viewMode,
+      hasCustomRawQuery,
+      driftRadarBaselineEnabled,
+      runDriftRadarQuery,
+      runDriftRadarBaselineQuery,
+    ],
   );
 
   const handleDriftRadarBaselineChange = useCallback(
@@ -338,8 +352,10 @@ export function useTracesOrchestrator() {
 
   const handleFormatQuery = useCallback(() => {
     const formatted = formatEsqlQuery(effectiveQuery);
-    if (formatted === generatedQuery) {
-      setRawQuery(null);
+    const formattedGenerated = formatEsqlQuery(generatedQuery);
+    if (formatted === formattedGenerated) {
+      // Keep the formatted version visible while preserving generated-query semantics.
+      if (formatted !== effectiveQuery) setRawQuery(formatted);
     } else if (formatted !== effectiveQuery) {
       setRawQuery(formatted);
     }
