@@ -122,7 +122,7 @@ interface RawSnapshotData {
   snapshots: GetSnapshotsResponse;
   policies: GetSlmPoliciesResponse;
   repositories: GetRepositoriesResponse;
-  slmStats: SlmStatsResponse;
+  slmStats: SlmStatsResponse | null;
 }
 
 function toSnapshotData(raw: RawSnapshotData): SnapshotData {
@@ -153,7 +153,7 @@ export function useSnapshotData(): DataFetchResult<SnapshotData> & { refresh: ()
         snapshots: snapshots.status === "fulfilled" ? snapshots.value : { snapshots: [] },
         policies: policies.status === "fulfilled" ? policies.value : {},
         repositories: repositories.status === "fulfilled" ? repositories.value : {},
-        slmStats: slmStats.status === "fulfilled" ? slmStats.value : ({} as SlmStatsResponse),
+        slmStats: slmStats.status === "fulfilled" ? slmStats.value : null,
       } satisfies RawSnapshotData;
     }),
     enabled: Boolean(connection),
