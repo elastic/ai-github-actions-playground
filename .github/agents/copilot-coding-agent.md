@@ -61,7 +61,8 @@ When a change affects the visual appearance of the UI, you **must** capture and 
 Use `screenshot-feature.mjs` — it launches a browser, mocks Elasticsearch, auto-connects, navigates to the page you specify, and captures a screenshot. No live Elasticsearch cluster needed.
 
 ```bash
-cd peek && npm run build && npm run preview -- --port 3000 &
+cd peek
+npm run build && npm run preview -- --port 3000 &
 DEV_PID=$!
 for i in $(seq 1 30); do curl -sf http://localhost:3000/ai-github-actions-playground/ >/dev/null && break; sleep 1; done
 npx playwright install --with-deps chromium
