@@ -9,21 +9,21 @@ import TableSortLabel from "@mui/material/TableSortLabel";
 import Typography from "@mui/material/Typography";
 
 import { formatLatency } from "./serviceInventoryHelpers";
-import type { RecentTrace, TraceSortField, SortDirection } from "./serviceDashboardHelpers";
+import type { RecentTrace, TraceSortField } from "./serviceDashboardHelpers";
 
 interface ServiceTracesTableProps {
   traces: RecentTrace[];
-  sortField: TraceSortField;
-  sortDirection: SortDirection;
-  onSort: (field: TraceSortField) => void;
+  getSortLabelProps: (field: TraceSortField) => {
+    active: boolean;
+    direction: "asc" | "desc";
+    onClick: () => void;
+  };
   onViewTrace: (traceId: string) => void;
 }
 
 export default function ServiceTracesTable({
   traces,
-  sortField,
-  sortDirection,
-  onSort,
+  getSortLabelProps,
   onViewTrace,
 }: ServiceTracesTableProps) {
   return (
@@ -32,40 +32,16 @@ export default function ServiceTracesTable({
         <TableRow>
           <TableCell>Trace ID</TableCell>
           <TableCell>
-            <TableSortLabel
-              active={sortField === "spanName"}
-              direction={sortField === "spanName" ? sortDirection : "asc"}
-              onClick={() => onSort("spanName")}
-            >
-              Operation
-            </TableSortLabel>
+            <TableSortLabel {...getSortLabelProps("spanName")}>Operation</TableSortLabel>
           </TableCell>
           <TableCell align="right">
-            <TableSortLabel
-              active={sortField === "durationMs"}
-              direction={sortField === "durationMs" ? sortDirection : "desc"}
-              onClick={() => onSort("durationMs")}
-            >
-              Duration
-            </TableSortLabel>
+            <TableSortLabel {...getSortLabelProps("durationMs")}>Duration</TableSortLabel>
           </TableCell>
           <TableCell>
-            <TableSortLabel
-              active={sortField === "statusCode"}
-              direction={sortField === "statusCode" ? sortDirection : "asc"}
-              onClick={() => onSort("statusCode")}
-            >
-              Status
-            </TableSortLabel>
+            <TableSortLabel {...getSortLabelProps("statusCode")}>Status</TableSortLabel>
           </TableCell>
           <TableCell>
-            <TableSortLabel
-              active={sortField === "timestamp"}
-              direction={sortField === "timestamp" ? sortDirection : "desc"}
-              onClick={() => onSort("timestamp")}
-            >
-              Timestamp
-            </TableSortLabel>
+            <TableSortLabel {...getSortLabelProps("timestamp")}>Timestamp</TableSortLabel>
           </TableCell>
           <TableCell align="right">Actions</TableCell>
         </TableRow>

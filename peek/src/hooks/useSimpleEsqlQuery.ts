@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import type { EsqlResponse } from "../types";
 import type { EsqlQueryParams } from "../services/es";
+import { isElasticsearchError } from "../services/es";
 import { createPersesEsqlDatasource } from "../services/perses/esqlDatasource";
 import { useConnectionStore } from "../store/useConnectionStore";
 
@@ -86,14 +87,14 @@ export function useSimpleEsqlQuery({
   return {
     data: result.data ?? null,
     loading: result.isFetching,
-    error:
-      requestBuildError != null
-        ? requestBuildError.message
-        : result.error == null
-          ? null
-          : result.error instanceof Error
-            ? result.error.message
-            : String(result.error),
+    error: (() => {
+      if (requestBuildError != null) return requestBuildError.message;
+      if (result.error == null) return null;
+      const rawError: unknown = result.error;
+      if (rawError instanceof Error) return rawError.message;
+      if (isElasticsearchError(rawError)) return rawError.message;
+      return String(rawError);
+    })(),
     refetch: result.refetch,
   };
 }

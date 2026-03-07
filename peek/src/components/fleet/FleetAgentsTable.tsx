@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo, useState, type KeyboardEvent } from "react";
+import { memo, useMemo, type KeyboardEvent } from "react";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import Table from "@mui/material/Table";
@@ -18,6 +18,7 @@ import FilterListOffIcon from "@mui/icons-material/FilterListOff";
 
 import type { ElasticAgentInfo } from "../../services/fleet";
 import { computeCheckinStaleness, fleetStatusColor } from "../../services/fleet";
+import { useTableSort } from "../../hooks/useTableSort";
 import { usePageFiltersStore } from "../../store/usePageFiltersStore";
 import EmptyState from "../EmptyState";
 import { compareSemver } from "../../utils/compareSemver";
@@ -38,27 +39,13 @@ type SortField =
   | "lastSeen"
   | "logCount"
   | "errorCount";
-type SortDirection = "asc" | "desc";
 
 export default memo(function FleetAgentsTable({ agents, onAgentClick }: Props) {
   const agentFilter = usePageFiltersStore((s) => s.agentFilter);
   const updateAgentFilter = usePageFiltersStore((s) => s.updateAgentFilter);
   const resetFilters = usePageFiltersStore((s) => s.resetFleetAgentFilter);
 
-  const [sortField, setSortField] = useState<SortField>("hostname");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
-
-  const handleSort = useCallback(
-    (field: SortField) => {
-      if (field === sortField) {
-        setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
-      } else {
-        setSortField(field);
-        setSortDirection("asc");
-      }
-    },
-    [sortField],
-  );
+  const { sortField, sortDirection, getSortLabelProps } = useTableSort<SortField>("hostname");
 
   const uniqueVersions = useMemo(() => {
     const versions = new Set(agents.map((a) => a.version));
@@ -190,76 +177,28 @@ export default memo(function FleetAgentsTable({ agents, onAgentClick }: Props) {
           <TableHead>
             <TableRow>
               <TableCell>
-                <TableSortLabel
-                  active={sortField === "hostname"}
-                  direction={sortField === "hostname" ? sortDirection : "asc"}
-                  onClick={() => handleSort("hostname")}
-                >
-                  Agent
-                </TableSortLabel>
+                <TableSortLabel {...getSortLabelProps("hostname")}>Agent</TableSortLabel>
               </TableCell>
               <TableCell>
-                <TableSortLabel
-                  active={sortField === "status"}
-                  direction={sortField === "status" ? sortDirection : "asc"}
-                  onClick={() => handleSort("status")}
-                >
-                  Status
-                </TableSortLabel>
+                <TableSortLabel {...getSortLabelProps("status")}>Status</TableSortLabel>
               </TableCell>
               <TableCell>
-                <TableSortLabel
-                  active={sortField === "version"}
-                  direction={sortField === "version" ? sortDirection : "asc"}
-                  onClick={() => handleSort("version")}
-                >
-                  Version
-                </TableSortLabel>
+                <TableSortLabel {...getSortLabelProps("version")}>Version</TableSortLabel>
               </TableCell>
               <TableCell>
-                <TableSortLabel
-                  active={sortField === "policyId"}
-                  direction={sortField === "policyId" ? sortDirection : "asc"}
-                  onClick={() => handleSort("policyId")}
-                >
-                  Policy
-                </TableSortLabel>
+                <TableSortLabel {...getSortLabelProps("policyId")}>Policy</TableSortLabel>
               </TableCell>
               <TableCell>
-                <TableSortLabel
-                  active={sortField === "os"}
-                  direction={sortField === "os" ? sortDirection : "asc"}
-                  onClick={() => handleSort("os")}
-                >
-                  OS
-                </TableSortLabel>
+                <TableSortLabel {...getSortLabelProps("os")}>OS</TableSortLabel>
               </TableCell>
               <TableCell>
-                <TableSortLabel
-                  active={sortField === "lastSeen"}
-                  direction={sortField === "lastSeen" ? sortDirection : "asc"}
-                  onClick={() => handleSort("lastSeen")}
-                >
-                  Last Seen
-                </TableSortLabel>
+                <TableSortLabel {...getSortLabelProps("lastSeen")}>Last Seen</TableSortLabel>
               </TableCell>
               <TableCell align="right">
-                <TableSortLabel
-                  active={sortField === "logCount"}
-                  direction={sortField === "logCount" ? sortDirection : "asc"}
-                  onClick={() => handleSort("logCount")}
-                >
-                  Logs
-                </TableSortLabel>
+                <TableSortLabel {...getSortLabelProps("logCount")}>Logs</TableSortLabel>
               </TableCell>
               <TableCell align="right">
-                <TableSortLabel
-                  active={sortField === "errorCount"}
-                  direction={sortField === "errorCount" ? sortDirection : "asc"}
-                  onClick={() => handleSort("errorCount")}
-                >
-                  Errors
-                </TableSortLabel>
+                <TableSortLabel {...getSortLabelProps("errorCount")}>Errors</TableSortLabel>
               </TableCell>
             </TableRow>
           </TableHead>

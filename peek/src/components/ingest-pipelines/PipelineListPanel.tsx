@@ -1,8 +1,5 @@
-import { useMemo, useState } from "react";
-import Box from "@mui/material/Box";
-import FormControlLabel from "@mui/material/FormControlLabel";
+import { useMemo } from "react";
 import Paper from "@mui/material/Paper";
-import Switch from "@mui/material/Switch";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
@@ -10,15 +7,22 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TableSortLabel from "@mui/material/TableSortLabel";
-import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 
 import type { PipelineEntry } from "../../hooks/useIngestPipelines";
+import { useTableSort } from "../../hooks/useTableSort";
 import { formatMs } from "../../utils/formatDuration";
 import EmptyState from "../EmptyState";
+import SearchFilterBar from "../SearchFilterBar";
 
-type SortField = "name" | "processors" | "docs" | "failed" | "timeMs" | "avgMsPerDoc" | "nodes";
-type SortDirection = "asc" | "desc";
+type PipelineSortField =
+  | "name"
+  | "processors"
+  | "docs"
+  | "failed"
+  | "timeMs"
+  | "avgMsPerDoc"
+  | "nodes";
 
 interface PipelineRuntimeSummary {
   count: number;
@@ -61,8 +65,11 @@ export default function PipelineListPanel({
   selectedName,
   onSelect,
 }: PipelineListPanelProps) {
-  const [sortField, setSortField] = useState<SortField>("timeMs");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  const { sortField, sortDirection, getSortLabelProps } = useTableSort<PipelineSortField>(
+    "timeMs",
+    "asc",
+    { initialDirection: "desc" },
+  );
 
   const sortedPipelines = useMemo(() => {
     const rows = [...filteredPipelines];
@@ -114,112 +121,44 @@ export default function PipelineListPanel({
     return rows;
   }, [filteredPipelines, runtimeByPipelineName, sortDirection, sortField]);
 
-  function handleSort(field: SortField) {
-    if (field === sortField) {
-      setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
-      return;
-    }
-    setSortField(field);
-    setSortDirection("asc");
-  }
-
   return (
     <Paper
       variant="outlined"
       sx={{ display: "flex", flexDirection: "column", width: "100%", minHeight: 0 }}
     >
-      <Box sx={{ p: 1 }}>
-        <TextField
-          size="small"
-          fullWidth
-          placeholder="Search pipelines"
-          value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
-          inputProps={{ "aria-label": "Search pipelines" }}
-        />
-        <FormControlLabel
-          control={
-            <Switch
-              size="small"
-              checked={showSystemPipelines}
-              onChange={(event) => onShowSystemPipelinesChange(event.target.checked)}
-              inputProps={{ "aria-label": "Show system pipelines" }}
-            />
-          }
-          label={
-            <Typography variant="caption" color="text.secondary">
-              Show system pipelines
-            </Typography>
-          }
-          sx={{ mt: 0.5, ml: 0 }}
-        />
-      </Box>
+      <SearchFilterBar
+        search={search}
+        onSearchChange={onSearchChange}
+        placeholder="Search pipelines"
+        toggleLabel="Show system pipelines"
+        toggleChecked={showSystemPipelines}
+        onToggleChange={onShowSystemPipelinesChange}
+        divider={false}
+      />
       <TableContainer sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
         <Table size="small" stickyHeader aria-label="Ingest pipeline list">
           <TableHead>
             <TableRow>
               <TableCell>
-                <TableSortLabel
-                  active={sortField === "name"}
-                  direction={sortField === "name" ? sortDirection : "asc"}
-                  onClick={() => handleSort("name")}
-                >
-                  Name
-                </TableSortLabel>
+                <TableSortLabel {...getSortLabelProps("name")}>Name</TableSortLabel>
               </TableCell>
               <TableCell align="right">
-                <TableSortLabel
-                  active={sortField === "processors"}
-                  direction={sortField === "processors" ? sortDirection : "asc"}
-                  onClick={() => handleSort("processors")}
-                >
-                  Processors
-                </TableSortLabel>
+                <TableSortLabel {...getSortLabelProps("processors")}>Processors</TableSortLabel>
               </TableCell>
               <TableCell align="right">
-                <TableSortLabel
-                  active={sortField === "docs"}
-                  direction={sortField === "docs" ? sortDirection : "asc"}
-                  onClick={() => handleSort("docs")}
-                >
-                  Docs
-                </TableSortLabel>
+                <TableSortLabel {...getSortLabelProps("docs")}>Docs</TableSortLabel>
               </TableCell>
               <TableCell align="right">
-                <TableSortLabel
-                  active={sortField === "failed"}
-                  direction={sortField === "failed" ? sortDirection : "asc"}
-                  onClick={() => handleSort("failed")}
-                >
-                  Failed
-                </TableSortLabel>
+                <TableSortLabel {...getSortLabelProps("failed")}>Failed</TableSortLabel>
               </TableCell>
               <TableCell align="right">
-                <TableSortLabel
-                  active={sortField === "timeMs"}
-                  direction={sortField === "timeMs" ? sortDirection : "asc"}
-                  onClick={() => handleSort("timeMs")}
-                >
-                  Time
-                </TableSortLabel>
+                <TableSortLabel {...getSortLabelProps("timeMs")}>Time</TableSortLabel>
               </TableCell>
               <TableCell align="right">
-                <TableSortLabel
-                  active={sortField === "avgMsPerDoc"}
-                  direction={sortField === "avgMsPerDoc" ? sortDirection : "asc"}
-                  onClick={() => handleSort("avgMsPerDoc")}
-                >
-                  Avg ms/doc
-                </TableSortLabel>
+                <TableSortLabel {...getSortLabelProps("avgMsPerDoc")}>Avg ms/doc</TableSortLabel>
               </TableCell>
               <TableCell align="right">
-                <TableSortLabel
-                  active={sortField === "nodes"}
-                  direction={sortField === "nodes" ? sortDirection : "asc"}
-                  onClick={() => handleSort("nodes")}
-                >
-                  Nodes
-                </TableSortLabel>
+                <TableSortLabel {...getSortLabelProps("nodes")}>Nodes</TableSortLabel>
               </TableCell>
             </TableRow>
           </TableHead>

@@ -4,28 +4,23 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 
-import type {
-  RouteRow,
-  RouteSparklineData,
-  RouteSortField,
-  SortDirection,
-} from "./serviceDashboardHelpers";
+import type { RouteRow, RouteSparklineData, RouteSortField } from "./serviceDashboardHelpers";
 import ServiceRoutesTable from "./ServiceRoutesTable";
 
 interface ServiceRoutesPanelProps {
   routeRows: RouteRow[];
-  sortField: RouteSortField;
-  sortDirection: SortDirection;
-  onSort: (field: RouteSortField) => void;
+  getSortLabelProps: (field: RouteSortField) => {
+    active: boolean;
+    direction: "asc" | "desc";
+    onClick: () => void;
+  };
   sparklineData?: Record<string, RouteSparklineData>;
   routeInsightSlotIds?: Record<string, string>;
 }
 
 export default function ServiceRoutesPanel({
   routeRows,
-  sortField,
-  sortDirection,
-  onSort,
+  getSortLabelProps,
   sparklineData,
   routeInsightSlotIds,
 }: ServiceRoutesPanelProps) {
@@ -60,9 +55,7 @@ export default function ServiceRoutesPanel({
       <Box sx={{ overflowX: "auto" }}>
         <ServiceRoutesTable
           routeRows={routeRows}
-          sortField={sortField}
-          sortDirection={sortDirection}
-          onSort={onSort}
+          getSortLabelProps={getSortLabelProps}
           sparklineData={sparklineData}
           routeInsightSlotIds={routeInsightSlotIds}
         />

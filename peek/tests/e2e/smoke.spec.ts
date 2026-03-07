@@ -57,6 +57,15 @@ const A11Y_BASELINE: Record<string, Record<string, Record<string, number>>> = {
     Indices: {
       "color-contrast": 9,
     },
+    Tasks: {
+      "color-contrast": 7,
+    },
+    "Index Lifecycle Management": {
+      "color-contrast": 8,
+    },
+    "Index Templates": {
+      "color-contrast": 7,
+    },
   },
   "mobile-safari": {
     "Query Lab": {
@@ -88,6 +97,9 @@ const A11Y_BASELINE: Record<string, Record<string, Record<string, number>>> = {
   "mobile-chrome": {
     "Query Lab": {
       "scrollable-region-focusable": 1,
+    },
+    Tasks: {
+      "color-contrast": 5,
     },
   },
 };
@@ -473,6 +485,28 @@ test.describe("smoke – site navigation", () => {
     await expect(queryInput).toContainText('service.name == "checkout-service"');
   });
 
+  test("task manager, ILM, and templates pages render with headings", async ({ page }) => {
+    await connectToMockCluster(page);
+
+    // Task Manager
+    await navigateViaSidebar(page, "Tasks");
+    await expect(page.getByRole("heading", { name: "Task Manager" })).toBeVisible({
+      timeout: 10_000,
+    });
+
+    // Index Lifecycle Management
+    await navigateViaSidebar(page, "Index Lifecycle Management");
+    await expect(page.getByRole("heading", { name: "Index Lifecycle Management" })).toBeVisible({
+      timeout: 10_000,
+    });
+
+    // Index Templates
+    await navigateViaSidebar(page, "Index Templates");
+    await expect(page.getByRole("heading", { name: "Index Templates" })).toBeVisible({
+      timeout: 10_000,
+    });
+  });
+
   test("pages have no axe accessibility violations", async ({ page }, testInfo) => {
     test.setTimeout(90_000); // axe scans 9 pages serially; 30s default is too tight in CI
     await page.goto("");
@@ -499,6 +533,11 @@ test.describe("smoke – site navigation", () => {
         await expect(page.getByRole("heading", { name: "API Console" })).toBeVisible();
       },
       Indices: () => expect(page.getByRole("heading", { name: "Indices" })).toBeVisible(),
+      Tasks: () => expect(page.getByRole("heading", { name: "Task Manager" })).toBeVisible(),
+      "Index Lifecycle Management": () =>
+        expect(page.getByRole("heading", { name: "Index Lifecycle Management" })).toBeVisible(),
+      "Index Templates": () =>
+        expect(page.getByRole("heading", { name: "Index Templates" })).toBeVisible(),
     };
 
     for (const nav of [
@@ -509,6 +548,9 @@ test.describe("smoke – site navigation", () => {
       "Logs",
       "Console",
       "Indices",
+      "Tasks",
+      "Index Lifecycle Management",
+      "Index Templates",
     ]) {
       await navigateViaSidebar(page, nav);
       await pageReadyLocators[nav]!();

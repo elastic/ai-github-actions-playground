@@ -7,10 +7,8 @@ import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
 import Divider from "@mui/material/Divider";
 import Drawer from "@mui/material/Drawer";
-import FormControlLabel from "@mui/material/FormControlLabel";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
-import Switch from "@mui/material/Switch";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
@@ -35,6 +33,7 @@ import { useDataStreams } from "../hooks/useDataStreams";
 import { useFieldCaps } from "../hooks/useFieldCaps";
 import { useIndices } from "../hooks/useIndices";
 import { useOpenInDiscover } from "../hooks/useOpenInDiscover";
+import { useTableSort } from "../hooks/useTableSort";
 import { INSIGHT_GUARDRAIL } from "../hooks/insightPromptUtils";
 import { usePageSlotInsights } from "../hooks/usePageSlotInsights";
 import { COMPACT_CHIP_SX } from "../types/tokens";
@@ -53,13 +52,13 @@ import {
   DATA_STREAMS_INSIGHT_SLOTS,
 } from "./dataStreamsInsightSlots";
 import { getStatusChipColor, STREAM_STATUS_ORDER, toFieldRows } from "./dataStreamsUtils";
+import SearchFilterBar from "./SearchFilterBar";
 
 // ---------------------------------------------------------------------------
 // Sorting helpers
 // ---------------------------------------------------------------------------
 
 type StreamSortField = "name" | "status" | "indices" | "docs" | "size";
-type StreamSortDirection = "asc" | "desc";
 
 const DATA_STREAM_INDEX_PREFIX = ".ds-";
 
@@ -80,7 +79,7 @@ function compareStreams(
   a: { name: string; status: string; indices: unknown[]; docs: number; sizeBytes: number },
   b: { name: string; status: string; indices: unknown[]; docs: number; sizeBytes: number },
   field: StreamSortField,
-  dir: StreamSortDirection,
+  direction: "asc" | "desc",
 ): number {
   let cmp: number;
   switch (field) {
@@ -104,7 +103,7 @@ function compareStreams(
     default:
       cmp = 0;
   }
-  return dir === "asc" ? cmp : -cmp;
+  return direction === "asc" ? cmp : -cmp;
 }
 
 function streamGroupName(streamName: string): string | null {
@@ -128,8 +127,11 @@ export default function DataStreamsPage() {
   const deferredSearch = useDeferredValue(search);
   const deferredFieldSearch = useDeferredValue(fieldSearch);
   const [showSystemStreams, setShowSystemStreams] = useState(false);
-  const [streamSortField, setStreamSortField] = useState<StreamSortField>("name");
-  const [streamSortDirection, setStreamSortDirection] = useState<StreamSortDirection>("asc");
+  const {
+    sortField: streamSortField,
+    sortDirection: streamSortDirection,
+    getSortLabelProps: getStreamSortLabelProps,
+  } = useTableSort<StreamSortField>("name");
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const [selectedName, setSelectedName] = useState<string | null>(null);
   const [selectedField, setSelectedField] = useState<{ name: string; type: string } | null>(null);
@@ -276,16 +278,6 @@ export default function DataStreamsPage() {
         { total: 0, green: 0, yellow: 0, red: 0, totalIndices: 0, totalDocs: 0, totalSizeBytes: 0 },
       ),
     [dataStreams, streamStatsByName],
-  );
-
-  const handleStreamSort = useCallback(
-    (field: StreamSortField) => {
-      setStreamSortDirection((prev) =>
-        streamSortField === field && prev === "asc" ? "desc" : "asc",
-      );
-      setStreamSortField(field);
-    },
-    [streamSortField],
   );
 
   const toggleGroup = useCallback((groupName: string) => {
@@ -529,81 +521,36 @@ export default function DataStreamsPage() {
                 minHeight: 0,
               }}
             >
-              <Box sx={{ p: 1 }}>
-                <TextField
-                  size="small"
-                  fullWidth
-                  placeholder="Search streams"
-                  value={search}
-                  onChange={(e) => void setSearch(e.target.value)}
-                  inputProps={{ "aria-label": "Search streams" }}
-                />
-                <FormControlLabel
-                  control={
-                    <Switch
-                      size="small"
-                      checked={showSystemStreams}
-                      onChange={(e) => setShowSystemStreams(e.target.checked)}
-                      inputProps={{ "aria-label": "Show system streams" }}
-                    />
-                  }
-                  label={
-                    <Typography variant="caption" color="text.secondary">
-                      Show system streams
-                    </Typography>
-                  }
-                  sx={{ mt: 0.5, ml: 0 }}
-                />
-              </Box>
-              <Divider />
+              <SearchFilterBar
+                search={search}
+                onSearchChange={(v) => void setSearch(v)}
+                placeholder="Search streams"
+                toggleLabel="Show system streams"
+                toggleChecked={showSystemStreams}
+                onToggleChange={setShowSystemStreams}
+              />
               <TableContainer sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
                 <Table size="small" stickyHeader aria-label="Data stream list">
                   <TableHead>
                     <TableRow>
                       <TableCell>
-                        <TableSortLabel
-                          active={streamSortField === "name"}
-                          direction={streamSortField === "name" ? streamSortDirection : "asc"}
-                          onClick={() => handleStreamSort("name")}
-                        >
-                          Name
-                        </TableSortLabel>
+                        <TableSortLabel {...getStreamSortLabelProps("name")}>Name</TableSortLabel>
                       </TableCell>
                       <TableCell>
-                        <TableSortLabel
-                          active={streamSortField === "status"}
-                          direction={streamSortField === "status" ? streamSortDirection : "asc"}
-                          onClick={() => handleStreamSort("status")}
-                        >
+                        <TableSortLabel {...getStreamSortLabelProps("status")}>
                           Status
                         </TableSortLabel>
                       </TableCell>
                       <TableCell align="right">
-                        <TableSortLabel
-                          active={streamSortField === "indices"}
-                          direction={streamSortField === "indices" ? streamSortDirection : "asc"}
-                          onClick={() => handleStreamSort("indices")}
-                        >
+                        <TableSortLabel {...getStreamSortLabelProps("indices")}>
                           Indices
                         </TableSortLabel>
                       </TableCell>
                       <TableCell align="right">
-                        <TableSortLabel
-                          active={streamSortField === "docs"}
-                          direction={streamSortField === "docs" ? streamSortDirection : "asc"}
-                          onClick={() => handleStreamSort("docs")}
-                        >
-                          Docs
-                        </TableSortLabel>
+                        <TableSortLabel {...getStreamSortLabelProps("docs")}>Docs</TableSortLabel>
                       </TableCell>
                       <TableCell align="right">
-                        <TableSortLabel
-                          active={streamSortField === "size"}
-                          direction={streamSortField === "size" ? streamSortDirection : "asc"}
-                          onClick={() => handleStreamSort("size")}
-                        >
-                          Size
-                        </TableSortLabel>
+                        <TableSortLabel {...getStreamSortLabelProps("size")}>Size</TableSortLabel>
                       </TableCell>
                     </TableRow>
                   </TableHead>

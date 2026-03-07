@@ -23,6 +23,7 @@ export interface UsePageSlotInsightsOptions {
 }
 
 const QUERY_KEY_PREFIX = "page-slot-insights" as const;
+const EMPTY_INSIGHTS: PageInsightsResponse["insights"] = [];
 
 function parseJsonObjectFromText(text: string): unknown {
   const trimmed = text.trim();
@@ -149,7 +150,7 @@ export function usePageSlotInsights({
 
   return {
     summary: data?.summary ?? null,
-    insights: data?.insights ?? [],
+    insights: data?.insights ?? EMPTY_INSIGHTS,
     loading,
     error,
     refresh,
