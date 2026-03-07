@@ -39,8 +39,9 @@ export default function HostDetailPage() {
   const { filters } = usePageFiltersStore(useShallow((s) => ({ filters: s.hostsFilters })));
 
   const cacheKey = useMemo(
-    () => ["host-detail", connection?.url, decodedHostId] as const,
-    [connection?.url, decodedHostId],
+    () =>
+      ["host-detail", connection?.url, decodedHostId, filters.timeFrom, filters.timeTo] as const,
+    [connection?.url, decodedHostId, filters.timeFrom, filters.timeTo],
   );
   const { data: searchResult = null } = useQuery<EsqlResponse | null>({
     queryKey: cacheKey,

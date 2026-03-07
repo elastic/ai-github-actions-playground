@@ -75,7 +75,16 @@ export default function HostInventoryTable({
               key={row.hostId}
               hover
               sx={{ cursor: onRowClick ? "pointer" : undefined }}
+              role={onRowClick ? "button" : undefined}
+              tabIndex={onRowClick ? 0 : undefined}
               onClick={() => onRowClick?.(row)}
+              onKeyDown={(event) => {
+                if (!onRowClick) return;
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  onRowClick(row);
+                }
+              }}
             >
               <TableCell onClick={(event) => event.stopPropagation()}>
                 <HostLink hostRef={toHostRef(row.hostId, row.hostName, row.osType)} />
