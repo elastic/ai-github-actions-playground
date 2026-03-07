@@ -56,10 +56,10 @@ const A11Y_BASELINE: Record<string, Record<string, Record<string, number>>> = {
     Tasks: {
       "color-contrast": 7,
     },
-    ILM: {
+    "Index Lifecycle Management": {
       "color-contrast": 7,
     },
-    Templates: {
+    "Index Templates": {
       "color-contrast": 7,
     },
   },
@@ -470,15 +470,15 @@ test.describe("smoke – site navigation", () => {
       timeout: 10_000,
     });
 
-    // ILM
-    await navigateViaSidebar(page, "ILM");
-    await expect(page.getByRole("heading", { name: "ILM Troubleshooting" })).toBeVisible({
+    // Index Lifecycle Management
+    await navigateViaSidebar(page, "Index Lifecycle Management");
+    await expect(page.getByRole("heading", { name: "Index Lifecycle Management" })).toBeVisible({
       timeout: 10_000,
     });
 
-    // Templates
-    await navigateViaSidebar(page, "Templates");
-    await expect(page.getByRole("heading", { name: "Templates" })).toBeVisible({
+    // Index Templates
+    await navigateViaSidebar(page, "Index Templates");
+    await expect(page.getByRole("heading", { name: "Index Templates" })).toBeVisible({
       timeout: 10_000,
     });
   });
@@ -507,8 +507,10 @@ test.describe("smoke – site navigation", () => {
       },
       Indices: () => expect(page.getByRole("heading", { name: "Indices" })).toBeVisible(),
       Tasks: () => expect(page.getByRole("heading", { name: "Task Manager" })).toBeVisible(),
-      ILM: () => expect(page.getByRole("heading", { name: "ILM Troubleshooting" })).toBeVisible(),
-      Templates: () => expect(page.getByRole("heading", { name: "Templates" })).toBeVisible(),
+      "Index Lifecycle Management": () =>
+        expect(page.getByRole("heading", { name: "Index Lifecycle Management" })).toBeVisible(),
+      "Index Templates": () =>
+        expect(page.getByRole("heading", { name: "Index Templates" })).toBeVisible(),
     };
 
     for (const nav of [
@@ -520,8 +522,8 @@ test.describe("smoke – site navigation", () => {
       "Console",
       "Indices",
       "Tasks",
-      "ILM",
-      "Templates",
+      "Index Lifecycle Management",
+      "Index Templates",
     ]) {
       await navigateViaSidebar(page, nav);
       await pageReadyLocators[nav]!();
