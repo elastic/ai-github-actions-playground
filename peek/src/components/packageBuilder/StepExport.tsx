@@ -11,6 +11,7 @@ import ListItemText from "@mui/material/ListItemText";
 import Alert from "@mui/material/Alert";
 import Stack from "@mui/material/Stack";
 import DownloadIcon from "@mui/icons-material/Download";
+import FolderOpenIcon from "@mui/icons-material/FolderOpen";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 import FolderIcon from "@mui/icons-material/Folder";
 import ImageIcon from "@mui/icons-material/Image";
@@ -26,7 +27,12 @@ import {
   getIconFileName,
 } from "../../services/packageBuilder/generateManifest";
 import { renderTemplate, findUndefinedVars } from "../../services/packageBuilder/renderTemplate";
-import { exportPackageZip, downloadBlob } from "../../services/packageBuilder/exportPackage";
+import {
+  exportPackageZip,
+  downloadBlob,
+  supportsDirectoryExport,
+  exportPackageToDirectory,
+} from "../../services/packageBuilder/exportPackage";
 
 type PackageBuilderState = Parameters<typeof usePackageBuilderStore>[0] extends (
   state: infer T,
@@ -186,6 +192,8 @@ export default function StepExport() {
   const [selectedFile, setSelectedFile] = useState<PreviewFile>("manifest");
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
+  const [dirHandle, setDirHandle] = useState<FileSystemDirectoryHandle | null>(null);
+  const [dirExportSuccess, setDirExportSuccess] = useState(false);
 
   const fullName = identity.name.endsWith("_input_otel")
     ? identity.name
@@ -214,6 +222,22 @@ export default function StepExport() {
     }
   };
 
+  const handleDirectoryExport = async () => {
+    setExporting(true);
+    setExportError(null);
+    setDirExportSuccess(false);
+    try {
+      const handle = await exportPackageToDirectory(data, dirHandle ?? undefined);
+      setDirHandle(handle);
+      setDirExportSuccess(true);
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") return;
+      setExportError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const handleCopy = () => {
     navigator.clipboard.writeText(fileContents[selectedFile]);
   };
@@ -231,21 +255,39 @@ export default function StepExport() {
             {fullName} v{identity.version}
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          startIcon={<DownloadIcon />}
-          onClick={handleExport}
-          disabled={exporting || fails > 0}
-          size="large"
-        >
-          {exporting ? "Exporting..." : "Download .zip"}
-        </Button>
+        <Box sx={{ display: "flex", gap: 1 }}>
+          {supportsDirectoryExport() && (
+            <Button
+              variant="contained"
+              startIcon={<FolderOpenIcon />}
+              onClick={handleDirectoryExport}
+              disabled={exporting || fails > 0}
+              size="large"
+            >
+              {dirHandle ? "Update folder" : "Export to folder"}
+            </Button>
+          )}
+          <Button
+            variant={supportsDirectoryExport() ? "outlined" : "contained"}
+            startIcon={<DownloadIcon />}
+            onClick={handleExport}
+            disabled={exporting || fails > 0}
+            size="large"
+          >
+            Download .zip
+          </Button>
+        </Box>
       </Box>
 
       {/* Validation summary */}
       <Alert severity={fails > 0 ? "error" : warns > 0 ? "warning" : "success"} sx={{ py: 0.5 }}>
         {passes} passed, {warns} warnings, {fails} errors
       </Alert>
+      {dirExportSuccess && (
+        <Alert severity="success" sx={{ py: 0.5 }}>
+          Files written to folder. Make changes and click &quot;Update folder&quot; to sync.
+        </Alert>
+      )}
       {exportError && (
         <Alert severity="error" sx={{ py: 0.5 }}>
           {exportError}
