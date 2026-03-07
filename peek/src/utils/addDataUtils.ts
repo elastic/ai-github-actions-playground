@@ -478,6 +478,9 @@ ${runModeStart}`;
 export OTEL_EXPORTER_OTLP_HEADERS="Authorization=ApiKey ${apiKey}"`
         : `export ELASTIC_ENDPOINT="${esUrl}"
 export ELASTIC_API_KEY="${apiKey}"`;
+      const sampleConfig = isOtlp
+        ? "otel_samples/managed_otlp/platformlogs_hostmetrics.yml"
+        : "otel_samples/platformlogs_hostmetrics.yml";
       return `echo "Step 1: Detect architecture, then download and extract the EDOT Collector"
 AGENT_ARCH="$(uname -m | sed -E 's/^arm64$/aarch64/; s/^x86_64$/x86_64/')"
 curl -L -O ${ARTIFACTS_BASE}/elastic-agent-${version}-darwin-\${AGENT_ARCH}.tar.gz
@@ -488,6 +491,7 @@ echo "Step 2: Set your credentials"
 ${credentialLines}
 export STORAGE_DIR="$(pwd)/data/otel"
 mkdir -p "$STORAGE_DIR"
+cp ${sampleConfig} otel.yml
 
 echo "Step 3: Start the EDOT Collector"
 sudo -E ./elastic-agent otel --config otel.yml`;
@@ -504,6 +508,9 @@ sudo -E ./elastic-agent otel --config otel.yml`;
 $env:OTEL_EXPORTER_OTLP_HEADERS = "Authorization=ApiKey ${apiKey}"`
         : `$env:ELASTIC_ENDPOINT = "${esUrl}"
 $env:ELASTIC_API_KEY = "${apiKey}"`;
+      const sampleConfig = isOtlp
+        ? "otel_samples\\managed_otlp\\platformlogs_hostmetrics.yml"
+        : "otel_samples\\platformlogs_hostmetrics.yml";
       return `Write-Host "Step 1: Detect architecture and download the EDOT Collector"
 $agentArch = if ($env:PROCESSOR_ARCHITECTURE -eq "ARM64") { "arm64" } else { "x86_64" }
 Write-Host "Download URL: ${ARTIFACTS_BASE}/elastic-agent-${version}-windows-$agentArch.zip"
@@ -515,6 +522,7 @@ Write-Host "Step 2: Set your credentials"
 ${credentialLines}
 $env:STORAGE_DIR = "$PWD\\data\\otel"
 New-Item -ItemType Directory -Path $env:STORAGE_DIR -Force | Out-Null
+Copy-Item ${sampleConfig} otel.yml
 
 Write-Host "Step 3: Start the EDOT Collector"
 .\\elastic-agent.exe otel --config otel.yml`;

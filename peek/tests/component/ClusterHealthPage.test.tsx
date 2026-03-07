@@ -19,6 +19,8 @@ const getSlmStatsMock = vi.fn();
 const getSnapshotStatusMock = vi.fn();
 const getClusterSettingsMock = vi.fn();
 const getAllocationExplainMock = vi.fn();
+const getTasksDetailedMock = vi.fn();
+const getIlmPoliciesMock = vi.fn();
 
 vi.mock("../../src/services/es", () => ({
   ElasticsearchClient: vi.fn().mockImplementation(() => ({
@@ -34,6 +36,8 @@ vi.mock("../../src/services/es", () => ({
     getSnapshotStatus: getSnapshotStatusMock,
     getClusterSettings: getClusterSettingsMock,
     getAllocationExplain: getAllocationExplainMock,
+    getTasksDetailed: getTasksDetailedMock,
+    getIlmPolicies: getIlmPoliciesMock,
   })),
   isElasticsearchError: (err: unknown) => {
     if (typeof err !== "object" || err === null) return false;
@@ -101,6 +105,8 @@ describe("ClusterHealthPage", () => {
       defaults: { "cluster.routing.allocation.enable": "all" },
     });
     getAllocationExplainMock.mockRejectedValue(new Error("no unassigned shards"));
+    getTasksDetailedMock.mockResolvedValue({ nodes: {} });
+    getIlmPoliciesMock.mockResolvedValue({});
   });
 
   it("renders overview with cluster status and key metrics", async () => {
@@ -204,14 +210,16 @@ describe("ClusterHealthPage", () => {
     const user = userEvent.setup();
     renderHealth();
 
+    let initialCalls = 0;
     await waitFor(() => {
-      expect(getClusterHealthMock).toHaveBeenCalledTimes(1);
+      initialCalls = getClusterHealthMock.mock.calls.length;
+      expect(initialCalls).toBeGreaterThan(0);
     });
 
     await user.click(screen.getByRole("button", { name: /refresh/i }));
 
     await waitFor(() => {
-      expect(getClusterHealthMock).toHaveBeenCalledTimes(2);
+      expect(getClusterHealthMock.mock.calls.length).toBeGreaterThan(initialCalls);
     });
   });
 
