@@ -16,6 +16,7 @@ import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 import { useCopyFeedbackTimeout } from "../hooks/useCopyFeedbackTimeout";
+import { nanoToMs } from "../utils/formatDuration";
 
 // -----------------------------------------------------------------------
 // Defensive types for the ES|QL profile payload.
@@ -57,11 +58,6 @@ function isEsqlProfile(value: unknown): value is EsqlProfile {
     "drivers" in value &&
     Array.isArray((value as EsqlProfile).drivers)
   );
-}
-
-function nanoToMs(nanos: number | undefined): string {
-  if (nanos === undefined) return "—";
-  return `${(nanos / 1_000_000).toFixed(2)} ms`;
 }
 
 interface DriverRowProps {

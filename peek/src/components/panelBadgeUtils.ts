@@ -1,8 +1,7 @@
+import { formatDuration } from "../utils/formatDuration";
+
 /** Format execution time for the panel health badge. */
-export function formatMs(ms: number): string {
-  if (ms < 1000) return `${ms}ms`;
-  return `${(ms / 1000).toFixed(1)}s`;
-}
+export const formatMs: (ms: number) => string = formatDuration;
 
 /** Format a row count with k/m/b suffix for the panel health badge. */
 export function formatRowCount(count: number): string {
