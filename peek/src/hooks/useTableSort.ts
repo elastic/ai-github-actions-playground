@@ -33,7 +33,7 @@ export function useTableSort<F extends string>(
   const getSortLabelProps = useCallback(
     (field: F) => ({
       active: sortField === field,
-      direction: (sortField === field ? sortDirection : defaultDirection) as "asc" | "desc",
+      direction: sortField === field ? sortDirection : defaultDirection,
       onClick: () => handleSort(field),
     }),
     [sortField, sortDirection, defaultDirection, handleSort],

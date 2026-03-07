@@ -68,4 +68,21 @@ describe("useTableSort", () => {
     expect(props.active).toBe(true);
     expect(props.direction).toBe("desc");
   });
+
+  it("exposes setters to update sort state programmatically", () => {
+    const { result } = renderHook(() => useTableSort<"a" | "b">("a", "asc"));
+
+    act(() => result.current.setSortField("b"));
+    expect(result.current.sortField).toBe("b");
+
+    act(() => result.current.setSortDirection("desc"));
+    expect(result.current.sortDirection).toBe("desc");
+  });
+
+  it("getSortLabelProps onClick delegates to handleSort", () => {
+    const { result } = renderHook(() => useTableSort<"a" | "b">("a", "asc"));
+
+    act(() => result.current.getSortLabelProps("a").onClick());
+    expect(result.current.sortDirection).toBe("desc");
+  });
 });
