@@ -34,12 +34,7 @@ export interface HostRow {
   lastSeen: string;
   cpuUtilization: number | null;
   memoryUtilization: number | null;
-  diskUtilization: number | null;
   processCount: number | null;
-  /** Optional enricher — `agent.id` when available. */
-  agentId?: string;
-  /** Optional enricher — `cloud.instance.id` when available. */
-  cloudInstanceId?: string;
   /** Optional enricher — first `host.ip` when available. */
   hostIp?: string;
 }
@@ -54,34 +49,20 @@ export function normalizeOsType(raw: string | null | undefined): HostOsType {
   return "unknown";
 }
 
-/**
- * Optional identity enrichers used when `host.name` is
- * absent. These prevent unidentified hosts from collapsing to the same key.
- */
-export interface HostIdentityHints {
-  agentId?: string | null;
-  cloudInstanceId?: string | null;
-  hostIp?: string | null;
-}
-
 /** Builds a deterministic `HostRef` from raw host fields. */
 export function toHostRef(
   hostId: string | null | undefined,
   hostName: string | null | undefined,
   osType: string | null | undefined,
-  identityHints?: HostIdentityHints,
+  hostIp?: string | null,
 ): HostRef {
   const normalizedOsType = normalizeOsType(osType);
   const trimmedHostId = hostId?.trim();
   const trimmedHostName = hostName?.trim();
-  const trimmedAgentId = identityHints?.agentId?.trim();
-  const trimmedCloudInstanceId = identityHints?.cloudInstanceId?.trim();
-  const trimmedHostIp = identityHints?.hostIp?.trim();
+  const trimmedHostIp = hostIp?.trim();
   const id =
     trimmedHostId ||
     (trimmedHostName ? `${trimmedHostName}::${normalizedOsType}` : undefined) ||
-    trimmedAgentId ||
-    trimmedCloudInstanceId ||
     trimmedHostIp ||
     "unknown";
   const display = trimmedHostName || trimmedHostId || "unknown";

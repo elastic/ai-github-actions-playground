@@ -179,7 +179,6 @@ export default function HostDetailPage() {
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
             <MetricCard label="CPU Utilization" value={fmtPct(hostRow.cpuUtilization)} />
             <MetricCard label="Memory Utilization" value={fmtPct(hostRow.memoryUtilization)} />
-            <MetricCard label="Disk Utilization" value={fmtPct(hostRow.diskUtilization)} />
             {hostRow.processCount != null && (
               <MetricCard label="Processes" value={fmtCount(hostRow.processCount)} />
             )}

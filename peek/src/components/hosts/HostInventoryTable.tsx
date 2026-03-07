@@ -25,7 +25,6 @@ const COLUMNS: Column[] = [
   { id: "lastSeen", label: "Last Seen" },
   { id: "cpuUtilization", label: "CPU %", align: "right" },
   { id: "memoryUtilization", label: "Memory %", align: "right" },
-  { id: "diskUtilization", label: "Disk %", align: "right" },
   { id: "processCount", label: "Processes", align: "right" },
 ];
 
@@ -89,11 +88,7 @@ export default function HostInventoryTable({
             >
               <TableCell onClick={(event) => event.stopPropagation()}>
                 <HostLink
-                  hostRef={toHostRef(row.hostId, row.hostName, row.osType, {
-                    agentId: row.agentId,
-                    cloudInstanceId: row.cloudInstanceId,
-                    hostIp: row.hostIp,
-                  })}
+                  hostRef={toHostRef(row.hostId, row.hostName, row.osType, row.hostIp)}
                 />
               </TableCell>
               <TableCell>
@@ -102,7 +97,6 @@ export default function HostInventoryTable({
               <TableCell>{fmtTimestamp(row.lastSeen)}</TableCell>
               <TableCell align="right">{fmtPct(row.cpuUtilization)}</TableCell>
               <TableCell align="right">{fmtPct(row.memoryUtilization)}</TableCell>
-              <TableCell align="right">{fmtPct(row.diskUtilization)}</TableCell>
               <TableCell align="right">{fmtCount(row.processCount)}</TableCell>
             </TableRow>
           ))}

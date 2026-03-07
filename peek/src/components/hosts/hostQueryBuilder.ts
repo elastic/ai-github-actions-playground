@@ -57,10 +57,7 @@ export function buildHostInventoryQuery(filters: HostQueryFilters): string {
     last_seen = MAX(@timestamp),
     cpu_utilization = MAX(system.cpu.utilization),
     memory_utilization = MAX(system.memory.utilization),
-    disk_utilization = MAX(system.filesystem.utilization),
     process_count = MAX(system.processes.count),
-    agent_id = MAX(agent.id),
-    cloud_instance_id = MAX(cloud.instance.id),
     host_ip = MAX(host.ip)
   BY host_key
 | SORT last_seen DESC`;
@@ -87,10 +84,7 @@ export function buildHostDetailQuery(hostId: string, filters: HostQueryFilters):
     last_seen = @timestamp,
     cpu_utilization = system.cpu.utilization,
     memory_utilization = system.memory.utilization,
-    disk_utilization = system.filesystem.utilization,
     process_count = system.processes.count,
-    agent_id = agent.id,
-    cloud_instance_id = cloud.instance.id,
     host_ip = host.ip
-| KEEP host_key, host_name, os_type, os_name, os_version, last_seen, cpu_utilization, memory_utilization, disk_utilization, process_count, agent_id, cloud_instance_id, host_ip`;
+| KEEP host_key, host_name, os_type, os_name, os_version, last_seen, cpu_utilization, memory_utilization, process_count, host_ip`;
 }
