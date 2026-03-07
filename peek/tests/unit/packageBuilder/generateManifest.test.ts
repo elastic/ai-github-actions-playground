@@ -1,6 +1,9 @@
 import { describe, it, expect } from "vitest";
 import YAML from "yaml";
-import { generateManifest, generateChangelog } from "../../../src/services/packageBuilder/generateManifest";
+import {
+  generateManifest,
+  generateChangelog,
+} from "../../../src/services/packageBuilder/generateManifest";
 import type { PackageBuilderData } from "../../../src/types/packageBuilder";
 
 function makeData(overrides: Partial<PackageBuilderData> = {}): PackageBuilderData {
@@ -133,6 +136,27 @@ describe("generateManifest", () => {
     });
     const parsed = YAML.parse(generateManifest(data));
     expect(parsed.policy_templates[0].vars[0].default).toBe(6379);
+  });
+
+  it("falls back integer variable defaults to 0 when invalid", () => {
+    const data = makeData({
+      variables: [
+        {
+          name: "port",
+          type: "integer",
+          title: "Port",
+          description: "",
+          default: "abc",
+          required: false,
+          showUser: true,
+          multi: false,
+          secret: false,
+          options: [],
+        },
+      ],
+    });
+    const parsed = YAML.parse(generateManifest(data));
+    expect(parsed.policy_templates[0].vars[0].default).toBe(0);
   });
 
   it("includes select options", () => {

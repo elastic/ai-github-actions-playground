@@ -43,13 +43,16 @@ function serializeVariable(v: PackageVariable) {
   };
   if (v.description) out.description = v.description;
   if (v.required) out.required = true;
-  if (v.default !== "")
-    out.default =
-      v.type === "integer"
-        ? Number(v.default)
-        : v.type === "bool"
-          ? v.default === "true"
-          : v.default;
+  if (v.default !== "") {
+    if (v.type === "integer") {
+      const parsed = Number(v.default);
+      out.default = Number.isFinite(parsed) ? parsed : 0;
+    } else if (v.type === "bool") {
+      out.default = v.default === "true";
+    } else {
+      out.default = v.default;
+    }
+  }
   if (!v.showUser) out.show_user = false;
   if (v.multi) out.multi = true;
   if (v.secret) out.secret = true;

@@ -420,7 +420,7 @@ export const PAGE_MANIFEST = {
   packageBuilder: {
     path: "/package-builder",
     component: PackageBuilderPage,
-    requiresConnection: false,
+    requiresConnection: true,
     showTimeControls: false,
     skeletonVariant: "list",
     nav: {
