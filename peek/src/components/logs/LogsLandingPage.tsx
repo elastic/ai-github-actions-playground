@@ -20,18 +20,7 @@ import { useOpenInDiscover } from "../../hooks/useOpenInDiscover";
 import { interactiveCardSx } from "../interactiveCardSx";
 
 import LogsDimensionListPage from "./LogsDimensionListPage";
-
-export type LogsFocusDimension = "service.name" | "host.name" | "process.name" | "log.file.path";
-
-export const LOGS_DIMENSION_LABELS: Record<
-  LogsFocusDimension,
-  { singular: string; plural: string }
-> = {
-  "service.name": { singular: "Service", plural: "Services" },
-  "host.name": { singular: "Host", plural: "Hosts" },
-  "process.name": { singular: "Process", plural: "Processes" },
-  "log.file.path": { singular: "File", plural: "Files" },
-};
+import { LOGS_DIMENSION_LABELS, type LogsFocusDimension } from "./logsDimensions";
 
 interface FocusOption {
   dimension: LogsFocusDimension | null;

@@ -20,7 +20,7 @@ import ContentSkeleton from "../ContentSkeleton";
 import EmptyState from "../EmptyState";
 import { escapeEsqlString } from "../../services/es/esqlUtils";
 
-import { LOGS_DIMENSION_LABELS, type LogsFocusDimension } from "./LogsLandingPage";
+import { LOGS_DIMENSION_LABELS, type LogsFocusDimension } from "./logsDimensions";
 
 interface ValueRow {
   value: string;
@@ -103,7 +103,7 @@ export default function LogsDimensionListPage({
     : `No results match "${search}"`;
   const emptyDescription = noData
     ? `No values for ${dimension} were found in logs-* for the current time range.`
-    : undefined;
+    : "Try a different search term.";
 
   return (
     <Paper variant="outlined" sx={{ p: 3 }}>
@@ -121,6 +121,7 @@ export default function LogsDimensionListPage({
 
       <TextField
         placeholder={`Search ${dimensionLabel.toLowerCase()} names\u2026`}
+        aria-label={`Search ${dimensionLabel.toLowerCase()} names`}
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         fullWidth
