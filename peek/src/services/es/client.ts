@@ -49,7 +49,11 @@ import type { ProfilingTopFunctionsRequest } from "./profilingTypes";
 import type { GetWatchResponse, QueryWatchesRequest, QueryWatchesResponse } from "./watcherTypes";
 import type { ListTasksResponse } from "./taskTypes";
 import type { GetIlmPoliciesResponse, IlmExplainDetailResponse } from "./ilmTypes";
-import type { GetIndexTemplatesResponse, GetComponentTemplatesResponse } from "./templateTypes";
+import type {
+  GetIndexTemplatesResponse,
+  GetComponentTemplatesResponse,
+  SimulateIndexTemplateResponse,
+} from "./templateTypes";
 
 // ---------------------------------------------------------------------------
 // Re-export domain types so existing `import … from "./client"` keeps working.
@@ -146,6 +150,7 @@ export type {
   GetIndexTemplatesResponse,
   ComponentTemplateRecord,
   GetComponentTemplatesResponse,
+  SimulateIndexTemplateResponse,
   IndexTemplateRow,
   ComponentTemplateRow,
 } from "./templateTypes";
@@ -733,6 +738,16 @@ export class ElasticsearchClient {
 
   async getComponentTemplates(signal?: AbortSignal): Promise<GetComponentTemplatesResponse> {
     return this._fetch<GetComponentTemplatesResponse>("/_component_template", { signal });
+  }
+
+  async simulateIndexTemplate(
+    name: string,
+    signal?: AbortSignal,
+  ): Promise<SimulateIndexTemplateResponse> {
+    return this._fetch<SimulateIndexTemplateResponse>(
+      `/_index_template/_simulate/${encodeURIComponent(name)}`,
+      { method: "POST", signal },
+    );
   }
 
   // -------------------------------------------------------------------------

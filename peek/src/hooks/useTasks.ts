@@ -18,6 +18,7 @@ function toTaskRows(response: ListTasksResponse): TaskRow[] {
     cancellable: t.cancellable,
     cancelled: t.cancelled ?? false,
     parentTaskId: t.parent_task_id ?? "",
+    raw: t,
   }));
 }
 

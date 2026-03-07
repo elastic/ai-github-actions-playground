@@ -23,6 +23,7 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import CloseIcon from "@mui/icons-material/Close";
 import PolicyIcon from "@mui/icons-material/Policy";
+import { parseAsBoolean, parseAsString, parseAsStringEnum, useQueryStates } from "nuqs";
 
 import type { IlmIndexRow, IlmPolicyRow } from "../services/es";
 import { useIlm } from "../hooks/useIlm";
@@ -39,6 +40,11 @@ import { OverviewInfoCard } from "./OverviewInfoCard";
 type IndexSortField = "index" | "policy" | "phase" | "step" | "age" | "error";
 type PolicySortField = "name" | "version" | "modifiedDate" | "indexCount";
 type SortDirection = "asc" | "desc";
+
+const ILM_TABS: Array<"indices" | "policies"> = ["indices", "policies"];
+const INDEX_SORT_FIELDS: IndexSortField[] = ["index", "policy", "phase", "step", "age", "error"];
+const POLICY_SORT_FIELDS: PolicySortField[] = ["name", "version", "modifiedDate", "indexCount"];
+const SORT_DIRECTIONS: SortDirection[] = ["asc", "desc"];
 
 export function parseDurationToMs(value: string): number {
   const match = value.trim().match(/^(\d+(?:\.\d+)?)(ms|s|m|h|d)$/i);
@@ -144,37 +150,50 @@ export default function IlmPage() {
   const indexRows = result.status === "success" ? result.data.indexRows : [];
   const policyRows = result.status === "success" ? result.data.policyRows : [];
 
-  // Tab state (indices vs policies)
-  const [activeTab, setActiveTab] = useState<"indices" | "policies">("indices");
+  const [urlState, setUrlState] = useQueryStates(
+    {
+      tab: parseAsStringEnum<"indices" | "policies">(ILM_TABS).withDefault("indices"),
+      q: parseAsString.withDefault(""),
+      onlyErrors: parseAsBoolean.withDefault(false),
+      managedOnly: parseAsBoolean.withDefault(false),
+      phase: parseAsString.withDefault(""),
+      indexSortField: parseAsStringEnum<IndexSortField>(INDEX_SORT_FIELDS).withDefault("error"),
+      indexSortDir: parseAsStringEnum<SortDirection>(SORT_DIRECTIONS).withDefault("desc"),
+      policySortField: parseAsStringEnum<PolicySortField>(POLICY_SORT_FIELDS).withDefault("name"),
+      policySortDir: parseAsStringEnum<SortDirection>(SORT_DIRECTIONS).withDefault("asc"),
+    },
+    { history: "replace" },
+  );
 
-  // Search
-  const [search, setSearch] = useState("");
+  const activeTab = urlState.tab;
+  const search = urlState.q;
   const deferredSearch = useDeferredValue(search);
-
-  // Only errors toggle
-  const [onlyErrors, setOnlyErrors] = useState(false);
-  const [managedOnly, setManagedOnly] = useState(false);
+  const onlyErrors = urlState.onlyErrors;
+  const managedOnly = urlState.managedOnly;
+  const phaseFilter = urlState.phase;
+  const indexSortField = urlState.indexSortField;
+  const indexSortDir = urlState.indexSortDir;
+  const policySortField = urlState.policySortField;
+  const policySortDir = urlState.policySortDir;
 
   // Index table sort — default: errors first
-  const [indexSortField, setIndexSortField] = useState<IndexSortField>("error");
-  const [indexSortDir, setIndexSortDir] = useState<SortDirection>("desc");
   const handleIndexSort = useCallback(
     (field: IndexSortField) => {
-      setIndexSortDir((prev) => (indexSortField === field && prev === "asc" ? "desc" : "asc"));
-      setIndexSortField(field);
+      const nextDir: SortDirection =
+        indexSortField === field && indexSortDir === "asc" ? "desc" : "asc";
+      void setUrlState({ indexSortField: field, indexSortDir: nextDir });
     },
-    [indexSortField],
+    [indexSortField, indexSortDir, setUrlState],
   );
 
   // Policy table sort
-  const [policySortField, setPolicySortField] = useState<PolicySortField>("name");
-  const [policySortDir, setPolicySortDir] = useState<SortDirection>("asc");
   const handlePolicySort = useCallback(
     (field: PolicySortField) => {
-      setPolicySortDir((prev) => (policySortField === field && prev === "asc" ? "desc" : "asc"));
-      setPolicySortField(field);
+      const nextDir: SortDirection =
+        policySortField === field && policySortDir === "asc" ? "desc" : "asc";
+      void setUrlState({ policySortField: field, policySortDir: nextDir });
     },
-    [policySortField],
+    [policySortField, policySortDir, setUrlState],
   );
 
   // Detail flyover
@@ -202,15 +221,25 @@ export default function IlmPage() {
   // Filter + sort
   const filteredIndexRows = useMemo(() => {
     const term = deferredSearch.trim().toLowerCase();
+    const phase = phaseFilter.trim().toLowerCase();
     let filtered = indexRows.filter((r) => {
       if (onlyErrors && !r.isError) return false;
       if (managedOnly && !r.raw?.managed) return false;
+      if (phase && r.phase.toLowerCase() !== phase) return false;
       if (!term) return true;
       return r.index.toLowerCase().includes(term) || r.policy.toLowerCase().includes(term);
     });
     filtered = [...filtered].sort((a, b) => compareIndexRows(a, b, indexSortField, indexSortDir));
     return filtered;
-  }, [indexRows, deferredSearch, onlyErrors, managedOnly, indexSortField, indexSortDir]);
+  }, [
+    indexRows,
+    deferredSearch,
+    onlyErrors,
+    managedOnly,
+    phaseFilter,
+    indexSortField,
+    indexSortDir,
+  ]);
 
   const filteredPolicyRows = useMemo(() => {
     const term = deferredSearch.trim().toLowerCase();
@@ -299,7 +328,7 @@ export default function IlmPage() {
       <Box sx={{ display: "flex", gap: 1, alignItems: "center", flexWrap: "wrap" }}>
         <Tabs
           value={activeTab}
-          onChange={(_, v) => setActiveTab(v as "indices" | "policies")}
+          onChange={(_, v) => void setUrlState({ tab: v as "indices" | "policies" })}
           sx={{ minHeight: COMPONENT_HEIGHTS.tab }}
         >
           <Tab label="Indices" value="indices" sx={{ minHeight: COMPONENT_HEIGHTS.tab, py: 0 }} />
@@ -311,18 +340,26 @@ export default function IlmPage() {
             activeTab === "indices" ? "Filter by index or policy..." : "Filter policies..."
           }
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => void setUrlState({ q: e.target.value })}
           sx={{ minWidth: 260 }}
           aria-label="Filter ILM"
         />
         {activeTab === "indices" && (
           <>
+            <TextField
+              size="small"
+              placeholder="Phase (hot/warm/...)"
+              value={phaseFilter}
+              onChange={(e) => void setUrlState({ phase: e.target.value })}
+              sx={{ minWidth: 180 }}
+              aria-label="Filter ILM phase"
+            />
             <FormControlLabel
               control={
                 <Switch
                   size="small"
                   checked={managedOnly}
-                  onChange={(e) => setManagedOnly(e.target.checked)}
+                  onChange={(e) => void setUrlState({ managedOnly: e.target.checked })}
                 />
               }
               label="Managed only"
@@ -332,7 +369,7 @@ export default function IlmPage() {
                 <Switch
                   size="small"
                   checked={onlyErrors}
-                  onChange={(e) => setOnlyErrors(e.target.checked)}
+                  onChange={(e) => void setUrlState({ onlyErrors: e.target.checked })}
                 />
               }
               label="Only errors"
@@ -467,7 +504,7 @@ export default function IlmPage() {
                         icon={<PolicyIcon sx={{ fontSize: 28 }} />}
                         heading="No ILM indices found"
                         description={
-                          search || onlyErrors || managedOnly
+                          search || onlyErrors || managedOnly || phaseFilter
                             ? "Try adjusting your filters."
                             : "No ILM-managed indices detected."
                         }

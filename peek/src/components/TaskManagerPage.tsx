@@ -445,7 +445,7 @@ export default function TaskManagerPage() {
                   sx={{ p: 1, maxHeight: 300, overflow: "auto", fontSize: "0.75rem" }}
                 >
                   <pre style={{ margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-                    {JSON.stringify(selectedTask, null, 2)}
+                    {JSON.stringify(selectedTask.raw ?? selectedTask, null, 2)}
                   </pre>
                 </Paper>
               </Box>

@@ -5,6 +5,7 @@ import type {
   GetComponentTemplatesResponse,
   IndexTemplateRow,
   ComponentTemplateRow,
+  SimulateIndexTemplateResponse,
 } from "../services/es";
 import type { DataFetchResult } from "../types/query";
 
@@ -86,4 +87,24 @@ export function useTemplates(): DataFetchResult<TemplatesData> & { refresh: () =
   if (query.isError) return { status: "error", error: query.error.message, refresh };
   if (query.data) return { status: "success", data: query.data, refresh };
   return { status: "idle", refresh };
+}
+
+export function useSimulatedIndexTemplate(
+  templateName: string | null,
+): DataFetchResult<SimulateIndexTemplateResponse | null> {
+  const { connection, createQueryFn } = useEsQuery();
+  const query = useQuery({
+    queryKey: ["template-simulate", connection?.url, templateName],
+    queryFn: createQueryFn((client) => client.simulateIndexTemplate(templateName!)),
+    enabled: Boolean(connection && templateName),
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
+
+  if (!connection || !templateName) return { status: "idle" };
+  if (query.isFetching) return { status: "loading" };
+  if (query.isError) return { status: "error", error: query.error.message };
+  if (query.data) return { status: "success", data: query.data };
+  return { status: "idle" };
 }

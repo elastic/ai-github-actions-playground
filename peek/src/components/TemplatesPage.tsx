@@ -21,9 +21,10 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import CloseIcon from "@mui/icons-material/Close";
 import DescriptionIcon from "@mui/icons-material/Description";
+import { parseAsBoolean, parseAsString, parseAsStringEnum, useQueryStates } from "nuqs";
 
 import type { IndexTemplateRow, ComponentTemplateRow } from "../services/es";
-import { useTemplates } from "../hooks/useTemplates";
+import { useSimulatedIndexTemplate, useTemplates } from "../hooks/useTemplates";
 import { COMPONENT_HEIGHTS } from "../types/tokens";
 
 import EmptyState from "./EmptyState";
@@ -37,6 +38,16 @@ import { OverviewInfoCard } from "./OverviewInfoCard";
 type IndexTplSortField = "name" | "priority" | "composedOfCount" | "dataStream";
 type CompTplSortField = "name" | "usedByCount" | "version";
 type SortDirection = "asc" | "desc";
+
+const TEMPLATE_TABS: Array<"index" | "component"> = ["index", "component"];
+const INDEX_TPL_SORT_FIELDS: IndexTplSortField[] = [
+  "name",
+  "priority",
+  "composedOfCount",
+  "dataStream",
+];
+const COMP_TPL_SORT_FIELDS: CompTplSortField[] = ["name", "usedByCount", "version"];
+const SORT_DIRECTIONS: SortDirection[] = ["asc", "desc"];
 
 function compareIndexTpls(
   a: IndexTemplateRow,
@@ -113,35 +124,52 @@ export default function TemplatesPage() {
   const indexTemplates = result.status === "success" ? result.data.indexTemplates : [];
   const componentTemplates = result.status === "success" ? result.data.componentTemplates : [];
 
-  // Tab state
-  const [activeTab, setActiveTab] = useState<"index" | "component">("index");
+  const [urlState, setUrlState] = useQueryStates(
+    {
+      tab: parseAsStringEnum<"index" | "component">(TEMPLATE_TABS).withDefault("index"),
+      q: parseAsString.withDefault(""),
+      indexTplSortField:
+        parseAsStringEnum<IndexTplSortField>(INDEX_TPL_SORT_FIELDS).withDefault("name"),
+      indexTplSortDir: parseAsStringEnum<SortDirection>(SORT_DIRECTIONS).withDefault("asc"),
+      compTplSortField:
+        parseAsStringEnum<CompTplSortField>(COMP_TPL_SORT_FIELDS).withDefault("name"),
+      compTplSortDir: parseAsStringEnum<SortDirection>(SORT_DIRECTIONS).withDefault("asc"),
+      dataStreamOnly: parseAsBoolean.withDefault(false),
+      priorityMin: parseAsString.withDefault(""),
+      priorityMax: parseAsString.withDefault(""),
+    },
+    { history: "replace" },
+  );
 
-  // Search
-  const [search, setSearch] = useState("");
+  const activeTab = urlState.tab;
+  const search = urlState.q;
   const deferredSearch = useDeferredValue(search);
+  const indexTplSortField = urlState.indexTplSortField;
+  const indexTplSortDir = urlState.indexTplSortDir;
+  const compTplSortField = urlState.compTplSortField;
+  const compTplSortDir = urlState.compTplSortDir;
+  const dataStreamOnly = urlState.dataStreamOnly;
+  const priorityMin = urlState.priorityMin;
+  const priorityMax = urlState.priorityMax;
 
   // Index templates sort
-  const [indexTplSortField, setIndexTplSortField] = useState<IndexTplSortField>("name");
-  const [indexTplSortDir, setIndexTplSortDir] = useState<SortDirection>("asc");
   const handleIndexTplSort = useCallback(
     (field: IndexTplSortField) => {
-      setIndexTplSortDir((prev) =>
-        indexTplSortField === field && prev === "asc" ? "desc" : "asc",
-      );
-      setIndexTplSortField(field);
+      const nextDir: SortDirection =
+        indexTplSortField === field && indexTplSortDir === "asc" ? "desc" : "asc";
+      void setUrlState({ indexTplSortField: field, indexTplSortDir: nextDir });
     },
-    [indexTplSortField],
+    [indexTplSortField, indexTplSortDir, setUrlState],
   );
 
   // Component templates sort
-  const [compTplSortField, setCompTplSortField] = useState<CompTplSortField>("name");
-  const [compTplSortDir, setCompTplSortDir] = useState<SortDirection>("asc");
   const handleCompTplSort = useCallback(
     (field: CompTplSortField) => {
-      setCompTplSortDir((prev) => (compTplSortField === field && prev === "asc" ? "desc" : "asc"));
-      setCompTplSortField(field);
+      const nextDir: SortDirection =
+        compTplSortField === field && compTplSortDir === "asc" ? "desc" : "asc";
+      void setUrlState({ compTplSortField: field, compTplSortDir: nextDir });
     },
-    [compTplSortField],
+    [compTplSortField, compTplSortDir, setUrlState],
   );
 
   // Detail flyover (index template)
@@ -150,6 +178,7 @@ export default function TemplatesPage() {
     () => indexTemplates.find((t) => t.name === selectedTemplateName) ?? null,
     [indexTemplates, selectedTemplateName],
   );
+  const simulatedTemplate = useSimulatedIndexTemplate(selectedTemplate?.name ?? null);
 
   // Derived metrics
   const dsCount = useMemo(
@@ -164,7 +193,14 @@ export default function TemplatesPage() {
   // Filter + sort
   const filteredIndexTemplates = useMemo(() => {
     const term = deferredSearch.trim().toLowerCase();
+    const minPriority = Number(priorityMin);
+    const maxPriority = Number(priorityMax);
+    const hasMin = priorityMin.trim() !== "" && Number.isFinite(minPriority);
+    const hasMax = priorityMax.trim() !== "" && Number.isFinite(maxPriority);
     const filtered = indexTemplates.filter((t) => {
+      if (dataStreamOnly && !t.dataStreamEnabled) return false;
+      if (hasMin && t.priority < minPriority) return false;
+      if (hasMax && t.priority > maxPriority) return false;
       if (!term) return true;
       return (
         t.name.toLowerCase().includes(term) ||
@@ -173,7 +209,15 @@ export default function TemplatesPage() {
       );
     });
     return [...filtered].sort((a, b) => compareIndexTpls(a, b, indexTplSortField, indexTplSortDir));
-  }, [indexTemplates, deferredSearch, indexTplSortField, indexTplSortDir]);
+  }, [
+    indexTemplates,
+    deferredSearch,
+    indexTplSortField,
+    indexTplSortDir,
+    dataStreamOnly,
+    priorityMin,
+    priorityMax,
+  ]);
 
   const filteredComponentTemplates = useMemo(() => {
     const term = deferredSearch.trim().toLowerCase();
@@ -246,7 +290,7 @@ export default function TemplatesPage() {
       <Box sx={{ display: "flex", gap: 1, alignItems: "center", flexWrap: "wrap" }}>
         <Tabs
           value={activeTab}
-          onChange={(_, v) => setActiveTab(v as "index" | "component")}
+          onChange={(_, v) => void setUrlState({ tab: v as "index" | "component" })}
           sx={{ minHeight: COMPONENT_HEIGHTS.tab }}
         >
           <Tab
@@ -264,10 +308,39 @@ export default function TemplatesPage() {
           size="small"
           placeholder="Filter templates..."
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => void setUrlState({ q: e.target.value })}
           sx={{ minWidth: 260 }}
           aria-label="Filter templates"
         />
+        {activeTab === "index" && (
+          <>
+            <TextField
+              size="small"
+              value={priorityMin}
+              onChange={(e) => void setUrlState({ priorityMin: e.target.value })}
+              placeholder="Min priority"
+              sx={{ width: 130 }}
+              inputProps={{ inputMode: "numeric" }}
+              aria-label="Minimum template priority"
+            />
+            <TextField
+              size="small"
+              value={priorityMax}
+              onChange={(e) => void setUrlState({ priorityMax: e.target.value })}
+              placeholder="Max priority"
+              sx={{ width: 130 }}
+              inputProps={{ inputMode: "numeric" }}
+              aria-label="Maximum template priority"
+            />
+            <Button
+              size="small"
+              variant={dataStreamOnly ? "contained" : "outlined"}
+              onClick={() => void setUrlState({ dataStreamOnly: !dataStreamOnly })}
+            >
+              Data-stream only
+            </Button>
+          </>
+        )}
       </Box>
 
       {/* Index templates table */}
@@ -377,7 +450,7 @@ export default function TemplatesPage() {
                         icon={<DescriptionIcon sx={{ fontSize: 28 }} />}
                         heading="No index templates found"
                         description={
-                          search
+                          search || dataStreamOnly || priorityMin || priorityMax
                             ? "Try adjusting your search filter."
                             : "No index templates configured."
                         }
@@ -571,6 +644,32 @@ export default function TemplatesPage() {
                   </Box>
                 </>
               )}
+
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
+                  SIMULATED OUTPUT
+                </Typography>
+                <Paper
+                  variant="outlined"
+                  sx={{ p: 1, maxHeight: 260, overflow: "auto", fontSize: "0.75rem" }}
+                >
+                  {simulatedTemplate.status === "loading" ? (
+                    <LinearProgress />
+                  ) : simulatedTemplate.status === "error" ? (
+                    <Typography variant="body2" color="error">
+                      {simulatedTemplate.error}
+                    </Typography>
+                  ) : (
+                    <pre style={{ margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                      {JSON.stringify(
+                        simulatedTemplate.status === "success" ? simulatedTemplate.data : {},
+                        null,
+                        2,
+                      )}
+                    </pre>
+                  )}
+                </Paper>
+              </Box>
 
               <Box sx={{ mt: 2 }}>
                 <Typography variant="caption" color="text.secondary" display="block" gutterBottom>

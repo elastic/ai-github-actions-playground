@@ -45,6 +45,9 @@ export interface GetComponentTemplatesResponse {
   component_templates?: ComponentTemplateRecord[];
 }
 
+/** Response from POST /_index_template/_simulate/{name} */
+export type SimulateIndexTemplateResponse = Record<string, unknown>;
+
 /** Flattened index template row. */
 export interface IndexTemplateRow {
   name: string;

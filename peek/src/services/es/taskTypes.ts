@@ -40,4 +40,5 @@ export interface TaskRow {
   cancellable: boolean;
   cancelled: boolean;
   parentTaskId: string;
+  raw?: TaskInfo;
 }
