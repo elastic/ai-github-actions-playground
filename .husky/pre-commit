@@ -1,5 +1,3 @@
 set -e
 
-(cd peek && npx lint-staged)
-(cd peek && npx tsgo --noEmit)
-(cd peek && npx vitest run --changed HEAD --passWithNoTests)
+make pre-commit

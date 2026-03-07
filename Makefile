@@ -5,7 +5,7 @@ BASE ?= main
 
 .PHONY: all help setup serve serve-proxy serve-background serve-explore explore-down build lint lint-full format format-full ci check clean preview test test-unit test-unit-full test-unit-coverage test-integration test-e2e test-e2e-preview docker-build docker-run electron-dev electron-build electron-dist
 .PHONY: otel-up otel-down otel-logs otel-cloud-up otel-cloud-down otel-cloud-logs otel-profiling-up otel-profiling-down otel-profiling-logs profiling-seed fleet-harness-up fleet-harness-down fleet-harness-logs
-.PHONY: seed-es screenshot-all screenshot-section test-e2e-live otel-capture otel-capture-down otel-replay-up otel-replay otel-replay-down seed-k8s
+.PHONY: seed-es screenshot-all screenshot-section test-e2e-live otel-capture otel-capture-down otel-replay-up otel-replay otel-replay-down seed-k8s pre-commit pre-commit-lint-staged pre-commit-typecheck test-unit-staged
 
 all: help
 
@@ -29,6 +29,7 @@ help:
 	@echo "  check            - Alias for ci"
 	@echo "  test             - Run all tests (unit, integration, e2e)"
 	@echo "  test-unit        - Run unit tests related to files changed since BASE (fast default)"
+	@echo "  test-unit-staged - Run unit tests related to staged JS/TS files in peek/"
 	@echo "  test-unit-full   - Run all unit tests"
 	@echo "  test-unit-coverage - Run unit/component tests with coverage thresholds"
 	@echo "  test-integration - Run integration tests"
@@ -63,6 +64,7 @@ help:
 	@echo "  fleet-harness-up - Start Fleet Server + enrolled agents harness"
 	@echo "  fleet-harness-down - Stop and remove Fleet harness"
 	@echo "  fleet-harness-logs - Tail Fleet Server logs"
+	@echo "  pre-commit       - Run the same checks as .husky/pre-commit"
 
 setup:
 	@echo "Installing dependencies..."
@@ -226,6 +228,23 @@ test-unit:
 	@echo "Running unit tests for changed files (against $(BASE))..."
 	@echo "Note: coverage thresholds are intentionally skipped for incremental PR runs."
 	@cd $(PEEK_DIR) && npx vitest run --config vitest.config.ts --changed $(BASE) --passWithNoTests
+
+test-unit-staged:
+	@echo "Running unit tests related to staged JS/TS files in peek/..."
+	@STAGED=$$(git diff --cached --name-only --diff-filter=ACMR -- 'peek' | grep -E '^peek/.*\.(ts|tsx|js|jsx)$$' | sed 's#^peek/##' || true); \
+	if [ -n "$$STAGED" ]; then \
+		(cd $(PEEK_DIR) && echo "$$STAGED" | tr '\n' '\0' | xargs -0 npx vitest related --run --passWithNoTests); \
+	else \
+		echo "No staged JS/TS files under peek/ — skipping unit tests."; \
+	fi
+
+pre-commit-lint-staged:
+	@cd $(PEEK_DIR) && npx lint-staged
+
+pre-commit-typecheck:
+	@cd $(PEEK_DIR) && npx tsgo --noEmit
+
+pre-commit: pre-commit-lint-staged pre-commit-typecheck test-unit-staged
 
 test: test-unit-full test-integration test-e2e
 

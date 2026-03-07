@@ -1,5 +1,4 @@
-import Button from "@mui/material/Button";
-import CircularProgress from "@mui/material/CircularProgress";
+import LoadingButton from "./LoadingButton";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
@@ -24,6 +23,8 @@ export default function RefreshToolbar({
   onRefresh,
   loading,
 }: RefreshToolbarProps) {
+  const refreshLabel = loading ? "Refreshing..." : "Refresh";
+
   return (
     <Stack direction="row" spacing={1} alignItems="center">
       <Typography variant="caption" color="text.secondary">
@@ -34,15 +35,15 @@ export default function RefreshToolbar({
         options={refreshOptions}
         onChange={onIntervalChange}
       />
-      <Button
+      <LoadingButton
         size="small"
         variant="outlined"
         onClick={onRefresh}
-        disabled={loading}
-        aria-label="Refresh"
+        loading={loading}
+        aria-label={refreshLabel}
       >
-        {loading ? <CircularProgress size={16} /> : "Refresh"}
-      </Button>
+        {refreshLabel}
+      </LoadingButton>
     </Stack>
   );
 }

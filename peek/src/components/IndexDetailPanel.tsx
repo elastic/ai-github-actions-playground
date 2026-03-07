@@ -139,9 +139,13 @@ function OverviewContent({ selectedRecord }: { selectedRecord: CatIndexRecord | 
           </MetaValue>
         </>
       ) : (
-        <Typography variant="body2" color="text.secondary" sx={{ gridColumn: "span 2" }}>
-          No index selected.
-        </Typography>
+        <Box sx={{ gridColumn: "span 2" }}>
+          <EmptyState
+            size="small"
+            heading="No index selected"
+            description="Select an index from the list to view its details."
+          />
+        </Box>
       )}
     </MetaGrid>
   );
