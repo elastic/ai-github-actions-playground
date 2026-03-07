@@ -8,6 +8,7 @@ import { useLLMStore } from "../store/useLLMStore";
 import type { InsightSlotDefinition, PageInsightsResponse } from "../types/insightSlots";
 
 import { pageInsightsSchema } from "./insightSlotSchema";
+import { ANNOTATION_LAYER_POLICY } from "./insightPromptUtils";
 
 export interface UsePageSlotInsightsOptions {
   /** Serialized page context passed as the user message to the LLM */
@@ -75,13 +76,7 @@ export function usePageSlotInsights({
       const augmentedSystem =
         `${systemPrompt}\n\n` +
         "Annotation layer policy:\n" +
-        "- You are an AI annotation layer over the user's screen.\n" +
-        "- Your job is to draw attention to things the user would likely miss on their own.\n" +
-        "- Not every slot must have an insight.\n" +
-        "- Emit a slot insight only when there is meaningful, non-obvious signal.\n" +
-        "- Skip slots that only have neutral/obvious information.\n" +
-        "- Focus on hidden risks, subtle anomalies, non-obvious correlations, and emerging trends.\n" +
-        "- Never invent values, entities, or trends.\n\n" +
+        `${ANNOTATION_LAYER_POLICY}\n\n` +
         `Target insight slots:\n${slotList}`;
 
       const openai = createOpenAI({

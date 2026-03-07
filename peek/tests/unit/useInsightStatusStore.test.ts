@@ -41,6 +41,22 @@ describe("useInsightStatusStore", () => {
     expect(useInsightStatusStore.getState().error).toBe("LLM call failed");
   });
 
+  it("syncFromProvider prunes dismissals for slots no longer present", () => {
+    useInsightStatusStore.getState().dismissSlot("slot-a");
+    useInsightStatusStore.getState().dismissSlot("slot-b");
+
+    useInsightStatusStore.getState().syncFromProvider({
+      loading: false,
+      totalInsights: 1,
+      error: null,
+      slotIds: ["slot-b"],
+    });
+
+    const dismissed = useInsightStatusStore.getState().dismissedSlotIds;
+    expect(dismissed.size).toBe(1);
+    expect(dismissed.has("slot-b")).toBe(true);
+  });
+
   it("dismissSlot adds a slot ID to the dismissed set", () => {
     useInsightStatusStore.getState().dismissSlot("health-card");
     useInsightStatusStore.getState().dismissSlot("index-count");

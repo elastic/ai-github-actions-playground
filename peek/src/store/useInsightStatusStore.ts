@@ -28,6 +28,7 @@ export interface InsightStatusState {
     loading: boolean;
     totalInsights: number;
     error: string | null;
+    slotIds?: readonly string[];
   }) => void;
 
   /** Mark a slot as dismissed. */
@@ -58,8 +59,22 @@ export const useInsightStatusStore = create<InsightStatusState>()(
     (set) => ({
       ...DEFAULT_STATE,
 
-      syncFromProvider: ({ loading, totalInsights, error }) =>
-        set({ loading, totalInsights, error }),
+      syncFromProvider: ({ loading, totalInsights, error, slotIds }) =>
+        set((state) => {
+          if (!slotIds) {
+            return { loading, totalInsights, error };
+          }
+          const allowedSlotIds = new Set(slotIds);
+          const nextDismissed = new Set(
+            [...state.dismissedSlotIds].filter((slotId) => allowedSlotIds.has(slotId)),
+          );
+          return {
+            loading,
+            totalInsights,
+            error,
+            dismissedSlotIds: nextDismissed,
+          };
+        }),
 
       dismissSlot: (slotId) =>
         set((state) => {

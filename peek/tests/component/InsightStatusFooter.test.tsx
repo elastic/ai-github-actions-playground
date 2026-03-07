@@ -176,4 +176,70 @@ describe("InsightStatusFooter", () => {
 
     document.body.removeChild(container);
   });
+
+  it("jump-to-next skips dismissed slots", async () => {
+    const user = userEvent.setup();
+    useInsightStatusStore.getState().syncFromProvider({
+      loading: false,
+      totalInsights: 2,
+      error: null,
+    });
+    useInsightStatusStore.getState().dismissSlot("slot-a");
+
+    const container = document.createElement("div");
+    container.innerHTML =
+      '<div data-insight-slot-id="slot-a"><button aria-label="View info insight"></button></div>' +
+      '<div data-insight-slot-id="slot-b"><button aria-label="View warning insight"></button></div>';
+    document.body.appendChild(container);
+
+    const slotA = container.querySelector<HTMLElement>('[data-insight-slot-id="slot-a"]')!;
+    slotA.scrollIntoView = vi.fn();
+    const slotB = container.querySelector<HTMLElement>('[data-insight-slot-id="slot-b"]')!;
+    slotB.scrollIntoView = vi.fn();
+
+    render(<InsightStatusFooter />);
+
+    const jumpButton = screen.getByRole("button", { name: /jump to next insight/i });
+    await user.click(jumpButton);
+
+    expect(slotA.scrollIntoView).not.toHaveBeenCalled();
+    expect(slotB.scrollIntoView).toHaveBeenCalledWith({
+      behavior: "smooth",
+      block: "center",
+    });
+
+    document.body.removeChild(container);
+  });
+
+  it("uses reduced-motion behavior when preference is enabled", async () => {
+    const user = userEvent.setup();
+    useInsightStatusStore.getState().syncFromProvider({
+      loading: false,
+      totalInsights: 1,
+      error: null,
+    });
+    vi.stubGlobal("matchMedia", vi.fn().mockReturnValue({ matches: true }));
+
+    const container = document.createElement("div");
+    container.innerHTML =
+      '<div data-insight-slot-id="slot-a"><button aria-label="View info insight"></button></div>';
+    document.body.appendChild(container);
+
+    const slotA = container.querySelector<HTMLElement>('[data-insight-slot-id="slot-a"]')!;
+    slotA.scrollIntoView = vi.fn();
+    const indicator = container.querySelector<HTMLElement>('[aria-label="View info insight"]')!;
+    indicator.click = vi.fn();
+
+    render(<InsightStatusFooter />);
+    await user.click(screen.getByRole("button", { name: /jump to next insight/i }));
+
+    expect(slotA.scrollIntoView).toHaveBeenCalledWith({
+      behavior: "auto",
+      block: "center",
+    });
+    expect(indicator.click).toHaveBeenCalledTimes(1);
+
+    document.body.removeChild(container);
+    vi.unstubAllGlobals();
+  });
 });

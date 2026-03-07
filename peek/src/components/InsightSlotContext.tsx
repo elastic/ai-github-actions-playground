@@ -49,9 +49,10 @@ export function InsightSlotProvider({
 
   // Sync page-level insight status to the global store for the footer.
   const syncFromProvider = useInsightStatusStore((s) => s.syncFromProvider);
+  const slotIds = useMemo(() => insights.map((insight) => insight.slotId), [insights]);
   useEffect(() => {
-    syncFromProvider({ loading, totalInsights: insights.length, error });
-  }, [syncFromProvider, loading, insights.length, error]);
+    syncFromProvider({ loading, totalInsights: insights.length, error, slotIds });
+  }, [syncFromProvider, loading, insights.length, error, slotIds]);
 
   // Clear global status on unmount (page navigation).
   const resetInsightStatus = useInsightStatusStore((s) => s.resetInsightStatus);

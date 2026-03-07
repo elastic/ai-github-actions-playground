@@ -56,24 +56,32 @@ export default function InsightStatusFooter() {
     lastScrolledIndex.current = nextIndex;
     const target = active[nextIndex] as HTMLElement | undefined;
     if (!target) return;
-    target.scrollIntoView({ behavior: "smooth", block: "center" });
+    const reducedMotion =
+      typeof window !== "undefined" &&
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    target.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "center" });
 
-    // Flash the glow briefly to highlight the target.
-    const prev = target.style.outline;
-    target.style.outline = "2px solid";
-    target.style.outlineOffset = "2px";
-    const timer = setTimeout(() => {
-      target.style.outline = prev;
-      target.style.outlineOffset = "";
-    }, HIGHLIGHT_FLASH_MS);
+    if (!reducedMotion) {
+      // Flash the glow briefly to highlight the target.
+      const prev = target.style.outline;
+      target.style.outline = "2px solid";
+      target.style.outlineOffset = "2px";
+      setTimeout(() => {
+        target.style.outline = prev;
+        target.style.outlineOffset = "";
+      }, HIGHLIGHT_FLASH_MS);
+    }
 
     // Click the insight indicator to open the popover.
     const indicator = target.querySelector<HTMLElement>('[aria-label*="insight"]');
     if (indicator) {
-      setTimeout(() => indicator.click(), POPOVER_OPEN_DELAY_MS);
+      if (reducedMotion) {
+        indicator.click();
+      } else {
+        setTimeout(() => indicator.click(), POPOVER_OPEN_DELAY_MS);
+      }
     }
-
-    return () => clearTimeout(timer);
   }, [dismissedSlotIds]);
 
   // Nothing to show.

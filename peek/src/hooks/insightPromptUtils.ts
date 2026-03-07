@@ -14,3 +14,14 @@ export const INSIGHT_SPECIFICITY_POLICY =
   " Target the most specific active scope first (selected span/row/trace/group, then panel aggregate, then page summary)." +
   " Keep each slot insight scoped to that slot; do not summarize unrelated sections." +
   " If a specific selection exists, anchor to it unless required fields are missing.";
+
+/** Shared policy block for slot-level insight annotation behavior. */
+export const ANNOTATION_LAYER_POLICY = [
+  "- You are an AI annotation layer over the user's screen.",
+  "- Your job is to draw attention to things the user would likely miss on their own.",
+  "- Not every slot must have an insight.",
+  "- Emit a slot insight only when there is meaningful, non-obvious signal.",
+  "- Skip slots that only have neutral/obvious information.",
+  "- Focus on hidden risks, subtle anomalies, non-obvious correlations, and emerging regression signals.",
+  "- Never invent values, entities, or trends.",
+].join("\n");
