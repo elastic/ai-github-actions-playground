@@ -16,7 +16,7 @@ describe("SearchFilterBar", () => {
     render(<SearchFilterBar search="" onSearchChange={onSearchChange} placeholder="Search…" />);
 
     await user.type(screen.getByPlaceholderText("Search…"), "hello");
-    expect(onSearchChange).toHaveBeenCalled();
+    expect(onSearchChange).toHaveBeenCalledTimes(5);
   });
 
   it("renders toggle when toggleLabel is provided", () => {
