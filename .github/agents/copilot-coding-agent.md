@@ -52,31 +52,30 @@ Before finishing:
 
 ### Screenshots for UI Changes
 
-When a change affects the visual appearance of the dashboard, you **must** capture and attach before/after screenshots to the pull request.
+When a change affects the visual appearance of the UI, you **must** capture and attach screenshots of the **actual page you changed** to the pull request.
 
-**Important:** Screenshots must show the feature you are building or modifying — not the default connections page. After starting the dev server, navigate to the relevant page or route that demonstrates your change before capturing the screenshot. If your change requires an Elasticsearch connection to be visible, describe the change in the PR body instead of attaching a screenshot of the connections page.
+**NEVER** screenshot the Welcome page, Connect dialog, or Dashboards page unless your PR specifically changes those pages. If you attach a screenshot of the wrong page, the PR is misleading.
 
-1. Start the dev server in the background and wait until it is ready:
+#### How to take screenshots
+
+Use `screenshot-feature.mjs` — it launches a browser, mocks Elasticsearch, auto-connects, navigates to the page you specify, and captures a screenshot. No live Elasticsearch cluster needed.
 
 ```bash
-cd peek && npm run dev &
+cd peek
+npm run build && npm run preview -- --port 3000 &
 DEV_PID=$!
 for i in $(seq 1 30); do curl -sf http://localhost:3000/ai-github-actions-playground/ >/dev/null && break; sleep 1; done
-```
-
-2. Run the screenshot preflight, passing `--url` with the route that shows your feature (not the default connections page):
-
-```bash
-cd peek && node scripts/screenshot-preflight.mjs --url http://127.0.0.1:3000/<feature-route> --output screenshot-preflight.json --screenshot screenshot.png
-```
-
-3. Stop the dev server:
-
-```bash
+npx playwright install --with-deps chromium
+node scripts/screenshot-feature.mjs \
+  --url http://127.0.0.1:3000/ai-github-actions-playground/ \
+  --page <page-name> \
+  --screenshot screenshot.png
 kill $DEV_PID
 ```
 
-4. If the preflight reports errors, attach the diagnostics JSON instead. If it passes, attach the captured screenshot to the PR body.
+Replace `<page-name>` with the page you changed. Run `node scripts/screenshot-feature.mjs --page invalid` to see all valid page names.
+
+If the page you changed is not in the supported list, check `peek/scripts/page-nav-buttons.mjs` and add it.
 
 For this repository:
 
