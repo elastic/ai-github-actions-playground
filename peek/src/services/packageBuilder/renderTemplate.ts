@@ -111,22 +111,22 @@ export function renderTemplate(
 /** Find template variables referenced as {{name}} but not defined in the variable list. */
 export function findUndefinedVars(templateSource: string, variables: PackageVariable[]): string[] {
   const defined = new Set(variables.map((v) => v.name));
-  const referenced = new Set<string>();
-  const re = /\{\{(?!#|\/|!|>)([a-zA-Z_][a-zA-Z0-9_]*)\}\}/g;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(templateSource)) !== null) {
-    if (m[1]) referenced.add(m[1]);
-  }
+  const referenced = extractReferencedVars(templateSource);
   return [...referenced].filter((name) => !defined.has(name));
 }
 
 /** Find variables defined but never referenced in the template. */
 export function findUnusedVars(templateSource: string, variables: PackageVariable[]): string[] {
+  const referenced = extractReferencedVars(templateSource);
+  return variables.map((v) => v.name).filter((name) => !referenced.has(name));
+}
+
+function extractReferencedVars(templateSource: string): Set<string> {
   const referenced = new Set<string>();
-  // Match both {{name}} and {{#if name}} and {{/if name}} patterns
-  const re = /\{\{[#/]?\s*(?:if|each|unless|with)?\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\}\}/g;
+  // Match block helpers like {{#if name}} / {{#each items}}
+  const reBlock = /\{\{#\s*(?:if|each|unless|with)\s+([a-zA-Z_][a-zA-Z0-9_]*)\b[^}]*\}\}/g;
   let m: RegExpExecArray | null;
-  while ((m = re.exec(templateSource)) !== null) {
+  while ((m = reBlock.exec(templateSource)) !== null) {
     if (m[1]) referenced.add(m[1]);
   }
   // Also match plain {{name}}
@@ -134,5 +134,5 @@ export function findUnusedVars(templateSource: string, variables: PackageVariabl
   while ((m = rePlain.exec(templateSource)) !== null) {
     if (m[1]) referenced.add(m[1]);
   }
-  return variables.map((v) => v.name).filter((name) => !referenced.has(name));
+  return referenced;
 }

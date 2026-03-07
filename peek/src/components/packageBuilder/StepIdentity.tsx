@@ -53,6 +53,14 @@ Only annotate fields that are empty, have wrong values, or could be improved. Sk
 
 const categoryOptions = PACKAGE_CATEGORIES;
 
+function hashString(value: string): string {
+  let hash = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (Math.imul(31, hash) + value.charCodeAt(i)) | 0;
+  }
+  return hash.toString(36);
+}
+
 function readAsDataURL(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -146,7 +154,7 @@ Has icon: ${identity.icon ? "yes" : "no"}`;
   const { insights, loading, error, refresh } = usePageSlotInsights({
     context: insightContext,
     systemPrompt: IDENTITY_SYSTEM_PROMPT,
-    cacheKey: `pkg-identity-slots::${insightContext.length}::${insightContext.slice(0, 100)}`,
+    cacheKey: `pkg-identity-slots::${hashString(insightContext)}`,
     slots: IDENTITY_SLOTS,
     enabled: Boolean(identity.name),
   });

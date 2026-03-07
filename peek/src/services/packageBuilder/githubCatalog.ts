@@ -17,6 +17,7 @@ export interface CatalogEntry {
 let catalogCache: CatalogEntry[] | null = null;
 let catalogCacheAt = 0;
 const CATALOG_CACHE_TTL_MS = 5 * 60 * 1000;
+const FETCH_TIMEOUT_MS = 30_000;
 
 export async function listInputPackages(signal?: AbortSignal): Promise<CatalogEntry[]> {
   if (catalogCache && Date.now() - catalogCacheAt < CATALOG_CACHE_TTL_MS) return catalogCache;
@@ -58,11 +59,12 @@ export async function fetchPackageFiles(
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
   const fileMap = new Map<string, Uint8Array>();
+  const fetchSignal = signal ?? AbortSignal.timeout(FETCH_TIMEOUT_MS);
 
   // Fetch text files in parallel
   const textFetches = PACKAGE_FILES.map(async (relPath) => {
     const url = `${RAW_BASE}/packages/${dirName}/${relPath}`;
-    const res = await fetch(url, { signal });
+    const res = await fetch(url, { signal: fetchSignal });
     if (!res.ok) return; // Skip missing files (e.g. README may not exist)
     const text = await res.text();
     fileMap.set(`${dirName}/${relPath}`, encoder.encode(text));
@@ -79,7 +81,7 @@ export async function fetchPackageFiles(
   if (!iconFileName) return fileMap;
 
   const iconUrl = `${RAW_BASE}/packages/${dirName}/img/${iconFileName}`;
-  const iconRes = await fetch(iconUrl, { signal });
+  const iconRes = await fetch(iconUrl, { signal: fetchSignal });
   if (!iconRes.ok) return fileMap;
 
   const bytes = new Uint8Array(await iconRes.arrayBuffer());

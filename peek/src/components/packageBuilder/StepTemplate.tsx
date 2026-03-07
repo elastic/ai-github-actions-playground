@@ -257,6 +257,7 @@ export default function StepTemplate() {
             templateError={result.templateError}
             packageName={identity.name}
             variables={variables}
+            mockValues={mockValues}
             templateContent={templateContent}
             themeMode={themeMode}
           />
@@ -284,7 +285,8 @@ export default function StepTemplate() {
                   value={mockValues[v.name] ?? v.default}
                   onChange={(e) => setMockValue(v.name, e.target.value)}
                   size="small"
-                  type={v.type === "integer" ? "number" : "text"}
+                  type={v.secret ? "password" : v.type === "integer" ? "number" : "text"}
+                  autoComplete={v.secret ? "new-password" : undefined}
                   sx={{ width: 220 }}
                   helperText={v.type === "bool" ? '"true" or "false"' : undefined}
                 />
@@ -303,17 +305,32 @@ interface RenderedPreviewProps {
   templateError: string | null;
   packageName: string;
   variables: PackageVariable[];
+  mockValues: Record<string, string>;
   templateContent: string;
   themeMode: "light" | "dark";
 }
 
 const previewBaseExtensions = [yaml(), EditorView.lineWrapping];
 
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function redactSecrets(text: string, secretValues: string[]): string {
+  let result = text;
+  for (const value of secretValues) {
+    if (!value) continue;
+    result = result.replace(new RegExp(escapeRegExp(value), "g"), "[REDACTED]");
+  }
+  return result;
+}
+
 function RenderedPreview({
   rendered,
   templateError,
   packageName,
   variables,
+  mockValues,
   templateContent,
   themeMode,
 }: RenderedPreviewProps) {
@@ -331,19 +348,28 @@ function RenderedPreview({
 
   const context = useMemo(() => {
     if (!rendered || !templateContent.trim()) return "";
+    const secretValues = variables
+      .filter((v) => v.secret)
+      .map((v) => mockValues[v.name] ?? v.default)
+      .filter(Boolean);
     const varList = variables
-      .map((v) => `${v.name} (${v.type}, required: ${v.required}, default: "${v.default}")`)
+      .map((v) => {
+        const value = v.secret ? "[REDACTED]" : v.default;
+        return `${v.name} (${v.type}, required: ${v.required}, default: "${value}")`;
+      })
       .join(", ");
-    const numberedLines = lines.map((l, i) => `${i + 1}: ${l}`).join("\n");
+    const numberedLines = lines
+      .map((line, i) => `${i + 1}: ${redactSecrets(line, secretValues)}`)
+      .join("\n");
     return `Package: "${packageName}"
 Variables: ${varList}
 
 Rendered YAML (line numbers for slot references):
 ${numberedLines}`;
-  }, [rendered, templateContent, packageName, variables, lines]);
+  }, [rendered, templateContent, packageName, variables, lines, mockValues]);
 
   const cacheKey = `pkg-template-lines::${packageName}::${lines.length}::${templateContent.length}`;
-  const insightsEnabled = lines.length > 0 && variables.length > 0;
+  const insightsEnabled = lines.length > 0;
 
   const { insights } = usePageSlotInsights({
     context,
