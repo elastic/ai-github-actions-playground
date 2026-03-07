@@ -2,13 +2,13 @@ import Box from "@mui/material/Box";
 import Collapse from "@mui/material/Collapse";
 import IconButton from "@mui/material/IconButton";
 import Paper from "@mui/material/Paper";
-import Skeleton from "@mui/material/Skeleton";
 import Typography from "@mui/material/Typography";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ShowChartIcon from "@mui/icons-material/ShowChart";
 
 import type { EsqlResponse } from "../../types";
 import { TRACE_TIME_RANGE_OPTIONS, resolveTraceTimeRangeToMs } from "../timePresets";
+import ContentSkeleton from "../ContentSkeleton";
 import EmptyState from "../EmptyState";
 import TraceScatterChart from "../visualizations/TraceScatterChart";
 
@@ -151,7 +151,7 @@ export default function TraceMetricsCharts({
                 Latency
               </Typography>
               {searchLoading ? (
-                <Skeleton variant="rounded" height={CHART_HEIGHT} sx={{ borderRadius: 1 }} />
+                <ContentSkeleton variant="chart-cell" height={CHART_HEIGHT} />
               ) : scatterData.length > 0 ? (
                 <Box sx={{ height: CHART_HEIGHT }}>
                   <TraceScatterChart
