@@ -112,7 +112,7 @@ export default function LogsDimensionListPage({
           Back
         </Button>
         <Box>
-          <Typography variant="h6">{dimensionPluralLabel}</Typography>
+          <Typography variant="h6" component="h1">{dimensionPluralLabel}</Typography>
           <Typography variant="body2" color="text.secondary">
             Ranked by log volume &mdash; click to explore in Query Lab
           </Typography>

@@ -113,7 +113,7 @@ export default function LogsLandingPage() {
   return (
     <Paper variant="outlined" sx={{ p: 3 }}>
       <Box sx={{ mb: 3 }}>
-        <Typography variant="h6">What logs are you looking for?</Typography>
+        <Typography variant="h6" component="h1">What logs are you looking for?</Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
           Pick a dimension to browse, or open all logs in Query Lab.
         </Typography>
