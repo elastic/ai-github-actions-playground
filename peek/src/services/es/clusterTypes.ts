@@ -212,14 +212,47 @@ export type RecoveryResponse = Record<string, { shards?: RecoveryShardStatus[] }
 
 export interface IlmExplainIndexStatus {
   managed?: boolean;
+  policy?: string;
   phase?: string;
   action?: string;
   step?: string;
   failed_step?: string;
+  step_info?: { reason?: string };
 }
 
 export interface IlmExplainResponse {
   indices?: Record<string, IlmExplainIndexStatus>;
+}
+
+export type IlmPolicyResponse = Record<
+  string,
+  {
+    version?: number;
+    modified_date?: string;
+    policy?: Record<string, unknown>;
+  }
+>;
+
+export interface TaskInfo {
+  action?: string;
+  cancellable?: boolean;
+  description?: string;
+  id?: number;
+  node?: string;
+  parent_task_id?: string;
+  running_time_in_nanos?: number;
+  start_time_in_millis?: number;
+  type?: string;
+}
+
+export interface TasksListResponse {
+  nodes?: Record<
+    string,
+    {
+      name?: string;
+      tasks?: Record<string, TaskInfo>;
+    }
+  >;
 }
 
 export interface SlmPolicyStats {

@@ -15,6 +15,10 @@ const getNodeStatsMock = vi.fn();
 const getDataStreamsMock = vi.fn();
 const resolveIndexMock = vi.fn();
 const rawRequestMock = vi.fn();
+const getPendingTasksMock = vi.fn();
+const getIlmExplainAllMock = vi.fn();
+const getTasksDetailedMock = vi.fn();
+const getIlmPoliciesMock = vi.fn();
 
 vi.mock("../../src/services/es", () => ({
   ElasticsearchClient: vi.fn().mockImplementation(() => ({
@@ -25,6 +29,10 @@ vi.mock("../../src/services/es", () => ({
     getNodeStats: getNodeStatsMock,
     getDataStreams: getDataStreamsMock,
     resolveIndex: resolveIndexMock,
+    getPendingTasks: getPendingTasksMock,
+    getIlmExplainAll: getIlmExplainAllMock,
+    getTasksDetailed: getTasksDetailedMock,
+    getIlmPolicies: getIlmPoliciesMock,
     rawRequest: rawRequestMock,
   })),
   isElasticsearchError: (err: unknown) => {
@@ -159,6 +167,10 @@ describe("ClusterOverviewPage", () => {
       aliases: [{ name: "alias-1" }],
       data_streams: [],
     });
+    getPendingTasksMock.mockResolvedValue({ tasks: [] });
+    getIlmExplainAllMock.mockResolvedValue({ indices: {} });
+    getTasksDetailedMock.mockResolvedValue({ nodes: {} });
+    getIlmPoliciesMock.mockResolvedValue({});
     mockFleetRawRequest();
   });
 

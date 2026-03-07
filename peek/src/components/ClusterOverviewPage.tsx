@@ -10,6 +10,7 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
 import { useClusterOverview } from "../hooks/useClusterOverview";
+import { useHealthChecks } from "../hooks/useHealthChecks";
 import { usePageContextStore } from "../store/usePageContextStore";
 import { formatBytes } from "../utils/formatBytes";
 import { formatCompactNumber, toNodeRows } from "../utils/clusterOverviewUtils";
@@ -82,6 +83,11 @@ export default function ClusterOverviewPage() {
   const clusterIndexCount = clusterStats?.indices?.count ?? null;
 
   const fleetTotal = data?.fleetStatus?.total ?? data?.agentInventoryCount ?? null;
+  const { checks: localChecks } = useHealthChecks({
+    surface: "local",
+    checkIds: ["cluster.status.red", "cluster.status.yellow", "cluster.unassigned_shards"],
+  });
+  const nonPassingLocalChecks = localChecks.filter((check) => check.status !== "pass");
 
   const partialErrorsKey = partialErrors.join("|");
 
@@ -263,7 +269,17 @@ export default function ClusterOverviewPage() {
                           label={`Unassigned shards: ${clusterHealth.unassigned_shards}`}
                         />
                       )}
+                      <Chip
+                        size="small"
+                        color={nonPassingLocalChecks.length > 0 ? "warning" : "success"}
+                        label={`Snapshot checks: ${nonPassingLocalChecks.length} alert${nonPassingLocalChecks.length === 1 ? "" : "s"}`}
+                      />
                     </Stack>
+                    {nonPassingLocalChecks[0] ? (
+                      <Typography variant="body2" color="text.secondary">
+                        {nonPassingLocalChecks[0].summary}
+                      </Typography>
+                    ) : null}
                   </Stack>
                 ) : (
                   <Typography variant="body2" color="text.secondary">
