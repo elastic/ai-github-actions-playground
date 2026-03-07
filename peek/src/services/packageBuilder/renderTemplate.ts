@@ -30,18 +30,27 @@ function autoIndentMultilineValues(
   let result = rendered;
   for (const [name, value] of multilineVars) {
     const tag = `{{${name}}}`;
-    // Find the tag in the template to determine its column offset
-    const tagIdx = templateSource.indexOf(tag);
-    if (tagIdx === -1) continue;
-    // Find the start of the line containing the tag
-    const lineStart = templateSource.lastIndexOf("\n", tagIdx) + 1;
-    const column = tagIdx - lineStart;
-    const indent = " ".repeat(column);
-    // In the rendered output, find the raw value and re-indent its lines
+    const columns: number[] = [];
+    let searchFrom = 0;
+    while (searchFrom < templateSource.length) {
+      const tagIdx = templateSource.indexOf(tag, searchFrom);
+      if (tagIdx === -1) break;
+      const lineStart = templateSource.lastIndexOf("\n", tagIdx) + 1;
+      columns.push(tagIdx - lineStart);
+      searchFrom = tagIdx + tag.length;
+    }
+    if (columns.length === 0) continue;
+    // In the rendered output, re-indent each rendered occurrence with the
+    // matching column from the template.
     const rawVal = value as string;
-    const indentedVal = rawVal.split("\n").join("\n" + indent);
-    if (rawVal !== indentedVal) {
-      result = result.split(rawVal).join(indentedVal);
+    let resultSearchFrom = 0;
+    for (const column of columns) {
+      const rawIdx = result.indexOf(rawVal, resultSearchFrom);
+      if (rawIdx === -1) break;
+      const indent = " ".repeat(column);
+      const indentedVal = rawVal.split("\n").join("\n" + indent);
+      result = `${result.slice(0, rawIdx)}${indentedVal}${result.slice(rawIdx + rawVal.length)}`;
+      resultSearchFrom = rawIdx + indentedVal.length;
     }
   }
   return result;
@@ -100,10 +109,7 @@ export function renderTemplate(
 }
 
 /** Find template variables referenced as {{name}} but not defined in the variable list. */
-export function findUndefinedVars(
-  templateSource: string,
-  variables: PackageVariable[],
-): string[] {
+export function findUndefinedVars(templateSource: string, variables: PackageVariable[]): string[] {
   const defined = new Set(variables.map((v) => v.name));
   const referenced = new Set<string>();
   const re = /\{\{(?!#|\/|!|>)([a-zA-Z_][a-zA-Z0-9_]*)\}\}/g;
@@ -115,10 +121,7 @@ export function findUndefinedVars(
 }
 
 /** Find variables defined but never referenced in the template. */
-export function findUnusedVars(
-  templateSource: string,
-  variables: PackageVariable[],
-): string[] {
+export function findUnusedVars(templateSource: string, variables: PackageVariable[]): string[] {
   const referenced = new Set<string>();
   // Match both {{name}} and {{#if name}} and {{/if name}} patterns
   const re = /\{\{[#/]?\s*(?:if|each|unless|with)?\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\}\}/g;

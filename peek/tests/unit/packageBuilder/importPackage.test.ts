@@ -5,7 +5,10 @@ import { REDIS_MANIFEST, REDIS_TEMPLATE } from "./fixtures/redis";
 
 const encoder = new TextEncoder();
 
-function makeFileMap(files: Record<string, string>, rootFolder = "package"): Map<string, Uint8Array> {
+function makeFileMap(
+  files: Record<string, string>,
+  rootFolder = "package",
+): Map<string, Uint8Array> {
   const map = new Map<string, Uint8Array>();
   for (const [path, content] of Object.entries(files)) {
     map.set(`${rootFolder}/${path}`, encoder.encode(content));
@@ -27,11 +30,14 @@ function expectVariable(
 
 describe("importFromFileMap — Apache input package", () => {
   it("parses identity fields from manifest", async () => {
-    const fileMap = makeFileMap({
-      "manifest.yml": APACHE_MANIFEST,
-      "agent/input/input.yml.hbs": APACHE_TEMPLATE,
-      "docs/README.md": APACHE_README,
-    }, "apache_input_otel");
+    const fileMap = makeFileMap(
+      {
+        "manifest.yml": APACHE_MANIFEST,
+        "agent/input/input.yml.hbs": APACHE_TEMPLATE,
+        "docs/README.md": APACHE_README,
+      },
+      "apache_input_otel",
+    );
 
     const { data, warnings } = await importFromFileMap(fileMap);
 
@@ -44,31 +50,41 @@ describe("importFromFileMap — Apache input package", () => {
     expect(data.identity.kibanaVersion).toBe("^9.2.0");
     expect(data.identity.subscription).toBe("basic");
     expect(data.identity.categories).toEqual(["web", "observability", "opentelemetry"]);
-    expect(data.identity.description).toBe("Collect Apache HTTP Server status metrics using OpenTelemetry Collector");
+    expect(data.identity.description).toBe(
+      "Collect Apache HTTP Server status metrics using OpenTelemetry Collector",
+    );
     // Icon file not included → warning
     expect(warnings).toContainEqual(expect.stringContaining("logo_apache_otel.svg"));
   });
 
   it("parses policy template", async () => {
-    const fileMap = makeFileMap({
-      "manifest.yml": APACHE_MANIFEST,
-      "agent/input/input.yml.hbs": APACHE_TEMPLATE,
-    }, "apache_input_otel");
+    const fileMap = makeFileMap(
+      {
+        "manifest.yml": APACHE_MANIFEST,
+        "agent/input/input.yml.hbs": APACHE_TEMPLATE,
+      },
+      "apache_input_otel",
+    );
 
     const { data } = await importFromFileMap(fileMap);
 
     expect(data.policyTemplate.name).toBe("apachereceiver");
     expect(data.policyTemplate.title).toBe("Apache HTTP Server Metrics (OpenTelemetry)");
-    expect(data.policyTemplate.description).toBe("Collect Apache HTTP Server status metrics using OpenTelemetry Collector");
+    expect(data.policyTemplate.description).toBe(
+      "Collect Apache HTTP Server status metrics using OpenTelemetry Collector",
+    );
     expect(data.policyTemplate.signalTypes).toEqual(["metrics"]);
     expect(data.policyTemplate.dynamicSignalTypes).toBe(false);
   });
 
   it("parses all 11 variables with correct types and defaults", async () => {
-    const fileMap = makeFileMap({
-      "manifest.yml": APACHE_MANIFEST,
-      "agent/input/input.yml.hbs": APACHE_TEMPLATE,
-    }, "apache_input_otel");
+    const fileMap = makeFileMap(
+      {
+        "manifest.yml": APACHE_MANIFEST,
+        "agent/input/input.yml.hbs": APACHE_TEMPLATE,
+      },
+      "apache_input_otel",
+    );
 
     const { data } = await importFromFileMap(fileMap);
     const vars = data.variables;
@@ -114,21 +130,27 @@ describe("importFromFileMap — Apache input package", () => {
   });
 
   it("loads template content verbatim", async () => {
-    const fileMap = makeFileMap({
-      "manifest.yml": APACHE_MANIFEST,
-      "agent/input/input.yml.hbs": APACHE_TEMPLATE,
-    }, "apache_input_otel");
+    const fileMap = makeFileMap(
+      {
+        "manifest.yml": APACHE_MANIFEST,
+        "agent/input/input.yml.hbs": APACHE_TEMPLATE,
+      },
+      "apache_input_otel",
+    );
 
     const { data } = await importFromFileMap(fileMap);
     expect(data.templateContent).toBe(APACHE_TEMPLATE);
   });
 
   it("loads README content", async () => {
-    const fileMap = makeFileMap({
-      "manifest.yml": APACHE_MANIFEST,
-      "agent/input/input.yml.hbs": APACHE_TEMPLATE,
-      "docs/README.md": APACHE_README,
-    }, "apache_input_otel");
+    const fileMap = makeFileMap(
+      {
+        "manifest.yml": APACHE_MANIFEST,
+        "agent/input/input.yml.hbs": APACHE_TEMPLATE,
+        "docs/README.md": APACHE_README,
+      },
+      "apache_input_otel",
+    );
 
     const { data } = await importFromFileMap(fileMap);
     expect(data.readmeContent).toBe(APACHE_README);
@@ -137,10 +159,13 @@ describe("importFromFileMap — Apache input package", () => {
 
 describe("importFromFileMap — Redis input package", () => {
   it("parses identity and strips _input_otel suffix from name", async () => {
-    const fileMap = makeFileMap({
-      "manifest.yml": REDIS_MANIFEST,
-      "agent/input/input.yml.hbs": REDIS_TEMPLATE,
-    }, "redis_input_otel");
+    const fileMap = makeFileMap(
+      {
+        "manifest.yml": REDIS_MANIFEST,
+        "agent/input/input.yml.hbs": REDIS_TEMPLATE,
+      },
+      "redis_input_otel",
+    );
 
     const { data } = await importFromFileMap(fileMap);
     expect(data.identity.name).toBe("redis");
@@ -149,14 +174,17 @@ describe("importFromFileMap — Redis input package", () => {
   });
 
   it("parses select-type variables with options", async () => {
-    const fileMap = makeFileMap({
-      "manifest.yml": REDIS_MANIFEST,
-      "agent/input/input.yml.hbs": REDIS_TEMPLATE,
-    }, "redis_input_otel");
+    const fileMap = makeFileMap(
+      {
+        "manifest.yml": REDIS_MANIFEST,
+        "agent/input/input.yml.hbs": REDIS_TEMPLATE,
+      },
+      "redis_input_otel",
+    );
 
     const { data } = await importFromFileMap(fileMap);
 
-    const transport = data.variables.find((v) => v.name === "transport")!;
+    const transport = expectVariable(data.variables, "transport");
     expect(transport.type).toBe("select");
     expect(transport.default).toBe("tcp");
     expect(transport.multi).toBe(false);
@@ -165,29 +193,35 @@ describe("importFromFileMap — Redis input package", () => {
       { text: "Unix Socket", value: "unix" },
     ]);
 
-    const tlsMin = data.variables.find((v) => v.name === "tls_min_version")!;
+    const tlsMin = expectVariable(data.variables, "tls_min_version");
     expect(tlsMin.type).toBe("select");
     expect(tlsMin.options).toHaveLength(4);
     expect(tlsMin.options[0]).toEqual({ text: "1.0", value: "1.0" });
   });
 
   it("parses password-type variables", async () => {
-    const fileMap = makeFileMap({
-      "manifest.yml": REDIS_MANIFEST,
-      "agent/input/input.yml.hbs": REDIS_TEMPLATE,
-    }, "redis_input_otel");
+    const fileMap = makeFileMap(
+      {
+        "manifest.yml": REDIS_MANIFEST,
+        "agent/input/input.yml.hbs": REDIS_TEMPLATE,
+      },
+      "redis_input_otel",
+    );
 
     const { data } = await importFromFileMap(fileMap);
-    const password = data.variables.find((v) => v.name === "password")!;
+    const password = expectVariable(data.variables, "password");
     expect(password.type).toBe("password");
     expect(password.secret).toBe(false);
   });
 
   it("parses all 16 Redis variables", async () => {
-    const fileMap = makeFileMap({
-      "manifest.yml": REDIS_MANIFEST,
-      "agent/input/input.yml.hbs": REDIS_TEMPLATE,
-    }, "redis_input_otel");
+    const fileMap = makeFileMap(
+      {
+        "manifest.yml": REDIS_MANIFEST,
+        "agent/input/input.yml.hbs": REDIS_TEMPLATE,
+      },
+      "redis_input_otel",
+    );
 
     const { data } = await importFromFileMap(fileMap);
     expect(data.variables).toHaveLength(16);
@@ -213,10 +247,13 @@ describe("importFromFileMap — Redis input package", () => {
   });
 
   it("loads Redis template content verbatim", async () => {
-    const fileMap = makeFileMap({
-      "manifest.yml": REDIS_MANIFEST,
-      "agent/input/input.yml.hbs": REDIS_TEMPLATE,
-    }, "redis_input_otel");
+    const fileMap = makeFileMap(
+      {
+        "manifest.yml": REDIS_MANIFEST,
+        "agent/input/input.yml.hbs": REDIS_TEMPLATE,
+      },
+      "redis_input_otel",
+    );
 
     const { data } = await importFromFileMap(fileMap);
     expect(data.templateContent).toBe(REDIS_TEMPLATE);

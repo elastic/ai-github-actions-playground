@@ -11,6 +11,7 @@ import Avatar from "@mui/material/Avatar";
 import Stack from "@mui/material/Stack";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import DeleteIcon from "@mui/icons-material/Delete";
+import { useShallow } from "zustand/react/shallow";
 
 import { usePackageBuilderStore } from "../../store/usePackageBuilderStore";
 import type { InsightSlotDefinition } from "../../types/insightSlots";
@@ -72,17 +73,33 @@ function readAsArrayBuffer(file: File): Promise<ArrayBuffer> {
 
 export default function StepIdentity() {
   const identity = usePackageBuilderStore((s) => s.identity);
-  const setName = usePackageBuilderStore((s) => s.setName);
-  const setTitle = usePackageBuilderStore((s) => s.setTitle);
-  const setDescription = usePackageBuilderStore((s) => s.setDescription);
-  const setVersion = usePackageBuilderStore((s) => s.setVersion);
-  const setFormatVersion = usePackageBuilderStore((s) => s.setFormatVersion);
-  const setOwnerGithub = usePackageBuilderStore((s) => s.setOwnerGithub);
-  const setOwnerType = usePackageBuilderStore((s) => s.setOwnerType);
-  const setCategories = usePackageBuilderStore((s) => s.setCategories);
-  const setKibanaVersion = usePackageBuilderStore((s) => s.setKibanaVersion);
-  const setSubscription = usePackageBuilderStore((s) => s.setSubscription);
-  const setIcon = usePackageBuilderStore((s) => s.setIcon);
+  const {
+    setName,
+    setTitle,
+    setDescription,
+    setVersion,
+    setFormatVersion,
+    setOwnerGithub,
+    setOwnerType,
+    setCategories,
+    setKibanaVersion,
+    setSubscription,
+    setIcon,
+  } = usePackageBuilderStore(
+    useShallow((s) => ({
+      setName: s.setName,
+      setTitle: s.setTitle,
+      setDescription: s.setDescription,
+      setVersion: s.setVersion,
+      setFormatVersion: s.setFormatVersion,
+      setOwnerGithub: s.setOwnerGithub,
+      setOwnerType: s.setOwnerType,
+      setCategories: s.setCategories,
+      setKibanaVersion: s.setKibanaVersion,
+      setSubscription: s.setSubscription,
+      setIcon: s.setIcon,
+    })),
+  );
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -91,7 +108,10 @@ export default function StepIdentity() {
       const file = e.target.files?.[0];
       if (!file) return;
       try {
-        const [dataUrl, arrayBuffer] = await Promise.all([readAsDataURL(file), readAsArrayBuffer(file)]);
+        const [dataUrl, arrayBuffer] = await Promise.all([
+          readAsDataURL(file),
+          readAsArrayBuffer(file),
+        ]);
         setIcon({
           name: file.name,
           dataUrl,
@@ -138,7 +158,13 @@ Has icon: ${identity.icon ? "yes" : "no"}`;
     : "";
 
   return (
-    <InsightSlotProvider summary={null} insights={insights} loading={loading} error={error} refresh={refresh}>
+    <InsightSlotProvider
+      summary={null}
+      insights={insights}
+      loading={loading}
+      error={error}
+      refresh={refresh}
+    >
       <Box sx={{ display: "flex", gap: 3 }}>
         <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 2.5 }}>
           <Typography variant="h6">Package Identity</Typography>
@@ -148,7 +174,11 @@ Has icon: ${identity.icon ? "yes" : "no"}`;
               label="Package name"
               value={identity.name}
               onChange={(e) => setName(e.target.value)}
-              helperText={displayName ? `Full name: ${displayName}` : "Lowercase, underscores only. _input_otel suffix added automatically."}
+              helperText={
+                displayName
+                  ? `Full name: ${displayName}`
+                  : "Lowercase, underscores only. _input_otel suffix added automatically."
+              }
               fullWidth
               size="small"
             />
@@ -230,15 +260,11 @@ Has icon: ${identity.icon ? "yes" : "no"}`;
               options={categoryOptions}
               value={identity.categories}
               onChange={(_, v) => setCategories(v)}
-              renderInput={(params) => (
-                <TextField {...params} label="Categories" size="small" />
-              )}
+              renderInput={(params) => <TextField {...params} label="Categories" size="small" />}
               renderTags={(value, getTagProps) =>
                 value.map((option, index) => {
                   const { key, ...tagProps } = getTagProps({ index });
-                  return (
-                    <Chip key={key} label={option} size="small" {...tagProps} />
-                  );
+                  return <Chip key={key} label={option} size="small" {...tagProps} />;
                 })
               }
               size="small"
@@ -274,8 +300,18 @@ Has icon: ${identity.icon ? "yes" : "no"}`;
 
         {/* Icon upload section */}
         <InsightSlot slotId="identity-icon">
-          <Paper variant="outlined" sx={{ width: 220, p: 2, display: "flex", flexDirection: "column", alignItems: "center", gap: 1.5 }}>
-            <Typography variant="subtitle2" color="text.secondary">
+          <Paper
+            variant="outlined"
+            sx={{
+              width: 220,
+              p: 2,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 1.5,
+            }}
+          >
+            <Typography variant="subtitle1" color="text.secondary">
               Package Icon
             </Typography>
             {identity.icon ? (
@@ -288,13 +324,18 @@ Has icon: ${identity.icon ? "yes" : "no"}`;
                 <Typography variant="caption" noWrap sx={{ maxWidth: 180 }}>
                   {identity.icon.name}
                 </Typography>
-                <Button size="small" color="error" startIcon={<DeleteIcon />} onClick={() => setIcon(null)}>
+                <Button
+                  size="small"
+                  color="error"
+                  startIcon={<DeleteIcon />}
+                  onClick={() => setIcon(null)}
+                >
                   Remove
                 </Button>
               </Stack>
             ) : (
               <Stack alignItems="center" spacing={1}>
-                <Box
+                <Button
                   sx={{
                     width: 80,
                     height: 80,
@@ -304,13 +345,14 @@ Has icon: ${identity.icon ? "yes" : "no"}`;
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    cursor: "pointer",
+                    minWidth: 0,
+                    p: 0,
                     "&:hover": { borderColor: "primary.main", bgcolor: "action.hover" },
                   }}
                   onClick={() => fileInputRef.current?.click()}
                 >
                   <UploadFileIcon color="action" />
-                </Box>
+                </Button>
                 <Typography variant="caption" color="text.secondary">
                   SVG preferred
                 </Typography>

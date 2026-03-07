@@ -15,7 +15,11 @@ import { EditorView } from "@codemirror/view";
 
 import { usePackageBuilderStore } from "../../store/usePackageBuilderStore";
 import { useThemeStore } from "../../store/useThemeStore";
-import { renderTemplate, findUndefinedVars, findUnusedVars } from "../../services/packageBuilder/renderTemplate";
+import {
+  renderTemplate,
+  findUndefinedVars,
+  findUnusedVars,
+} from "../../services/packageBuilder/renderTemplate";
 import { STARTER_TEMPLATES } from "../../types/packageBuilder";
 import type { InsightSlotDefinition } from "../../types/insightSlots";
 import { usePageSlotInsights } from "../../hooks/usePageSlotInsights";
@@ -97,13 +101,27 @@ export default function StepTemplate() {
 
   if (isEmpty) {
     return (
-      <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", gap: 3 }}>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          height: "100%",
+          gap: 3,
+        }}
+      >
         <DescriptionOutlinedIcon sx={{ fontSize: 64, color: "text.disabled" }} />
         <Typography variant="h6" color="text.secondary">
           No template yet
         </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 440, textAlign: "center" }}>
-          Start from a starter template below, or paste your own OTel Collector config into the editor.
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{ maxWidth: 440, textAlign: "center" }}
+        >
+          Start from a starter template below, or paste your own OTel Collector config into the
+          editor.
         </Typography>
         <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap", justifyContent: "center" }}>
           {Object.keys(STARTER_TEMPLATES).map((key) => (
@@ -117,7 +135,11 @@ export default function StepTemplate() {
             </Button>
           ))}
         </Box>
-        <Button variant="text" size="small" onClick={() => setTemplateContent("# Paste or type your template here\n")}>
+        <Button
+          variant="text"
+          size="small"
+          onClick={() => setTemplateContent("# Paste or type your template here\n")}
+        >
           Start from scratch
         </Button>
       </Box>
@@ -196,14 +218,28 @@ export default function StepTemplate() {
 
         {/* Preview with per-line insights */}
         <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 0.5 }}>
+          <Box
+            sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 0.5 }}
+          >
             <Typography variant="caption" color="text.secondary">
               Rendered preview
               {result.yamlValid && (
-                <Chip label="Valid YAML" size="small" color="success" variant="outlined" sx={{ ml: 1, height: 18, fontSize: 10 }} />
+                <Chip
+                  label="Valid YAML"
+                  size="small"
+                  color="success"
+                  variant="outlined"
+                  sx={{ ml: 1, height: 18, fontSize: 10 }}
+                />
               )}
               {result.yamlError && (
-                <Chip label="Invalid YAML" size="small" color="error" variant="outlined" sx={{ ml: 1, height: 18, fontSize: 10 }} />
+                <Chip
+                  label="Invalid YAML"
+                  size="small"
+                  color="error"
+                  variant="outlined"
+                  sx={{ ml: 1, height: 18, fontSize: 10 }}
+                />
               )}
             </Typography>
             {result.rendered && (
@@ -273,7 +309,14 @@ interface RenderedPreviewProps {
 
 const previewBaseExtensions = [yaml(), EditorView.lineWrapping];
 
-function RenderedPreview({ rendered, templateError, packageName, variables, templateContent, themeMode }: RenderedPreviewProps) {
+function RenderedPreview({
+  rendered,
+  templateError,
+  packageName,
+  variables,
+  templateContent,
+  themeMode,
+}: RenderedPreviewProps) {
   const cmRef = useRef<ReactCodeMirrorRef>(null);
   const lines = useMemo(() => (rendered ? rendered.split("\n") : []), [rendered]);
 
@@ -300,21 +343,22 @@ ${numberedLines}`;
   }, [rendered, templateContent, packageName, variables, lines]);
 
   const cacheKey = `pkg-template-lines::${packageName}::${lines.length}::${templateContent.length}`;
+  const insightsEnabled = lines.length > 0 && variables.length > 0;
 
   const { insights } = usePageSlotInsights({
     context,
     systemPrompt: TEMPLATE_INSIGHT_SYSTEM_PROMPT,
     cacheKey,
     slots,
-    enabled: lines.length > 0 && variables.length > 0,
+    enabled: insightsEnabled,
   });
 
   // Push insights into CodeMirror state whenever they change
   useEffect(() => {
     const view = cmRef.current?.view;
     if (!view) return;
-    view.dispatch({ effects: setInsights.of(insights) });
-  }, [insights]);
+    view.dispatch({ effects: setInsights.of(insightsEnabled ? insights : []) });
+  }, [insights, insightsEnabled]);
 
   const previewExtensions = useMemo(
     () => [...previewBaseExtensions, ...insightGutterExtension()],
@@ -331,7 +375,18 @@ ${numberedLines}`;
 
   if (!rendered) {
     return (
-      <Box sx={{ minHeight: 400, p: 1.5, bgcolor: "action.hover", fontFamily: "monospace", fontSize: 13, border: 1, borderColor: "divider", borderRadius: 1 }}>
+      <Box
+        sx={{
+          minHeight: 400,
+          p: 1.5,
+          bgcolor: "action.hover",
+          fontFamily: "monospace",
+          fontSize: 13,
+          border: 1,
+          borderColor: "divider",
+          borderRadius: 1,
+        }}
+      >
         (empty)
       </Box>
     );
