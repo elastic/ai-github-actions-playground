@@ -57,12 +57,16 @@ export function toHostRef(
   hostIp?: string | null,
 ): HostRef {
   const normalizedOsType = normalizeOsType(osType);
+  // Use the raw lowercased os.type token for the stable key so it matches the
+  // CONCAT(host.name, "::", COALESCE(os.type, "unknown")) expression in ES|QL.
+  // e.g. "darwin" not "macos".
+  const stableOsToken = osType?.toLowerCase().trim() ?? "unknown";
   const trimmedHostId = hostId?.trim();
   const trimmedHostName = hostName?.trim();
   const trimmedHostIp = hostIp?.trim();
   const id =
     trimmedHostId ||
-    (trimmedHostName ? `${trimmedHostName}::${normalizedOsType}` : undefined) ||
+    (trimmedHostName ? `${trimmedHostName}::${stableOsToken}` : undefined) ||
     trimmedHostIp ||
     "unknown";
   const display = trimmedHostName || trimmedHostId || "unknown";
