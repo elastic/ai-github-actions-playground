@@ -1,0 +1,33 @@
+name: PR Labeler
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  actions: read
+  contents: read
+  issues: read
+  pull-requests: write
+
+jobs:
+  run:
+    if: github.event.pull_request.draft == false
+    uses: elastic/ai-github-actions/.github/workflows/gh-aw-pr-labeler.lock.yml@main
+    with:
+      classification-labels: big_boom, medium_boom, little_boom
+      additional-instructions: |
+        These labels measure the impact/risk of a pull request. They are mutually
+        exclusive — each PR should have exactly one.
+
+        - **big_boom**: Large, high-risk change. Touches core architecture, public
+          APIs, security-sensitive code, or wide-reaching refactors. Requires
+          careful review.
+        - **medium_boom**: Moderate change. Adds a new feature, modifies existing
+          behaviour, or touches multiple components. Standard review.
+        - **little_boom**: Small, low-risk change. Typo fixes, documentation
+          updates, config tweaks, dependency bumps, or minor UI polish.
+
+        Because the labels are mutually exclusive, always remove the other two
+        classification labels before adding the selected one.
+    secrets:
+      COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
