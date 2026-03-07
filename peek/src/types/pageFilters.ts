@@ -56,7 +56,7 @@ export interface HostsFilters {
 }
 
 export const DEFAULT_HOSTS_FILTERS: HostsFilters = {
-  timeFrom: "NOW() - 5 minutes",
+  timeFrom: "NOW() - 1 hour",
   timeTo: "NOW()",
   osFilter: "all",
   search: "",

@@ -16,6 +16,7 @@ import { usePageFiltersStore } from "../../store/usePageFiltersStore";
 import DateRangePicker from "../DateRangePicker";
 import EmptyState from "../EmptyState";
 import PageHeader from "../PageHeader";
+import { toDashboardTimeRange, toTraceTimeRange } from "../timePresets";
 
 import { buildHostDetailQuery, type HostQueryFilters } from "./hostQueryBuilder";
 import { fmtPct, fmtCount, fmtTimestamp, MetricCard } from "./hostFormatters";
@@ -81,8 +82,11 @@ export default function HostDetailPage() {
       <Paper variant="outlined" sx={{ p: 1.5 }}>
         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center" }}>
           <DateRangePicker
-            value={{ from: filters.timeFrom, to: filters.timeTo }}
-            onChange={(range) => updateFilters({ timeFrom: range.from, timeTo: range.to })}
+            value={toDashboardTimeRange({ from: filters.timeFrom, to: filters.timeTo })}
+            onChange={(range) => {
+              const traceRange = toTraceTimeRange(range);
+              updateFilters({ timeFrom: traceRange.from, timeTo: traceRange.to });
+            }}
           />
           {loading && <CircularProgress size={16} />}
         </Box>

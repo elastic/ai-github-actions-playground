@@ -13,6 +13,7 @@ import { PAGE_MANIFEST } from "../../routes/manifest";
 import DateRangePicker from "../DateRangePicker";
 import EmptyState from "../EmptyState";
 import PageHeader from "../PageHeader";
+import { toDashboardTimeRange, toTraceTimeRange } from "../timePresets";
 
 import HostHoneycombChart from "./HostHoneycombChart";
 import HostInventoryTable from "./HostInventoryTable";
@@ -74,8 +75,11 @@ export default function HostsPage({ osType }: HostsPageProps) {
             sx={{ minWidth: 200 }}
           />
           <DateRangePicker
-            value={{ from: filters.timeFrom, to: filters.timeTo }}
-            onChange={(range) => updateFilters({ timeFrom: range.from, timeTo: range.to })}
+            value={toDashboardTimeRange({ from: filters.timeFrom, to: filters.timeTo })}
+            onChange={(range) => {
+              const traceRange = toTraceTimeRange(range);
+              updateFilters({ timeFrom: traceRange.from, timeTo: traceRange.to });
+            }}
           />
           <Button variant="text" onClick={handleReset} disabled={loading}>
             Reset
