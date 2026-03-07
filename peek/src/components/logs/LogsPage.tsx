@@ -48,7 +48,7 @@ export default function LogsPage() {
   );
 
   // Show the focus picker when the user hasn't interacted yet and there are no results
-  const showFocusPicker = !focusChosen && !state.result && !state.loading;
+  const showFocusPicker = !focusChosen && !state.result && !state.loading && !state.error;
 
   return (
     <InsightSlotProvider

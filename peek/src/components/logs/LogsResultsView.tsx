@@ -54,6 +54,8 @@ export default function LogsResultsView({
           return traceCandidate != null && String(traceCandidate).trim() !== "";
         })?.[traceColIdx] ?? null)
       : null;
+  const maxHistogramCount =
+    histogramBuckets.length > 0 ? Math.max(...histogramBuckets.map((bucket) => bucket.count)) : 0;
 
   return (
     <Paper
@@ -167,70 +169,82 @@ export default function LogsResultsView({
               <Typography variant="body2" sx={{ mb: 1 }}>
                 Log volume over time — click an anomaly bar to drill in with CHANGE_POINT.
               </Typography>
-              {(() => {
-                const maxCount = Math.max(...histogramBuckets.map((b) => b.count));
-                return (
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "flex-end",
-                      gap: "2px",
-                      minHeight: 160,
-                      mt: 1,
-                    }}
-                  >
-                    {/* Y-axis labels */}
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "flex-end",
+                  gap: "2px",
+                  minHeight: 160,
+                  mt: 1,
+                }}
+              >
+                {/* Y-axis labels */}
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "space-between",
+                    height: 140,
+                    pr: 0.5,
+                    flexShrink: 0,
+                  }}
+                >
+                  <Typography variant="caption" color="text.secondary">
+                    {maxHistogramCount.toLocaleString()}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    0
+                  </Typography>
+                </Box>
+                {/* Bars */}
+                {histogramBuckets.map((bucket) => {
+                  const barHeight =
+                    maxHistogramCount > 0 ? (bucket.count / maxHistogramCount) * 140 : 0;
+                  const barTitle = `${new Date(bucket.start).toLocaleTimeString()} • ${bucket.count.toLocaleString()} events${bucket.anomaly ? " • anomaly" : ""}`;
+                  const barSx = {
+                    minWidth: 12,
+                    flex: 1,
+                    height: Math.max(4, barHeight),
+                    py: 0,
+                    px: 0,
+                    borderRadius: "2px 2px 0 0",
+                  };
+                  if (bucket.anomaly) {
+                    return (
+                      <Button
+                        key={bucket.start}
+                        size="small"
+                        variant="contained"
+                        color="warning"
+                        onClick={() => onAnomalyDrillIn(bucket.start, bucket.end)}
+                        aria-label={`Anomaly: ${new Date(bucket.start).toLocaleTimeString()} – ${bucket.count.toLocaleString()} events`}
+                        title={barTitle}
+                        sx={{
+                          ...barSx,
+                          bgcolor: "warning.main",
+                          opacity: 1,
+                          "&:hover": { opacity: 1 },
+                        }}
+                      />
+                    );
+                  }
+                  return (
                     <Box
+                      key={bucket.start}
+                      component="div"
+                      role="img"
+                      tabIndex={0}
+                      aria-label={`Bucket: ${new Date(bucket.start).toLocaleTimeString()} – ${bucket.count.toLocaleString()} events`}
+                      title={barTitle}
                       sx={{
-                        display: "flex",
-                        flexDirection: "column",
-                        justifyContent: "space-between",
-                        height: 140,
-                        pr: 0.5,
-                        flexShrink: 0,
+                        ...barSx,
+                        bgcolor: "primary.main",
+                        opacity: 0.5,
                       }}
-                    >
-                      <Typography variant="caption" color="text.secondary">
-                        {maxCount.toLocaleString()}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        0
-                      </Typography>
-                    </Box>
-                    {/* Bars */}
-                    {histogramBuckets.map((bucket) => {
-                      const barHeight = maxCount > 0 ? (bucket.count / maxCount) * 140 : 0;
-                      return (
-                        <Button
-                          key={bucket.start}
-                          size="small"
-                          variant={bucket.anomaly ? "contained" : "text"}
-                          color={bucket.anomaly ? "warning" : "primary"}
-                          onClick={() => onAnomalyDrillIn(bucket.start, bucket.end)}
-                          disabled={!bucket.anomaly}
-                          aria-label={`${bucket.anomaly ? "Anomaly: " : ""}${new Date(bucket.start).toLocaleTimeString()} – ${bucket.count.toLocaleString()} events`}
-                          title={`${new Date(bucket.start).toLocaleTimeString()} • ${bucket.count.toLocaleString()} events${bucket.anomaly ? " • anomaly" : ""}`}
-                          sx={{
-                            minWidth: 12,
-                            flex: 1,
-                            height: Math.max(4, barHeight),
-                            py: 0,
-                            px: 0,
-                            borderRadius: "2px 2px 0 0",
-                            bgcolor: bucket.anomaly ? "warning.main" : "primary.main",
-                            opacity: bucket.anomaly ? 1 : 0.7,
-                            "&:hover": { opacity: 1 },
-                            "&.Mui-disabled": {
-                              bgcolor: "primary.main",
-                              opacity: 0.5,
-                            },
-                          }}
-                        />
-                      );
-                    })}
-                  </Box>
-                );
-              })()}
+                    />
+                  );
+                })}
+              </Box>
             </>
           )}
         </Box>
