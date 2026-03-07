@@ -25,8 +25,6 @@ import type {
   CatAllocationRecord,
   CatShardRecord,
   RecoveryResponse,
-  IlmExplainResponse,
-  IlmPolicyResponse,
   SlmStatsResponse,
   SnapshotStatusResponse,
   ClusterSettingsResponse,
@@ -100,7 +98,6 @@ export type {
   NodesIngestStatsResponse,
   ClusterSettingsResponse,
   ClusterAllocationExplainResponse,
-  TaskInfo,
   TasksListResponse,
 } from "./clusterTypes";
 
