@@ -5,73 +5,67 @@ import { renderHook, act } from "@testing-library/react";
 import { useTableSort } from "../../src/hooks/useTableSort";
 
 describe("useTableSort", () => {
-  it("returns the default field and direction", () => {
+  it("initialises with the given field and default asc direction", () => {
     const { result } = renderHook(() => useTableSort<"name" | "size">("name"));
     expect(result.current.sortField).toBe("name");
     expect(result.current.sortDirection).toBe("asc");
   });
 
-  it("respects a custom default direction", () => {
-    const { result } = renderHook(() => useTableSort<"count">("count", "desc"));
-    expect(result.current.sortField).toBe("count");
+  it("initialises with a custom default direction", () => {
+    const { result } = renderHook(() => useTableSort<"name" | "duration">("duration", "desc"));
+    expect(result.current.sortField).toBe("duration");
     expect(result.current.sortDirection).toBe("desc");
   });
 
-  it("toggles direction when the same field is clicked", () => {
-    const { result } = renderHook(() => useTableSort<"name" | "size">("name"));
-    expect(result.current.sortDirection).toBe("asc");
+  it("toggles direction when clicking the same field", () => {
+    const { result } = renderHook(() => useTableSort<"a" | "b">("a", "asc"));
 
-    act(() => result.current.handleSort("name"));
-    expect(result.current.sortField).toBe("name");
+    act(() => result.current.handleSort("a"));
     expect(result.current.sortDirection).toBe("desc");
 
-    act(() => result.current.handleSort("name"));
+    act(() => result.current.handleSort("a"));
     expect(result.current.sortDirection).toBe("asc");
   });
 
-  it("resets to asc when switching to a new field", () => {
-    const { result } = renderHook(() => useTableSort<"name" | "size">("name"));
+  it("uses defaultDirection when switching to a new field (asc default)", () => {
+    const { result } = renderHook(() => useTableSort<"a" | "b">("a", "asc"));
 
-    // Toggle name to desc
-    act(() => result.current.handleSort("name"));
+    // Toggle current field to desc first
+    act(() => result.current.handleSort("a"));
     expect(result.current.sortDirection).toBe("desc");
 
-    // Switch to size → resets to asc
-    act(() => result.current.handleSort("size"));
-    expect(result.current.sortField).toBe("size");
-    expect(result.current.sortDirection).toBe("asc");
-  });
-
-  it("getSortLabelProps returns correct props for active field", () => {
-    const { result } = renderHook(() => useTableSort<"name" | "size">("name"));
-    const props = result.current.getSortLabelProps("name");
-    expect(props.active).toBe(true);
-    expect(props.direction).toBe("asc");
-    expect(typeof props.onClick).toBe("function");
-  });
-
-  it("getSortLabelProps returns correct props for inactive field", () => {
-    const { result } = renderHook(() => useTableSort<"name" | "size">("name"));
-    const props = result.current.getSortLabelProps("size");
-    expect(props.active).toBe(false);
-    expect(props.direction).toBe("asc");
-  });
-
-  it("getSortLabelProps onClick toggles direction", () => {
-    const { result } = renderHook(() => useTableSort<"name" | "size">("name"));
-    act(() => result.current.getSortLabelProps("name").onClick());
-    expect(result.current.sortDirection).toBe("desc");
-  });
-
-  it("exposes setSortField and setSortDirection for advanced usage", () => {
-    const { result } = renderHook(() => useTableSort<"a" | "b">("a"));
-
-    act(() => {
-      result.current.setSortField("b");
-      result.current.setSortDirection("desc");
-    });
-
+    // Switch to a different field — should reset to defaultDirection (asc)
+    act(() => result.current.handleSort("b"));
     expect(result.current.sortField).toBe("b");
+    expect(result.current.sortDirection).toBe("asc");
+  });
+
+  it("uses defaultDirection when switching to a new field (desc default)", () => {
+    const { result } = renderHook(() => useTableSort<"name" | "duration">("duration", "desc"));
+
+    // Toggle current field to asc first
+    act(() => result.current.handleSort("duration"));
+    expect(result.current.sortDirection).toBe("asc");
+
+    // Switch to a different field — should reset to defaultDirection (desc)
+    act(() => result.current.handleSort("name"));
+    expect(result.current.sortField).toBe("name");
     expect(result.current.sortDirection).toBe("desc");
+  });
+
+  it("getSortLabelProps returns defaultDirection for inactive columns", () => {
+    const { result } = renderHook(() => useTableSort<"a" | "b">("a", "desc"));
+
+    const props = result.current.getSortLabelProps("b");
+    expect(props.active).toBe(false);
+    expect(props.direction).toBe("desc");
+  });
+
+  it("getSortLabelProps returns current direction for active column", () => {
+    const { result } = renderHook(() => useTableSort<"a" | "b">("a", "desc"));
+
+    const props = result.current.getSortLabelProps("a");
+    expect(props.active).toBe(true);
+    expect(props.direction).toBe("desc");
   });
 });

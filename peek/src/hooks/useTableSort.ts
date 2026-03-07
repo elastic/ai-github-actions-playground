@@ -23,18 +23,20 @@ export function useTableSort<F extends string>(
   const handleSort = useCallback(
     (field: F) => {
       setSortField(field);
-      setSortDirection((prev) => (sortField === field && prev === "asc" ? "desc" : "asc"));
+      setSortDirection((prev) =>
+        sortField === field ? (prev === "asc" ? "desc" : "asc") : defaultDirection,
+      );
     },
-    [sortField],
+    [sortField, defaultDirection],
   );
 
   const getSortLabelProps = useCallback(
     (field: F) => ({
       active: sortField === field,
-      direction: (sortField === field ? sortDirection : "asc") as "asc" | "desc",
+      direction: (sortField === field ? sortDirection : defaultDirection) as "asc" | "desc",
       onClick: () => handleSort(field),
     }),
-    [sortField, sortDirection, handleSort],
+    [sortField, sortDirection, defaultDirection, handleSort],
   );
 
   return {
