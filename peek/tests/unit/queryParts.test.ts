@@ -85,6 +85,22 @@ describe("normalizeTimeExpression", () => {
     expect(normalizeTimeExpression("2026-01-01T00:00:00.000Z")).toBe('"2026-01-01T00:00:00.000Z"');
   });
 
+  it("unwraps TO_DATETIME expressions to quoted ISO strings", () => {
+    expect(normalizeTimeExpression('TO_DATETIME("2025-03-06T15:18:00.000Z")')).toBe(
+      '"2025-03-06T15:18:00.000Z"',
+    );
+    expect(normalizeTimeExpression('to_datetime("2025-03-06T15:18:00.000Z")')).toBe(
+      '"2025-03-06T15:18:00.000Z"',
+    );
+    expect(normalizeTimeExpression('TO_DATETIME("2026-02-24T03:00:00.000Z")')).toBe(
+      '"2026-02-24T03:00:00.000Z"',
+    );
+  });
+
+  it("returns null for TO_DATETIME with invalid inner value", () => {
+    expect(normalizeTimeExpression('TO_DATETIME("not-a-date")')).toBeNull();
+  });
+
   it("returns null for unsupported expressions", () => {
     expect(normalizeTimeExpression("NOW(); DROP TABLE x")).toBeNull();
   });
