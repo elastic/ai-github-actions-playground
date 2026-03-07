@@ -147,6 +147,7 @@ export function useStorageExplorerData(): UseStorageExplorerDataResult {
         for (const row of catShardsResult.value) {
           const node = row.node?.trim();
           const index = row.index?.trim();
+          // Unassigned shards are intentionally excluded because this view is grouped by node.
           if (!node || !index) continue;
 
           const dataStream = dataStreamByBackingIndex.get(index) ?? null;

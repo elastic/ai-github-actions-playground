@@ -333,8 +333,8 @@ export default function StorageExplorerPage() {
     };
   }, [data.shards]);
 
-  const toggleExpanded = useCallback((id: string) => {
-    setExpanded((prev) => ({ ...prev, [id]: !(prev[id] ?? true) }));
+  const toggleExpanded = useCallback((id: string, currentlyExpanded: boolean) => {
+    setExpanded((prev) => ({ ...prev, [id]: !currentlyExpanded }));
   }, []);
 
   const handleSetGroupBy = useCallback((nextGroupBy: GroupBy) => {
@@ -732,7 +732,7 @@ export default function StorageExplorerPage() {
                               aria-label={`${isExpanded ? "Collapse" : "Expand"} ${node.label}`}
                               onClick={(event) => {
                                 event.stopPropagation();
-                                toggleExpanded(node.id);
+                                toggleExpanded(node.id, isExpanded);
                               }}
                             >
                               {isExpanded ? (
