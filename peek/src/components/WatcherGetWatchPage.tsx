@@ -19,6 +19,7 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import CloseIcon from "@mui/icons-material/Close";
 
+import { useTableSort } from "../hooks/useTableSort";
 import { useWatcherQueryWatches } from "../hooks/useWatcherQueryWatches";
 import { useWatcherWatch } from "../hooks/useWatcherWatch";
 
@@ -75,7 +76,6 @@ type SortField =
   | "owner"
   | "lastChecked"
   | "actions";
-type SortDirection = "asc" | "desc";
 
 interface WatchTableRow {
   id: string;
@@ -92,8 +92,7 @@ interface WatchTableRow {
 export default function WatcherGetWatchPage() {
   const [selectedWatchId, setSelectedWatchId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [sortField, setSortField] = useState<SortField>("id");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+  const { sortField, sortDirection, getSortLabelProps } = useTableSort<SortField>("id");
   const listResult = useWatcherQueryWatches({ size: 500 });
   const watchResult = useWatcherWatch(selectedWatchId ?? "");
   const loading = watchResult.status === "loading";
@@ -187,15 +186,6 @@ export default function WatcherGetWatchPage() {
     return sorted;
   }, [search, sortDirection, sortField, tableRows]);
 
-  function handleSort(nextField: SortField) {
-    if (nextField === sortField) {
-      setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
-      return;
-    }
-    setSortField(nextField);
-    setSortDirection("asc");
-  }
-
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, height: "100%", minHeight: 0 }}>
       <Paper variant="outlined" sx={{ p: 1.5 }}>
@@ -251,76 +241,30 @@ export default function WatcherGetWatchPage() {
               <TableHead>
                 <TableRow>
                   <TableCell>
-                    <TableSortLabel
-                      active={sortField === "id"}
-                      direction={sortField === "id" ? sortDirection : "asc"}
-                      onClick={() => handleSort("id")}
-                    >
-                      Watch ID
-                    </TableSortLabel>
+                    <TableSortLabel {...getSortLabelProps("id")}>Watch ID</TableSortLabel>
                   </TableCell>
                   <TableCell>
-                    <TableSortLabel
-                      active={sortField === "active"}
-                      direction={sortField === "active" ? sortDirection : "asc"}
-                      onClick={() => handleSort("active")}
-                    >
-                      Active
-                    </TableSortLabel>
+                    <TableSortLabel {...getSortLabelProps("active")}>Active</TableSortLabel>
                   </TableCell>
                   <TableCell>
-                    <TableSortLabel
-                      active={sortField === "state"}
-                      direction={sortField === "state" ? sortDirection : "asc"}
-                      onClick={() => handleSort("state")}
-                    >
-                      State
-                    </TableSortLabel>
+                    <TableSortLabel {...getSortLabelProps("state")}>State</TableSortLabel>
                   </TableCell>
                   <TableCell>
-                    <TableSortLabel
-                      active={sortField === "trigger"}
-                      direction={sortField === "trigger" ? sortDirection : "asc"}
-                      onClick={() => handleSort("trigger")}
-                    >
-                      Trigger
-                    </TableSortLabel>
+                    <TableSortLabel {...getSortLabelProps("trigger")}>Trigger</TableSortLabel>
                   </TableCell>
                   <TableCell>
-                    <TableSortLabel
-                      active={sortField === "ack"}
-                      direction={sortField === "ack" ? sortDirection : "asc"}
-                      onClick={() => handleSort("ack")}
-                    >
-                      Ack
-                    </TableSortLabel>
+                    <TableSortLabel {...getSortLabelProps("ack")}>Ack</TableSortLabel>
                   </TableCell>
                   <TableCell>
-                    <TableSortLabel
-                      active={sortField === "owner"}
-                      direction={sortField === "owner" ? sortDirection : "asc"}
-                      onClick={() => handleSort("owner")}
-                    >
-                      Owner
-                    </TableSortLabel>
+                    <TableSortLabel {...getSortLabelProps("owner")}>Owner</TableSortLabel>
                   </TableCell>
                   <TableCell>
-                    <TableSortLabel
-                      active={sortField === "lastChecked"}
-                      direction={sortField === "lastChecked" ? sortDirection : "asc"}
-                      onClick={() => handleSort("lastChecked")}
-                    >
+                    <TableSortLabel {...getSortLabelProps("lastChecked")}>
                       Last checked
                     </TableSortLabel>
                   </TableCell>
                   <TableCell align="right">
-                    <TableSortLabel
-                      active={sortField === "actions"}
-                      direction={sortField === "actions" ? sortDirection : "asc"}
-                      onClick={() => handleSort("actions")}
-                    >
-                      Actions
-                    </TableSortLabel>
+                    <TableSortLabel {...getSortLabelProps("actions")}>Actions</TableSortLabel>
                   </TableCell>
                 </TableRow>
               </TableHead>

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
@@ -11,6 +11,7 @@ import { useTheme } from "@mui/material/styles";
 import StorageIcon from "@mui/icons-material/Storage";
 
 import type { ClusterHealthData } from "../../hooks/useClusterHealthData";
+import { useTableSort } from "../../hooks/useTableSort";
 import {
   NODE_PERMISSION_HEADING,
   NODE_PERMISSION_DESCRIPTION,
@@ -52,8 +53,11 @@ interface NodeDetailTableProps {
 
 export default function NodeDetailTable({ data }: NodeDetailTableProps) {
   const theme = useTheme();
-  const [sortBy, setSortBy] = useState<SortKey>("name");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+  const {
+    sortField: sortBy,
+    sortDirection: sortDir,
+    getSortLabelProps,
+  } = useTableSort<SortKey>("name");
 
   const rows = useMemo((): NodeRow[] => {
     const nodes = data.nodeStats?.nodes;
@@ -107,15 +111,6 @@ export default function NodeDetailTable({ data }: NodeDetailTableProps) {
     });
     return copy;
   }, [rows, sortBy, sortDir]);
-
-  const handleSort = (key: SortKey) => {
-    if (sortBy === key) {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    } else {
-      setSortBy(key);
-      setSortDir("asc");
-    }
-  };
 
   if (rows.length === 0) {
     return (
@@ -187,13 +182,7 @@ export default function NodeDetailTable({ data }: NodeDetailTableProps) {
           <TableRow>
             {columns.map((col) => (
               <TableCell key={col.key}>
-                <TableSortLabel
-                  active={sortBy === col.key}
-                  direction={sortBy === col.key ? sortDir : "asc"}
-                  onClick={() => handleSort(col.key)}
-                >
-                  {col.label}
-                </TableSortLabel>
+                <TableSortLabel {...getSortLabelProps(col.key)}>{col.label}</TableSortLabel>
               </TableCell>
             ))}
           </TableRow>

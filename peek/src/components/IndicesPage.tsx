@@ -6,11 +6,9 @@ import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
 import Drawer from "@mui/material/Drawer";
-import FormControlLabel from "@mui/material/FormControlLabel";
 import IconButton from "@mui/material/IconButton";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
-import Switch from "@mui/material/Switch";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
@@ -18,7 +16,6 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TableSortLabel from "@mui/material/TableSortLabel";
-import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import StorageIcon from "@mui/icons-material/Storage";
@@ -31,6 +28,7 @@ import { PAGE_MANIFEST } from "../routes/manifest";
 import { useIndices, useIndexDetail } from "../hooks/useIndices";
 import { useOpenInDiscover } from "../hooks/useOpenInDiscover";
 import { useDiskUsage } from "../hooks/useDiskUsage";
+import { useTableSort } from "../hooks/useTableSort";
 import { formatBytes } from "../utils/formatBytes";
 import { usePageSlotInsights } from "../hooks/usePageSlotInsights";
 import { INSIGHT_GUARDRAIL } from "../hooks/insightPromptUtils";
@@ -45,13 +43,13 @@ import { InsightSlotProvider } from "./InsightSlotContext";
 import { OverviewInfoCard } from "./OverviewInfoCard";
 import { type IndexTab, parseIntOrNull, healthColor, INDEX_TABS } from "./indicesUtils";
 import { INDICES_INSIGHT_SLOT_IDS, INDICES_INSIGHT_SLOTS } from "./indicesInsightSlots";
+import SearchFilterBar from "./SearchFilterBar";
 
 // ---------------------------------------------------------------------------
 // Sorting helpers
 // ---------------------------------------------------------------------------
 
 type IndexSortField = "index" | "health" | "docs.count" | "store.size";
-type SortDirection = "asc" | "desc";
 
 const HEALTH_ORDER: Record<string, number> = { green: 0, yellow: 1, red: 2 };
 
@@ -59,7 +57,7 @@ function compareIndices(
   a: { index: string; health: string; "docs.count": string | null; "store.size": string | null },
   b: { index: string; health: string; "docs.count": string | null; "store.size": string | null },
   field: IndexSortField,
-  dir: SortDirection,
+  direction: "asc" | "desc",
 ): number {
   let cmp: number;
   switch (field) {
@@ -78,7 +76,7 @@ function compareIndices(
     default:
       cmp = 0;
   }
-  return dir === "asc" ? cmp : -cmp;
+  return direction === "asc" ? cmp : -cmp;
 }
 
 // ---------------------------------------------------------------------------
@@ -92,8 +90,7 @@ export default function IndicesPage() {
 
   const [search, setSearch] = useSearchParam();
   const [showSystemIndices, setShowSystemIndices] = useState(false);
-  const [sortField, setSortField] = useState<IndexSortField>("index");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+  const { sortField, sortDirection, getSortLabelProps } = useTableSort<IndexSortField>("index");
   const [selectedIndex, setSelectedIndex] = useQueryState("selectedIndex", parseAsString);
   const [activeTab, setActiveTab] = useQueryState(
     "tab",
@@ -148,14 +145,6 @@ export default function IndicesPage() {
     : showSystemIndices
       ? "No indices match the current search filter."
       : "Toggle 'Show system indices' above to include system indices.";
-
-  const handleSort = useCallback(
-    (field: IndexSortField) => {
-      setSortDirection((prev) => (sortField === field && prev === "asc" ? "desc" : "asc"));
-      setSortField(field);
-    },
-    [sortField],
-  );
 
   // Publish screen context for AI chat
   const setPageSection = usePageContextStore((s) => s.setPageSection);
@@ -421,71 +410,30 @@ export default function IndicesPage() {
                 minHeight: 0,
               }}
             >
-              <Box sx={{ p: 1, borderBottom: 1, borderColor: "border.subtle" }}>
-                <TextField
-                  size="small"
-                  fullWidth
-                  placeholder="Search indices"
-                  value={search}
-                  onChange={(e) => void setSearch(e.target.value)}
-                  inputProps={{ "aria-label": "Search indices" }}
-                />
-                <FormControlLabel
-                  control={
-                    <Switch
-                      size="small"
-                      checked={showSystemIndices}
-                      onChange={(e) => setShowSystemIndices(e.target.checked)}
-                      inputProps={{ "aria-label": "Show system indices" }}
-                    />
-                  }
-                  label={
-                    <Typography variant="caption" color="text.secondary">
-                      Show system indices
-                    </Typography>
-                  }
-                  sx={{ mt: 0.5, ml: 0 }}
-                />
-              </Box>
+              <SearchFilterBar
+                search={search}
+                onSearchChange={(v) => void setSearch(v)}
+                placeholder="Search indices"
+                toggleLabel="Show system indices"
+                toggleChecked={showSystemIndices}
+                onToggleChange={setShowSystemIndices}
+                divider={false}
+              />
               <TableContainer sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
                 <Table size="small" stickyHeader aria-label="Index list">
                   <TableHead>
                     <TableRow>
                       <TableCell>
-                        <TableSortLabel
-                          active={sortField === "index"}
-                          direction={sortField === "index" ? sortDirection : "asc"}
-                          onClick={() => handleSort("index")}
-                        >
-                          Name
-                        </TableSortLabel>
+                        <TableSortLabel {...getSortLabelProps("index")}>Name</TableSortLabel>
                       </TableCell>
                       <TableCell>
-                        <TableSortLabel
-                          active={sortField === "health"}
-                          direction={sortField === "health" ? sortDirection : "asc"}
-                          onClick={() => handleSort("health")}
-                        >
-                          Health
-                        </TableSortLabel>
+                        <TableSortLabel {...getSortLabelProps("health")}>Health</TableSortLabel>
                       </TableCell>
                       <TableCell align="right">
-                        <TableSortLabel
-                          active={sortField === "docs.count"}
-                          direction={sortField === "docs.count" ? sortDirection : "asc"}
-                          onClick={() => handleSort("docs.count")}
-                        >
-                          Docs
-                        </TableSortLabel>
+                        <TableSortLabel {...getSortLabelProps("docs.count")}>Docs</TableSortLabel>
                       </TableCell>
                       <TableCell align="right">
-                        <TableSortLabel
-                          active={sortField === "store.size"}
-                          direction={sortField === "store.size" ? sortDirection : "asc"}
-                          onClick={() => handleSort("store.size")}
-                        >
-                          Size
-                        </TableSortLabel>
+                        <TableSortLabel {...getSortLabelProps("store.size")}>Size</TableSortLabel>
                       </TableCell>
                     </TableRow>
                   </TableHead>

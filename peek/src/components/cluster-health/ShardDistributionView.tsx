@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import Stack from "@mui/material/Stack";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
@@ -10,6 +10,7 @@ import TableSortLabel from "@mui/material/TableSortLabel";
 import Typography from "@mui/material/Typography";
 
 import type { ClusterHealthData } from "../../hooks/useClusterHealthData";
+import { useTableSort } from "../../hooks/useTableSort";
 
 import { groupUnassignedReasons } from "./clusterHealthUtils";
 import InfoCard from "./InfoCard";
@@ -58,17 +59,13 @@ export default function ShardDistributionView({ data }: ShardDistributionViewPro
 
   // Shard distribution per index
   type SortKey = "index" | "primary" | "replica" | "unassigned";
-  const [sortKey, setSortKey] = useState<SortKey>("index");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
-
-  const handleSort = (key: SortKey) => {
-    if (sortKey === key) {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    } else {
-      setSortKey(key);
-      setSortDir(key === "index" ? "asc" : "desc");
-    }
-  };
+  const {
+    sortField: sortKey,
+    sortDirection: sortDir,
+    getSortLabelProps,
+  } = useTableSort<SortKey>("index", "asc", {
+    fieldDefaults: { primary: "desc", replica: "desc", unassigned: "desc" },
+  });
 
   const indexDistribution = useMemo(() => {
     const map = new Map<string, { primary: number; replica: number; unassigned: number }>();
@@ -135,13 +132,7 @@ export default function ShardDistributionView({ data }: ShardDistributionViewPro
                       align={key === "index" ? undefined : "right"}
                       sortDirection={sortKey === key ? sortDir : false}
                     >
-                      <TableSortLabel
-                        active={sortKey === key}
-                        direction={sortKey === key ? sortDir : "asc"}
-                        onClick={() => handleSort(key)}
-                      >
-                        {label}
-                      </TableSortLabel>
+                      <TableSortLabel {...getSortLabelProps(key)}>{label}</TableSortLabel>
                     </TableCell>
                   ))}
                 </TableRow>
