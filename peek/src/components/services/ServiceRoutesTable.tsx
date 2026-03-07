@@ -13,28 +13,23 @@ import { useTheme } from "@mui/material/styles";
 import InsightSlot from "../InsightSlot";
 
 import { formatLatency, formatErrorRate } from "./serviceInventoryHelpers";
-import type {
-  RouteRow,
-  RouteSparklineData,
-  RouteSortField,
-  SortDirection,
-} from "./serviceDashboardHelpers";
+import type { RouteRow, RouteSparklineData, RouteSortField } from "./serviceDashboardHelpers";
 import ServiceSparklineCell from "./ServiceSparklineCell";
 
 interface ServiceRoutesTableProps {
   routeRows: RouteRow[];
-  sortField: RouteSortField;
-  sortDirection: SortDirection;
-  onSort: (field: RouteSortField) => void;
+  getSortLabelProps: (field: RouteSortField) => {
+    active: boolean;
+    direction: "asc" | "desc";
+    onClick: () => void;
+  };
   sparklineData?: Record<string, RouteSparklineData>;
   routeInsightSlotIds?: Record<string, string>;
 }
 
 export default function ServiceRoutesTable({
   routeRows,
-  sortField,
-  sortDirection,
-  onSort,
+  getSortLabelProps,
   sparklineData,
   routeInsightSlotIds,
 }: ServiceRoutesTableProps) {
@@ -64,40 +59,16 @@ export default function ServiceRoutesTable({
       <TableHead>
         <TableRow>
           <TableCell>
-            <TableSortLabel
-              active={sortField === "route"}
-              direction={sortField === "route" ? sortDirection : "asc"}
-              onClick={() => onSort("route")}
-            >
-              Route
-            </TableSortLabel>
+            <TableSortLabel {...getSortLabelProps("route")}>Route</TableSortLabel>
           </TableCell>
           <TableCell align="right">
-            <TableSortLabel
-              active={sortField === "requestCount"}
-              direction={sortField === "requestCount" ? sortDirection : "desc"}
-              onClick={() => onSort("requestCount")}
-            >
-              Requests
-            </TableSortLabel>
+            <TableSortLabel {...getSortLabelProps("requestCount")}>Requests</TableSortLabel>
           </TableCell>
           <TableCell align="right">
-            <TableSortLabel
-              active={sortField === "avgLatencyMs"}
-              direction={sortField === "avgLatencyMs" ? sortDirection : "desc"}
-              onClick={() => onSort("avgLatencyMs")}
-            >
-              Avg Latency
-            </TableSortLabel>
+            <TableSortLabel {...getSortLabelProps("avgLatencyMs")}>Avg Latency</TableSortLabel>
           </TableCell>
           <TableCell align="right">
-            <TableSortLabel
-              active={sortField === "errorRate"}
-              direction={sortField === "errorRate" ? sortDirection : "desc"}
-              onClick={() => onSort("errorRate")}
-            >
-              Error Rate
-            </TableSortLabel>
+            <TableSortLabel {...getSortLabelProps("errorRate")}>Error Rate</TableSortLabel>
           </TableCell>
         </TableRow>
       </TableHead>
