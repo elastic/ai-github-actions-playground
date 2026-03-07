@@ -728,12 +728,20 @@ export default function StorageExplorerPage() {
                       onClick={() => setSelectedId(node.id)}
                       tabIndex={0}
                       onKeyDown={(event) => {
-                        if (event.key === "Enter" || event.key === " ") {
+                        if (event.target !== event.currentTarget) return;
+                        if (event.key === "Enter" || event.key === " " || event.code === "Space") {
                           event.preventDefault();
                           setSelectedId(node.id);
                         }
                       }}
-                      sx={{ cursor: "pointer" }}
+                      sx={{
+                        cursor: "pointer",
+                        "&:focus-visible": {
+                          outline: "2px solid",
+                          outlineColor: "primary.main",
+                          outlineOffset: -2,
+                        },
+                      }}
                     >
                       <TableCell>
                         <Box

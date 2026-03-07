@@ -104,15 +104,22 @@ export function useStorageExplorerData(): UseStorageExplorerDataResult {
       if (nodeStatsResult.status === "rejected") partialErrors.push("node stats");
       if (dataStreamsResult.status === "rejected") partialErrors.push("data streams");
 
-      if (partialErrors.length === 3) {
+      if (catShardsResult.status === "rejected") {
+        const shardsError = catShardsResult.reason;
+        throw new Error(
+          isElasticsearchError(shardsError)
+            ? shardsError.message
+            : "Failed to load shard data for storage explorer.",
+        );
+      }
+
+      if (partialErrors.length === 2) {
         const firstError =
-          catShardsResult.status === "rejected"
-            ? catShardsResult.reason
-            : nodeStatsResult.status === "rejected"
-              ? nodeStatsResult.reason
-              : dataStreamsResult.status === "rejected"
-                ? dataStreamsResult.reason
-                : new Error("Failed to load storage explorer data.");
+          nodeStatsResult.status === "rejected"
+            ? nodeStatsResult.reason
+            : dataStreamsResult.status === "rejected"
+              ? dataStreamsResult.reason
+              : new Error("Failed to load storage explorer data.");
         throw new Error(
           isElasticsearchError(firstError)
             ? firstError.message
@@ -193,11 +200,11 @@ export function useStorageExplorerData(): UseStorageExplorerDataResult {
 
   const result = useMemo<DataFetchResult<StorageExplorerData>>(() => {
     if (!connection) return { status: "idle" };
-    if (query.isFetching) return { status: "loading" };
+    if (query.isPending) return { status: "loading" };
     if (query.isError) return { status: "error", error: query.error.message };
     if (query.data) return { status: "success", data: query.data.data };
     return { status: "idle" };
-  }, [connection, query.data, query.error, query.isError, query.isFetching]);
+  }, [connection, query.data, query.error, query.isError, query.isPending]);
 
   return {
     result,

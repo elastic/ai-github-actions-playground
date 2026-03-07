@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 
@@ -227,8 +227,13 @@ describe("StorageExplorerPage", () => {
     if (!datasetRow) throw new Error("Expected dataset row to exist");
 
     datasetRow.focus();
-    await user.keyboard("{Enter}");
+    fireEvent.keyDown(datasetRow, { key: " ", code: "Space" });
 
     expect(await screen.findByText("Storage details")).toBeInTheDocument();
+
+    datasetRow.focus();
+    await user.keyboard("{Enter}");
+
+    expect(screen.getByText("Storage details")).toBeInTheDocument();
   });
 });
