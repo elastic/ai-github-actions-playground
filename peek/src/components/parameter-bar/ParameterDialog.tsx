@@ -278,7 +278,8 @@ export default function ParameterDialog({
     if (!open) return;
     reset(toFormValues(editing));
     void trigger();
-    // Clear the preview query cache when the dialog opens
+    // Clear all preview query cache entries when the dialog opens so stale
+    // results from a previous editing session are not shown.
     queryClient.removeQueries({ queryKey: ["parameter-preview"] });
   }, [open, editing, reset, trigger, queryClient]);
 
