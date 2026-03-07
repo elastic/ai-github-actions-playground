@@ -23,6 +23,14 @@ export function fmtLoadAvg(value: number | null): string {
   return value.toFixed(2);
 }
 
+export function fmtBytesRate(value: number | null): string {
+  if (value == null) return "—";
+  if (value < 1024) return `${value.toFixed(1)} B/s`;
+  if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB/s`;
+  if (value < 1024 * 1024 * 1024) return `${(value / 1024 / 1024).toFixed(2)} MB/s`;
+  return `${(value / 1024 / 1024 / 1024).toFixed(2)} GB/s`;
+}
+
 
 interface MetricCardProps {
   label: string;

@@ -1,24 +1,26 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import Box from "@mui/material/Box";
+import MuiTooltip from "@mui/material/Tooltip";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
-import { EChart } from "../perses/PersesEChartWrapper";
-
-import { useEChartTheme } from "../visualizations/useEChartTheme";
 
 import type { HostRow } from "./hostTypes";
-import { osLabel } from "./hostTypes";
 
 interface HostHoneycombChartProps {
   hostRows: HostRow[];
 }
 
+// Flat-top hexagon geometry
+const CELL_W = 52; // px
+const CELL_H = Math.round(CELL_W * Math.sqrt(3) / 2); // ≈ 45px
+const GAP = 4; // px gap between cells
+const COLS = 8; // cells per row
+
 /** Returns a hex color interpolated from green -> yellow -> red based on value 0-1. */
 function cpuColor(value: number | null): string {
-  if (value == null) return "#6b7280"; // gray for unknown
+  if (value == null) return "#6b7280";
   const clamped = Math.max(0, Math.min(1, value));
-  // Green (0%) -> Yellow (50%) -> Red (100%)
   if (clamped <= 0.5) {
     const t = clamped * 2;
     const r = Math.round(76 + (234 - 76) * t);
@@ -33,124 +35,64 @@ function cpuColor(value: number | null): string {
   return `rgb(${r}, ${g}, ${b})`;
 }
 
-export default function HostHoneycombChart({ hostRows }: HostHoneycombChartProps) {
-  const theme = useEChartTheme();
+function HexCell({ row }: { row: HostRow }) {
   const navigate = useNavigate();
+  const cpu =
+    row.cpuUtilization != null ? `${(row.cpuUtilization * 100).toFixed(1)}%` : "N/A";
+  const mem =
+    row.memoryUtilization != null ? `${(row.memoryUtilization * 100).toFixed(1)}%` : "N/A";
 
-  const option = useMemo(() => {
-    // Group hosts by OS family
-    const groups = new Map<string, HostRow[]>();
-    for (const row of hostRows) {
-      const key = osLabel(row.osType);
-      const list = groups.get(key) ?? [];
-      list.push(row);
-      groups.set(key, list);
-    }
-
-    const treemapData = Array.from(groups.entries()).map(([osName, rows]) => ({
-      name: osName,
-      children: rows.map((row) => ({
-        name: row.hostName || row.hostId,
-        value: 1,
-        hostId: row.hostId,
-        cpuUtilization: row.cpuUtilization,
-        memoryUtilization: row.memoryUtilization,
-        itemStyle: {
-          color: cpuColor(row.cpuUtilization),
-          borderColor: "rgba(255,255,255,0.3)",
-          borderWidth: 2,
-          borderRadius: 4,
-        },
-      })),
-    }));
-
-    return {
-      tooltip: {
-        ...theme.tooltip,
-        formatter: (params: {
-          data?: {
-            hostId?: string;
-            cpuUtilization?: number | null;
-            memoryUtilization?: number | null;
-          };
-          name?: string;
-          treePathInfo?: Array<{ name: string }>;
-        }) => {
-          const data = params.data;
-          if (!data?.hostId) {
-            return `<strong>${params.name ?? ""}</strong>`;
-          }
-          const cpu =
-            data.cpuUtilization != null ? `${(data.cpuUtilization * 100).toFixed(1)}%` : "N/A";
-          const mem =
-            data.memoryUtilization != null
-              ? `${(data.memoryUtilization * 100).toFixed(1)}%`
-              : "N/A";
-          return [`<strong>${params.name ?? ""}</strong>`, `CPU: ${cpu}`, `Memory: ${mem}`].join(
-            "<br/>",
-          );
-        },
-      },
-      series: [
-        {
-          type: "treemap",
-          data: treemapData,
-          width: "100%",
-          height: "100%",
-          roam: false,
-          nodeClick: false as const,
-          breadcrumb: { show: false },
-          squareRatio: 1,
-          leafDepth: 1,
-          levels: [
-            {
-              // OS group level
-              itemStyle: {
-                borderColor:
-                  (Array.isArray(theme.tooltip) ? undefined : theme.tooltip?.borderColor) ?? "#444",
-                borderWidth: 3,
-                gapWidth: 3,
-              },
-              upperLabel: {
-                show: true,
-                height: 24,
-                color: theme.textStyle?.color ?? "#ccc",
-                fontSize: 12,
-                fontWeight: 600 as const,
-                backgroundColor: "transparent",
-              },
-            },
-            {
-              // Host leaf level
-              itemStyle: {
-                borderColor: "rgba(255,255,255,0.15)",
-                borderWidth: 2,
-                gapWidth: 1,
-              },
-              label: {
-                show: true,
-                formatter: (params: { name?: string }) => params.name ?? "",
-                fontSize: 10,
-                color: "#fff",
-                textShadowColor: "rgba(0,0,0,0.6)",
-                textShadowBlur: 3,
-              },
-            },
-          ],
-        },
-      ],
-    };
-  }, [hostRows, theme]);
-
-  const handleChartClick = useMemo(
-    () => (params: { data?: { hostId?: string } }) => {
-      const hostId = params.data?.hostId;
-      if (hostId) {
-        navigate(`/hosts/${encodeURIComponent(hostId)}`);
+  return (
+    <MuiTooltip
+      title={
+        <Box>
+          <Typography variant="caption" sx={{ fontWeight: 600, display: "block" }}>
+            {row.hostName || row.hostId}
+          </Typography>
+          <Typography variant="caption" display="block">
+            CPU: {cpu}
+          </Typography>
+          <Typography variant="caption" display="block">
+            Memory: {mem}
+          </Typography>
+        </Box>
       }
-    },
-    [navigate],
+      arrow
+    >
+      <Box
+        role="button"
+        tabIndex={0}
+        onClick={() => navigate(`/hosts/${encodeURIComponent(row.hostId)}`)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            navigate(`/hosts/${encodeURIComponent(row.hostId)}`);
+          }
+        }}
+        sx={{
+          width: CELL_W,
+          height: CELL_H,
+          flexShrink: 0,
+          clipPath: "polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)",
+          backgroundColor: cpuColor(row.cpuUtilization),
+          cursor: "pointer",
+          transition: "opacity 0.15s",
+          "&:hover": { opacity: 0.75 },
+          "&:focus-visible": { outline: "2px solid white", outlineOffset: 2 },
+        }}
+        aria-label={`${row.hostName || row.hostId}: CPU ${cpu}, Memory ${mem}`}
+      />
+    </MuiTooltip>
   );
+}
+
+export default function HostHoneycombChart({ hostRows }: HostHoneycombChartProps) {
+  const rows = useMemo(() => {
+    const result: HostRow[][] = [];
+    for (let i = 0; i < hostRows.length; i += COLS) {
+      result.push(hostRows.slice(i, i + COLS));
+    }
+    return result;
+  }, [hostRows]);
 
   if (hostRows.length === 0) return null;
 
@@ -161,7 +103,7 @@ export default function HostHoneycombChart({ hostRows }: HostHoneycombChartProps
           Host Map
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          Each cell is a host, colored by CPU utilization. Grouped by OS family.
+          Each cell is a host, colored by CPU utilization. Hover for details.
         </Typography>
         <Box sx={{ display: "flex", gap: 1, mt: 1, alignItems: "center" }}>
           <Typography variant="caption" color="text.secondary">
@@ -184,14 +126,24 @@ export default function HostHoneycombChart({ hostRows }: HostHoneycombChartProps
           </Typography>
         </Box>
       </Box>
-      <Box sx={{ height: Math.max(280, Math.min(hostRows.length * 40, 500)) }}>
-        <EChart
-          option={option}
-          theme={theme}
-          onEvents={{ click: handleChartClick }}
-          sx={{ width: "100%", height: "100%" }}
-        />
+      <Box sx={{ p: 2 }}>
+        {rows.map((rowHosts, rowIdx) => (
+          <Box
+            key={rowIdx}
+            sx={{
+              display: "flex",
+              gap: `${GAP}px`,
+              mb: `${GAP}px`,
+              ml: rowIdx % 2 === 1 ? `${(CELL_W + GAP) / 2}px` : 0,
+            }}
+          >
+            {rowHosts.map((host) => (
+              <HexCell key={host.hostId} row={host} />
+            ))}
+          </Box>
+        ))}
       </Box>
     </Paper>
   );
 }
+

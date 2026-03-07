@@ -38,6 +38,7 @@ export default function HostDetailMetricsGrid({ hostId, filters }: HostDetailMet
         hostId={hostId}
         metricField="system.disk.io"
         filters={filters}
+        asBytes
         color="#66bb6a"
       />
       <HostDetailMetricChart
@@ -45,6 +46,7 @@ export default function HostDetailMetricsGrid({ hostId, filters }: HostDetailMet
         hostId={hostId}
         metricField="system.network.io"
         filters={filters}
+        asBytes
         color="#ffa726"
       />
       <HostDetailLoadChart hostId={hostId} filters={filters} />
