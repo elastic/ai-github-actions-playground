@@ -30,6 +30,7 @@ function toTemplatesData(
     composedOf: it.index_template.composed_of ?? [],
     dataStreamEnabled: Boolean(it.index_template.data_stream),
     version: it.index_template.version ?? "—",
+    raw: it,
   }));
 
   // Build a map of component template names -> count of index templates using them

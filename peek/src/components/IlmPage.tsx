@@ -393,7 +393,16 @@ export default function IlmPage() {
                     key={row.index}
                     hover
                     selected={row.index === selectedIndex}
+                    tabIndex={0}
+                    role="button"
+                    aria-label={`Open ILM details for ${row.index}`}
                     onClick={() => setSelectedIndex(row.index)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " " || event.key === "Spacebar") {
+                        event.preventDefault();
+                        setSelectedIndex(row.index);
+                      }
+                    }}
                     sx={{ cursor: "pointer" }}
                   >
                     <TableCell>
@@ -651,7 +660,7 @@ export default function IlmPage() {
                   sx={{ p: 1, maxHeight: 300, overflow: "auto", fontSize: "0.75rem" }}
                 >
                   <pre style={{ margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-                    {JSON.stringify(selectedRow, null, 2)}
+                    {JSON.stringify(selectedRow.raw ?? selectedRow, null, 2)}
                   </pre>
                 </Paper>
               </Box>

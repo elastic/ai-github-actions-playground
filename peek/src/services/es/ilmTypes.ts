@@ -71,6 +71,7 @@ export interface IlmIndexRow {
   failedStep: string;
   isError: boolean;
   stepReason: string;
+  raw?: IlmExplainIndexDetail;
 }
 
 /** Flattened ILM policy row for the policies table. */

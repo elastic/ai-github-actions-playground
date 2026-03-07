@@ -49,7 +49,14 @@ function compareCompTpls(
       cmp = a.usedByCount - b.usedByCount;
       break;
     case "version":
-      cmp = String(a.version).localeCompare(String(b.version));
+      {
+        const aNum = Number(a.version);
+        const bNum = Number(b.version);
+        cmp =
+          Number.isFinite(aNum) && Number.isFinite(bNum)
+            ? aNum - bNum
+            : String(a.version).localeCompare(String(b.version), undefined, { numeric: true });
+      }
       break;
     default:
       cmp = 0;
@@ -130,6 +137,16 @@ describe("TemplatesPage component template sorting", () => {
   it("sorts by used-by count descending", () => {
     const sorted = [...components].sort((a, b) => compareCompTpls(a, b, "usedByCount", "desc"));
     expect(sorted.map((c) => c.usedByCount)).toEqual([5, 3, 1]);
+  });
+
+  it("sorts numeric-like versions numerically", () => {
+    const withVersions = [
+      makeComponentTemplate({ name: "a", version: "10" }),
+      makeComponentTemplate({ name: "b", version: "2" }),
+      makeComponentTemplate({ name: "c", version: "1" }),
+    ];
+    const sorted = [...withVersions].sort((a, b) => compareCompTpls(a, b, "version", "asc"));
+    expect(sorted.map((c) => c.version)).toEqual(["1", "2", "10"]);
   });
 });
 

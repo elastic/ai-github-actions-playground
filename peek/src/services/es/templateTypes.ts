@@ -54,6 +54,7 @@ export interface IndexTemplateRow {
   composedOf: string[];
   dataStreamEnabled: boolean;
   version: number | string;
+  raw?: IndexTemplateRecord;
 }
 
 /** Flattened component template row. */

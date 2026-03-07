@@ -29,6 +29,7 @@ function toIlmData(results: [GetIlmPoliciesResponse, IlmExplainDetailResponse]):
     failedStep: detail.failed_step ?? "",
     isError: Boolean(detail.step_info?.reason),
     stepReason: detail.step_info?.reason ?? "",
+    raw: detail,
   }));
 
   const policyRows: IlmPolicyRow[] = Object.entries(policies).map(([name, policy]) => ({

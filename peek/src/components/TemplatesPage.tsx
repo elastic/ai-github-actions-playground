@@ -79,7 +79,14 @@ function compareCompTpls(
       cmp = a.usedByCount - b.usedByCount;
       break;
     case "version":
-      cmp = String(a.version).localeCompare(String(b.version));
+      {
+        const aNum = Number(a.version);
+        const bNum = Number(b.version);
+        cmp =
+          Number.isFinite(aNum) && Number.isFinite(bNum)
+            ? aNum - bNum
+            : String(a.version).localeCompare(String(b.version), undefined, { numeric: true });
+      }
       break;
     default:
       cmp = 0;
@@ -316,7 +323,16 @@ export default function TemplatesPage() {
                     key={tpl.name}
                     hover
                     selected={tpl.name === selectedTemplateName}
+                    tabIndex={0}
+                    role="button"
+                    aria-label={`Open template details for ${tpl.name}`}
                     onClick={() => setSelectedTemplateName(tpl.name)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " " || event.key === "Spacebar") {
+                        event.preventDefault();
+                        setSelectedTemplateName(tpl.name);
+                      }
+                    }}
                     sx={{ cursor: "pointer" }}
                   >
                     <TableCell>
@@ -558,7 +574,7 @@ export default function TemplatesPage() {
                   sx={{ p: 1, maxHeight: 300, overflow: "auto", fontSize: "0.75rem" }}
                 >
                   <pre style={{ margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-                    {JSON.stringify(selectedTemplate, null, 2)}
+                    {JSON.stringify(selectedTemplate.raw ?? selectedTemplate, null, 2)}
                   </pre>
                 </Paper>
               </Box>
