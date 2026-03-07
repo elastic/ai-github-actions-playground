@@ -24,7 +24,7 @@ describe("buildHostInventoryQuery", () => {
       timeTo: "NOW()",
       osType: "linux",
     });
-    expect(query).toContain('host.os.type == "linux"');
+    expect(query).toContain('os.type == "linux"');
   });
 
   it("maps macos to darwin in the filter", () => {
@@ -33,7 +33,7 @@ describe("buildHostInventoryQuery", () => {
       timeTo: "NOW()",
       osType: "macos",
     });
-    expect(query).toContain('host.os.type == "darwin"');
+    expect(query).toContain('os.type == "darwin"');
   });
 
   it("adds search filter", () => {
@@ -63,7 +63,7 @@ describe("buildHostInventoryQuery", () => {
       timeTo: "NOW()",
       osType: "unknown",
     });
-    expect(query).not.toContain("host.os.type ==");
+    expect(query).not.toContain("os.type ==");
   });
 });
 
@@ -75,7 +75,7 @@ describe("buildHostDetailQuery", () => {
     });
     expect(query).toContain("FROM metrics-hostmetricsreceiver*");
     expect(query).toContain('== "host-123"');
-    expect(query).toContain("COALESCE(host.id, CONCAT(");
+    expect(query).toContain("CONCAT(COALESCE(host.name");
     expect(query).toContain("LIMIT 1");
   });
 

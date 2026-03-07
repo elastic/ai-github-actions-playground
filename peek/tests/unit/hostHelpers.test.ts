@@ -7,7 +7,7 @@ describe("parseHostInventory", () => {
   it("parses a standard inventory response", () => {
     const data: EsqlResponse = {
       columns: [
-        { name: "host.id", type: "keyword" },
+        { name: "host_key", type: "keyword" },
         { name: "host_name", type: "keyword" },
         { name: "os_type", type: "keyword" },
         { name: "os_name", type: "keyword" },
@@ -20,7 +20,7 @@ describe("parseHostInventory", () => {
       ],
       values: [
         [
-          "host-1",
+          "web-server-1::linux",
           "web-server-1",
           "linux",
           "Ubuntu",
@@ -32,7 +32,7 @@ describe("parseHostInventory", () => {
           120,
         ],
         [
-          "host-2",
+          "win-dc-1::windows",
           "win-dc-1",
           "windows",
           "Windows Server",
@@ -49,7 +49,7 @@ describe("parseHostInventory", () => {
     const rows = parseHostInventory(data);
     expect(rows).toHaveLength(2);
 
-    expect(rows[0].hostId).toBe("host-1");
+    expect(rows[0].hostId).toBe("web-server-1::linux");
     expect(rows[0].hostName).toBe("web-server-1");
     expect(rows[0].osType).toBe("linux");
     expect(rows[0].osName).toBe("Ubuntu");
@@ -57,7 +57,7 @@ describe("parseHostInventory", () => {
     expect(rows[0].memoryUtilization).toBe(0.72);
     expect(rows[0].processCount).toBe(120);
 
-    expect(rows[1].hostId).toBe("host-2");
+    expect(rows[1].hostId).toBe("win-dc-1::windows");
     expect(rows[1].osType).toBe("windows");
     expect(rows[1].processCount).toBe(250);
   });
@@ -65,7 +65,7 @@ describe("parseHostInventory", () => {
   it("handles darwin as macos", () => {
     const data: EsqlResponse = {
       columns: [
-        { name: "host.id", type: "keyword" },
+        { name: "host_key", type: "keyword" },
         { name: "host_name", type: "keyword" },
         { name: "os_type", type: "keyword" },
         { name: "os_name", type: "keyword" },
@@ -93,7 +93,7 @@ describe("parseHostInventory", () => {
   it("handles missing optional metric columns gracefully", () => {
     const data: EsqlResponse = {
       columns: [
-        { name: "host.id", type: "keyword" },
+        { name: "host_key", type: "keyword" },
         { name: "host_name", type: "keyword" },
         { name: "os_type", type: "keyword" },
         { name: "os_name", type: "keyword" },
@@ -145,37 +145,16 @@ describe("parseHostInventory", () => {
     expect(rows[0].hostId).toBe("web-1::linux");
   });
 
-  it("falls back to host_id alias when host.id column is missing", () => {
+  it("falls back to 'unknown' when host_key column is missing", () => {
     const data: EsqlResponse = {
       columns: [
-        { name: "host_id", type: "keyword" },
         { name: "host_name", type: "keyword" },
         { name: "os_type", type: "keyword" },
-        { name: "os_name", type: "keyword" },
-        { name: "os_version", type: "keyword" },
-        { name: "last_seen", type: "date" },
-        { name: "cpu_utilization", type: "double" },
-        { name: "memory_utilization", type: "double" },
-        { name: "disk_utilization", type: "double" },
-        { name: "process_count", type: "long" },
       ],
-      values: [
-        [
-          "alias-id-1",
-          "api-1",
-          "linux",
-          "Ubuntu",
-          "24.04",
-          "2026-01-01T00:00:00Z",
-          0.2,
-          0.3,
-          0.4,
-          60,
-        ],
-      ],
+      values: [["api-1", "linux"]],
     };
 
     const rows = parseHostInventory(data);
-    expect(rows[0].hostId).toBe("alias-id-1");
+    expect(rows[0].hostId).toBe("unknown");
   });
 });

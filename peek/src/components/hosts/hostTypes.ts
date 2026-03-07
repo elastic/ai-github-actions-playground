@@ -1,8 +1,8 @@
 /**
  * Host identity and data model types.
  *
- * The identity contract uses `host.id` as the preferred key, falling back
- * to `host.name` (+ `host.os.type` disambiguation) when `host.id` is absent.
+ * The identity contract uses `host.name::os.type` as the host key since
+ * OTel hostmetricsreceiver data does not include `host.id`.
  */
 
 /** OS types recognized by the host inventory. */
@@ -14,8 +14,8 @@ export type HostOsType = "linux" | "windows" | "macos" | "unknown";
  */
 export interface HostRef {
   /**
-   * Primary identifier — `host.id` when available, else `host.name::osType`,
-   * else an enricher (`agent.id`, `cloud.instance.id`, `host.ip`).
+   * Primary identifier — `host.name::osType` composite key,
+   * falling back to enrichers (`agent.id`, `cloud.instance.id`, `host.ip`).
    * See `toHostRef` for the full fallback chain.
    */
   hostId: string;
@@ -44,7 +44,7 @@ export interface HostRow {
   hostIp?: string;
 }
 
-/** Normalizes raw `host.os.type` string to a known `HostOsType`. */
+/** Normalizes raw `os.type` string to a known `HostOsType`. */
 export function normalizeOsType(raw: string | null | undefined): HostOsType {
   if (!raw) return "unknown";
   const lower = raw.toLowerCase().trim();
@@ -55,7 +55,7 @@ export function normalizeOsType(raw: string | null | undefined): HostOsType {
 }
 
 /**
- * Optional identity enrichers used when `host.id` and `host.name` are both
+ * Optional identity enrichers used when `host.name` is
  * absent. These prevent unidentified hosts from collapsing to the same key.
  */
 export interface HostIdentityHints {

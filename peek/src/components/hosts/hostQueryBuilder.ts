@@ -24,7 +24,7 @@ function escapeEsql(value: string): string {
 }
 
 const STABLE_HOST_ID_EXPRESSION =
-  'COALESCE(host.id, CONCAT(COALESCE(host.name, "unknown"), "::", COALESCE(host.os.type, "unknown")))';
+  'CONCAT(COALESCE(host.name, "unknown"), "::", COALESCE(os.type, "unknown"))';
 
 /**
  * Builds an ES|QL query that returns one row per host with the latest
@@ -38,7 +38,7 @@ export function buildHostInventoryQuery(filters: HostQueryFilters): string {
 
   if (filters.osType && filters.osType !== "unknown") {
     const osValue = filters.osType === "macos" ? "darwin" : filters.osType;
-    whereConditions.push(`host.os.type == "${osValue}"`);
+    whereConditions.push(`os.type == "${osValue}"`);
   }
 
   if (filters.search) {
@@ -50,9 +50,8 @@ export function buildHostInventoryQuery(filters: HostQueryFilters): string {
 | WHERE ${whereConditions.join(" AND ")}
 | EVAL host_key = ${STABLE_HOST_ID_EXPRESSION}
 | STATS
-    host_id = MAX(host.id),
     host_name = MAX(host.name),
-    os_type = MAX(host.os.type),
+    os_type = MAX(os.type),
     os_name = MAX(host.os.name),
     os_version = MAX(host.os.version),
     last_seen = MAX(@timestamp),
@@ -81,9 +80,8 @@ export function buildHostDetailQuery(hostId: string, filters: HostQueryFilters):
 | LIMIT 1
 | EVAL
     host_key = ${STABLE_HOST_ID_EXPRESSION},
-    host_id = host.id,
     host_name = host.name,
-    os_type = host.os.type,
+    os_type = os.type,
     os_name = host.os.name,
     os_version = host.os.version,
     last_seen = @timestamp,
@@ -94,5 +92,5 @@ export function buildHostDetailQuery(hostId: string, filters: HostQueryFilters):
     agent_id = agent.id,
     cloud_instance_id = cloud.instance.id,
     host_ip = host.ip
-| KEEP host_key, host_id, host_name, os_type, os_name, os_version, last_seen, cpu_utilization, memory_utilization, disk_utilization, process_count, agent_id, cloud_instance_id, host_ip`;
+| KEEP host_key, host_name, os_type, os_name, os_version, last_seen, cpu_utilization, memory_utilization, disk_utilization, process_count, agent_id, cloud_instance_id, host_ip`;
 }
