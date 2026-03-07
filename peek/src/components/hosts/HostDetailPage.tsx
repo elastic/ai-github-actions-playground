@@ -108,7 +108,12 @@ export default function HostDetailPage() {
         }
         description={
           hostRow
-            ? `${osLabel(hostRow.osType)} — ${hostRow.osName} ${hostRow.osVersion}`
+            ? [
+                osLabel(hostRow.osType),
+                [hostRow.osName, hostRow.osVersion].filter(Boolean).join(" "),
+              ]
+                .filter(Boolean)
+                .join(" — ")
             : "Load host details to view resource metrics."
         }
       />

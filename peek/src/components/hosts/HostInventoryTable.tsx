@@ -63,6 +63,13 @@ export default function HostInventoryTable({
           </TableRow>
         </TableHead>
         <TableBody>
+          {hostRows.length === 0 && (
+            <TableRow>
+              <TableCell colSpan={COLUMNS.length} align="center">
+                No hosts found
+              </TableCell>
+            </TableRow>
+          )}
           {hostRows.map((row) => (
             <TableRow
               key={row.hostId}

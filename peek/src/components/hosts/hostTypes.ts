@@ -13,7 +13,7 @@ export type HostOsType = "linux" | "windows" | "macos" | "unknown";
  * Consumed by `HostLink`, `openHost`, and any pivot that targets host detail.
  */
 export interface HostRef {
-  /** Primary identifier — `host.id` when available, else `host.name`. */
+  /** Primary identifier — `host.id` when available, else `host.name::osType` (see `toHostRef`). */
   hostId: string;
   /** Human-readable label shown in links/breadcrumbs. */
   displayName: string;
