@@ -1,2 +1,0 @@
-import{r as o}from"./mui-Cgz-MpXb.js";function b(n,i="asc"){const[t,c]=o.useState(n),[e,a]=o.useState(i),r=o.useCallback(s=>{c(s),a(l=>t===s&&l==="asc"?"desc":"asc")},[t]),u=o.useCallback(s=>({active:t===s,direction:t===s?e:"asc",onClick:()=>r(s)}),[t,e,r]);return{sortField:t,sortDirection:e,handleSort:r,getSortLabelProps:u,setSortField:c,setSortDirection:a}}export{b as u};
-//# sourceMappingURL=useTableSort-Da_uQEht.js.map
