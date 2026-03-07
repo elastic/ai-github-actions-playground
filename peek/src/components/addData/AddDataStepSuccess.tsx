@@ -79,7 +79,16 @@ export default function AddDataStepSuccess({
           : `${techName} setup is complete, but data is not verified yet. Start your collector, then verify or explore now.`}
       </Typography>
       {outcomeSignals.length > 0 && (
-        <Alert severity={hasVerifiedSignals ? "success" : "info"}>
+        <Alert
+          severity={hasVerifiedSignals ? "success" : "info"}
+          action={
+            !hasVerifiedSignals ? (
+              <Button color="inherit" size="small" onClick={onBack}>
+                Verify now
+              </Button>
+            ) : undefined
+          }
+        >
           {hasVerifiedSignals
             ? `Verified signals: ${outcomeSignals.map((signal) => SIGNAL_NAV[signal].label).join(", ")}.`
             : `Expected signals: ${outcomeSignals.map((signal) => SIGNAL_NAV[signal].label).join(", ")}. Run your collector and verify again.`}

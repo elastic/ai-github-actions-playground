@@ -162,7 +162,7 @@ export default function AddDataStepSetup(p: AddDataStepSetupProps) {
     p.awsDeployStarted &&
     (p.verification.status === "capturing_baseline" || p.verification.status === "polling");
   const showCredentialsSection = !showConfigureSection || configureComplete;
-  const showInstallSection = showCredentialsSection && hasAnyApiKey;
+  const showInstallSection = showCredentialsSection;
   const showVerifySection = awsFlowEnabled ? p.awsDeployStarted : hasAnyApiKey;
   const awsCredentialsSource = p.selectedAwsTarget?.label ?? "AWS source";
   const hostOnboardingFlow =
