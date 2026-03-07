@@ -203,8 +203,12 @@ export default function TraceResultsView({
               durationUs: r.durationUs,
               serviceName: r.serviceName,
               traceId: r.traceId,
+              spanId: r.spanId,
             }))}
-            onPointClick={(traceId) => onSelectTrace(traceId)}
+            onPointClick={(point) => {
+              onSelectTrace(point.traceId, point.spanId, point.timestamp);
+              if (point.spanId) onSelectSpan?.(point.spanId);
+            }}
           />
         )}
         {searchResult && effectiveViewMode === "serviceMap" && (

@@ -517,7 +517,7 @@ export default function IndicesPage() {
                             variant="body2"
                             noWrap
                             title={idx.index}
-                            sx={{ maxWidth: 200 }}
+                            sx={{ width: "100%" }}
                           >
                             {idx.index}
                           </Typography>

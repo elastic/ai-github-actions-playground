@@ -262,6 +262,36 @@ describe("TracesPage error alerts", () => {
   });
 });
 
+describe("TracesPage query actions", () => {
+  beforeEach(() => {
+    capturedCallbacks = [];
+    mockRunQuery.mockClear();
+    createQueryClient();
+    useTracesStore.setState({
+      filters: { ...EMPTY_FILTERS },
+      rawQuery: null,
+      selectedTraceId: null,
+      selectedTraceSpans: [],
+      selectedSpanId: null,
+      viewMode: "list",
+      drawerOpen: false,
+    });
+  });
+
+  it("formats the generated ES|QL query into multiline pipeline form", async () => {
+    const user = userEvent.setup();
+    renderTracesPage();
+
+    const before = screen.getByTestId("codemirror-mock").textContent ?? "";
+    expect(before.includes("\n| ")).toBe(false);
+
+    await user.click(screen.getByRole("button", { name: /format query/i }));
+
+    const after = screen.getByTestId("codemirror-mock").textContent ?? "";
+    expect(after.includes("\n| ")).toBe(true);
+  });
+});
+
 describe("TracesPage slot insight integration", () => {
   beforeEach(() => {
     capturedCallbacks = [];

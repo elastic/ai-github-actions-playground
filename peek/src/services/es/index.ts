@@ -23,6 +23,7 @@ export type * from "./indicesTypes";
 export type * from "./securityTypes";
 export type * from "./ingestTypes";
 export type * from "./profilingTypes";
+export type * from "./watcherTypes";
 
 export {
   buildExplorerQuery,

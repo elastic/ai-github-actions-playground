@@ -53,6 +53,7 @@ interface DataPoint {
   durationUs: number;
   serviceName: string;
   traceId: string;
+  spanId?: string;
 }
 
 function makePoint(overrides: Partial<DataPoint> = {}): DataPoint {
@@ -166,11 +167,11 @@ describe("TraceScatterChart", () => {
     expect(legend.show).toBe(true);
   });
 
-  it("invokes onPointClick with traceId when a point is clicked", () => {
+  it("invokes onPointClick with trace/span context when a point is clicked", () => {
     const onPointClick = vi.fn();
     render(
       <TraceScatterChart
-        data={[makePoint({ traceId: "clicked-trace" })]}
+        data={[makePoint({ traceId: "clicked-trace", spanId: "clicked-span" })]}
         onPointClick={onPointClick}
       />,
     );
@@ -180,8 +181,12 @@ describe("TraceScatterChart", () => {
     const clickCall = onFn.mock.calls.find((c: unknown[]) => c[0] === "click");
     expect(clickCall).toBeDefined();
     const handler = clickCall![1] as (params: { data: unknown }) => void;
-    handler({ data: { traceId: "clicked-trace" } });
-    expect(onPointClick).toHaveBeenCalledWith("clicked-trace");
+    handler({ data: { traceId: "clicked-trace", spanId: "clicked-span", timestamp: "ts" } });
+    expect(onPointClick).toHaveBeenCalledWith({
+      traceId: "clicked-trace",
+      spanId: "clicked-span",
+      timestamp: "ts",
+    });
   });
 
   it("does not register click handler when onPointClick is not provided", () => {

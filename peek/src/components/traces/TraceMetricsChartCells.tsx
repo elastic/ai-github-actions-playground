@@ -10,7 +10,7 @@ import TimeSeriesChart from "../visualizations/TimeSeriesChart";
 
 import { sliceForMetric, toErrorsBarData } from "./traceMetricsUtils";
 
-export const CHART_HEIGHT = 200;
+export const CHART_HEIGHT = 170;
 
 export interface ChartCellProps {
   title: string;

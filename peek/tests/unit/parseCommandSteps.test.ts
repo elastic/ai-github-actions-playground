@@ -72,4 +72,30 @@ describe("parseCommandSteps", () => {
     expect(steps[0]!.command).toContain("DOTENV");
     expect(steps[1]!.command).toBe("docker compose up -d");
   });
+
+  it("parses shell and PowerShell step markers", () => {
+    const command = [
+      'echo "Step 1: Create config"',
+      "cat > .env << 'DOTENV'",
+      "FOO=bar",
+      "DOTENV",
+      "",
+      'Write-Host "Step 2: Start collector"',
+      ".\\elastic-agent.exe otel --config otel.yml",
+    ].join("\n");
+
+    const steps = parseCommandSteps(command);
+    expect(steps).toEqual([
+      {
+        number: 1,
+        title: "Create config",
+        command: "cat > .env << 'DOTENV'\nFOO=bar\nDOTENV",
+      },
+      {
+        number: 2,
+        title: "Start collector",
+        command: ".\\elastic-agent.exe otel --config otel.yml",
+      },
+    ]);
+  });
 });

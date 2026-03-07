@@ -676,7 +676,7 @@ export default function DataStreamsPage() {
                                 variant="body2"
                                 noWrap
                                 title={row.stream?.name}
-                                sx={{ maxWidth: 240, fontSize: "0.85rem", fontFamily: "monospace" }}
+                                sx={{ width: "100%", fontSize: "0.85rem", fontFamily: "monospace" }}
                               >
                                 {row.stream?.name}
                               </Typography>

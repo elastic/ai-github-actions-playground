@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
@@ -95,6 +96,11 @@ export default function IngestionVerificationPanel({
 
       {/* Action row */}
       <Stack direction="row" spacing={1} alignItems="center">
+        {status === "idle" && connectionAvailable && !autoStart && (
+          <Button size="small" variant="outlined" onClick={() => verification.startPolling()}>
+            Check now
+          </Button>
+        )}
         {isPolling && (
           <Tooltip title="Verification checks for new streams, meaningful increase in docs/sec rate (not just a random batch), and new hosts/agents sending data.">
             <Stack direction="row" spacing={0.5} alignItems="center">

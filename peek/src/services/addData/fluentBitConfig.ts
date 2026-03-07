@@ -191,58 +191,58 @@ export function generateFluentBitInstallCommand(
   collectorId: ThirdPartyCollectorId = "fluent-bit",
 ): string {
   if (collectorId === "vector") {
-    return `# 1. Install Vector
+    return `echo "Step 1: Install Vector"
 curl -1sLf 'https://repositories.timber.io/public/vector/cfg/setup/bash.deb.sh' | sudo -E bash
 sudo apt-get update && sudo apt-get install -y vector
 
-# 2. Save the configuration above as /etc/vector/vector.toml
+echo "Step 2: Save the configuration above as /etc/vector/vector.toml"
 
-# 3. Start Vector
+echo "Step 3: Start Vector"
 sudo systemctl enable --now vector`;
   }
 
   if (collectorId === "fluentd") {
-    return `# 1. Install Fluentd (td-agent)
+    return `echo "Step 1: Install Fluentd (td-agent)"
 curl -L https://toolbelt.treasuredata.com/sh/install-ubuntu-jammy-td-agent4.sh | sh
 
-# 2. Save the configuration above as /etc/td-agent/td-agent.conf
+echo "Step 2: Save the configuration above as /etc/td-agent/td-agent.conf"
 
-# 3. Start Fluentd
+echo "Step 3: Start Fluentd"
 sudo systemctl enable --now td-agent`;
   }
 
   if (collectorId === "filebeat") {
-    return `# 1. Install Filebeat
+    return `echo "Step 1: Install Filebeat"
 curl -L -O https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-8.17.0-amd64.deb
 sudo dpkg -i filebeat-8.17.0-amd64.deb
 
-# 2. Save the configuration above as /etc/filebeat/filebeat.yml
+echo "Step 2: Save the configuration above as /etc/filebeat/filebeat.yml"
 
-# 3. Start Filebeat
+echo "Step 3: Start Filebeat"
 sudo systemctl enable --now filebeat`;
   }
 
   if (collectorId === "logstash") {
-    return `# 1. Install Logstash
+    return `echo "Step 1: Install Logstash"
 curl -L -O https://artifacts.elastic.co/downloads/logstash/logstash-8.17.0-amd64.deb
 sudo dpkg -i logstash-8.17.0-amd64.deb
 
-# 2. Save the configuration above as /etc/logstash/conf.d/elastic-output.conf
+echo "Step 2: Save the configuration above as /etc/logstash/conf.d/elastic-output.conf"
 
-# 3. Start Logstash
+echo "Step 3: Start Logstash"
 sudo systemctl enable --now logstash`;
   }
 
-  return `# 1. Install Fluent Bit
+  return `echo "Step 1: Install Fluent Bit"
 install_script="$(mktemp -t fluent-bit-install.XXXXXX.sh)"
 trap 'rm -f "$install_script"' EXIT
 curl -fsSL -o "$install_script" https://raw.githubusercontent.com/fluent/fluent-bit/master/install.sh
-# Review the script before running it.
+echo "Reviewing installer script before execution"
 cat "$install_script"
 sh "$install_script"
 
-# 2. Save the configuration above as /etc/fluent-bit/fluent-bit.conf
+echo "Step 2: Save the configuration above as /etc/fluent-bit/fluent-bit.conf"
 
-# 3. Start Fluent Bit
+echo "Step 3: Start Fluent Bit"
 sudo systemctl start fluent-bit`;
 }

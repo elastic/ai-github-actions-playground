@@ -173,8 +173,30 @@ export interface NodeStatsNode {
     cpu?: { percent?: number; total_in_millis?: number };
   };
   ingest?: {
-    total?: { count?: number; failed?: number; time_in_millis?: number };
-    pipelines?: Record<string, { count?: number; failed?: number; time_in_millis?: number }>;
+    total?: { count?: number; failed?: number; current?: number; time_in_millis?: number };
+    pipelines?: Record<
+      string,
+      {
+        count?: number;
+        failed?: number;
+        current?: number;
+        time_in_millis?: number;
+        processors?: Array<
+          Record<
+            string,
+            {
+              type?: string;
+              stats?: {
+                count?: number;
+                failed?: number;
+                current?: number;
+                time_in_millis?: number;
+              };
+            }
+          >
+        >;
+      }
+    >;
   };
 }
 

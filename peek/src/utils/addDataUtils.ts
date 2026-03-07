@@ -204,24 +204,29 @@ export interface CommandStep {
 /**
  * Split a multi-step command string into discrete steps.
  *
- * Each step is identified by a comment line matching the pattern `# N. <title>`
- * where `N` is a positive integer.  All lines between two step markers (or
- * between the last marker and end-of-string) are joined to form the step's
- * command text.  Leading non-step preamble lines (e.g. notes about managed OTLP)
- * are prepended to the first step's command.
+ * Each step is identified by either:
+ * - A comment line matching `# N. <title>`, or
+ * - A shell/powershell prompt matching `echo "Step N: <title>"` / `Write-Host "Step N: <title>"`.
+ *
+ * All lines between two step markers (or between the last marker and end-of-string)
+ * are joined to form the step's command text. Leading non-step preamble lines
+ * (e.g. notes about managed OTLP) are prepended to the first step's command.
  *
  * Returns an empty array when the command contains no step markers.
  */
 export function parseCommandSteps(command: string): CommandStep[] {
   const lines = command.split("\n");
-  const stepPattern = /^#\s*(\d+)\.\s*(.*)$/;
+  const stepPattern =
+    /^(?:#\s*(\d+)\.\s*(.*)|(?:echo|Write-Host)\s+["']Step\s+(\d+):\s*(.*)["'])$/i;
   const steps: CommandStep[] = [];
   const preambleLines: string[] = [];
 
   for (const line of lines) {
     const match = stepPattern.exec(line);
     if (match) {
-      steps.push({ number: parseInt(match[1]!, 10), title: match[2]!.trim(), command: "" });
+      const numberRaw = match[1] ?? match[3];
+      const titleRaw = match[2] ?? match[4];
+      steps.push({ number: parseInt(numberRaw!, 10), title: titleRaw!.trim(), command: "" });
     } else if (steps.length === 0) {
       preambleLines.push(line);
     } else {
@@ -291,20 +296,20 @@ export const PLATFORM_GUIDES: Record<Platform, PlatformGuide> = {
     command: ({ esUrl, version, apiKey, endpointType }) => {
       const managedOtlpNotice =
         endpointType === "managed_otlp"
-          ? `# Note: Kubernetes quickstart currently supports Elasticsearch output only.\n# Managed OTLP endpoint mode is available for Docker, Linux, macOS, and Windows.\n\n`
+          ? `echo "Note: Kubernetes quickstart currently supports Elasticsearch output only."\necho "Managed OTLP endpoint mode is available for Docker, Linux, macOS, and Windows."\n\n`
           : "";
-      return `${managedOtlpNotice}# 1. Add the OpenTelemetry Helm repository
+      return `${managedOtlpNotice}echo "Step 1: Add the OpenTelemetry Helm repository"
 helm repo add open-telemetry \\
   'https://open-telemetry.github.io/opentelemetry-helm-charts' --force-update
 
-# 2. Create namespace and secret with your ES credentials
+echo "Step 2: Create namespace and secret with your Elasticsearch credentials"
 kubectl create namespace opentelemetry-operator-system
 kubectl create secret generic elastic-secret-otel \\
   --namespace opentelemetry-operator-system \\
   --from-literal=elastic_endpoint='${esUrl}' \\
   --from-literal=elastic_api_key='${apiKey}'
 
-# 3. Install the OpenTelemetry Kube Stack with EDOT values
+echo "Step 3: Install the OpenTelemetry Kube Stack with EDOT values"
 helm install opentelemetry-kube-stack open-telemetry/opentelemetry-kube-stack \\
   --namespace opentelemetry-operator-system \\
   --values 'https://raw.githubusercontent.com/elastic/elastic-agent/refs/tags/v${version}/deploy/helm/edot-collector/kube-stack/values.yaml' \\
@@ -327,8 +332,20 @@ helm install opentelemetry-kube-stack open-telemetry/opentelemetry-kube-stack \\
       - OTEL_EXPORTER_OTLP_HEADERS`
         : `      - ELASTIC_API_KEY
       - ELASTIC_ENDPOINT`;
-      return `# 1. Create an otel-collector-config.yml (see official docs for full reference)
-# 2. Create a .env file
+      const sampleConfigPath = isOtlp
+        ? "otel_samples/managed_otlp/platformlogs_hostmetrics.yml"
+        : "otel_samples/platformlogs_hostmetrics.yml";
+      return `echo "Step 1: Ensure otel-collector-config.yml is a file"
+if [ -d ./otel-collector-config.yml ]; then
+  echo "Expected ./otel-collector-config.yml to be a file, but found a directory."
+  exit 1
+fi
+if [ ! -f ./otel-collector-config.yml ]; then
+  echo "Downloading starter config to ./otel-collector-config.yml"
+  curl -fsSL ${ARTIFACTS_BASE}/${sampleConfigPath} -o ./otel-collector-config.yml
+fi
+
+echo "Step 2: Create a .env file"
 cat > .env << 'DOTENV'
 HOST_FILESYSTEM=/
 DOCKER_SOCK=/var/run/docker.sock
@@ -339,7 +356,7 @@ ${endpointEnvKey}=${endpoint}
 OTEL_COLLECTOR_CONFIG=./otel-collector-config.yml
 DOTENV
 
-# 3. Create a docker-compose.yml
+echo "Step 3: Create a docker-compose.yml"
 cat > docker-compose.yml << 'COMPOSE'
 services:
   otel-collector:
@@ -364,7 +381,7 @@ ${composeEnvLines}
       - STORAGE_DIR=/usr/share/elastic-agent
 COMPOSE
 
-# 4. Start the collector
+echo "Step 4: Start the collector"
 docker compose up -d`;
     },
   },
@@ -390,19 +407,19 @@ ELASTIC_API_KEY="${apiKey}"`;
 export ELASTIC_API_KEY="${apiKey}"`
           : `export ELASTIC_ENDPOINT="${esUrl}"
 export ELASTIC_API_KEY="${apiKey}"`;
-        return `# 1. Detect architecture, then download and extract the EDOT Collector (generic tar.gz)
+        return `echo "Step 1: Detect architecture, then download and extract the EDOT Collector (generic tar.gz)"
 AGENT_ARCH="$(uname -m | sed -E 's/^(x86_64|amd64)$/x86_64/; s/^(aarch64|arm64)$/arm64/')"
 curl -L -O ${ARTIFACTS_BASE}/elastic-agent-${version}-linux-\${AGENT_ARCH}.tar.gz
 tar xzvf elastic-agent-${version}-linux-\${AGENT_ARCH}.tar.gz
 cd elastic-agent-${version}-linux-\${AGENT_ARCH}
 
-# 2. Set your credentials
+echo "Step 2: Set your credentials"
 ${runOnceCredentialLines}
 export STORAGE_DIR="$(pwd)/data/otel"
 mkdir -p "$STORAGE_DIR"
 cp ${sampleConfig} otel.yml
 
-# 3. Start the EDOT Collector
+echo "Step 3: Start the EDOT Collector"
 sudo -E ./elastic-agent otel --config otel.yml`;
       }
 
@@ -434,7 +451,7 @@ WantedBy=multi-user.target
 EOF
 sudo systemctl daemon-reload
 sudo systemctl enable --now elastic-agent-otel.service`;
-      return `# 1. Detect architecture, then install the EDOT Collector package
+      return `echo "Step 1: Detect architecture, then install the EDOT Collector package"
 AGENT_ARCH="$(uname -m | sed -E 's/^(x86_64|amd64)$/x86_64/; s/^(aarch64|arm64)$/arm64/')"
 AGENT_DIR="/opt/Elastic/Agent"
 PKG_FILE="elastic-agent-${version}-linux-\${AGENT_ARCH}.${packageExt}"
@@ -442,11 +459,11 @@ curl -L -O ${ARTIFACTS_BASE}/\${PKG_FILE}
 ${installSnippet}
 sudo cp "$AGENT_DIR/${sampleConfig}" "$AGENT_DIR/otel.yml"
 
-# 2. Set your credentials
+echo "Step 2: Set your credentials"
 ${runModeCredentials}
 sudo mkdir -p "$AGENT_DIR/data/otel"
 
-# 3. Start the EDOT Collector
+echo "Step 3: Start the EDOT Collector"
 ${runModeStart}`;
     },
   },
@@ -461,18 +478,18 @@ ${runModeStart}`;
 export OTEL_EXPORTER_OTLP_HEADERS="Authorization=ApiKey ${apiKey}"`
         : `export ELASTIC_ENDPOINT="${esUrl}"
 export ELASTIC_API_KEY="${apiKey}"`;
-      return `# 1. Detect architecture, then download and extract the EDOT Collector
+      return `echo "Step 1: Detect architecture, then download and extract the EDOT Collector"
 AGENT_ARCH="$(uname -m | sed -E 's/^arm64$/aarch64/; s/^x86_64$/x86_64/')"
 curl -L -O ${ARTIFACTS_BASE}/elastic-agent-${version}-darwin-\${AGENT_ARCH}.tar.gz
 tar xzvf elastic-agent-${version}-darwin-\${AGENT_ARCH}.tar.gz
 cd elastic-agent-${version}-darwin-\${AGENT_ARCH}
 
-# 2. Set your credentials
+echo "Step 2: Set your credentials"
 ${credentialLines}
 export STORAGE_DIR="$(pwd)/data/otel"
 mkdir -p "$STORAGE_DIR"
 
-# 3. Start the EDOT Collector
+echo "Step 3: Start the EDOT Collector"
 sudo -E ./elastic-agent otel --config otel.yml`;
     },
   },
@@ -487,20 +504,19 @@ sudo -E ./elastic-agent otel --config otel.yml`;
 $env:OTEL_EXPORTER_OTLP_HEADERS = "Authorization=ApiKey ${apiKey}"`
         : `$env:ELASTIC_ENDPOINT = "${esUrl}"
 $env:ELASTIC_API_KEY = "${apiKey}"`;
-      return `# 1. Detect architecture and download the EDOT Collector
+      return `Write-Host "Step 1: Detect architecture and download the EDOT Collector"
 $agentArch = if ($env:PROCESSOR_ARCHITECTURE -eq "ARM64") { "arm64" } else { "x86_64" }
-# Download from: ${ARTIFACTS_BASE}/elastic-agent-${version}-windows-$agentArch.zip
-# Or use PowerShell:
+Write-Host "Download URL: ${ARTIFACTS_BASE}/elastic-agent-${version}-windows-$agentArch.zip"
 Invoke-WebRequest -Uri "${ARTIFACTS_BASE}/elastic-agent-${version}-windows-$agentArch.zip" -OutFile elastic-agent.zip
 Expand-Archive -Path elastic-agent.zip -DestinationPath .
 cd elastic-agent-${version}-windows-$agentArch
 
-# 2. Set your credentials
+Write-Host "Step 2: Set your credentials"
 ${credentialLines}
 $env:STORAGE_DIR = "$PWD\\data\\otel"
 New-Item -ItemType Directory -Path $env:STORAGE_DIR -Force | Out-Null
 
-# 3. Start the EDOT Collector
+Write-Host "Step 3: Start the EDOT Collector"
 .\\elastic-agent.exe otel --config otel.yml`;
     },
   },
