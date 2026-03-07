@@ -4,6 +4,7 @@ import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
+import CircularProgress from "@mui/material/CircularProgress";
 import Drawer from "@mui/material/Drawer";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
@@ -57,8 +58,18 @@ export default function GlobalHealthPage() {
   );
 
   const failingCounts = useMemo(() => {
-    const counts: Record<HealthSeverity, number> = { critical: 0, high: 0, medium: 0, low: 0 };
+    const counts: Record<HealthSeverity | "unknown", number> = {
+      critical: 0,
+      high: 0,
+      medium: 0,
+      low: 0,
+      unknown: 0,
+    };
     for (const check of checks) {
+      if (check.status === "unknown") {
+        counts.unknown += 1;
+        continue;
+      }
       if ((check.status === "fail" || check.status === "warn") && check.severity) {
         counts[check.severity] += 1;
       }
@@ -86,6 +97,7 @@ export default function GlobalHealthPage() {
         <Chip color="error" variant="outlined" label={`High: ${failingCounts.high}`} />
         <Chip color="warning" label={`Medium: ${failingCounts.medium}`} />
         <Chip color="default" label={`Low: ${failingCounts.low}`} />
+        <Chip color="default" variant="outlined" label={`Unknown: ${failingCounts.unknown}`} />
         <Chip label={`Last updated: ${formattedLastUpdated}`} variant="outlined" />
       </Stack>
 
@@ -102,7 +114,24 @@ export default function GlobalHealthPage() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {orderedChecks.length === 0 ? (
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={6}>
+                  <Stack
+                    direction="row"
+                    spacing={1}
+                    alignItems="center"
+                    justifyContent="center"
+                    py={1}
+                  >
+                    <CircularProgress size={16} />
+                    <Typography variant="body2" color="text.secondary">
+                      Loading health checks...
+                    </Typography>
+                  </Stack>
+                </TableCell>
+              </TableRow>
+            ) : orderedChecks.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6}>
                   <EmptyState

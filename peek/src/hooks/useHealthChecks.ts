@@ -13,6 +13,14 @@ import { useConnectionStore } from "../store/useConnectionStore";
 
 const SHARED_HEALTH_SNAPSHOT_KEY = "shared";
 
+function hashString(value: string): string {
+  let hash = 5381;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash * 33) ^ value.charCodeAt(i);
+  }
+  return (hash >>> 0).toString(36);
+}
+
 export interface UseHealthChecksOptions {
   surface: HealthSurface;
   checkIds?: string[];
@@ -28,6 +36,7 @@ export interface UseHealthChecksResult {
 
 export function useHealthChecks(options: UseHealthChecksOptions): UseHealthChecksResult {
   const connection = useConnectionStore((s) => s.connection);
+  const activeProfileId = useConnectionStore((s) => s.activeProfileId);
 
   const selectedChecks = useMemo(() => {
     const allSurfaceChecks = healthRegistry.getBySurface(options.surface);
@@ -41,11 +50,24 @@ export function useHealthChecks(options: UseHealthChecksOptions): UseHealthCheck
       new Set(selectedChecks.flatMap((check) => check.dependsOn)),
     ) as HealthQueryGroup[];
   }, [selectedChecks]);
+  const connectionFingerprint = useMemo(() => {
+    if (!connection) return "none";
+    return hashString(
+      [
+        activeProfileId ?? "",
+        connection.url,
+        connection.username ?? "",
+        connection.password ?? "",
+        connection.apiKey ?? "",
+      ].join("|"),
+    );
+  }, [connection, activeProfileId]);
 
   const query = useQuery({
     queryKey: [
       "health-checks",
       connection?.url,
+      connectionFingerprint,
       SHARED_HEALTH_SNAPSHOT_KEY,
       sharedGroups.join(","),
     ],
