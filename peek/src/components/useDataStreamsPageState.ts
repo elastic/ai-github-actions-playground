@@ -1,6 +1,5 @@
 import { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { parseAsString, useQueryState } from "nuqs";
 
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useApiConsoleStore } from "../store/useApiConsoleStore";
@@ -11,6 +10,7 @@ import { useFieldCaps } from "../hooks/useFieldCaps";
 import { useOpenInDiscover } from "../hooks/useOpenInDiscover";
 import { INSIGHT_GUARDRAIL } from "../hooks/insightPromptUtils";
 import { usePageSlotInsights } from "../hooks/usePageSlotInsights";
+import { useSearchParam } from "../hooks/useSearchParam";
 
 import { DATA_STREAMS_INSIGHT_SLOTS } from "./dataStreamsInsightSlots";
 import type { StreamSortField, StreamSortDirection } from "./dataStreamsUtils";
@@ -22,10 +22,7 @@ export function useDataStreamsPageState() {
   const setConsoleDraft = useApiConsoleStore((s) => s.setConsoleDraft);
   const navigate = useNavigate();
 
-  const [search, setSearch] = useQueryState(
-    "search",
-    parseAsString.withDefault("").withOptions({ history: "replace" }),
-  );
+  const [search, setSearch] = useSearchParam();
   const [fieldSearch, setFieldSearch] = useState("");
   const deferredSearch = useDeferredValue(search);
   const deferredFieldSearch = useDeferredValue(fieldSearch);

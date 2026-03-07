@@ -8,7 +8,7 @@ import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 
 import { splitEsqlPipeline } from "../services/es/queryText";
 
-import { formatDuration } from "./formatDuration";
+import { formatDuration } from "../utils/formatDuration";
 
 interface QueryPipelineStepsProps {
   query: string;

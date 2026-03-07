@@ -34,6 +34,7 @@ import { useDiskUsage } from "../hooks/useDiskUsage";
 import { formatBytes } from "../utils/formatBytes";
 import { usePageSlotInsights } from "../hooks/usePageSlotInsights";
 import { INSIGHT_GUARDRAIL } from "../hooks/insightPromptUtils";
+import { useSearchParam } from "../hooks/useSearchParam";
 
 import EmptyState from "./EmptyState";
 import PageHeader from "./PageHeader";
@@ -89,10 +90,7 @@ export default function IndicesPage() {
   const setConsoleDraft = useApiConsoleStore((s) => s.setConsoleDraft);
   const navigate = useNavigate();
 
-  const [search, setSearch] = useQueryState(
-    "search",
-    parseAsString.withDefault("").withOptions({ history: "replace" }),
-  );
+  const [search, setSearch] = useSearchParam();
   const [showSystemIndices, setShowSystemIndices] = useState(false);
   const [sortField, setSortField] = useState<IndexSortField>("index");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
