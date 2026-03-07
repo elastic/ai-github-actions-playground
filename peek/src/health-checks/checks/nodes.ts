@@ -518,4 +518,487 @@ export const nodesChecks: HealthCheckDefinition[] = [
       return { status: "pass", summary: "No ingest pipeline failures." };
     },
   },
+  {
+    id: "nodes.jvm.heap_percent.warning",
+    domain: "nodes",
+    title: "Node heap utilization warning",
+    description:
+      "Warns when any data/master node JVM heap usage is >= 75%. Voting-only tiebreaker nodes are excluded.",
+    severityOnFail: "medium",
+    surfaces: ["global"],
+    dependsOn: ["nodesCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/jvm-settings",
+    recommendation:
+      "Heap above 75% is a warning sign. Monitor trends and consider scaling before hitting critical thresholds.",
+    evaluate: (snapshot) => {
+      const nodes = getEligibleNodes(snapshot.data.nodesCore?.nodeStats?.nodes ?? {});
+      const hottestNode = nodes
+        .map((node) => ({
+          name: node.name ?? "unknown",
+          heap: node.jvm?.mem?.heap_used_percent ?? 0,
+        }))
+        .sort((a, b) => b.heap - a.heap)[0];
+
+      if ((hottestNode?.heap ?? 0) >= 75 && (hottestNode?.heap ?? 0) < 85) {
+        return {
+          status: "warn",
+          summary: `Elevated JVM heap on ${hottestNode?.name} (${hottestNode?.heap}%).`,
+          observed: { hottestNode },
+          links: [{ label: "Cluster Health", to: "/cluster-health" }],
+        };
+      }
+      return { status: "pass", summary: "Node JVM heap utilization is below warning threshold." };
+    },
+  },
+  {
+    id: "nodes.indices.fielddata.evictions",
+    domain: "nodes",
+    title: "Fielddata evictions",
+    description:
+      "Warns when fielddata evictions are non-zero, indicating the fielddata cache is under pressure.",
+    severityOnFail: "medium",
+    surfaces: ["global"],
+    dependsOn: ["nodesCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/circuit-breaker-settings",
+    recommendation:
+      "Fielddata evictions mean the cache is too small or text fields are being aggregated. Use keyword fields for aggregations.",
+    evaluate: (snapshot) => {
+      const nodes = Object.values(snapshot.data.nodesCore?.nodeStats?.nodes ?? {});
+      let totalEvictions = 0;
+      for (const node of nodes) {
+        totalEvictions += node.indices?.fielddata?.evictions ?? 0;
+      }
+      if (totalEvictions > 0) {
+        return {
+          status: "warn",
+          summary: `${totalEvictions} fielddata eviction${totalEvictions === 1 ? "" : "s"} across cluster.`,
+          observed: { totalEvictions },
+          links: [{ label: "Cluster Health", to: "/cluster-health" }],
+        };
+      }
+      return { status: "pass", summary: "No fielddata evictions." };
+    },
+  },
+  {
+    id: "nodes.indices.query_cache.evictions.high",
+    domain: "nodes",
+    title: "Query cache evictions",
+    description: "Warns when query cache evictions are high relative to cache count.",
+    severityOnFail: "low",
+    surfaces: ["global"],
+    dependsOn: ["nodesCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/nodes-stats",
+    recommendation:
+      "High query cache evictions reduce search performance. Consider increasing indices.queries.cache.size or reducing query diversity.",
+    evaluate: (snapshot) => {
+      const nodes = Object.values(snapshot.data.nodesCore?.nodeStats?.nodes ?? {});
+      let totalEvictions = 0;
+      let totalCacheCount = 0;
+      for (const node of nodes) {
+        totalEvictions += node.indices?.query_cache?.evictions ?? 0;
+        totalCacheCount += node.indices?.query_cache?.cache_count ?? 0;
+      }
+      if (totalCacheCount > 100 && totalEvictions / totalCacheCount >= 0.5) {
+        return {
+          status: "warn",
+          summary: `Query cache eviction ratio ${((totalEvictions / totalCacheCount) * 100).toFixed(0)}% (${totalEvictions} evictions / ${totalCacheCount} cached).`,
+          observed: { totalEvictions, totalCacheCount },
+          links: [{ label: "Cluster Health", to: "/cluster-health" }],
+        };
+      }
+      return { status: "pass", summary: "Query cache eviction rate is normal." };
+    },
+  },
+  {
+    id: "nodes.thread_pool.get.rejected",
+    domain: "nodes",
+    title: "Get rejections",
+    description: "Warns when get thread pool rejections are non-zero — hot path overload.",
+    severityOnFail: "medium",
+    surfaces: ["global"],
+    dependsOn: ["nodesCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/thread-pool-settings",
+    recommendation:
+      "Get rejections indicate document retrieval requests are being dropped. Check for hot-path overload on specific indices.",
+    evaluate: (snapshot) => {
+      const nodes = Object.values(snapshot.data.nodesCore?.nodeStats?.nodes ?? {});
+      let total = 0;
+      for (const node of nodes) {
+        total += node.thread_pool?.get?.rejected ?? 0;
+      }
+      if (total > 0) {
+        return {
+          status: "warn",
+          summary: `${total} get thread pool rejection${total === 1 ? "" : "s"}.`,
+          observed: { totalGetRejections: total },
+          links: [{ label: "Nodes", to: "/nodes" }],
+        };
+      }
+      return { status: "pass", summary: "No get rejections." };
+    },
+  },
+  {
+    id: "nodes.indices.indexing.latency.high",
+    domain: "nodes",
+    title: "Indexing latency",
+    description: "Warns when average indexing latency exceeds 20ms per document across any node.",
+    severityOnFail: "medium",
+    surfaces: ["global"],
+    dependsOn: ["nodesCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/nodes-stats",
+    recommendation:
+      "High indexing latency may indicate slow disks, heavy merges, or complex ingest pipelines. Check merge stats and pipeline performance.",
+    evaluate: (snapshot) => {
+      const nodes = Object.values(snapshot.data.nodesCore?.nodeStats?.nodes ?? {});
+      for (const node of nodes) {
+        const total = node.indices?.indexing?.index_total ?? 0;
+        const timeMs = node.indices?.indexing?.index_time_in_millis ?? 0;
+        if (total > 1000) {
+          const avgMs = timeMs / total;
+          if (avgMs >= 20) {
+            return {
+              status: "warn",
+              summary: `High indexing latency on ${node.name ?? "unknown"} — avg ${avgMs.toFixed(1)}ms/doc.`,
+              observed: { node: node.name, avgMs: +avgMs.toFixed(1), totalDocs: total },
+              links: [{ label: "Nodes", to: "/nodes" }],
+            };
+          }
+        }
+      }
+      return { status: "pass", summary: "Indexing latency is within threshold." };
+    },
+  },
+  {
+    id: "nodes.indices.indexing.failed",
+    domain: "nodes",
+    title: "Indexing failures",
+    description: "Warns when index_failed count is non-zero on any node.",
+    severityOnFail: "high",
+    surfaces: ["global", "local"],
+    dependsOn: ["nodesCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/nodes-stats",
+    recommendation:
+      "Indexing failures mean documents are being rejected. Check for mapping conflicts, version conflicts, or pipeline errors.",
+    evaluate: (snapshot) => {
+      const nodes = Object.values(snapshot.data.nodesCore?.nodeStats?.nodes ?? {});
+      let totalFailed = 0;
+      for (const node of nodes) {
+        totalFailed += node.indices?.indexing?.index_failed ?? 0;
+      }
+      if (totalFailed > 0) {
+        return {
+          status: "warn",
+          summary: `${totalFailed} indexing failure${totalFailed === 1 ? "" : "s"} across cluster.`,
+          observed: { totalFailed },
+          links: [{ label: "Cluster Health", to: "/cluster-health" }],
+        };
+      }
+      return { status: "pass", summary: "No indexing failures." };
+    },
+  },
+  {
+    id: "nodes.indices.merges.throttled",
+    domain: "nodes",
+    title: "Merge throttling",
+    description: "Warns when merge throttle time is non-zero, indicating merges are falling behind indexing.",
+    severityOnFail: "medium",
+    surfaces: ["global"],
+    dependsOn: ["nodesCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/nodes-stats",
+    recommendation:
+      "Merge throttling slows indexing. Consider reducing indexing rate, increasing merge threads, or using faster storage.",
+    evaluate: (snapshot) => {
+      const nodes = Object.values(snapshot.data.nodesCore?.nodeStats?.nodes ?? {});
+      let totalThrottledMs = 0;
+      for (const node of nodes) {
+        totalThrottledMs += node.indices?.merges?.total_throttled_time_in_millis ?? 0;
+      }
+      if (totalThrottledMs > 0) {
+        const totalThrottledSec = +(totalThrottledMs / 1000).toFixed(1);
+        return {
+          status: "warn",
+          summary: `${totalThrottledSec}s of merge throttle time across cluster.`,
+          observed: { totalThrottledMs, totalThrottledSec },
+          links: [{ label: "Nodes", to: "/nodes" }],
+        };
+      }
+      return { status: "pass", summary: "No merge throttling." };
+    },
+  },
+  {
+    id: "nodes.indices.translog.uncommitted.high",
+    domain: "nodes",
+    title: "Translog uncommitted operations",
+    description:
+      "Warns when translog has many uncommitted operations, indicating slow flushes and recovery risk.",
+    severityOnFail: "medium",
+    surfaces: ["global"],
+    dependsOn: ["nodesCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/nodes-stats",
+    recommendation:
+      "Large translogs slow recovery and increase memory pressure. Check flush frequency and disk I/O performance.",
+    evaluate: (snapshot) => {
+      const nodes = Object.values(snapshot.data.nodesCore?.nodeStats?.nodes ?? {});
+      for (const node of nodes) {
+        const uncommitted = node.indices?.translog?.uncommitted_operations ?? 0;
+        if (uncommitted >= 100_000) {
+          return {
+            status: "warn",
+            summary: `${node.name ?? "unknown"} has ${uncommitted.toLocaleString()} uncommitted translog operations.`,
+            observed: { node: node.name, uncommittedOps: uncommitted },
+            links: [{ label: "Nodes", to: "/nodes" }],
+          };
+        }
+      }
+      return { status: "pass", summary: "Translog uncommitted operations are normal." };
+    },
+  },
+  {
+    id: "nodes.indices.refresh.latency.high",
+    domain: "nodes",
+    title: "Refresh latency",
+    description: "Warns when average refresh latency exceeds 500ms — near-real-time search may lag.",
+    severityOnFail: "low",
+    surfaces: ["global"],
+    dependsOn: ["nodesCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/nodes-stats",
+    recommendation:
+      "High refresh latency delays search visibility. Check segment count, merge pressure, and consider increasing refresh_interval.",
+    evaluate: (snapshot) => {
+      const nodes = Object.values(snapshot.data.nodesCore?.nodeStats?.nodes ?? {});
+      for (const node of nodes) {
+        const total = node.indices?.refresh?.total ?? 0;
+        const timeMs = node.indices?.refresh?.total_time_in_millis ?? 0;
+        if (total > 100) {
+          const avgMs = timeMs / total;
+          if (avgMs >= 500) {
+            return {
+              status: "warn",
+              summary: `High refresh latency on ${node.name ?? "unknown"} — avg ${avgMs.toFixed(0)}ms.`,
+              observed: { node: node.name, avgRefreshMs: +avgMs.toFixed(0) },
+              links: [{ label: "Nodes", to: "/nodes" }],
+            };
+          }
+        }
+      }
+      return { status: "pass", summary: "Refresh latency is within threshold." };
+    },
+  },
+  {
+    id: "nodes.indices.search.query_latency.high",
+    domain: "nodes",
+    title: "Search query latency",
+    description: "Warns when average search query latency exceeds 100ms on any node.",
+    severityOnFail: "medium",
+    surfaces: ["global", "local"],
+    dependsOn: ["nodesCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/nodes-stats",
+    recommendation:
+      "High search latency degrades user experience. Profile slow queries, optimize mappings, and check for resource contention.",
+    evaluate: (snapshot) => {
+      const nodes = Object.values(snapshot.data.nodesCore?.nodeStats?.nodes ?? {});
+      for (const node of nodes) {
+        const total = node.indices?.search?.query_total ?? 0;
+        const timeMs = node.indices?.search?.query_time_in_millis ?? 0;
+        if (total > 100) {
+          const avgMs = timeMs / total;
+          if (avgMs >= 100) {
+            return {
+              status: "warn",
+              summary: `High search latency on ${node.name ?? "unknown"} — avg ${avgMs.toFixed(0)}ms/query.`,
+              observed: { node: node.name, avgQueryMs: +avgMs.toFixed(0), totalQueries: total },
+              links: [{ label: "Nodes", to: "/nodes" }],
+            };
+          }
+        }
+      }
+      return { status: "pass", summary: "Search query latency is within threshold." };
+    },
+  },
+  {
+    id: "nodes.indices.search.fetch_latency.high",
+    domain: "nodes",
+    title: "Search fetch latency",
+    description: "Warns when average search fetch latency exceeds 100ms on any node.",
+    severityOnFail: "medium",
+    surfaces: ["global"],
+    dependsOn: ["nodesCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/nodes-stats",
+    recommendation:
+      "High fetch latency may indicate large result sets or stored fields. Reduce _source size or use source filtering.",
+    evaluate: (snapshot) => {
+      const nodes = Object.values(snapshot.data.nodesCore?.nodeStats?.nodes ?? {});
+      for (const node of nodes) {
+        const total = node.indices?.search?.fetch_total ?? 0;
+        const timeMs = node.indices?.search?.fetch_time_in_millis ?? 0;
+        if (total > 100) {
+          const avgMs = timeMs / total;
+          if (avgMs >= 100) {
+            return {
+              status: "warn",
+              summary: `High fetch latency on ${node.name ?? "unknown"} — avg ${avgMs.toFixed(0)}ms/fetch.`,
+              observed: { node: node.name, avgFetchMs: +avgMs.toFixed(0), totalFetches: total },
+              links: [{ label: "Nodes", to: "/nodes" }],
+            };
+          }
+        }
+      }
+      return { status: "pass", summary: "Search fetch latency is within threshold." };
+    },
+  },
+  {
+    id: "nodes.indices.search.open_contexts.high",
+    domain: "nodes",
+    title: "Open scroll contexts",
+    description:
+      "Warns when open scroll/search contexts are high — open scrolls consume heap and can cause OOM.",
+    severityOnFail: "medium",
+    surfaces: ["global"],
+    dependsOn: ["nodesCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/nodes-stats",
+    recommendation:
+      "Open scroll contexts hold resources until closed or timed out. Check for scroll leaks in client applications.",
+    evaluate: (snapshot) => {
+      const nodes = Object.values(snapshot.data.nodesCore?.nodeStats?.nodes ?? {});
+      let totalOpen = 0;
+      for (const node of nodes) {
+        totalOpen += node.indices?.search?.open_contexts ?? 0;
+      }
+      if (totalOpen >= 100) {
+        return {
+          status: "warn",
+          summary: `${totalOpen} open scroll/search contexts across cluster.`,
+          observed: { totalOpenContexts: totalOpen },
+          links: [{ label: "Cluster Health", to: "/cluster-health" }],
+        };
+      }
+      return { status: "pass", summary: "Open scroll context count is normal." };
+    },
+  },
+  {
+    id: "nodes.indices.docs.deleted_ratio.high",
+    domain: "nodes",
+    title: "Deleted documents ratio",
+    description:
+      "Warns when deleted documents exceed 20% of total — wasted disk and heap from unmerged deletes.",
+    severityOnFail: "low",
+    surfaces: ["global"],
+    dependsOn: ["nodesCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/nodes-stats",
+    recommendation:
+      "High deleted doc ratios waste resources. Consider force-merging read-only indices to expunge deletes.",
+    evaluate: (snapshot) => {
+      const nodes = Object.values(snapshot.data.nodesCore?.nodeStats?.nodes ?? {});
+      let totalDocs = 0;
+      let totalDeleted = 0;
+      for (const node of nodes) {
+        totalDocs += node.indices?.docs?.count ?? 0;
+        totalDeleted += node.indices?.docs?.deleted ?? 0;
+      }
+      const total = totalDocs + totalDeleted;
+      if (total > 10_000 && totalDeleted / total >= 0.2) {
+        const pct = +((totalDeleted / total) * 100).toFixed(1);
+        return {
+          status: "warn",
+          summary: `${pct}% of documents are deleted but unmerged (${totalDeleted.toLocaleString()} deleted).`,
+          observed: { totalDocs, totalDeleted, deletedPercent: pct },
+          links: [{ label: "Cluster Health", to: "/cluster-health" }],
+        };
+      }
+      return { status: "pass", summary: "Deleted document ratio is normal." };
+    },
+  },
+  {
+    id: "nodes.indices.segments.memory.high",
+    domain: "nodes",
+    title: "Segment memory usage",
+    description:
+      "Warns when segment memory is a large portion of heap on any node — too many segments or too many fields.",
+    severityOnFail: "medium",
+    surfaces: ["global"],
+    dependsOn: ["nodesCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/nodes-stats",
+    recommendation:
+      "High segment memory reduces available heap. Reduce shard count, force-merge old indices, or reduce field count.",
+    evaluate: (snapshot) => {
+      const nodes = getEligibleNodes(snapshot.data.nodesCore?.nodeStats?.nodes ?? {});
+      for (const node of nodes) {
+        const segMem = node.indices?.segments?.memory_in_bytes ?? 0;
+        const heapMax = node.jvm?.mem?.heap_max_in_bytes ?? 0;
+        if (heapMax > 0 && segMem / heapMax >= 0.5) {
+          const pct = +((segMem / heapMax) * 100).toFixed(1);
+          return {
+            status: "warn",
+            summary: `Segment memory on ${node.name ?? "unknown"} is ${pct}% of heap (${(segMem / 1e9).toFixed(1)} GB).`,
+            observed: {
+              node: node.name,
+              segmentMemGb: +(segMem / 1e9).toFixed(1),
+              heapMaxGb: +(heapMax / 1e9).toFixed(1),
+              percent: pct,
+            },
+            links: [{ label: "Nodes", to: "/nodes" }],
+          };
+        }
+      }
+      return { status: "pass", summary: "Segment memory usage is within threshold." };
+    },
+  },
+  {
+    id: "nodes.breaker.request.tripped",
+    domain: "nodes",
+    title: "Request circuit breaker trips",
+    description:
+      "Warns when the request circuit breaker has tripped — large aggregations or heavy queries exceeded memory limits.",
+    severityOnFail: "medium",
+    surfaces: ["global"],
+    dependsOn: ["nodesCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/circuit-breaker-settings",
+    recommendation:
+      "Request breaker trips indicate individual requests using too much memory. Optimize aggregations and reduce cardinality.",
+    evaluate: (snapshot) => {
+      const nodes = Object.values(snapshot.data.nodesCore?.nodeStats?.nodes ?? {});
+      let total = 0;
+      for (const node of nodes) {
+        total += node.breakers?.request?.tripped ?? 0;
+      }
+      if (total > 0) {
+        return {
+          status: "warn",
+          summary: `Request circuit breaker tripped ${total} time${total === 1 ? "" : "s"}.`,
+          observed: { totalTrips: total },
+          links: [{ label: "Cluster Health", to: "/cluster-health" }],
+        };
+      }
+      return { status: "pass", summary: "No request breaker trips." };
+    },
+  },
+  {
+    id: "nodes.breaker.inflight.tripped",
+    domain: "nodes",
+    title: "In-flight requests breaker trips",
+    description:
+      "Warns when the in-flight requests circuit breaker has tripped — too many concurrent requests consuming memory.",
+    severityOnFail: "medium",
+    surfaces: ["global"],
+    dependsOn: ["nodesCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/circuit-breaker-settings",
+    recommendation:
+      "In-flight breaker trips mean too many concurrent requests. Implement client-side throttling or add nodes.",
+    evaluate: (snapshot) => {
+      const nodes = Object.values(snapshot.data.nodesCore?.nodeStats?.nodes ?? {});
+      let total = 0;
+      for (const node of nodes) {
+        total += node.breakers?.in_flight_requests?.tripped ?? 0;
+      }
+      if (total > 0) {
+        return {
+          status: "warn",
+          summary: `In-flight requests breaker tripped ${total} time${total === 1 ? "" : "s"}.`,
+          observed: { totalTrips: total },
+          links: [{ label: "Cluster Health", to: "/cluster-health" }],
+        };
+      }
+      return { status: "pass", summary: "No in-flight request breaker trips." };
+    },
+  },
 ];

@@ -139,6 +139,19 @@ export interface NodeStatsNode {
     docs?: { count?: number; deleted?: number };
     shard_stats?: { total_count?: number };
     store?: { size_in_bytes?: number };
+    fielddata?: {
+      memory_size_in_bytes?: number;
+      evictions?: number;
+    };
+    query_cache?: {
+      memory_size_in_bytes?: number;
+      evictions?: number;
+      hit_count?: number;
+      miss_count?: number;
+      cache_count?: number;
+      cache_size?: number;
+      total_count?: number;
+    };
     indexing?: {
       index_total?: number;
       index_time_in_millis?: number;
@@ -149,16 +162,28 @@ export interface NodeStatsNode {
       query_time_in_millis?: number;
       fetch_total?: number;
       fetch_time_in_millis?: number;
+      open_contexts?: number;
     };
     merges?: {
       total?: number;
       total_time_in_millis?: number;
       total_size_in_bytes?: number;
+      total_throttled_time_in_millis?: number;
     };
     get?: { total?: number; time_in_millis?: number; missing_total?: number };
     refresh?: { total?: number; total_time_in_millis?: number };
     flush?: { total?: number; total_time_in_millis?: number };
-    segments?: { count?: number; memory_in_bytes?: number };
+    translog?: {
+      operations?: number;
+      size_in_bytes?: number;
+      uncommitted_operations?: number;
+      uncommitted_size_in_bytes?: number;
+    };
+    segments?: {
+      count?: number;
+      memory_in_bytes?: number;
+      version_map_memory_in_bytes?: number;
+    };
   };
   thread_pool?: Record<
     string,
