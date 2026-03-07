@@ -32,6 +32,7 @@ const resetProfiling = () => usePageFiltersStore.getState().resetProfilingFilter
 const resetQuery = () => useQueryStore.getState().resetQueryState();
 const resetServices = () => usePageFiltersStore.getState().resetServiceFilters();
 const resetKubernetes = () => usePageFiltersStore.getState().resetKubernetesFilters();
+const resetHosts = () => usePageFiltersStore.getState().resetHostsFilters();
 const resetTraces = () => useTracesStore.getState().resetFilters();
 const resetUi = () => useUIStore.getState().resetUIState();
 const resetTheme = () => useThemeStore.getState().resetThemeState();
@@ -46,6 +47,7 @@ export const storeResetters: ReadonlyArray<() => void> = [
   resetDashboard,
   resetExplorer,
   resetFleet,
+  resetHosts,
   resetKubernetes,
   resetLlm,
   resetProfiling,
@@ -81,6 +83,7 @@ export const RESET_SCOPE: ReadonlyArray<{ label: string; reset: () => void }> = 
       resetExplorer();
       resetLogs();
       resetFleet();
+      resetHosts();
       resetProfiling();
       resetServices();
       resetKubernetes();

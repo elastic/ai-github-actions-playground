@@ -1,0 +1,94 @@
+/**
+ * Host identity and data model types.
+ *
+ * The identity contract uses `host.name::os.type` as the host key since
+ * OTel hostmetricsreceiver data does not include `host.id`.
+ */
+
+/** OS types recognized by the host inventory. */
+export type HostOsType = "linux" | "windows" | "macos" | "unknown";
+
+/**
+ * Lightweight reference for cross-surface navigation.
+ * Consumed by `HostLink`, `openHost`, and any pivot that targets host detail.
+ */
+export interface HostRef {
+  /**
+   * Primary identifier — `host.name::osType` composite key,
+   * falling back to enrichers (`agent.id`, `cloud.instance.id`, `host.ip`).
+   * See `toHostRef` for the full fallback chain.
+   */
+  hostId: string;
+  /** Human-readable label shown in links/breadcrumbs. */
+  displayName: string;
+  osType: HostOsType;
+}
+
+/** A single host row as displayed in the inventory table. */
+export interface HostRow {
+  hostId: string;
+  hostName: string;
+  osType: HostOsType;
+  osName: string;
+  osVersion: string;
+  lastSeen: string;
+  cpuUtilization: number | null;
+  memoryUtilization: number | null;
+  processCount: number | null;
+  /** Optional enricher — first `host.ip` when available. */
+  hostIp?: string;
+}
+
+/** Normalizes raw `os.type` string to a known `HostOsType`. */
+export function normalizeOsType(raw: string | null | undefined): HostOsType {
+  if (!raw) return "unknown";
+  const lower = raw.toLowerCase().trim();
+  if (lower === "linux") return "linux";
+  if (lower === "windows") return "windows";
+  if (lower === "darwin" || lower === "macos") return "macos";
+  return "unknown";
+}
+
+/** Builds a deterministic `HostRef` from raw host fields. */
+export function toHostRef(
+  hostId: string | null | undefined,
+  hostName: string | null | undefined,
+  osType: string | null | undefined,
+  hostIp?: string | null,
+): HostRef {
+  const normalizedOsType = normalizeOsType(osType);
+  // Use the raw lowercased os.type token for the stable key so it matches the
+  // CONCAT(host.name, "::", COALESCE(os.type, "unknown")) expression in ES|QL.
+  // e.g. "darwin" not "macos".
+  const stableOsToken = osType?.toLowerCase().trim() ?? "unknown";
+  const trimmedHostId = hostId?.trim();
+  const trimmedHostName = hostName?.trim();
+  const trimmedHostIp = hostIp?.trim();
+  const id =
+    trimmedHostId ||
+    (trimmedHostName ? `${trimmedHostName}::${stableOsToken}` : undefined) ||
+    trimmedHostIp ||
+    "unknown";
+  const display = trimmedHostName || trimmedHostId || "unknown";
+  return { hostId: id, displayName: display, osType: normalizedOsType };
+}
+
+/** User-friendly OS label for display. */
+export function osLabel(osType: HostOsType): string {
+  switch (osType) {
+    case "linux":
+      return "Linux";
+    case "windows":
+      return "Windows";
+    case "macos":
+      return "macOS";
+    case "unknown":
+      return "Unknown";
+    default:
+      return assertUnreachable(osType);
+  }
+}
+
+function assertUnreachable(value: never): never {
+  throw new Error(`Unhandled host OS type: ${String(value)}`);
+}

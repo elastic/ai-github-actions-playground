@@ -26,6 +26,7 @@ import PolicyIcon from "@mui/icons-material/Policy";
 import MiscellaneousServicesIcon from "@mui/icons-material/MiscellaneousServices";
 import SubjectIcon from "@mui/icons-material/Subject";
 import CloudIcon from "@mui/icons-material/Cloud";
+import DnsIcon from "@mui/icons-material/Dns";
 import DescriptionIcon from "@mui/icons-material/Description";
 
 import type { UserCapabilities } from "../services/es";
@@ -77,6 +78,11 @@ const K8sWorkloadDashboardPage = lazy(
   () => import("../components/kubernetes/K8sWorkloadDashboardPage"),
 );
 const K8sPodDashboardPage = lazy(() => import("../components/kubernetes/K8sPodDashboardPage"));
+const HostsPage = lazy(() => import("../components/hosts/HostsPage"));
+const HostDetailPage = lazy(() => import("../components/hosts/HostDetailPage"));
+const HostsLinuxPage = lazy(() => import("../components/hosts/HostsLinuxPage"));
+const HostsWindowsPage = lazy(() => import("../components/hosts/HostsWindowsPage"));
+const HostsMacosPage = lazy(() => import("../components/hosts/HostsMacosPage"));
 const TaskManagerPage = lazy(() => import("../components/TaskManagerPage"));
 const IlmPage = lazy(() => import("../components/IlmPage"));
 const TemplatesPage = lazy(() => import("../components/TemplatesPage"));
@@ -310,6 +316,76 @@ export const PAGE_MANIFEST = {
       order: 34,
       showInSidebar: false,
       icon: createElement(CloudIcon, { fontSize: "small" }),
+    },
+  },
+  hosts: {
+    path: "/hosts",
+    component: HostsPage,
+    requiresConnection: true,
+    showTimeControls: false,
+    skeletonVariant: "table",
+    nav: {
+      label: "Hosts",
+      group: "Workspace",
+      order: 40,
+      showInSidebar: true,
+      icon: createElement(DnsIcon, { fontSize: "small" }),
+    },
+  },
+  hostsLinux: {
+    path: "/hosts/linux",
+    component: HostsLinuxPage,
+    requiresConnection: true,
+    showTimeControls: false,
+    skeletonVariant: "table",
+    nav: {
+      label: "Linux Hosts",
+      group: "Workspace",
+      order: 41,
+      showInSidebar: false,
+      icon: createElement(DnsIcon, { fontSize: "small" }),
+    },
+  },
+  hostsWindows: {
+    path: "/hosts/windows",
+    component: HostsWindowsPage,
+    requiresConnection: true,
+    showTimeControls: false,
+    skeletonVariant: "table",
+    nav: {
+      label: "Windows Hosts",
+      group: "Workspace",
+      order: 42,
+      showInSidebar: false,
+      icon: createElement(DnsIcon, { fontSize: "small" }),
+    },
+  },
+  hostsMacos: {
+    path: "/hosts/macos",
+    component: HostsMacosPage,
+    requiresConnection: true,
+    showTimeControls: false,
+    skeletonVariant: "table",
+    nav: {
+      label: "macOS Hosts",
+      group: "Workspace",
+      order: 43,
+      showInSidebar: false,
+      icon: createElement(DnsIcon, { fontSize: "small" }),
+    },
+  },
+  hostDetail: {
+    path: "/hosts/:hostId",
+    component: HostDetailPage,
+    requiresConnection: true,
+    showTimeControls: false,
+    skeletonVariant: "detail-panel",
+    nav: {
+      label: "Host Detail",
+      group: "Workspace",
+      order: 44,
+      showInSidebar: false,
+      icon: createElement(DnsIcon, { fontSize: "small" }),
     },
   },
   console: {

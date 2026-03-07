@@ -14,7 +14,9 @@ import { devtools } from "zustand/middleware";
 import {
   DEFAULT_SERVICE_INVENTORY_FILTERS,
   DEFAULT_KUBERNETES_FILTERS,
+  DEFAULT_HOSTS_FILTERS,
   EMPTY_PROFILING_FILTERS,
+  type HostsFilters,
   type KubernetesFilters,
   type ProfilingFilters,
   type ServiceInventoryFilters,
@@ -92,6 +94,11 @@ interface PageFiltersState {
   kubernetesFilters: KubernetesFilters;
   updateKubernetesFilters: (updates: Partial<KubernetesFilters>) => void;
   resetKubernetesFilters: () => void;
+
+  // --- Hosts ------------------------------------------------------------
+  hostsFilters: HostsFilters;
+  updateHostsFilters: (updates: Partial<HostsFilters>) => void;
+  resetHostsFilters: () => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -158,6 +165,12 @@ export const usePageFiltersStore = create<PageFiltersState>()(
       updateKubernetesFilters: (updates) =>
         set((s) => ({ kubernetesFilters: { ...s.kubernetesFilters, ...updates } })),
       resetKubernetesFilters: () => set({ kubernetesFilters: { ...DEFAULT_KUBERNETES_FILTERS } }),
+
+      // --- Hosts ---------------------------------------------------------
+      hostsFilters: { ...DEFAULT_HOSTS_FILTERS },
+      updateHostsFilters: (updates) =>
+        set((s) => ({ hostsFilters: { ...s.hostsFilters, ...updates } })),
+      resetHostsFilters: () => set({ hostsFilters: { ...DEFAULT_HOSTS_FILTERS } }),
     }),
     { name: "PageFiltersStore", enabled: import.meta.env.DEV },
   ),

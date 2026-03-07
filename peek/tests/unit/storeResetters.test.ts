@@ -32,6 +32,11 @@ const STORES_WITH_RESET_API = [
     store: usePageFiltersStore,
     method: "resetKubernetesFilters",
   },
+  {
+    name: "usePageFiltersStore (hosts)",
+    store: usePageFiltersStore,
+    method: "resetHostsFilters",
+  },
   { name: "useLLMStore", store: useLLMStore, method: "resetLLMState" },
   {
     name: "usePageFiltersStore (profiling)",
