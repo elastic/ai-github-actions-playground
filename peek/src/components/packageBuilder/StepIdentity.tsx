@@ -90,15 +90,20 @@ export default function StepIdentity() {
     async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (!file) return;
-      const [dataUrl, arrayBuffer] = await Promise.all([readAsDataURL(file), readAsArrayBuffer(file)]);
-      setIcon({
-        name: file.name,
-        dataUrl,
-        rawBytes: new Uint8Array(arrayBuffer),
-        mimeType: file.type || "image/svg+xml",
-      });
-      // Reset so same file can be re-selected
-      e.target.value = "";
+      try {
+        const [dataUrl, arrayBuffer] = await Promise.all([readAsDataURL(file), readAsArrayBuffer(file)]);
+        setIcon({
+          name: file.name,
+          dataUrl,
+          rawBytes: new Uint8Array(arrayBuffer),
+          mimeType: file.type || "image/svg+xml",
+        });
+      } catch (err) {
+        console.warn("Failed to read icon file", err);
+      } finally {
+        // Reset so same file can be re-selected
+        e.target.value = "";
+      }
     },
     [setIcon],
   );

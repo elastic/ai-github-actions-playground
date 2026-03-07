@@ -1,4 +1,4 @@
-import { useMemo, useEffect, useRef } from "react";
+import { useMemo, useEffect, useRef, useCallback } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
@@ -77,6 +77,13 @@ export default function StepTemplate() {
   );
 
   const hasExporters = /\bexporters\s*:/i.test(templateContent);
+  const handleCopyRendered = useCallback(async (renderedText: string) => {
+    try {
+      await navigator.clipboard.writeText(renderedText);
+    } catch (err) {
+      console.warn("Failed to copy rendered template output", err);
+    }
+  }, []);
 
   const insertAtCursor = (text: string) => {
     const view = editorRef.current?.view;
@@ -204,7 +211,7 @@ export default function StepTemplate() {
                 <ContentCopyIcon
                   fontSize="small"
                   sx={{ cursor: "pointer", color: "text.secondary" }}
-                  onClick={() => navigator.clipboard.writeText(result.rendered)}
+                  onClick={() => void handleCopyRendered(result.rendered)}
                 />
               </Tooltip>
             )}

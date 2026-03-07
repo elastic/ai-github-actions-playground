@@ -1,6 +1,6 @@
 import JSZip from "jszip";
 import type { PackageBuilderData } from "../../types/packageBuilder";
-import { generateManifest, generateChangelog } from "./generateManifest";
+import { generateManifest, generateChangelog, getIconFileName } from "./generateManifest";
 
 export async function exportPackageZip(data: PackageBuilderData): Promise<Blob> {
   const zip = new JSZip();
@@ -24,9 +24,10 @@ export async function exportPackageZip(data: PackageBuilderData): Promise<Blob> 
 
   // img/ (icon if present)
   if (data.identity.icon) {
-    const ext = data.identity.icon.name.split(".").pop()?.toLowerCase();
-    const normalizedExt = ext && ["svg", "png", "jpg", "jpeg"].includes(ext) ? ext : "svg";
-    root.file(`img/logo_${data.identity.name}.${normalizedExt}`, data.identity.icon.rawBytes);
+    root.file(
+      `img/${getIconFileName(data.identity.name, data.identity.icon)}`,
+      data.identity.icon.rawBytes,
+    );
   }
 
   return zip.generateAsync({ type: "blob" });

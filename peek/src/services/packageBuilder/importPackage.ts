@@ -22,12 +22,12 @@ interface ParsedFiles {
   manifest?: string;
   template?: string;
   readme?: string;
-  iconFile?: { name: string; bytes: Uint8Array; mimeType: string };
+  iconFiles: Map<string, { name: string; bytes: Uint8Array; mimeType: string }>;
 }
 
 /** Collect files from a flat map of path → content (works for both zip and folder upload). */
 function collectFiles(files: Map<string, Uint8Array>): ParsedFiles {
-  const result: ParsedFiles = {};
+  const result: ParsedFiles = { iconFiles: new Map() };
   const decoder = new TextDecoder();
 
   for (const [path, bytes] of files) {
@@ -48,11 +48,11 @@ function collectFiles(files: Map<string, Uint8Array>): ParsedFiles {
         jpg: "image/jpeg",
         jpeg: "image/jpeg",
       };
-      result.iconFile = {
+      result.iconFiles.set(normalized.toLowerCase(), {
         name: normalized.split("/").pop() ?? "icon",
         bytes,
         mimeType: mimeMap[ext] ?? "image/svg+xml",
-      };
+      });
     }
   }
 
@@ -131,17 +131,20 @@ function parseManifest(yamlContent: string): Omit<PackageBuilderData, "templateC
     : [];
   const pt = policyTemplates[0] ?? {};
 
+  const dynamicSignalTypes = Boolean(pt.dynamic_signal_types);
   const rawSignalType = pt.type ? String(pt.type) : null;
   const signalTypes: SignalType[] = rawSignalType && VALID_SIGNAL_TYPES.has(rawSignalType)
     ? [rawSignalType as SignalType]
-    : ["metrics"];
+    : dynamicSignalTypes
+      ? []
+      : ["metrics"];
 
   const policyTemplate = {
     name: String(pt.name ?? ""),
     title: String(pt.title ?? ""),
     description: String(pt.description ?? ""),
     signalTypes,
-    dynamicSignalTypes: Boolean(pt.dynamic_signal_types),
+    dynamicSignalTypes,
   };
 
   // Variables
@@ -215,14 +218,23 @@ export async function importFromFileMap(fileMap: Map<string, Uint8Array>): Promi
   const { identity, policyTemplate, variables, iconPath } = parseManifest(parsed.manifest);
 
   // Resolve icon
-  if (parsed.iconFile) {
-    identity.icon = await bytesToPackageIcon(
-      parsed.iconFile.name,
-      parsed.iconFile.bytes,
-      parsed.iconFile.mimeType,
-    );
-  } else if (iconPath) {
-    warnings.push(`Icon referenced in manifest (${iconPath}) was not found in package files.`);
+  if (iconPath) {
+    const normalizedIconPath = iconPath.replace(/^\/+/, "").toLowerCase();
+    const iconFile = parsed.iconFiles.get(normalizedIconPath);
+    if (iconFile) {
+      identity.icon = await bytesToPackageIcon(iconFile.name, iconFile.bytes, iconFile.mimeType);
+    } else {
+      warnings.push(`Icon referenced in manifest (${iconPath}) was not found in package files.`);
+    }
+  } else if (parsed.iconFiles.size > 0) {
+    const firstIcon = parsed.iconFiles.values().next().value;
+    if (firstIcon) {
+      identity.icon = await bytesToPackageIcon(
+        firstIcon.name,
+        firstIcon.bytes,
+        firstIcon.mimeType,
+      );
+    }
   }
 
   if (!parsed.template) {

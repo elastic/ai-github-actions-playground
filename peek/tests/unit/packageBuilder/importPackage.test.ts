@@ -13,9 +13,15 @@ function makeFileMap(files: Record<string, string>, rootFolder = "package"): Map
   return map;
 }
 
-function expectVariable(vars: Awaited<ReturnType<typeof importFromFileMap>>["data"]["variables"], name: string) {
+function expectVariable(
+  vars: Awaited<ReturnType<typeof importFromFileMap>>["data"]["variables"],
+  name: string,
+): Awaited<ReturnType<typeof importFromFileMap>>["data"]["variables"][number] {
   const variable = vars.find((v) => v.name === name);
   expect(variable).toBeDefined();
+  if (!variable) {
+    throw new Error(`Expected variable ${name} to exist`);
+  }
   return variable;
 }
 

@@ -1,6 +1,38 @@
 import YAML from "yaml";
 import type { PackageBuilderData, PackageVariable } from "../../types/packageBuilder";
 
+const ICON_MIME_TO_EXT: Record<string, "svg" | "png" | "jpg" | "jpeg"> = {
+  "image/svg+xml": "svg",
+  "image/png": "png",
+  "image/jpeg": "jpg",
+};
+
+function sanitizeIconBaseName(name: string): string {
+  const sanitized = name.toLowerCase().replace(/[^a-z0-9_]/g, "_");
+  return sanitized || "package";
+}
+
+export function resolveIconExtension(icon: PackageBuilderData["identity"]["icon"]): "svg" | "png" | "jpg" | "jpeg" {
+  if (!icon) return "svg";
+
+  const byMime = ICON_MIME_TO_EXT[icon.mimeType.toLowerCase()];
+  if (byMime) return byMime;
+
+  const byName = icon.name.split(".").pop()?.toLowerCase();
+  if (byName && ["svg", "png", "jpg", "jpeg"].includes(byName)) {
+    return byName as "svg" | "png" | "jpg" | "jpeg";
+  }
+
+  return "png";
+}
+
+export function getIconFileName(
+  packageName: string,
+  icon: PackageBuilderData["identity"]["icon"],
+): string {
+  return `logo_${sanitizeIconBaseName(packageName)}.${resolveIconExtension(icon)}`;
+}
+
 function serializeVariable(v: PackageVariable) {
   const out: Record<string, unknown> = {
     name: v.name,
@@ -47,7 +79,7 @@ export function generateManifest(data: PackageBuilderData): string {
   if (identity.icon) {
     manifest.icons = [
       {
-        src: `/img/logo_${identity.name}.svg`,
+        src: `/img/${getIconFileName(identity.name, identity.icon)}`,
         title: `${identity.title} logo`,
         size: "32x32",
         type: identity.icon.mimeType || "image/svg+xml",

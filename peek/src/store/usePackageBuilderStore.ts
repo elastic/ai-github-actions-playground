@@ -97,6 +97,44 @@ const DEFAULT_STATE: Pick<
   readmeGenerated: false,
 };
 
+function stripIconRawBytes(identity: PackageBuilderState["identity"]): PackageBuilderState["identity"] {
+  if (!identity.icon) return identity;
+  return {
+    ...identity,
+    icon: {
+      name: identity.icon.name,
+      dataUrl: identity.icon.dataUrl,
+      rawBytes: new Uint8Array(),
+      mimeType: identity.icon.mimeType,
+    },
+  };
+}
+
+function decodeDataUrl(dataUrl: string): Uint8Array {
+  const match = dataUrl.match(/^data:.*?;base64,(.+)$/);
+  if (!match?.[1]) return new Uint8Array();
+  const binary = atob(match[1]);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes;
+}
+
+function restoreIconRawBytes(identity: PackageBuilderState["identity"]): PackageBuilderState["identity"] {
+  if (!identity.icon) return identity;
+  if (identity.icon.rawBytes instanceof Uint8Array && identity.icon.rawBytes.byteLength > 0) {
+    return identity;
+  }
+  return {
+    ...identity,
+    icon: {
+      ...identity.icon,
+      rawBytes: decodeDataUrl(identity.icon.dataUrl),
+    },
+  };
+}
+
 export const usePackageBuilderStore = create<PackageBuilderState>()(
   devtools(
     persist(
@@ -199,7 +237,7 @@ export const usePackageBuilderStore = create<PackageBuilderState>()(
       {
         name: "package-builder",
         partialize: (state) => ({
-          identity: state.identity,
+          identity: stripIconRawBytes(state.identity),
           policyTemplate: state.policyTemplate,
           variables: state.variables,
           templateContent: state.templateContent,
@@ -208,10 +246,16 @@ export const usePackageBuilderStore = create<PackageBuilderState>()(
           mockValues: state.mockValues,
           readmeGenerated: state.readmeGenerated,
         }),
-        merge: (persisted, current) => ({
-          ...current,
-          ...(persisted as Partial<PackageBuilderState>),
-        }),
+        merge: (persisted, current) => {
+          const merged = {
+            ...current,
+            ...(persisted as Partial<PackageBuilderState>),
+          };
+          return {
+            ...merged,
+            identity: restoreIconRawBytes(merged.identity),
+          };
+        },
       },
     ),
     { name: "PackageBuilderStore", enabled: import.meta.env.DEV },

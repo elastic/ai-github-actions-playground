@@ -142,68 +142,6 @@ const insightLineHighlight = ViewPlugin.fromClass(
 
 /* ── Tooltip on gutter click ── */
 
-let cleanupPopover: (() => void) | null = null;
-
-const insightGutterClick = EditorView.domEventHandlers({
-  click(event, view) {
-    const target = event.target as HTMLElement;
-    if (!target.classList.contains("cm-insight-dot")) return false;
-    const lineBlock = view.lineBlockAtHeight(event.clientY - view.documentTop);
-    if (!lineBlock) return false;
-    const line = view.state.doc.lineAt(lineBlock.from);
-    const lineIdx = line.number - 1;
-    const { byLine } = view.state.field(insightField);
-    const insight = byLine.get(lineIdx);
-    if (!insight) return false;
-
-    cleanupPopover?.();
-
-    const popover = document.createElement("div");
-    popover.className = "cm-insight-popover";
-    const severity = insight.severity ?? "info";
-    const borderColor = SEVERITY_DOT[severity] ?? SEVERITY_DOT.info;
-    popover.style.cssText = `
-      position: fixed;
-      z-index: 10000;
-      max-width: 320px;
-      padding: 8px 12px;
-      background: var(--cm-insight-popover-bg, #fff);
-      color: var(--cm-insight-popover-color, #222);
-      border: 1px solid ${borderColor};
-      border-radius: 6px;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-      font-size: 13px;
-      line-height: 1.5;
-      left: ${event.clientX + 8}px;
-      top: ${event.clientY + 8}px;
-    `;
-    popover.textContent = insight.text;
-    document.body.appendChild(popover);
-
-    let timerId: number | null = null;
-    const dismiss = () => {
-      popover.remove();
-      if (timerId !== null) {
-        window.clearTimeout(timerId);
-      }
-      document.removeEventListener("click", dismiss, true);
-      if (cleanupPopover === dismiss) {
-        cleanupPopover = null;
-      }
-    };
-    cleanupPopover = dismiss;
-    timerId = window.setTimeout(() => document.addEventListener("click", dismiss, true), 0);
-
-    return true;
-  },
-});
-
-const insightPopoverCleanup = ViewPlugin.fromClass(class {
-  destroy() {
-    cleanupPopover?.();
-  }
-});
-
 /* ── CSS for the gutter width ── */
 
 const gutterTheme = EditorView.theme({
@@ -216,6 +154,69 @@ const gutterTheme = EditorView.theme({
 /* ── Public: bundle all extensions ── */
 
 export function insightGutterExtension() {
+  let cleanupPopover: (() => void) | null = null;
+
+  const insightGutterClick = EditorView.domEventHandlers({
+    click(event, view) {
+      const target = event.target as HTMLElement;
+      if (!target.classList.contains("cm-insight-dot")) return false;
+      const lineBlock = view.lineBlockAtHeight(event.clientY - view.documentTop);
+      if (!lineBlock) return false;
+      const line = view.state.doc.lineAt(lineBlock.from);
+      const lineIdx = line.number - 1;
+      const { byLine } = view.state.field(insightField);
+      const insight = byLine.get(lineIdx);
+      if (!insight) return false;
+
+      cleanupPopover?.();
+
+      const popover = document.createElement("div");
+      popover.className = "cm-insight-popover";
+      const severity = insight.severity ?? "info";
+      const borderColor = SEVERITY_DOT[severity] ?? SEVERITY_DOT.info;
+      popover.style.cssText = `
+        position: fixed;
+        z-index: 10000;
+        max-width: 320px;
+        padding: 8px 12px;
+        background: var(--cm-insight-popover-bg, #fff);
+        color: var(--cm-insight-popover-color, #222);
+        border: 1px solid ${borderColor};
+        border-radius: 6px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        font-size: 13px;
+        line-height: 1.5;
+        left: ${event.clientX + 8}px;
+        top: ${event.clientY + 8}px;
+      `;
+      popover.textContent = insight.text;
+      document.body.appendChild(popover);
+
+      let timerId: number | null = null;
+      const dismiss = () => {
+        popover.remove();
+        if (timerId !== null) {
+          window.clearTimeout(timerId);
+        }
+        document.removeEventListener("click", dismiss, true);
+        if (cleanupPopover === dismiss) {
+          cleanupPopover = null;
+        }
+      };
+      cleanupPopover = dismiss;
+      timerId = window.setTimeout(() => document.addEventListener("click", dismiss, true), 0);
+
+      return true;
+    },
+  });
+
+  const insightPopoverCleanup = ViewPlugin.fromClass(class {
+    destroy() {
+      cleanupPopover?.();
+      cleanupPopover = null;
+    }
+  });
+
   return [
     insightField,
     insightGutter,
