@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useLayoutEffect } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
@@ -15,6 +15,7 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { Controller, useForm, useWatch, type FieldError, type Resolver } from "react-hook-form";
 import { z } from "zod";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { PARAMETER_TYPES } from "../../contracts/dashboard/literals";
 import { dashboardParameterSchema } from "../../schemas";
@@ -30,6 +31,7 @@ import { EMPTY_PARAM, formatValueForInput, parseParameterValue } from "./paramet
 interface ParameterDialogProps {
   open: boolean;
   editing: DashboardParameter | null;
+  activeProfileId: string | null;
   connection: ElasticsearchConnection | null;
   parameters: DashboardParameter[];
   onClose: () => void;
@@ -222,15 +224,13 @@ function toFormValues(param: DashboardParameter | null): ParameterDialogFormValu
 export default function ParameterDialog({
   open,
   editing,
+  activeProfileId,
   connection,
   parameters,
   onClose,
   onSave,
 }: ParameterDialogProps) {
-  const [esqlOptions, setEsqlOptions] = useState<string[]>([]);
-  const [esqlLoading, setEsqlLoading] = useState(false);
-  const [esqlError, setEsqlError] = useState<string | null>(null);
-  const abortRef = useRef<AbortController | null>(null);
+  const queryClient = useQueryClient();
 
   const { control, handleSubmit, getValues, setValue, reset, trigger, formState } =
     useForm<ParameterDialogFormValues>({
@@ -241,16 +241,50 @@ export default function ParameterDialog({
 
   const watchedType = useWatch({ control, name: "type" });
   const watchedSourceMode = useWatch({ control, name: "sourceMode" });
+  const watchedSourceQuery = useWatch({ control, name: "sourceQuery" });
 
-  useEffect(() => {
+  // Stable query key for the ES|QL preview query
+  const previewQueryKey = [
+    "parameter-preview",
+    activeProfileId,
+    connection?.url,
+    watchedSourceQuery,
+    parameters,
+  ] as const;
+  const hasSourceQueryError = watchedSourceMode === "esql" && Boolean(formState.errors.sourceQuery);
+
+  const {
+    data: esqlOptions = [],
+    isFetching: esqlLoading,
+    error: esqlQueryError,
+    refetch: fetchEsqlOptions,
+  } = useQuery<string[]>({
+    queryKey: previewQueryKey,
+    queryFn: async ({ signal }) => {
+      const datasource = createPersesEsqlDatasource(connection!);
+      const request = buildPersesEsqlRequest(watchedSourceQuery, { parameters });
+      const result = await datasource.execute(request, signal);
+      return result.values?.map((row) => String(row[0] ?? "")).filter(Boolean) ?? [];
+    },
+    enabled: false, // Only fetch on explicit refetch (Preview button)
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
+  const esqlError = esqlQueryError
+    ? esqlQueryError instanceof Error
+      ? esqlQueryError.message
+      : String(esqlQueryError)
+    : null;
+
+  useLayoutEffect(() => {
     if (!open) return;
     reset(toFormValues(editing));
     void trigger();
-    setEsqlOptions([]);
-    setEsqlError(null);
-  }, [open, editing, reset, trigger]);
-
-  useEffect(() => () => abortRef.current?.abort(), []);
+    // Clear all preview query cache entries when the dialog opens so stale
+    // results from a previous editing session are not shown.
+    queryClient.removeQueries({ queryKey: ["parameter-preview"] });
+  }, [open, editing, reset, trigger, queryClient]);
 
   const handleTypeChange = useCallback(
     (nextType: DashboardParameter["type"]) => {
@@ -291,34 +325,6 @@ export default function ParameterDialog({
     },
     [setValue],
   );
-
-  const fetchEsqlOptions = useCallback(async () => {
-    const sourceMode = getValues("sourceMode");
-    const sourceQuery = getValues("sourceQuery");
-    if (sourceMode !== "esql" || !sourceQuery.trim() || !connection) return;
-
-    abortRef.current?.abort();
-    const ctrl = new AbortController();
-    abortRef.current = ctrl;
-
-    setEsqlLoading(true);
-    setEsqlError(null);
-
-    try {
-      const datasource = createPersesEsqlDatasource(connection);
-      const request = buildPersesEsqlRequest(sourceQuery, { parameters });
-      const result = await datasource.execute(request, ctrl.signal);
-      if (!ctrl.signal.aborted) {
-        setEsqlOptions(result.values?.map((row) => String(row[0] ?? "")).filter(Boolean) ?? []);
-      }
-    } catch (err: unknown) {
-      if (!ctrl.signal.aborted) {
-        setEsqlError(err instanceof Error ? err.message : String(err));
-      }
-    } finally {
-      if (!ctrl.signal.aborted) setEsqlLoading(false);
-    }
-  }, [connection, getValues, parameters]);
 
   const handleSave = useCallback(
     (values: ParameterDialogFormValues) => {
@@ -508,8 +514,11 @@ export default function ParameterDialog({
               <Button
                 size="small"
                 variant="outlined"
-                onClick={fetchEsqlOptions}
-                disabled={esqlLoading || !connection}
+                onClick={() => {
+                  if (hasSourceQueryError) return;
+                  void fetchEsqlOptions();
+                }}
+                disabled={esqlLoading || !connection || hasSourceQueryError}
               >
                 {esqlLoading ? <CircularProgress size={16} /> : "Preview options"}
               </Button>
