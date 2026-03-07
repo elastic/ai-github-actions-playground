@@ -491,7 +491,7 @@ export class ElasticsearchClient {
 
   async getCatShards(signal?: AbortSignal): Promise<CatShardRecord[]> {
     return this._fetch<CatShardRecord[]>(
-      "/_cat/shards?format=json&h=index,shard,prirep,state,docs,store,node,unassigned.reason",
+      "/_cat/shards?format=json&bytes=b&h=index,shard,prirep,state,docs,store,node,unassigned.reason",
       { signal },
     );
   }
