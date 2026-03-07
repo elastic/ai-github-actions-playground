@@ -401,7 +401,7 @@ export const PAGE_MANIFEST = {
     nav: {
       label: "Resilience",
       group: "System",
-      order: 15,
+      order: 17,
       showInSidebar: false,
       icon: createElement(ShieldIcon, { fontSize: "small" }),
     },
@@ -556,7 +556,7 @@ export const PAGE_MANIFEST = {
     nav: {
       label: "ILM",
       group: "System",
-      order: 27,
+      order: 31,
       showInSidebar: true,
       icon: createElement(PolicyIcon, { fontSize: "small" }),
     },
