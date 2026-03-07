@@ -1,2 +1,0 @@
-import{r as s}from"./mui-BDStpyZI.js";function C(u,c="asc",r){const[e,i]=s.useState(u),[o,l]=s.useState(r?.initialDirection??c),a=s.useCallback(t=>r?.fieldDefaults?.[t]??c,[c,r?.fieldDefaults]),n=s.useCallback(t=>{i(t),l(b=>e===t?b==="asc"?"desc":"asc":a(t))},[e,a]),S=s.useCallback(t=>({active:e===t,direction:e===t?o:a(t),onClick:()=>n(t)}),[e,o,a,n]);return{sortField:e,sortDirection:o,handleSort:n,getSortLabelProps:S,setSortField:i,setSortDirection:l}}export{C as u};
-//# sourceMappingURL=useTableSort-DwRmdaYq.js.map
