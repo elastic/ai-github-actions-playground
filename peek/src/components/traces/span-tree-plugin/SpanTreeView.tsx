@@ -206,7 +206,7 @@ export default function SpanTreeView({
           onOpenInQueryLab={searchMode ? undefined : onOpenInQueryLab}
         />
       )}
-      <Box sx={{ flex: 1, minHeight: 0 }}>
+      <Box sx={{ flex: 1, minHeight: 0, overflowX: "auto" }}>
         <Virtuoso
           data={flatRows}
           fixedItemHeight={ROW_HEIGHT}
