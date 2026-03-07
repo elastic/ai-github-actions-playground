@@ -57,7 +57,7 @@ const A11Y_BASELINE: Record<string, Record<string, Record<string, number>>> = {
       "color-contrast": 7,
     },
     "Index Lifecycle Management": {
-      "color-contrast": 7,
+      "color-contrast": 8,
     },
     "Index Templates": {
       "color-contrast": 7,
