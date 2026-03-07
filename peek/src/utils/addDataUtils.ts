@@ -204,24 +204,29 @@ export interface CommandStep {
 /**
  * Split a multi-step command string into discrete steps.
  *
- * Each step is identified by a comment line matching the pattern `# N. <title>`
- * where `N` is a positive integer.  All lines between two step markers (or
- * between the last marker and end-of-string) are joined to form the step's
- * command text.  Leading non-step preamble lines (e.g. notes about managed OTLP)
- * are prepended to the first step's command.
+ * Each step is identified by either:
+ * - A comment line matching `# N. <title>`, or
+ * - A shell/powershell prompt matching `echo "Step N: <title>"` / `Write-Host "Step N: <title>"`.
+ *
+ * All lines between two step markers (or between the last marker and end-of-string)
+ * are joined to form the step's command text. Leading non-step preamble lines
+ * (e.g. notes about managed OTLP) are prepended to the first step's command.
  *
  * Returns an empty array when the command contains no step markers.
  */
 export function parseCommandSteps(command: string): CommandStep[] {
   const lines = command.split("\n");
-  const stepPattern = /^#\s*(\d+)\.\s*(.*)$/;
+  const stepPattern =
+    /^(?:#\s*(\d+)\.\s*(.*)|(?:echo|Write-Host)\s+["']Step\s+(\d+):\s*(.*)["'])$/i;
   const steps: CommandStep[] = [];
   const preambleLines: string[] = [];
 
   for (const line of lines) {
     const match = stepPattern.exec(line);
     if (match) {
-      steps.push({ number: parseInt(match[1]!, 10), title: match[2]!.trim(), command: "" });
+      const numberRaw = match[1] ?? match[3];
+      const titleRaw = match[2] ?? match[4];
+      steps.push({ number: parseInt(numberRaw!, 10), title: titleRaw!.trim(), command: "" });
     } else if (steps.length === 0) {
       preambleLines.push(line);
     } else {
