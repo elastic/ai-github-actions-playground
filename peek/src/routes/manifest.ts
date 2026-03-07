@@ -44,6 +44,7 @@ const DashboardsLandingPage = lazy(() => import("../components/DashboardsLanding
 const DataStreamsPage = lazy(() => import("../components/DataStreamsPage"));
 const AddDataPage = lazy(() => import("../components/AddDataPage"));
 const DiscoverPage = lazy(() => import("../components/DiscoverPage"));
+const LogsLandingPage = lazy(() => import("../components/logs/LogsLandingPage"));
 const LogsPage = lazy(() => import("../components/logs/LogsPage"));
 const DocsPage = lazy(() => import("../components/DocsPage"));
 const ExplorePage = lazy(() => import("../components/ExplorePage"));
@@ -128,15 +129,29 @@ export const PAGE_MANIFEST = {
   },
   logs: {
     path: "/logs",
-    component: LogsPage,
+    component: LogsLandingPage,
     requiresConnection: true,
-    showTimeControls: true,
-    skeletonVariant: "table",
+    showTimeControls: false,
+    skeletonVariant: "list",
     nav: {
       label: "Logs",
       group: "Data",
       order: 30,
       showInSidebar: true,
+      icon: createElement(SubjectIcon, { fontSize: "small" }),
+    },
+  },
+  logsExplorer: {
+    path: "/logs-explorer",
+    component: LogsPage,
+    requiresConnection: true,
+    showTimeControls: true,
+    skeletonVariant: "table",
+    nav: {
+      label: "Logs Explorer",
+      group: "Data",
+      order: 31,
+      showInSidebar: false,
       icon: createElement(SubjectIcon, { fontSize: "small" }),
     },
   },
