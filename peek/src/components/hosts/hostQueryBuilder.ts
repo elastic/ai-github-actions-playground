@@ -16,8 +16,15 @@ export interface HostQueryFilters {
 
 /** Escapes a string for safe embedding in an ES|QL double-quoted literal. */
 function escapeEsql(value: string): string {
-  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  return value
+    .replace(/\\/g, "\\\\")
+    .replace(/"/g, '\\"')
+    .replace(/\*/g, "\\*")
+    .replace(/\?/g, "\\?");
 }
+
+const STABLE_HOST_ID_EXPRESSION =
+  'COALESCE(host.id, CONCAT(COALESCE(host.name, "unknown"), "::", COALESCE(host.os.type, "unknown")))';
 
 /**
  * Builds an ES|QL query that returns one row per host with the latest
@@ -42,6 +49,7 @@ export function buildHostInventoryQuery(filters: HostQueryFilters): string {
   return `FROM metrics-hostmetricsreceiver*
 | WHERE ${whereConditions.join(" AND ")}
 | STATS
+    host_id = MAX(host.id),
     host_name = MAX(host.name),
     os_type = MAX(host.os.type),
     os_name = MAX(host.os.name),
@@ -51,7 +59,7 @@ export function buildHostInventoryQuery(filters: HostQueryFilters): string {
     memory_utilization = AVG(system.memory.utilization),
     disk_utilization = MAX(system.filesystem.utilization),
     process_count = MAX(system.processes.count)
-  BY host.id
+  BY host_key = ${STABLE_HOST_ID_EXPRESSION}
 | SORT last_seen DESC`;
 }
 
@@ -64,8 +72,9 @@ export function buildHostDetailQuery(hostId: string, filters: HostQueryFilters):
   return `FROM metrics-hostmetricsreceiver*
 | WHERE @timestamp >= ${filters.timeFrom}
   AND @timestamp <= ${filters.timeTo}
-  AND host.id == "${escaped}"
+  AND ${STABLE_HOST_ID_EXPRESSION} == "${escaped}"
 | STATS
+    host_id = MAX(host.id),
     host_name = MAX(host.name),
     os_type = MAX(host.os.type),
     os_name = MAX(host.os.name),
@@ -75,5 +84,5 @@ export function buildHostDetailQuery(hostId: string, filters: HostQueryFilters):
     memory_utilization = AVG(system.memory.utilization),
     disk_utilization = MAX(system.filesystem.utilization),
     process_count = MAX(system.processes.count)
-  BY host.id`;
+  BY host_key = ${STABLE_HOST_ID_EXPRESSION}`;
 }

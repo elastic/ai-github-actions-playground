@@ -15,7 +15,7 @@ describe("buildHostInventoryQuery", () => {
     expect(query).toContain("NOW() - 5 minutes");
     expect(query).toContain("NOW()");
     expect(query).toContain("STATS");
-    expect(query).toContain("BY host.id");
+    expect(query).toContain("BY host_key = COALESCE(");
   });
 
   it("adds OS filter for linux", () => {
@@ -45,6 +45,18 @@ describe("buildHostInventoryQuery", () => {
     expect(query).toContain('host.name LIKE "*web-server*"');
   });
 
+  it("escapes special characters in search filter", () => {
+    const query = buildHostInventoryQuery({
+      timeFrom: "NOW() - 5 minutes",
+      timeTo: "NOW()",
+      search: 'host"name\\test*?',
+    });
+    expect(query).toContain('\\"');
+    expect(query).toContain("\\\\test");
+    expect(query).toContain("\\*");
+    expect(query).toContain("\\?");
+  });
+
   it("omits OS filter for unknown", () => {
     const query = buildHostInventoryQuery({
       timeFrom: "NOW() - 5 minutes",
@@ -62,7 +74,8 @@ describe("buildHostDetailQuery", () => {
       timeTo: "NOW()",
     });
     expect(query).toContain("FROM metrics-hostmetricsreceiver*");
-    expect(query).toContain('host.id == "host-123"');
+    expect(query).toContain('== "host-123"');
+    expect(query).toContain("COALESCE(host.id, CONCAT(");
     expect(query).toContain("STATS");
   });
 
@@ -71,7 +84,7 @@ describe("buildHostDetailQuery", () => {
       timeFrom: "NOW() - 5 minutes",
       timeTo: "NOW()",
     });
-    expect(query).toContain('host.id == "host\\"evil"');
+    expect(query).toContain('== "host\\"evil"');
   });
 
   it("escapes backslashes in hostId", () => {
@@ -79,6 +92,6 @@ describe("buildHostDetailQuery", () => {
       timeFrom: "NOW() - 5 minutes",
       timeTo: "NOW()",
     });
-    expect(query).toContain('host.id == "host\\\\path"');
+    expect(query).toContain('== "host\\\\path"');
   });
 });

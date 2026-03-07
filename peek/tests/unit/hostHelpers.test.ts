@@ -111,9 +111,10 @@ describe("parseHostInventory", () => {
     expect(rows[0].processCount).toBeNull();
   });
 
-  it("falls back to host_name when host.id is missing", () => {
+  it("falls back to host_key when host.id is missing", () => {
     const data: EsqlResponse = {
       columns: [
+        { name: "host_key", type: "keyword" },
         { name: "host_name", type: "keyword" },
         { name: "os_type", type: "keyword" },
         { name: "os_name", type: "keyword" },
@@ -124,10 +125,23 @@ describe("parseHostInventory", () => {
         { name: "disk_utilization", type: "double" },
         { name: "process_count", type: "long" },
       ],
-      values: [["web-1", "linux", "Debian", "12", "2026-01-01T00:00:00Z", 0.1, 0.3, 0.2, 50]],
+      values: [
+        [
+          "web-1::linux",
+          "web-1",
+          "linux",
+          "Debian",
+          "12",
+          "2026-01-01T00:00:00Z",
+          0.1,
+          0.3,
+          0.2,
+          50,
+        ],
+      ],
     };
 
     const rows = parseHostInventory(data);
-    expect(rows[0].hostId).toBe("web-1");
+    expect(rows[0].hostId).toBe("web-1::linux");
   });
 });

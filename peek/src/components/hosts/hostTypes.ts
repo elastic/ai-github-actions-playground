@@ -50,9 +50,13 @@ export function toHostRef(
   hostName: string | null | undefined,
   osType: string | null | undefined,
 ): HostRef {
-  const id = hostId?.trim() || hostName?.trim() || "unknown";
-  const display = hostName?.trim() || hostId?.trim() || "unknown";
-  return { hostId: id, displayName: display, osType: normalizeOsType(osType) };
+  const normalizedOsType = normalizeOsType(osType);
+  const trimmedHostId = hostId?.trim();
+  const trimmedHostName = hostName?.trim();
+  const id =
+    trimmedHostId || (trimmedHostName ? `${trimmedHostName}::${normalizedOsType}` : "unknown");
+  const display = trimmedHostName || trimmedHostId || "unknown";
+  return { hostId: id, displayName: display, osType: normalizedOsType };
 }
 
 /** User-friendly OS label for display. */

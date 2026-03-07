@@ -25,12 +25,22 @@ import { osLabel } from "./hostTypes";
 
 export default function HostDetailPage() {
   const { hostId } = useParams<{ hostId: string }>();
-  const decodedHostId = hostId ? decodeURIComponent(hostId) : "";
+  const decodedHostId = useMemo(() => {
+    if (!hostId) return "";
+    try {
+      return decodeURIComponent(hostId);
+    } catch {
+      return hostId;
+    }
+  }, [hostId]);
   const queryClient = useQueryClient();
   const connection = useConnectionStore((s) => s.connection);
   const { filters } = usePageFiltersStore(useShallow((s) => ({ filters: s.hostsFilters })));
 
-  const cacheKey = useMemo(() => ["host-detail", decodedHostId] as const, [decodedHostId]);
+  const cacheKey = useMemo(
+    () => ["host-detail", connection?.url, decodedHostId] as const,
+    [connection?.url, decodedHostId],
+  );
   const { data: searchResult = null } = useQuery<EsqlResponse | null>({
     queryKey: cacheKey,
     queryFn: () => null,

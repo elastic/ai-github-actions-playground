@@ -70,7 +70,7 @@ export default function HostInventoryTable({
               sx={{ cursor: onRowClick ? "pointer" : undefined }}
               onClick={() => onRowClick?.(row)}
             >
-              <TableCell>
+              <TableCell onClick={(event) => event.stopPropagation()}>
                 <HostLink hostRef={toHostRef(row.hostId, row.hostName, row.osType)} />
               </TableCell>
               <TableCell>

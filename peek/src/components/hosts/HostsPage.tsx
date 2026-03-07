@@ -90,6 +90,7 @@ export default function HostsPage({ osType }: HostsPageProps) {
       {!loading && searchResult && hostRows.length === 0 && (
         <Paper variant="outlined" sx={{ flex: 1, minHeight: 200, overflow: "auto" }}>
           <EmptyState
+            icon={<SearchOffIcon />}
             heading="No hosts found"
             description="No hosts were found in the selected time range. Try expanding the time range or check your data ingestion."
             addDataHref={PAGE_MANIFEST.addData.path}

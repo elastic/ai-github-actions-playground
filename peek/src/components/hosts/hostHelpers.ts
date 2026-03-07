@@ -30,6 +30,8 @@ export function parseHostInventory(data: EsqlResponse): HostRow[] {
   if (columns.length === 0 || values.length === 0) return [];
 
   const iHostId = col(columns, "host.id");
+  const iHostKey = col(columns, "host_key");
+  const iHostIdAlias = col(columns, "host_id");
   const iHostName = col(columns, "host_name");
   const iOsType = col(columns, "os_type");
   const iOsName = col(columns, "os_name");
@@ -41,7 +43,7 @@ export function parseHostInventory(data: EsqlResponse): HostRow[] {
   const iProc = col(columns, "process_count");
 
   return values.map((row) => ({
-    hostId: str(row, iHostId) || str(row, iHostName) || "unknown",
+    hostId: str(row, iHostId) || str(row, iHostIdAlias) || str(row, iHostKey) || "unknown",
     hostName: str(row, iHostName),
     osType: normalizeOsType(str(row, iOsType)),
     osName: str(row, iOsName),

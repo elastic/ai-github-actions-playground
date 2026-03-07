@@ -48,15 +48,15 @@ describe("toHostRef", () => {
     expect(ref.osType).toBe("linux");
   });
 
-  it("falls back to host.name when host.id is null", () => {
+  it("falls back to host.name with os disambiguator when host.id is null", () => {
     const ref = toHostRef(null, "my-host", "windows");
-    expect(ref.hostId).toBe("my-host");
+    expect(ref.hostId).toBe("my-host::windows");
     expect(ref.displayName).toBe("my-host");
   });
 
-  it("falls back to host.name when host.id is empty", () => {
+  it("falls back to host.name with normalized os disambiguator when host.id is empty", () => {
     const ref = toHostRef("", "my-host", "darwin");
-    expect(ref.hostId).toBe("my-host");
+    expect(ref.hostId).toBe("my-host::macos");
     expect(ref.displayName).toBe("my-host");
     expect(ref.osType).toBe("macos");
   });

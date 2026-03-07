@@ -25,8 +25,8 @@ export function useHostsInventorySearch(osTypeOverride?: HostOsType) {
   );
 
   const cacheKey = useMemo(
-    () => ["hosts-search", osTypeOverride ?? filters.osFilter] as const,
-    [osTypeOverride, filters.osFilter],
+    () => ["hosts-search", connection?.url, osTypeOverride ?? filters.osFilter] as const,
+    [connection?.url, osTypeOverride, filters.osFilter],
   );
 
   const { data: searchResult = null } = useQuery<EsqlResponse | null>({
