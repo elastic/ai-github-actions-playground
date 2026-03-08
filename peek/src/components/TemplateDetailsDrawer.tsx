@@ -181,7 +181,7 @@ export default function TemplateDetailsDrawer({
 
           <Box sx={{ mt: 2 }}>
             <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
-              RAW JSON
+              METADATA (FLATTENED)
             </Typography>
             <JsonViewer maxHeight={300} content={selectedComponentTemplate} />
           </Box>
