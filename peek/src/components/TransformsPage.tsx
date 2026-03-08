@@ -1,5 +1,4 @@
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
-import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import FormControlLabel from "@mui/material/FormControlLabel";
@@ -14,6 +13,7 @@ import TransformIcon from "@mui/icons-material/Transform";
 import { useTransforms } from "../hooks/useTransforms";
 import type { TransformRow } from "../services/es";
 
+import DataBoundary from "./DataBoundary";
 import PageHeader from "./PageHeader";
 import EmptyState from "./EmptyState";
 import { TransformDetailDrawer } from "./transforms/TransformDetailDrawer";
@@ -152,7 +152,11 @@ export default function TransformsPage() {
         />
       </Stack>
 
-      {result.status === "error" && <Alert severity="error">{result.error}</Alert>}
+      {result.status === "error" && (
+        <DataBoundary result={result} onRetry={() => result.refresh()}>
+          {() => null}
+        </DataBoundary>
+      )}
 
       {loading && <LinearProgress />}
 

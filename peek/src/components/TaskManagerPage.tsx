@@ -1,5 +1,4 @@
 import { Fragment, useCallback, useDeferredValue, useMemo, useState } from "react";
-import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import FormControlLabel from "@mui/material/FormControlLabel";
@@ -20,6 +19,7 @@ import PendingActionsIcon from "@mui/icons-material/PendingActions";
 import type { TaskRow } from "../services/es";
 import { useTasks } from "../hooks/useTasks";
 
+import DataBoundary from "./DataBoundary";
 import EmptyState from "./EmptyState";
 import PageContainer from "./PageContainer";
 import PageHeaderSection from "./PageHeaderSection";
@@ -112,9 +112,9 @@ export default function TaskManagerPage() {
 
   if (result.status === "error") {
     return (
-      <Box sx={{ p: 2 }}>
-        <Alert severity="error">{result.error}</Alert>
-      </Box>
+      <DataBoundary result={result} onRetry={result.refresh}>
+        {() => null}
+      </DataBoundary>
     );
   }
 
