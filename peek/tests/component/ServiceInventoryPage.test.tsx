@@ -239,6 +239,28 @@ describe("ServiceInventoryPage", () => {
     expect(sparklineQuery).toContain("payment-service");
   });
 
+  it("keeps sparkline trends after reset and running search again", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(screen.getByRole("button", { name: "Search" }));
+
+    await waitFor(() => {
+      expect(screen.getAllByLabelText("Trend sparkline").length).toBeGreaterThan(0);
+    });
+
+    await user.click(screen.getByRole("button", { name: "Reset" }));
+    await waitFor(() => {
+      expect(screen.getByText("No service data loaded")).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole("button", { name: "Search" }));
+
+    await waitFor(() => {
+      expect(screen.getAllByLabelText("Trend sparkline").length).toBeGreaterThan(0);
+    });
+  });
+
   it("navigates to Traces with a clean service filter when View Traces is clicked", async () => {
     const user = userEvent.setup();
     // Pre-seed stale filters that should be wiped by the drilldown

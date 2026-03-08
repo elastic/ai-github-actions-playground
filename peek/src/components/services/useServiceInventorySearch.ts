@@ -76,11 +76,14 @@ export function useServiceInventorySearch() {
   const runSparklineQueryRef = useRef<(query: string) => void>(() => undefined);
   const activeFiltersRef = useRef(filters);
 
-  const handleSparklineSuccess = useCallback((data: EsqlResponse, executedQuery: string) => {
-    if (executedQuery !== latestSparklineQueryRef.current) return;
-    setSparklineData(parseServiceSparklineData(data));
-    setSparklineRetryMode("standard");
-  }, []);
+  const handleSparklineSuccess = useCallback(
+    (data: EsqlResponse, executedQuery: string) => {
+      if (executedQuery !== latestSparklineQueryRef.current) return;
+      setSparklineData(parseServiceSparklineData(data));
+      setSparklineRetryMode("standard");
+    },
+    [setSparklineData],
+  );
   const handleSparklineFailure = useCallback(
     (failedQuery: string) => {
       if (failedQuery !== latestSparklineQueryRef.current) return;
@@ -100,7 +103,7 @@ export function useServiceInventorySearch() {
       }
       setSparklineData({});
     },
-    [searchResult, sparklineRetryMode],
+    [searchResult, sparklineRetryMode, setSparklineData],
   );
   const {
     runQuery: runSparklineQuery,
@@ -131,7 +134,7 @@ export function useServiceInventorySearch() {
       setSparklineData({});
       runSparklineQuery(sparklineQuery);
     },
-    [setSearchResult, runSparklineQuery],
+    [setSearchResult, runSparklineQuery, setSparklineData],
   );
   const handleFailure = useCallback(
     (failedQuery: string) => {
@@ -159,7 +162,7 @@ export function useServiceInventorySearch() {
     setSparklineData({});
     runQuery(query);
     // Sparkline runs from handleSuccess once inventory results arrive, scoped to displayed services
-  }, [filters, runQuery]);
+  }, [filters, runQuery, setSparklineData]);
 
   const handleReset = useCallback(() => {
     if (loading) return;
@@ -169,7 +172,7 @@ export function useServiceInventorySearch() {
     setSearchResult(null);
     setSparklineData({});
     resetFilters();
-  }, [clearError, resetFilters, loading, setSearchResult]);
+  }, [clearError, resetFilters, loading, setSearchResult, setSparklineData]);
 
   const handleViewTraces = useCallback(
     (serviceName: string) => {
