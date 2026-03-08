@@ -11,16 +11,16 @@ import TableSortLabel from "@mui/material/TableSortLabel";
 import Typography from "@mui/material/Typography";
 
 import EmptyState from "../EmptyState";
+import { indicatorStatusColor } from "./helpers";
+import type { IndicatorStatus } from "./helpers";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-type IndicatorStatus = "green" | "yellow" | "red" | "unknown";
-
 export type SortField = "status" | "name" | "impactsCount" | "diagnosesCount" | "worstSeverity";
 
-export interface IndicatorRow {
+export interface IndicatorRowBase {
   key: string;
   name: string;
   status: IndicatorStatus;
@@ -30,21 +30,12 @@ export interface IndicatorRow {
   worstSeverity: number;
 }
 
-function indicatorStatusColor(
-  status: IndicatorStatus | undefined,
-): "success" | "warning" | "error" | "default" {
-  if (status === "green") return "success";
-  if (status === "yellow") return "warning";
-  if (status === "red") return "error";
-  return "default";
-}
-
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
 interface Props {
-  rows: IndicatorRow[];
+  rows: IndicatorRowBase[];
   loading: boolean;
   filterText: string;
   sortField: SortField;
@@ -158,7 +149,7 @@ export default function DiagnosticsIndicatorTable({
               <TableCell sx={{ maxWidth: 340, whiteSpace: "normal" }}>{row.symptom}</TableCell>
               <TableCell>{row.impactsCount}</TableCell>
               <TableCell>{row.diagnosesCount}</TableCell>
-              <TableCell>{row.worstSeverity || "—"}</TableCell>
+              <TableCell>{row.worstSeverity ?? "—"}</TableCell>
             </TableRow>
           ))
         )}

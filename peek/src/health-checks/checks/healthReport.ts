@@ -11,6 +11,13 @@ export const healthReportChecks: HealthCheckDefinition[] = [
     surfaces: ["global"],
     dependsOn: ["healthReport"],
     evaluate: (snapshot) => {
+      if (snapshot.errors.healthReport) {
+        return {
+          status: "unknown",
+          summary: "Health Report data could not be loaded.",
+          reason: snapshot.errors.healthReport,
+        };
+      }
       const report = snapshot.data.healthReport?.healthReport;
       if (!report) {
         return {
@@ -30,6 +37,12 @@ export const healthReportChecks: HealthCheckDefinition[] = [
           links: [{ label: "Cluster Diagnostics", to: "/cluster-diagnostics" }],
         };
       }
+      if (report.status !== "green" && report.status !== "yellow") {
+        return {
+          status: "unknown",
+          summary: "Health Report status is UNKNOWN.",
+        };
+      }
       return {
         status: "pass",
         summary: `Health Report status is ${(report.status ?? "unknown").toUpperCase()}.`,
@@ -46,6 +59,13 @@ export const healthReportChecks: HealthCheckDefinition[] = [
     surfaces: ["global"],
     dependsOn: ["healthReport"],
     evaluate: (snapshot) => {
+      if (snapshot.errors.healthReport) {
+        return {
+          status: "unknown",
+          summary: "Health Report data could not be loaded.",
+          reason: snapshot.errors.healthReport,
+        };
+      }
       const report = snapshot.data.healthReport?.healthReport;
       if (!report) {
         return {
@@ -63,6 +83,12 @@ export const healthReportChecks: HealthCheckDefinition[] = [
           observed: { status: report.status, nonGreenIndicators: nonGreen },
           recommendation: "Open Cluster Diagnostics to review impacted indicators and diagnoses.",
           links: [{ label: "Cluster Diagnostics", to: "/cluster-diagnostics" }],
+        };
+      }
+      if (report.status !== "green" && report.status !== "red") {
+        return {
+          status: "unknown",
+          summary: "Health Report status is UNKNOWN.",
         };
       }
       return {

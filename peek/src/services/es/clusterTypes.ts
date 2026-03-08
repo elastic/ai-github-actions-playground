@@ -346,6 +346,6 @@ export interface HealthReportIndicator {
 
 export interface HealthReportResponse {
   cluster_name?: string;
-  status?: "green" | "yellow" | "red";
+  status?: "green" | "yellow" | "red" | "unknown";
   indicators?: Record<string, HealthReportIndicator>;
 }

@@ -8,20 +8,16 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
 import type { HealthReportIndicator } from "../../services/es";
+import { indicatorStatusColor } from "./helpers";
+import type { IndicatorStatus } from "./helpers";
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-type IndicatorStatus = "green" | "yellow" | "red" | "unknown";
-
-function indicatorStatusColor(
-  status: IndicatorStatus | undefined,
-): "success" | "warning" | "error" | "default" {
-  if (status === "green") return "success";
-  if (status === "yellow") return "warning";
-  if (status === "red") return "error";
-  return "default";
+function getSafeHelpUrl(helpUrl: string): string | null {
+  try {
+    const parsed = new URL(helpUrl);
+    return parsed.protocol === "http:" || parsed.protocol === "https:" ? parsed.toString() : null;
+  } catch {
+    return null;
+  }
 }
 
 export interface DiagnosticsIndicatorRow {
@@ -78,9 +74,9 @@ export default function DiagnosticsDetailDrawer({ selected, onClose }: Props) {
                 Impacts
               </Typography>
               <Stack spacing={1}>
-                {selected.indicator.impacts.map((impact) => (
+                {selected.indicator.impacts.map((impact, idx) => (
                   <Paper
-                    key={`impact-${impact.id ?? impact.description}`}
+                    key={`impact-${impact.id ?? impact.description ?? idx}`}
                     variant="outlined"
                     sx={{ p: 1 }}
                   >
@@ -114,42 +110,57 @@ export default function DiagnosticsDetailDrawer({ selected, onClose }: Props) {
                 Diagnoses
               </Typography>
               <Stack spacing={1}>
-                {selected.indicator.diagnosis.map((diag) => (
-                  <Paper key={`diag-${diag.id ?? diag.cause}`} variant="outlined" sx={{ p: 1 }}>
-                    {diag.cause && (
-                      <Typography variant="body2" fontWeight="bold">
-                        Cause: {diag.cause}
-                      </Typography>
-                    )}
-                    {diag.action && <Typography variant="body2">Action: {diag.action}</Typography>}
-                    {diag.help_url && (
-                      <Link
-                        href={diag.help_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        variant="body2"
-                      >
-                        View documentation
-                      </Link>
-                    )}
-                    {diag.affected_resources && Object.keys(diag.affected_resources).length > 0 && (
-                      <Box
-                        component="pre"
-                        sx={{
-                          mt: 0.5,
-                          p: 1,
-                          border: 1,
-                          borderColor: "divider",
-                          borderRadius: 1,
-                          overflow: "auto",
-                          fontSize: 12,
-                        }}
-                      >
-                        {JSON.stringify(diag.affected_resources, null, 2)}
-                      </Box>
-                    )}
-                  </Paper>
-                ))}
+                {selected.indicator.diagnosis.map((diag, idx) => {
+                  const safeHelpUrl = diag.help_url ? getSafeHelpUrl(diag.help_url) : null;
+                  return (
+                    <Paper
+                      key={`diag-${diag.id ?? diag.cause ?? idx}`}
+                      variant="outlined"
+                      sx={{ p: 1 }}
+                    >
+                      {diag.cause && (
+                        <Typography variant="body2" fontWeight="bold">
+                          Cause: {diag.cause}
+                        </Typography>
+                      )}
+                      {diag.action && (
+                        <Typography variant="body2">Action: {diag.action}</Typography>
+                      )}
+                      {safeHelpUrl && (
+                        <Link
+                          href={safeHelpUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          variant="body2"
+                        >
+                          View documentation
+                        </Link>
+                      )}
+                      {diag.affected_resources &&
+                        Object.keys(diag.affected_resources).length > 0 && (
+                          <Box
+                            component="pre"
+                            sx={{
+                              mt: 0.5,
+                              p: 1,
+                              border: 1,
+                              borderColor: "divider",
+                              borderRadius: 1,
+                              overflow: "auto",
+                              fontSize: 12,
+                            }}
+                          >
+                            {JSON.stringify(diag.affected_resources, null, 2)}
+                          </Box>
+                        )}
+                      {diag.help_url && !safeHelpUrl && (
+                        <Typography variant="body2" color="text.secondary">
+                          Documentation URL unavailable: {diag.help_url}
+                        </Typography>
+                      )}
+                    </Paper>
+                  );
+                })}
               </Stack>
             </Box>
           )}

@@ -12,25 +12,12 @@ import type { HealthReportIndicator } from "../services/es";
 import PageHeader from "./PageHeader";
 import DiagnosticsDetailDrawer from "./cluster-diagnostics/DiagnosticsDetailDrawer";
 import DiagnosticsIndicatorTable from "./cluster-diagnostics/DiagnosticsIndicatorTable";
+import { indicatorStatusColor } from "./cluster-diagnostics/helpers";
 import { useHealthReport } from "./cluster-diagnostics/useHealthReport";
 
 import type { DiagnosticsIndicatorRow } from "./cluster-diagnostics/DiagnosticsDetailDrawer";
-import type { SortField } from "./cluster-diagnostics/DiagnosticsIndicatorTable";
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-type IndicatorStatus = "green" | "yellow" | "red" | "unknown";
-
-function indicatorStatusColor(
-  status: IndicatorStatus | undefined,
-): "success" | "warning" | "error" | "default" {
-  if (status === "green") return "success";
-  if (status === "yellow") return "warning";
-  if (status === "red") return "error";
-  return "default";
-}
+import type { IndicatorStatus } from "./cluster-diagnostics/helpers";
+import type { IndicatorRowBase, SortField } from "./cluster-diagnostics/DiagnosticsIndicatorTable";
 
 const STATUS_RANK: Record<string, number> = { red: 0, yellow: 1, green: 2, unknown: 3 };
 
@@ -47,11 +34,7 @@ function worstSeverity(indicator: HealthReportIndicator): number {
 // Row type
 // ---------------------------------------------------------------------------
 
-interface IndicatorRow extends DiagnosticsIndicatorRow {
-  impactsCount: number;
-  diagnosesCount: number;
-  worstSeverity: number;
-}
+interface IndicatorRow extends IndicatorRowBase, DiagnosticsIndicatorRow {}
 
 // ---------------------------------------------------------------------------
 // Component
