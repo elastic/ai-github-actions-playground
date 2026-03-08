@@ -9,7 +9,7 @@ import Typography from "@mui/material/Typography";
 
 import { INSIGHT_GUARDRAIL, INSIGHT_SPECIFICITY_POLICY } from "../../hooks/insightPromptUtils";
 import { usePageSlotInsights } from "../../hooks/usePageSlotInsights";
-import { PAGE_MANIFEST } from "../../routes/manifest";
+import { PAGE_PATHS } from "../../routes/paths";
 import DateRangePicker from "../DateRangePicker";
 import EmptyState from "../EmptyState";
 import InsightSlot from "../InsightSlot";
@@ -239,7 +239,7 @@ export default function ServiceInventoryPage() {
             <EmptyState
               heading="No service data loaded"
               description="Run a search to discover services from your OpenTelemetry traces."
-              addDataHref={PAGE_MANIFEST.addData.path}
+              addDataHref={PAGE_PATHS.addData.path}
             />
           </Paper>
         )}
@@ -249,7 +249,7 @@ export default function ServiceInventoryPage() {
             <EmptyState
               heading="No services found"
               description="No services were found in the selected time range. Expand the range or verify ingestion."
-              addDataHref={PAGE_MANIFEST.addData.path}
+              addDataHref={PAGE_PATHS.addData.path}
             />
           </Paper>
         )}

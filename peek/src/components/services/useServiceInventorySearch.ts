@@ -9,7 +9,7 @@ import { useServiceFiltersStore } from "../../store/useServiceFiltersStore";
 import { useTracesStore } from "../../store/useTracesStore";
 import { useTableSort } from "../../hooks/useTableSort";
 import { EMPTY_FILTERS } from "../traces/traceQueryBuilder";
-import { PAGE_MANIFEST } from "../../routes/manifest";
+import { PAGE_PATHS } from "../../routes/paths";
 import type { EsqlResponse } from "../../types";
 
 import {
@@ -179,7 +179,7 @@ export function useServiceInventorySearch() {
         timeTo: filters.timeTo,
         services: [serviceName],
       });
-      navigate(PAGE_MANIFEST.traces.path);
+      navigate(PAGE_PATHS.traces.path);
     },
     [navigate, filters.timeFrom, filters.timeTo],
   );
