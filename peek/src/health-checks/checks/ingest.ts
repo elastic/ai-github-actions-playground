@@ -3,7 +3,7 @@ import type { NodeStatsNode } from "../../services/es";
 import type { HealthCheckDefinition, HealthSnapshot } from "../types";
 
 const INGEST_ERROR_RATE_HIGH = 0.05;
-const INGEST_TIME_PER_DOC_HIGH_MS = 10;
+const INGEST_TIME_PER_DOC_HIGH_MS = 50;
 const INGEST_CURRENT_INFLIGHT_HIGH = 100;
 const INGEST_SKEW_RATIO = 3.0;
 
@@ -19,41 +19,6 @@ function median(values: number[]): number {
 }
 
 export const ingestChecks: HealthCheckDefinition[] = [
-  // #104
-  {
-    id: "ingest.pipelines.with_failures",
-    domain: "ingest",
-    title: "Ingest pipelines with failures",
-    description: "Warns when any ingest pipeline has reported failures.",
-    severityOnFail: "medium",
-    surfaces: ["global"],
-    dependsOn: ["nodesCore"],
-    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/nodes-stats",
-    recommendation:
-      "Ingest failures mean documents are being rejected. Check pipeline processor configurations.",
-    evaluate: (snapshot) => {
-      const nodes = getNodes(snapshot);
-      const pipelineFailures = new Map<string, number>();
-      for (const node of nodes) {
-        for (const [name, stats] of Object.entries(node.ingest?.pipelines ?? {})) {
-          pipelineFailures.set(name, (pipelineFailures.get(name) ?? 0) + (stats.failed ?? 0));
-        }
-      }
-      const failedPipelines = [...pipelineFailures.entries()]
-        .filter(([, count]) => count > 0)
-        .map(([name, count]) => ({ name, failed: count }));
-      if (failedPipelines.length > 0) {
-        return {
-          status: "warn",
-          summary: `${failedPipelines.length} ingest pipeline${failedPipelines.length === 1 ? "" : "s"} with failures.`,
-          observed: { pipelines: failedPipelines.slice(0, 10) },
-          recommendation: "Review pipeline processor configurations for errors.",
-          links: [{ label: "Ingest Pipelines", to: "/ingest-pipelines" }],
-        };
-      }
-      return { status: "pass", summary: "No ingest pipeline failures." };
-    },
-  },
   // #105
   {
     id: "ingest.pipelines.error_rate.high",
@@ -159,53 +124,6 @@ export const ingestChecks: HealthCheckDefinition[] = [
         };
       }
       return { status: "pass", summary: `In-flight ingest (${totalCurrent}) within threshold.` };
-    },
-  },
-  // #108
-  {
-    id: "ingest.pipelines.processor_hotspot",
-    domain: "ingest",
-    title: "Ingest processor hotspot",
-    description: "Warns when a single processor dominates pipeline processing time.",
-    severityOnFail: "low",
-    surfaces: ["global"],
-    dependsOn: ["nodesCore"],
-    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/nodes-stats",
-    recommendation:
-      "A single processor dominates pipeline time. Optimize it or split the pipeline.",
-    evaluate: (snapshot) => {
-      const nodes = getNodes(snapshot);
-      const pipelineProcessors = new Map<string, Map<string, number>>();
-      for (const node of nodes) {
-        for (const [pName, pStats] of Object.entries(node.ingest?.pipelines ?? {})) {
-          if (!pipelineProcessors.has(pName)) pipelineProcessors.set(pName, new Map());
-          const procMap = pipelineProcessors.get(pName)!;
-          for (const procEntry of pStats.processors ?? []) {
-            for (const [procKey, procStats] of Object.entries(procEntry)) {
-              const timeMs = procStats.stats?.time_in_millis ?? 0;
-              procMap.set(procKey, (procMap.get(procKey) ?? 0) + timeMs);
-            }
-          }
-        }
-      }
-      const hotspots: { pipeline: string; processor: string }[] = [];
-      for (const [pName, procMap] of pipelineProcessors) {
-        const times = [...procMap.entries()];
-        const totalTime = times.reduce((s, [, t]) => s + t, 0);
-        if (totalTime <= 0 || times.length < 2) continue;
-        for (const [procKey, procTime] of times) {
-          if (procTime / totalTime > 0.8) hotspots.push({ pipeline: pName, processor: procKey });
-        }
-      }
-      if (hotspots.length > 0) {
-        return {
-          status: "warn",
-          summary: `${hotspots.length} pipeline${hotspots.length === 1 ? "" : "s"} with processor hotspots.`,
-          observed: { hotspots: hotspots.slice(0, 5) },
-          recommendation: "One processor dominates pipeline time. Optimize or split the pipeline.",
-        };
-      }
-      return { status: "pass", summary: "No ingest processor hotspots detected." };
     },
   },
   // #109

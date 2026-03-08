@@ -23,7 +23,6 @@ const DocsPage = lazy(() => import("../components/DocsPage"));
 const ExplorePage = lazy(() => import("../components/ExplorePage"));
 const FleetAgentPage = lazy(() => import("../components/FleetAgentPage"));
 const FleetPage = lazy(() => import("../components/FleetPage"));
-const ClusterDiagnosticsPage = lazy(() => import("../components/ClusterDiagnosticsPage"));
 const IngestPipelinesPage = lazy(() => import("../components/IngestPipelinesPage"));
 const IndicesPage = lazy(() => import("../components/IndicesPage"));
 const StorageExplorerPage = lazy(() => import("../components/StorageExplorerPage"));
@@ -87,7 +86,6 @@ export const PAGE_MANIFEST: Record<PageId, ComponentType> = {
   clusterOverview: ClusterOverviewPage,
   clusterHealth: ClusterHealthPage,
   globalHealth: ClusterHealthPage,
-  clusterDiagnostics: ClusterDiagnosticsPage,
   clusterTasks: TaskManagerPage,
   clusterCapacity: ClusterCapacityPage,
   clusterShards: ClusterShardsPage,

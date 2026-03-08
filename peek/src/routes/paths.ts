@@ -397,19 +397,6 @@ export const PAGE_PATHS = {
       iconKey: "ShieldIcon",
     },
   },
-  clusterDiagnostics: {
-    path: "/cluster-diagnostics",
-    requiresConnection: true,
-    showTimeControls: false,
-    skeletonVariant: "table",
-    nav: {
-      label: "Cluster Diagnostics",
-      group: "System",
-      order: 19,
-      showInSidebar: true,
-      iconKey: "BugReportIcon",
-    },
-  },
   addData: {
     path: "/add-data",
     requiresConnection: true,

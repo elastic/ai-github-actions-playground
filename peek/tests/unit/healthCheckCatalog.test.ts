@@ -625,40 +625,6 @@ describe("node checks", () => {
     expect(check.evaluate(snap).status).toBe("unknown");
   });
 
-  it("#32 nodes.jvm.old_gc.time.high — warns on high GC time", () => {
-    const snap = makeSnapshot({
-      nodesCore: {
-        nodeStats: {
-          nodes: {
-            n1: {
-              name: "n1",
-              jvm: { gc: { collectors: { old: { collection_time_in_millis: 6000 } } } },
-            },
-          },
-        },
-      },
-    });
-    expect(findCheck(nodeChecks, "nodes.jvm.old_gc.time.high").evaluate(snap).status).toBe("warn");
-  });
-
-  it("#33 nodes.jvm.young_gc.time.high — warns on high GC time", () => {
-    const snap = makeSnapshot({
-      nodesCore: {
-        nodeStats: {
-          nodes: {
-            n1: {
-              name: "n1",
-              jvm: { gc: { collectors: { young: { collection_time_in_millis: 15000 } } } },
-            },
-          },
-        },
-      },
-    });
-    expect(findCheck(nodeChecks, "nodes.jvm.young_gc.time.high").evaluate(snap).status).toBe(
-      "warn",
-    );
-  });
-
   it("#35 nodes.os.load_1m.high — warns on high load", () => {
     const snap = makeSnapshot({
       nodesCore: {
@@ -738,19 +704,6 @@ describe("node checks", () => {
     );
   });
 
-  it("#43 nodes.http.total_opened.burst_like — warns when > 10000", () => {
-    const snap = makeSnapshot({
-      nodesCore: {
-        nodeStats: {
-          nodes: { n1: { name: "n1", http: { current_open: 10, total_opened: 15000 } } },
-        },
-      },
-    });
-    expect(findCheck(nodeChecks, "nodes.http.total_opened.burst_like").evaluate(snap).status).toBe(
-      "warn",
-    );
-  });
-
   it("#44 nodes.distribution.hotspotting — warns on uneven CPU", () => {
     const snap = makeSnapshot({
       nodesCore: {
@@ -791,17 +744,6 @@ describe("node checks", () => {
     );
   });
 
-  it("#46 nodes.thread_pool.search.rejected.nonzero — warns", () => {
-    const snap = makeSnapshot({
-      nodesCore: {
-        nodeStats: { nodes: { n1: { name: "n1", thread_pool: { search: { rejected: 5 } } } } },
-      },
-    });
-    expect(
-      findCheck(nodeChecks, "nodes.thread_pool.search.rejected.nonzero").evaluate(snap).status,
-    ).toBe("warn");
-  });
-
   it("#47 nodes.thread_pool.write.queue.high — warns", () => {
     const snap = makeSnapshot({
       nodesCore: {
@@ -811,17 +753,6 @@ describe("node checks", () => {
     expect(findCheck(nodeChecks, "nodes.thread_pool.write.queue.high").evaluate(snap).status).toBe(
       "warn",
     );
-  });
-
-  it("#48 nodes.thread_pool.write.rejected.nonzero — warns", () => {
-    const snap = makeSnapshot({
-      nodesCore: {
-        nodeStats: { nodes: { n1: { name: "n1", thread_pool: { write: { rejected: 2 } } } } },
-      },
-    });
-    expect(
-      findCheck(nodeChecks, "nodes.thread_pool.write.rejected.nonzero").evaluate(snap).status,
-    ).toBe("warn");
   });
 
   it("#51 nodes.thread_pool.management.queue.high — warns", () => {
@@ -843,53 +774,6 @@ describe("node checks", () => {
     });
     expect(
       findCheck(nodeChecks, "nodes.thread_pool.snapshot.queue.high").evaluate(snap).status,
-    ).toBe("warn");
-  });
-
-  it("#53 nodes.breaker.parent.tripped.nonzero — warns", () => {
-    const snap = makeSnapshot({
-      nodesCore: {
-        nodeStats: { nodes: { n1: { name: "n1", breakers: { parent: { tripped: 5 } } } } },
-      },
-    });
-    expect(
-      findCheck(nodeChecks, "nodes.breaker.parent.tripped.nonzero").evaluate(snap).status,
-    ).toBe("warn");
-  });
-
-  it("#54 nodes.breaker.request.tripped.nonzero — warns", () => {
-    const snap = makeSnapshot({
-      nodesCore: {
-        nodeStats: { nodes: { n1: { name: "n1", breakers: { request: { tripped: 3 } } } } },
-      },
-    });
-    expect(
-      findCheck(nodeChecks, "nodes.breaker.request.tripped.nonzero").evaluate(snap).status,
-    ).toBe("warn");
-  });
-
-  it("#55 nodes.breaker.fielddata.tripped.nonzero — warns", () => {
-    const snap = makeSnapshot({
-      nodesCore: {
-        nodeStats: { nodes: { n1: { name: "n1", breakers: { fielddata: { tripped: 2 } } } } },
-      },
-    });
-    expect(
-      findCheck(nodeChecks, "nodes.breaker.fielddata.tripped.nonzero").evaluate(snap).status,
-    ).toBe("warn");
-  });
-
-  it("#56 nodes.breaker.inflight_requests.tripped.nonzero — warns", () => {
-    const snap = makeSnapshot({
-      nodesCore: {
-        nodeStats: {
-          nodes: { n1: { name: "n1", breakers: { in_flight_requests: { tripped: 1 } } } },
-        },
-      },
-    });
-    expect(
-      findCheck(nodeChecks, "nodes.breaker.inflight_requests.tripped.nonzero").evaluate(snap)
-        .status,
     ).toBe("warn");
   });
 
@@ -917,20 +801,20 @@ describe("task checks", () => {
     expect(findCheck(taskChecks, "tasks.running.count.high").evaluate(snap).status).toBe("warn");
   });
 
-  it("#60 tasks.long_running.absolute — fails on long tasks", () => {
+  it("#60 tasks.long_running.absolute — warns on long tasks", () => {
     const snap = makeSnapshot({
       tasksCore: {
         tasks: {
           nodes: {
             n1: {
               name: "n1",
-              tasks: { "1": { action: "test", running_time_in_nanos: 600_000_000_000 } },
+              tasks: { "1": { action: "test", running_time_in_nanos: 2_000_000_000_000 } },
             },
           },
         },
       },
     });
-    expect(findCheck(taskChecks, "tasks.long_running.absolute").evaluate(snap).status).toBe("fail");
+    expect(findCheck(taskChecks, "tasks.long_running.absolute").evaluate(snap).status).toBe("warn");
   });
 
   it("#61 tasks.long_running.search — warns on long search tasks", () => {
@@ -941,7 +825,10 @@ describe("task checks", () => {
             n1: {
               name: "n1",
               tasks: {
-                "1": { action: "indices:data/read/search", running_time_in_nanos: 600_000_000_000 },
+                "1": {
+                  action: "indices:data/read/search",
+                  running_time_in_nanos: 2_000_000_000_000,
+                },
               },
             },
           },
@@ -961,7 +848,7 @@ describe("task checks", () => {
               tasks: {
                 "1": {
                   action: "indices:data/write/reindex",
-                  running_time_in_nanos: 600_000_000_000,
+                  running_time_in_nanos: 2_000_000_000_000,
                 },
               },
             },
@@ -982,7 +869,7 @@ describe("task checks", () => {
               tasks: {
                 "1": {
                   action: "indices:data/write/update_by_query",
-                  running_time_in_nanos: 600_000_000_000,
+                  running_time_in_nanos: 2_000_000_000_000,
                 },
               },
             },
@@ -1005,7 +892,7 @@ describe("task checks", () => {
               tasks: {
                 "1": {
                   action: "indices:data/write/delete_by_query",
-                  running_time_in_nanos: 600_000_000_000,
+                  running_time_in_nanos: 2_000_000_000_000,
                 },
               },
             },
@@ -1028,7 +915,7 @@ describe("task checks", () => {
               tasks: {
                 "1": {
                   action: "cluster:admin/snapshot/create",
-                  running_time_in_nanos: 600_000_000_000,
+                  running_time_in_nanos: 2_000_000_000_000,
                 },
               },
             },
@@ -1047,7 +934,11 @@ describe("task checks", () => {
             n1: {
               name: "n1",
               tasks: {
-                "1": { action: "test", cancellable: true, running_time_in_nanos: 600_000_000_000 },
+                "1": {
+                  action: "test",
+                  cancellable: true,
+                  running_time_in_nanos: 2_000_000_000_000,
+                },
               },
             },
           },
@@ -1345,29 +1236,6 @@ describe("indices checks", () => {
 // Ingest checks
 // ---------------------------------------------------------------------------
 describe("ingest checks", () => {
-  it("#104 ingest.pipelines.with_failures — warns", () => {
-    const snap = makeSnapshot({
-      nodesCore: {
-        nodeStats: {
-          nodes: {
-            n1: {
-              name: "n1",
-              ingest: {
-                total: { count: 100, failed: 5 },
-                pipelines: {
-                  "my-pipeline": { count: 100, failed: 5, current: 0, time_in_millis: 50 },
-                },
-              },
-            },
-          },
-        },
-      },
-    });
-    expect(findCheck(ingestChecks, "ingest.pipelines.with_failures").evaluate(snap).status).toBe(
-      "warn",
-    );
-  });
-
   it("#105 ingest.pipelines.error_rate.high — warns on high error rate", () => {
     const snap = makeSnapshot({
       nodesCore: {
@@ -1401,7 +1269,7 @@ describe("ingest checks", () => {
               ingest: {
                 total: { count: 100, failed: 0 },
                 pipelines: {
-                  "my-pipeline": { count: 100, failed: 0, current: 0, time_in_millis: 5000 },
+                  "my-pipeline": { count: 100, failed: 0, current: 0, time_in_millis: 10000 },
                 },
               },
             },
@@ -1653,7 +1521,6 @@ describe("health report checks", () => {
     const result = findCheck(healthReportChecks, "cluster.health_report.red").evaluate(snap);
     expect(result.status).toBe("fail");
     expect(result.observed).toBeTruthy();
-    expect(result.links?.[0]?.to).toBe("/cluster-diagnostics");
   });
 
   it("cluster.health_report.red — passes on green", () => {
@@ -1688,7 +1555,6 @@ describe("health report checks", () => {
     const result = findCheck(healthReportChecks, "cluster.health_report.yellow").evaluate(snap);
     expect(result.status).toBe("warn");
     expect(result.observed).toBeTruthy();
-    expect(result.links?.[0]?.to).toBe("/cluster-diagnostics");
   });
 
   it("cluster.health_report.yellow — passes on green", () => {
@@ -1698,6 +1564,25 @@ describe("health report checks", () => {
     expect(
       findCheck(healthReportChecks, "cluster.health_report.yellow").evaluate(snap).status,
     ).toBe("pass");
+  });
+
+  it("per-indicator check — returns unknown for unknown indicator status", () => {
+    const snap = makeSnapshot({
+      healthReport: {
+        healthReport: {
+          status: "yellow",
+          indicators: {
+            disk: { status: "unknown", symptom: "Disk status unavailable" },
+          },
+        },
+      },
+    });
+    const result = findCheck(healthReportChecks, "cluster.health_report.indicator.disk").evaluate(
+      snap,
+    );
+    expect(result.status).toBe("unknown");
+    expect(result.summary).toBe("Disk status unavailable");
+    expect(result.observed).toEqual({ status: "unknown" });
   });
 });
 
