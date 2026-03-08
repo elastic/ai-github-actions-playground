@@ -11,7 +11,7 @@ import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 
-import { PAGE_MANIFEST } from "../../routes/manifest";
+import { PAGE_PATHS } from "../../routes/paths";
 import DateRangePicker from "../DateRangePicker";
 import EmptyState from "../EmptyState";
 import PageHeader from "../PageHeader";
@@ -77,7 +77,7 @@ export default function HostsPage({ osType }: HostsPageProps) {
         actions={
           <Button
             component={RouterLink}
-            to={PAGE_MANIFEST.addData.path}
+            to={PAGE_PATHS.addData.path}
             startIcon={<AddCircleOutlineIcon />}
             size="small"
             variant="outlined"
@@ -125,7 +125,7 @@ export default function HostsPage({ osType }: HostsPageProps) {
             icon={<SearchOffIcon />}
             heading="No hosts found"
             description="No hosts were found in the selected time range. Try expanding the time range or check your data ingestion."
-            addDataHref={PAGE_MANIFEST.addData.path}
+            addDataHref={PAGE_PATHS.addData.path}
           />
         </Paper>
       )}
