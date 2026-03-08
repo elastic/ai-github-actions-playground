@@ -383,7 +383,6 @@ export default function TemplatesPage() {
                       selectedTemplateRef?.kind === "index" && tpl.name === selectedTemplateRef.name
                     }
                     tabIndex={0}
-                    role="button"
                     aria-label={`Open template details for ${tpl.name}`}
                     onClick={() => setSelectedTemplateRef({ kind: "index", name: tpl.name })}
                     onKeyDown={(event) => {
@@ -493,7 +492,6 @@ export default function TemplatesPage() {
                     key={ct.name}
                     hover
                     tabIndex={0}
-                    role="button"
                     aria-label={`View component template ${ct.name}`}
                     onClick={() => setSelectedTemplateRef({ kind: "component", name: ct.name })}
                     onKeyDown={(event) => {
