@@ -1,9 +1,0 @@
-{
-  "url": "http://127.0.0.1:3001/ai-github-actions-playground/",
-  "page": "data-streams",
-  "consoleErrors": [],
-  "pageErrors": [
-    "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:3001/ai-github-actions-playground/\nCall log:\n  - navigating to \"http://127.0.0.1:3001/ai-github-actions-playground/\", waiting until \"networkidle\"\n"
-  ],
-  "capturedAt": "2026-03-08T07:57:57.608Z"
-}
