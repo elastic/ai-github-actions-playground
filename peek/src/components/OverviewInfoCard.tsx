@@ -9,17 +9,25 @@ export interface OverviewInfoCardProps {
   children: React.ReactNode;
   /** When provided the entire card becomes a clickable drill-down link. */
   onClick?: () => void;
+  /** Controls surface prominence in dense overview pages. */
+  surfaceTier?: "primary" | "secondary";
 }
 
-export function OverviewInfoCard({ title, children, onClick }: OverviewInfoCardProps) {
+export function OverviewInfoCard({
+  title,
+  children,
+  onClick,
+  surfaceTier = "secondary",
+}: OverviewInfoCardProps) {
+  const isPrimary = surfaceTier === "primary";
   const paper = (
     <Paper
       variant="outlined"
       sx={{
         height: "100%",
         p: 2,
-        borderColor: "border.subtle",
-        bgcolor: "background.subtle",
+        borderColor: isPrimary ? "border.default" : "border.subtle",
+        bgcolor: isPrimary ? "background.paper" : "background.subtle",
         textAlign: "left",
         ...(onClick && {
           cursor: "pointer",
