@@ -9,6 +9,24 @@ import type { ComponentTemplateRow, IndexTemplateRow } from "../services/es";
 
 import DetailSurface from "./DetailSurface";
 
+interface JsonViewerProps {
+  content?: unknown;
+  maxHeight: number;
+  children?: React.ReactNode;
+}
+
+function JsonViewer({ content, maxHeight, children }: JsonViewerProps) {
+  return (
+    <Paper variant="outlined" sx={{ p: 1, maxHeight, overflow: "auto", fontSize: "0.75rem" }}>
+      {children ?? (
+        <pre style={{ margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+          {JSON.stringify(content ?? {}, null, 2)}
+        </pre>
+      )}
+    </Paper>
+  );
+}
+
 interface TemplateDetailsDrawerProps {
   selectedTemplate: IndexTemplateRow | null;
   selectedComponentTemplate: ComponentTemplateRow | null;
@@ -92,9 +110,9 @@ export default function TemplateDetailsDrawer({
             <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
               SIMULATED OUTPUT
             </Typography>
-            <Paper
-              variant="outlined"
-              sx={{ p: 1, maxHeight: 260, overflow: "auto", fontSize: "0.75rem" }}
+            <JsonViewer
+              maxHeight={260}
+              content={simulatedTemplate.status === "success" ? simulatedTemplate.data : {}}
             >
               {simulatedTemplate.status === "loading" ? (
                 <LinearProgress />
@@ -102,30 +120,15 @@ export default function TemplateDetailsDrawer({
                 <Typography variant="body2" color="error">
                   {simulatedTemplate.error}
                 </Typography>
-              ) : (
-                <pre style={{ margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-                  {JSON.stringify(
-                    simulatedTemplate.status === "success" ? simulatedTemplate.data : {},
-                    null,
-                    2,
-                  )}
-                </pre>
-              )}
-            </Paper>
+              ) : null}
+            </JsonViewer>
           </Box>
 
           <Box sx={{ mt: 2 }}>
             <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
               RAW JSON
             </Typography>
-            <Paper
-              variant="outlined"
-              sx={{ p: 1, maxHeight: 300, overflow: "auto", fontSize: "0.75rem" }}
-            >
-              <pre style={{ margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-                {JSON.stringify(selectedTemplate.raw ?? selectedTemplate, null, 2)}
-              </pre>
-            </Paper>
+            <JsonViewer maxHeight={300} content={selectedTemplate.raw ?? selectedTemplate} />
           </Box>
         </>
       )}
@@ -180,14 +183,7 @@ export default function TemplateDetailsDrawer({
             <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
               RAW JSON
             </Typography>
-            <Paper
-              variant="outlined"
-              sx={{ p: 1, maxHeight: 300, overflow: "auto", fontSize: "0.75rem" }}
-            >
-              <pre style={{ margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-                {JSON.stringify(selectedComponentTemplate, null, 2)}
-              </pre>
-            </Paper>
+            <JsonViewer maxHeight={300} content={selectedComponentTemplate} />
           </Box>
         </>
       )}
