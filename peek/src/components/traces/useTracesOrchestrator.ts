@@ -148,6 +148,7 @@ export function useTracesOrchestrator() {
     runQuery: runSearchSpansQuery,
     loading: searchSpansLoading,
     error: searchSpansError,
+    abort: abortSearchSpansQuery,
   } = useEsqlQuery({
     connection,
     onSuccess: (data) =>
@@ -163,6 +164,7 @@ export function useTracesOrchestrator() {
         (c) => c.name === DEFAULT_FIELD_MAPPING.traceId,
       );
       if (traceIdColumnIndex < 0) {
+        abortSearchSpansQuery();
         setSearchTraceSpans([]);
         return;
       }
@@ -174,17 +176,19 @@ export function useTracesOrchestrator() {
         ),
       );
       if (traceIds.length === 0) {
+        abortSearchSpansQuery();
         setSearchTraceSpans([]);
         return;
       }
       runSearchSpansQuery(buildTraceSpansForTraceIdsQuery(traceIds));
     },
-    [setSearchResult, setSearchTraceSpans, runSearchSpansQuery],
+    [setSearchResult, setSearchTraceSpans, runSearchSpansQuery, abortSearchSpansQuery],
   );
   const handleSearchFailure = useCallback(() => {
+    abortSearchSpansQuery();
     setSearchResult(null);
     setSearchTraceSpans([]);
-  }, [setSearchResult, setSearchTraceSpans]);
+  }, [abortSearchSpansQuery, setSearchResult, setSearchTraceSpans]);
   const {
     runQuery: runSearchQuery,
     loading: searchLoading,
