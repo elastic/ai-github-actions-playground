@@ -118,6 +118,55 @@ function formatRelativeTime(ms: number): string {
   return `${Math.round(diff / 86_400_000)}d ago`;
 }
 
+function humanizeSchedule(schedule: string): string {
+  const value = schedule.trim();
+  if (!value) return "—";
+  const parts = value.split(/\s+/);
+  if (parts.length >= 6) {
+    const [seconds, minutes, hours, dayOfMonth, month, dayOfWeek] = parts;
+    if (
+      seconds === "0" &&
+      minutes === "0" &&
+      hours === "*" &&
+      dayOfMonth === "*" &&
+      month === "*" &&
+      dayOfWeek === "?"
+    ) {
+      return "Hourly";
+    }
+    const hour = Number(hours);
+    const minute = Number(minutes);
+    if (
+      seconds === "0" &&
+      Number.isInteger(hour) &&
+      Number.isInteger(minute) &&
+      dayOfMonth === "*" &&
+      month === "*" &&
+      dayOfWeek === "?"
+    ) {
+      return `Daily at ${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")} UTC`;
+    }
+  }
+  return value;
+}
+
+function formatRetention({
+  expireAfter,
+  minCount,
+  maxCount,
+}: {
+  expireAfter: string;
+  minCount?: number;
+  maxCount?: number;
+}): string {
+  const parts: string[] = [];
+  if (expireAfter) parts.push(expireAfter);
+  if (minCount != null && maxCount != null) parts.push(`${minCount}–${maxCount} kept`);
+  else if (minCount != null) parts.push(`min ${minCount}`);
+  else if (maxCount != null) parts.push(`max ${maxCount}`);
+  return parts.length > 0 ? parts.join(", ") : "—";
+}
+
 function summarizeSettings(settings: Record<string, string>): string {
   const preferredKeys = ["bucket", "base_path", "location", "container", "path"];
   const preferred = preferredKeys.filter((k) => settings[k]).map((k) => `${k}: ${settings[k]}`);
@@ -687,12 +736,16 @@ function PoliciesTable({
               </TableCell>
               <TableCell>
                 <Typography variant="body2" color="text.secondary" noWrap>
-                  {row.schedule || "—"}
+                  {humanizeSchedule(row.schedule)}
                 </Typography>
               </TableCell>
               <TableCell>
                 <Typography variant="body2" color="text.secondary" noWrap>
-                  {row.expireAfter ? `${row.expireAfter} (${row.minCount}–${row.maxCount})` : "—"}
+                  {formatRetention({
+                    expireAfter: row.expireAfter,
+                    minCount: row.minCount,
+                    maxCount: row.maxCount,
+                  })}
                 </Typography>
               </TableCell>
             </TableRow>

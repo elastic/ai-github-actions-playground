@@ -46,8 +46,8 @@ export interface SlmPolicyRow {
   lastFailureTime: number;
   lastFailureDetails: string;
   expireAfter: string;
-  minCount: number;
-  maxCount: number;
+  minCount?: number;
+  maxCount?: number;
   indices: string[];
   isFailing: boolean;
 }
@@ -104,8 +104,8 @@ function toSlmPolicyRows(policies: Record<string, SlmPolicyRecord>): SlmPolicyRo
       lastFailureTime,
       lastFailureDetails: record.last_failure?.details ?? "",
       expireAfter: record.policy?.retention?.expire_after ?? "",
-      minCount: record.policy?.retention?.min_count ?? 0,
-      maxCount: record.policy?.retention?.max_count ?? 0,
+      minCount: record.policy?.retention?.min_count,
+      maxCount: record.policy?.retention?.max_count,
       indices: record.policy?.config?.indices ?? [],
       isFailing: lastFailureTime > lastSuccessTime,
     };
@@ -125,6 +125,36 @@ interface RawSnapshotData {
   policies: GetSlmPoliciesResponse;
   repositories: GetRepositoriesResponse;
   slmStats: SlmStatsResponse | null;
+}
+
+const FEATURE_UNAVAILABLE_STATUS_CODES = new Set([400, 403, 404]);
+
+function getErrorStatusCode(error: unknown): number | undefined {
+  if (typeof error !== "object" || error === null) return undefined;
+  if ("statusCode" in error) {
+    const statusCode = Number((error as { statusCode?: unknown }).statusCode);
+    if (Number.isFinite(statusCode)) return statusCode;
+  }
+  if ("status" in error) {
+    const status = Number((error as { status?: unknown }).status);
+    if (Number.isFinite(status)) return status;
+  }
+  if ("response" in error) {
+    const responseStatus = Number((error as { response?: { status?: unknown } }).response?.status);
+    if (Number.isFinite(responseStatus)) return responseStatus;
+  }
+  return undefined;
+}
+
+function isFeatureUnavailableError(error: unknown): boolean {
+  const statusCode = getErrorStatusCode(error);
+  return statusCode != null && FEATURE_UNAVAILABLE_STATUS_CODES.has(statusCode);
+}
+
+function readSettledValue<T>(result: PromiseSettledResult<T>, fallback: T): T {
+  if (result.status === "fulfilled") return result.value;
+  if (isFeatureUnavailableError(result.reason)) return fallback;
+  throw result.reason;
 }
 
 function toSnapshotData(raw: RawSnapshotData): SnapshotData {
@@ -152,10 +182,10 @@ export function useSnapshotData(): DataFetchResult<SnapshotData> & { refresh: ()
         client.getSlmStats(),
       ]);
       return {
-        snapshots: snapshots.status === "fulfilled" ? snapshots.value : { snapshots: [] },
-        policies: policies.status === "fulfilled" ? policies.value : {},
-        repositories: repositories.status === "fulfilled" ? repositories.value : {},
-        slmStats: slmStats.status === "fulfilled" ? slmStats.value : null,
+        snapshots: readSettledValue(snapshots, { snapshots: [] }),
+        policies: readSettledValue(policies, {}),
+        repositories: readSettledValue(repositories, {}),
+        slmStats: readSettledValue(slmStats, null),
       } satisfies RawSnapshotData;
     }),
     enabled: Boolean(connection),

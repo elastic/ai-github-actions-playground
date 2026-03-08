@@ -2,6 +2,7 @@ import type { HealthCheckDefinition } from "../types";
 
 const STALE_SUCCESS_FALLBACK_MS = 48 * 60 * 60 * 1000;
 const POLICY_STALENESS_GRACE_MS = 60 * 60 * 1000;
+const RECENT_SNAPSHOT_LOOKBACK_MS = 7 * 24 * 60 * 60 * 1000;
 
 function unknownSnapshotsDataResult(summary: string, to: string) {
   return {
@@ -12,12 +13,21 @@ function unknownSnapshotsDataResult(summary: string, to: string) {
   };
 }
 
+function withinRecentLookback(
+  snapshot: { start_time_in_millis?: number; end_time_in_millis?: number },
+  now: number,
+): boolean {
+  const timestamp = snapshot.end_time_in_millis ?? snapshot.start_time_in_millis;
+  if (!timestamp) return true;
+  return now - timestamp <= RECENT_SNAPSHOT_LOOKBACK_MS;
+}
+
 export const snapshotChecks: HealthCheckDefinition[] = [
   {
     id: "snapshots.failed.recent",
     domain: "snapshots",
     title: "Failed snapshots",
-    description: "Warns if any snapshots are in FAILED state.",
+    description: "Warns if any snapshots from the past 7 days are in FAILED state.",
     severityOnFail: "high",
     surfaces: ["global"],
     dependsOn: ["snapshotsCore"],
@@ -28,24 +38,25 @@ export const snapshotChecks: HealthCheckDefinition[] = [
       if (!snapshots) {
         return unknownSnapshotsDataResult("Snapshot data unavailable.", "/snapshots");
       }
-      const failed = snapshots.filter((s) => s.state === "FAILED");
+      const now = Date.now();
+      const failed = snapshots.filter((s) => s.state === "FAILED" && withinRecentLookback(s, now));
       if (failed.length > 0) {
         return {
           status: "warn",
-          summary: `${failed.length} snapshot${failed.length === 1 ? "" : "s"} in FAILED state.`,
+          summary: `${failed.length} recent snapshot${failed.length === 1 ? "" : "s"} in FAILED state.`,
           observed: { failedCount: failed.length },
           recommendation: "Investigate failed snapshots and check repository connectivity.",
           links: [{ label: "Snapshots", to: "/snapshots" }],
         };
       }
-      return { status: "pass", summary: "No failed snapshots." };
+      return { status: "pass", summary: "No recent failed snapshots." };
     },
   },
   {
     id: "snapshots.partial.recent",
     domain: "snapshots",
     title: "Partial snapshots",
-    description: "Warns if snapshots completed with partial shard failures.",
+    description: "Warns if snapshots from the past 7 days completed with partial shard failures.",
     severityOnFail: "medium",
     surfaces: ["global"],
     dependsOn: ["snapshotsCore"],
@@ -56,17 +67,20 @@ export const snapshotChecks: HealthCheckDefinition[] = [
       if (!snapshots) {
         return unknownSnapshotsDataResult("Snapshot data unavailable.", "/snapshots");
       }
-      const partial = snapshots.filter((s) => s.state === "PARTIAL");
+      const now = Date.now();
+      const partial = snapshots.filter(
+        (s) => s.state === "PARTIAL" && withinRecentLookback(s, now),
+      );
       if (partial.length > 0) {
         return {
           status: "warn",
-          summary: `${partial.length} snapshot${partial.length === 1 ? "" : "s"} in PARTIAL state.`,
+          summary: `${partial.length} recent snapshot${partial.length === 1 ? "" : "s"} in PARTIAL state.`,
           observed: { partialCount: partial.length },
           recommendation: "Partial snapshots indicate some shards failed to snapshot.",
           links: [{ label: "Snapshots", to: "/snapshots" }],
         };
       }
-      return { status: "pass", summary: "No partial snapshots." };
+      return { status: "pass", summary: "No recent partial snapshots." };
     },
   },
   {
