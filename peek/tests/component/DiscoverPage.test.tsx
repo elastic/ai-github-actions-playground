@@ -1,14 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import DiscoverPage from "../../src/components/DiscoverPage";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { useQueryStore } from "../../src/store/useQueryStore";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
 import { resetAllStores } from "../fixtures/test-utils";
+import { renderWithQueryClient } from "../helpers/renderWithQueryClient";
 
 const queryMock = vi.fn();
 
@@ -45,16 +45,11 @@ vi.mock("../../src/components/QueryPipelineSteps", () => ({
   ),
 }));
 
-let testQueryClient: QueryClient;
-
 function renderDiscoverPage() {
-  testQueryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(
-    <QueryClientProvider client={testQueryClient}>
-      <MemoryRouter>
-        <DiscoverPage />
-      </MemoryRouter>
-    </QueryClientProvider>,
+  return renderWithQueryClient(
+    <MemoryRouter>
+      <DiscoverPage />
+    </MemoryRouter>,
   );
 }
 
@@ -106,7 +101,7 @@ describe("DiscoverPage", () => {
       executionTimeMs: 1,
     });
     const user = userEvent.setup();
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <DiscoverPage />
       </MemoryRouter>,
@@ -139,7 +134,7 @@ describe("DiscoverPage", () => {
       executionTimeMs: 1,
     });
     const user = userEvent.setup();
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <DiscoverPage />
       </MemoryRouter>,
@@ -168,7 +163,7 @@ describe("DiscoverPage", () => {
       executionTimeMs: 1,
     });
     const user = userEvent.setup();
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <DiscoverPage />
       </MemoryRouter>,

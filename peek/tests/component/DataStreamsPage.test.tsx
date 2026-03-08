@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { act, render, screen, waitFor, within } from "@testing-library/react";
+import { act, screen, waitFor, within } from "@testing-library/react";
+import { renderWithQueryClient } from "../helpers/renderWithQueryClient";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
@@ -101,7 +102,7 @@ describe("DataStreamsPage", () => {
       });
     getFieldCapsMock.mockResolvedValue({ fields: {} });
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <NuqsTestingAdapter hasMemory>
           <DataStreamsPage />
@@ -146,7 +147,7 @@ describe("DataStreamsPage", () => {
     });
     getFieldCapsMock.mockResolvedValue({ fields: {} });
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <NuqsTestingAdapter hasMemory>
           <DataStreamsPage />
@@ -184,7 +185,7 @@ describe("DataStreamsPage", () => {
       fields: { "host.name": { keyword: { type: "keyword" } } },
     });
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <NuqsTestingAdapter hasMemory>
           <DataStreamsPage />
@@ -213,7 +214,7 @@ describe("DataStreamsPage", () => {
     });
     getFieldCapsMock.mockResolvedValue({ fields: {} });
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <NuqsTestingAdapter hasMemory>
           <DataStreamsPage />
@@ -243,7 +244,7 @@ describe("DataStreamsPage", () => {
     });
     getFieldCapsMock.mockResolvedValue({ fields: {} });
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <NuqsTestingAdapter hasMemory>
           <DataStreamsPage />
@@ -276,7 +277,7 @@ describe("DataStreamsPage", () => {
     });
     getFieldCapsMock.mockResolvedValue({ fields: {} });
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <NuqsTestingAdapter hasMemory>
           <DataStreamsPage />
@@ -307,7 +308,7 @@ describe("DataStreamsPage", () => {
     });
     getFieldCapsMock.mockResolvedValue({ fields: {} });
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <NuqsTestingAdapter hasMemory>
           <DataStreamsPage />
@@ -331,7 +332,7 @@ describe("DataStreamsPage", () => {
     });
     getFieldCapsMock.mockResolvedValue({ fields: {} });
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <NuqsTestingAdapter hasMemory>
           <DataStreamsPage />
@@ -358,7 +359,7 @@ describe("DataStreamsPage", () => {
       .mockReturnValueOnce(firstFields.promise)
       .mockReturnValueOnce(secondFields.promise);
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <NuqsTestingAdapter hasMemory>
           <DataStreamsPage />
@@ -397,7 +398,7 @@ describe("DataStreamsPage", () => {
       fields: { "host.name": { keyword: { type: "keyword" } } },
     });
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <NuqsTestingAdapter hasMemory>
           <DataStreamsPage />
@@ -429,7 +430,7 @@ describe("DataStreamsPage", () => {
       },
     });
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <NuqsTestingAdapter hasMemory>
           <DataStreamsPage />
@@ -461,7 +462,7 @@ describe("DataStreamsPage", () => {
       fields: { "host.name": { keyword: { type: "keyword" } } },
     });
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <NuqsTestingAdapter hasMemory>
           <DataStreamsPage />
@@ -497,7 +498,7 @@ describe("DataStreamsPage", () => {
     });
     getFieldCapsMock.mockResolvedValue({ fields: {} });
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <NuqsTestingAdapter hasMemory>
           <DataStreamsPage />
@@ -524,7 +525,7 @@ describe("DataStreamsPage", () => {
     });
     getFieldCapsMock.mockResolvedValue({ fields: {} });
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <NuqsTestingAdapter hasMemory>
           <DataStreamsPage />
@@ -556,7 +557,7 @@ describe("DataStreamsPage", () => {
     });
     getFieldCapsMock.mockResolvedValue({ fields: {} });
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <NuqsTestingAdapter hasMemory>
           <DataStreamsPage />
@@ -598,7 +599,7 @@ describe("DataStreamsPage", () => {
     });
     getFieldCapsMock.mockResolvedValue({ fields: {} });
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <NuqsTestingAdapter hasMemory>
           <DataStreamsPage />
