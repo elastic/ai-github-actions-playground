@@ -7,7 +7,7 @@ import LinearProgress from "@mui/material/LinearProgress";
 import Paper from "@mui/material/Paper";
 import { parseAsString, useQueryState } from "nuqs";
 
-import { PAGE_MANIFEST } from "../../routes/manifest";
+import { PAGE_PATHS } from "../../routes/paths";
 import { useConnectionStore } from "../../store/useConnectionStore";
 import { useProfilingFiltersStore } from "../../store/useProfilingFiltersStore";
 import { EMPTY_PROFILING_FILTERS } from "../../types/pageFilters";
@@ -222,7 +222,7 @@ export default function ProfilingGuidedPage() {
         onViewModeChange={setViewMode}
         showOpenInQueryLab={viewMode !== "topFunctions"}
         onOpenInQueryLab={handleOpenInQueryLab}
-        onAdvancedView={() => navigate(PAGE_MANIFEST.profilingAdvanced.path)}
+        onAdvancedView={() => navigate(PAGE_PATHS.profilingAdvanced.path)}
       />
 
       {loading && <LinearProgress />}

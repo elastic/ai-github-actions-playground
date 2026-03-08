@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { PAGE_MANIFEST } from "../routes/manifest";
+import { PAGE_PATHS } from "../routes/paths";
 import { useQueryStore } from "../store/useQueryStore";
 
 /**
@@ -10,7 +10,7 @@ import { useQueryStore } from "../store/useQueryStore";
  */
 export function openInDiscover(navigate: (path: string) => void, query: string): void {
   useQueryStore.getState().setDiscoverQueryDraft(query);
-  navigate(PAGE_MANIFEST.discover.path);
+  navigate(PAGE_PATHS.discover.path);
 }
 
 /**
@@ -24,7 +24,7 @@ export function useOpenInDiscover(): (query: string) => void {
   return useCallback(
     (query: string) => {
       setDiscoverQueryDraft(query);
-      navigate(PAGE_MANIFEST.discover.path);
+      navigate(PAGE_PATHS.discover.path);
     },
     [navigate, setDiscoverQueryDraft],
   );

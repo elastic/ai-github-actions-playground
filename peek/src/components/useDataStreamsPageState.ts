@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useApiConsoleStore } from "../store/useApiConsoleStore";
 import { usePageContextStore } from "../store/usePageContextStore";
-import { PAGE_MANIFEST } from "../routes/manifest";
+import { PAGE_PATHS } from "../routes/paths";
 import { useDataStreams } from "../hooks/useDataStreams";
 import { useFieldCaps } from "../hooks/useFieldCaps";
 import { useOpenInDiscover } from "../hooks/useOpenInDiscover";
@@ -157,7 +157,7 @@ export function useDataStreamsPageState() {
   const handleInspectInConsole = useCallback(() => {
     if (!selectedName) return;
     setConsoleDraft({ method: "GET", path: `/_data_stream/${selectedName}` });
-    navigate(PAGE_MANIFEST.console.path);
+    navigate(PAGE_PATHS.console.path);
   }, [selectedName, navigate, setConsoleDraft]);
 
   const handleFieldStatsQuery = useCallback(

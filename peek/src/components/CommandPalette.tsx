@@ -27,11 +27,11 @@ import ChatIcon from "@mui/icons-material/Chat";
 import { useShallow } from "zustand/react/shallow";
 
 import {
-  PAGE_MANIFEST,
+  PAGE_PATHS,
   isHiddenByCapability,
   type PageId,
-  type PageConfig,
-} from "../routes/manifest";
+  type PagePathConfig,
+} from "../routes/paths";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useThemeStore } from "../store/useThemeStore";
 import { useCommandPaletteStore } from "../store/useCommandPaletteStore";
@@ -100,8 +100,8 @@ function useCommands(): Command[] {
   return useMemo(() => {
     const commands: Command[] = [];
 
-    // Navigation commands from PAGE_MANIFEST
-    for (const [page, config] of Object.entries(PAGE_MANIFEST) as Array<[PageId, PageConfig]>) {
+    // Navigation commands from PAGE_PATHS
+    for (const [page, config] of Object.entries(PAGE_PATHS) as Array<[PageId, PagePathConfig]>) {
       if (!config.nav.showInSidebar) continue;
       if (config.path.includes(":")) continue;
       if (config.requiresConnection && !connected) continue;
@@ -171,7 +171,7 @@ function useCommands(): Command[] {
         keywords: "settings language model ai llm",
         onExecute: () => {
           setCommandPaletteOpen(false);
-          navigate(PAGE_MANIFEST.settings.path);
+          navigate(PAGE_PATHS.settings.path);
         },
       });
 
@@ -275,7 +275,7 @@ function useCommands(): Command[] {
         keywords: `docs documentation help ${section.id}`,
         onExecute: () => {
           setCommandPaletteOpen(false);
-          navigate(`${PAGE_MANIFEST.docs.path}?section=${section.id}`);
+          navigate(`${PAGE_PATHS.docs.path}?section=${section.id}`);
         },
       });
     }
