@@ -32,6 +32,8 @@ jobs:
             no-update-pr-body|Keep the body of the PR updated|Keeps the PR description aligned with the latest commits so reviewers have accurate context.|1d76db|Disable Update PR Body workflow
             no-address-pr-feedback|Address review feedback|Applies straightforward bot review suggestions automatically to reduce manual cleanup.|5319e7|Disable Address PR Review Feedback workflow
             no-address-merge-conflicts|Address merge conflicts|Automatically resolves simple main-branch merge conflicts so the PR stays mergeable.|d73a4a|Disable Address Merge Conflicts workflow
+          CONTROL_PANEL_ADVANCED_ITEMS: |
+            no-pr-preview|Enable PR Preview deployment|Opt out of this to skip PR preview deployment when preview workflows are configured to honor the label.|0366d6|Disable PR Preview deployment
         with:
           script: |
             // Security invariant for pull_request_target:
@@ -53,16 +55,17 @@ jobs:
                 .replace(/'/g, "&#39;");
             }
 
-            function parseItemsConfig(raw) {
+            function parseItemsConfig(raw, configName) {
               const lines = raw
                 .split("\n")
                 .map((line) => line.trim())
                 .filter(Boolean);
+              if (lines.length === 0) return [];
               return lines.map((line) => {
                 const parts = line.split(CONFIG_DELIMITER).map((part) => part.trim());
                 if (parts.length < 5) {
                   throw new Error(
-                    `Invalid CONTROL_PANEL_ITEMS line (expected 5 fields): ${line}`,
+                    `Invalid ${configName} line (expected 5 fields): ${line}`,
                   );
                 }
                 const [label, title, tooltip, color, description] = parts;
@@ -77,8 +80,16 @@ jobs:
               });
             }
 
-            const ITEMS = parseItemsConfig(process.env.CONTROL_PANEL_ITEMS ?? "");
-            if (ITEMS.length === 0) {
+            const PRIMARY_ITEMS = parseItemsConfig(
+              process.env.CONTROL_PANEL_ITEMS ?? "",
+              "CONTROL_PANEL_ITEMS",
+            );
+            const ADVANCED_ITEMS = parseItemsConfig(
+              process.env.CONTROL_PANEL_ADVANCED_ITEMS ?? "",
+              "CONTROL_PANEL_ADVANCED_ITEMS",
+            );
+            const ITEMS = [...PRIMARY_ITEMS, ...ADVANCED_ITEMS];
+            if (PRIMARY_ITEMS.length === 0) {
               throw new Error("CONTROL_PANEL_ITEMS must include at least one item.");
             }
 
@@ -100,11 +111,25 @@ jobs:
                 MARKER,
                 "Automatically handle the following tasks using AI:",
                 "",
-                ...ITEMS.map(
+                ...PRIMARY_ITEMS.map(
                   (item) =>
                     `- [${state[item.label] ? "x" : " "}] ${item.displayLabel} <!-- ${KEY_PREFIX}:${item.label} -->`,
                 ),
                 "",
+                ...(ADVANCED_ITEMS.length > 0
+                  ? [
+                      "<details>",
+                      "<summary>Advanced controls</summary>",
+                      "",
+                      ...ADVANCED_ITEMS.map(
+                        (item) =>
+                          `- [${state[item.label] ? "x" : " "}] ${item.displayLabel} <!-- ${KEY_PREFIX}:${item.label} -->`,
+                      ),
+                      "",
+                      "</details>",
+                      "",
+                    ]
+                  : []),
                 "<details>",
                 "<summary>Troubleshooting</summary>",
                 "",
