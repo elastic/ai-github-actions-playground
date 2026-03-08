@@ -1,182 +1,169 @@
+import { useCallback } from "react";
 import Dialog from "@mui/material/Dialog";
-import DialogTitle from "@mui/material/DialogTitle";
-import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
-import TextField from "@mui/material/TextField";
-import Button from "@mui/material/Button";
-import Alert from "@mui/material/Alert";
-import CircularProgress from "@mui/material/CircularProgress";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
+import Button from "@mui/material/Button";
+import CircularProgress from "@mui/material/CircularProgress";
+import { useShallow } from "zustand/react/shallow";
 
-import { useConnectionForm } from "../hooks/useConnectionForm";
+import { useConnectionStore } from "../store/useConnectionStore";
+import { useUIStore } from "../store/useUIStore";
 
-import ConnectionProfilesList from "./ConnectionProfilesList";
-import ConnectionAuthFields from "./ConnectionAuthFields";
-import ConnectionAdvancedSettings from "./ConnectionAdvancedSettings";
-import ConnectionSavePrompt from "./ConnectionSavePrompt";
+import ConnectionDialogForm from "./ConnectionDialogForm";
+import { useConnectionDialogActions } from "./useConnectionDialogActions";
+import {
+  isLikelyServerlessUrl,
+  useConnectionDialogForm,
+  type AuthType,
+} from "./useConnectionDialogForm";
 
 export default function ConnectionDialog() {
+  const { connectionDialogOpen: open, setConnectionDialogOpen: setOpen } = useUIStore(
+    useShallow((s) => ({
+      connectionDialogOpen: s.connectionDialogOpen,
+      setConnectionDialogOpen: s.setConnectionDialogOpen,
+    })),
+  );
   const {
-    open,
-    setOpen,
+    connection: savedConn,
     connected,
+    setConnection,
+    setConnected,
+    setCapabilities,
     connectionProfiles,
     activeProfileId,
+    saveConnectionProfile,
     deleteConnectionProfile,
-    unlockProfile,
-    url,
-    authType,
-    apiKey,
-    setApiKey,
-    username,
-    setUsername,
-    password,
-    setPassword,
-    proxyUrl,
-    setProxyUrl,
-    ingestUrl,
-    setIngestUrl,
-    showAdvanced,
-    setShowAdvanced,
-    showSecret,
-    setShowSecret,
-    testing,
-    result,
-    profileName,
-    setProfileName,
-    savePin,
-    setSavePin,
-    savePromptOpen,
-    setSavePromptOpen,
-    isDuplicateProfileName,
-    canAttemptConnection,
-    canConfirmConnectAndSave,
-    likelyServerless,
+    renameConnectionProfile,
     setActiveProfileId,
-    handleTest,
-    handleConnect,
-    handleDisconnect,
-    handleConnectAndSave,
-    handleLoadProfile,
-    handleRenameProfile,
-    handleUrlChange,
-    handleAuthTypeChange,
-  } = useConnectionForm();
+    getConnectionProfile,
+    lockProfile,
+    unlockProfile,
+  } = useConnectionStore(
+    useShallow((s) => ({
+      connection: s.connection,
+      connected: s.connected,
+      setConnection: s.setConnection,
+      setConnected: s.setConnected,
+      setCapabilities: s.setCapabilities,
+      connectionProfiles: s.connectionProfiles,
+      activeProfileId: s.activeProfileId,
+      saveConnectionProfile: s.saveConnectionProfile,
+      deleteConnectionProfile: s.deleteConnectionProfile,
+      renameConnectionProfile: s.renameConnectionProfile,
+      setActiveProfileId: s.setActiveProfileId,
+      getConnectionProfile: s.getConnectionProfile,
+      lockProfile: s.lockProfile,
+      unlockProfile: s.unlockProfile,
+    })),
+  );
+
+  const form = useConnectionDialogForm(savedConn, () => setActiveProfileId(null));
+  const actions = useConnectionDialogActions({
+    formState: form.form,
+    buildConnection: form.buildConnection,
+    connectionProfiles,
+    saveConnectionProfile,
+    deleteConnectionProfile,
+    lockProfile,
+    setConnection,
+    setConnected,
+    setCapabilities,
+    closeDialog: () => setOpen(false),
+  });
+
+  const handleAuthTypeChange = useCallback(
+    (nextAuthType: AuthType) => {
+      form.updateAuthType(nextAuthType);
+      actions.setResult(null);
+    },
+    [actions, form],
+  );
+
+  const handleLoadProfile = useCallback(
+    (profileId: string) => {
+      const profile = getConnectionProfile(profileId);
+      if (!profile) return;
+      form.setHydratedConnection(profile.connection);
+      setActiveProfileId(profileId);
+      actions.setResult(null);
+    },
+    [actions, form, getConnectionProfile, setActiveProfileId],
+  );
 
   return (
     <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
       <DialogTitle>Elasticsearch Connection</DialogTitle>
       <DialogContent>
-        <Box
-          component="form"
-          onSubmit={(e: React.FormEvent) => e.preventDefault()}
-          autoComplete="on"
-          sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}
-        >
-          <Typography variant="caption" color="text.secondary">
-            Enter your endpoint and credentials. Connections are direct from the browser unless a
-            proxy URL is configured.
-          </Typography>
-          {likelyServerless && (
-            <Alert severity="warning" sx={{ py: 0 }}>
-              This endpoint looks like Elasticsearch Serverless (<code>*.elastic.cloud</code>).
-              Direct browser access typically fails because required CORS settings are unavailable.
-            </Alert>
-          )}
-
-          <ConnectionProfilesList
-            connectionProfiles={connectionProfiles}
-            activeProfileId={activeProfileId}
-            onLoadProfile={handleLoadProfile}
-            onDeleteProfile={deleteConnectionProfile}
-            onRenameProfile={handleRenameProfile}
-            unlockProfile={unlockProfile}
-          />
-
-          <TextField
-            label="Elasticsearch URL"
-            placeholder="https://my-cluster.es.us-east-1.aws.elastic.cloud:443"
-            fullWidth
-            value={url}
-            onChange={(e) => handleUrlChange(e.target.value)}
-            helperText="The full URL including protocol and port"
-          />
-          <ConnectionAuthFields
-            authType={authType}
-            onAuthTypeChange={handleAuthTypeChange}
-            apiKey={apiKey}
-            onApiKeyChange={(v) => {
-              setApiKey(v);
-              setActiveProfileId(null);
-            }}
-            username={username}
-            onUsernameChange={(v) => {
-              setUsername(v);
-              setActiveProfileId(null);
-            }}
-            password={password}
-            onPasswordChange={(v) => {
-              setPassword(v);
-              setActiveProfileId(null);
-            }}
-            showSecret={showSecret}
-            onToggleShowSecret={() => setShowSecret(!showSecret)}
-          />
-          <ConnectionAdvancedSettings
-            showAdvanced={showAdvanced}
-            onToggleAdvanced={() => setShowAdvanced(!showAdvanced)}
-            proxyUrl={proxyUrl}
-            onProxyUrlChange={(v) => {
-              setProxyUrl(v);
-              setActiveProfileId(null);
-            }}
-            ingestUrl={ingestUrl}
-            onIngestUrlChange={(v) => {
-              setIngestUrl(v);
-              setActiveProfileId(null);
-            }}
-            url={url}
-          />
-          {result && <Alert severity={result.ok ? "success" : "error"}>{result.message}</Alert>}
-          <ConnectionSavePrompt
-            open={savePromptOpen}
-            profileName={profileName}
-            onProfileNameChange={setProfileName}
-            savePin={savePin}
-            onSavePinChange={setSavePin}
-            isDuplicateProfileName={isDuplicateProfileName}
-            testing={testing}
-            canConfirmConnectAndSave={canConfirmConnectAndSave}
-            onConnectAndSave={() => void handleConnectAndSave()}
-            onCancel={() => {
-              setSavePromptOpen(false);
-              setProfileName("");
-              setSavePin("");
-            }}
-          />
-        </Box>
+        <ConnectionDialogForm
+          authType={form.form.authType}
+          url={form.form.url}
+          apiKey={form.form.apiKey}
+          username={form.form.username}
+          password={form.form.password}
+          proxyUrl={form.form.proxyUrl}
+          ingestUrl={form.form.ingestUrl}
+          showAdvanced={form.form.showAdvanced}
+          showSecret={form.form.showSecret}
+          likelyServerless={isLikelyServerlessUrl(form.form.url)}
+          connectionProfiles={connectionProfiles}
+          activeProfileId={activeProfileId}
+          result={actions.result}
+          savePromptOpen={actions.savePromptOpen}
+          profileName={actions.profileName}
+          savePin={actions.savePin}
+          testing={actions.testing}
+          isDuplicateProfileName={actions.isDuplicateProfileName}
+          canConfirmConnectAndSave={actions.canConfirmConnectAndSave}
+          onLoadProfile={handleLoadProfile}
+          onDeleteProfile={deleteConnectionProfile}
+          onRenameProfile={renameConnectionProfile}
+          onUnlockProfile={unlockProfile}
+          onUrlChange={form.updateUrl}
+          onAuthTypeChange={handleAuthTypeChange}
+          onApiKeyChange={form.setApiKey}
+          onUsernameChange={form.setUsername}
+          onPasswordChange={form.setPassword}
+          onProxyUrlChange={form.setProxyUrl}
+          onIngestUrlChange={form.setIngestUrl}
+          onToggleShowSecret={() => form.setShowSecret(!form.form.showSecret)}
+          onToggleAdvanced={() => form.setShowAdvanced(!form.form.showAdvanced)}
+          onProfileNameChange={actions.setProfileName}
+          onSavePinChange={actions.setSavePin}
+          onCancelSave={() => {
+            actions.setSavePromptOpen(false);
+            actions.setProfileName("");
+            actions.setSavePin("");
+          }}
+          onConfirmConnectAndSave={actions.handleConnectAndSave}
+        />
       </DialogContent>
       <DialogActions disableSpacing sx={{ flexWrap: "wrap", gap: 1, pb: 2, px: 3 }}>
         {connected && (
-          <Button onClick={handleDisconnect} color="warning" disabled={testing}>
+          <Button onClick={actions.handleDisconnect} color="warning" disabled={actions.testing}>
             Disconnect
           </Button>
         )}
         <Box sx={{ flex: 1 }} />
         <Button onClick={() => setOpen(false)}>Cancel</Button>
-        <Button onClick={handleTest} disabled={!canAttemptConnection}>
-          {testing ? <CircularProgress size={20} /> : "Test"}
+        <Button onClick={() => void actions.handleTest()} disabled={!actions.canAttemptConnection}>
+          {actions.testing ? <CircularProgress size={20} /> : "Test"}
         </Button>
         <Button
           variant="outlined"
-          onClick={() => setSavePromptOpen((v) => !v)}
-          disabled={!canAttemptConnection}
+          onClick={() => actions.setSavePromptOpen((value) => !value)}
+          disabled={!actions.canAttemptConnection}
         >
           Connect & Save
         </Button>
-        <Button variant="contained" onClick={handleConnect} disabled={!canAttemptConnection}>
-          {testing ? <CircularProgress size={20} /> : "Connect"}
+        <Button
+          variant="contained"
+          onClick={() => void actions.handleConnect()}
+          disabled={!actions.canAttemptConnection}
+        >
+          {actions.testing ? <CircularProgress size={20} /> : "Connect"}
         </Button>
       </DialogActions>
     </Dialog>
