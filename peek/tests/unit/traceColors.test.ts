@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 
 import { getServiceColor, getServiceTextColor } from "../../src/components/traces/traceColors";
+import { CHART_COLORS } from "../../src/theme";
 
 function sRGBtoLinear(c: number): number {
   const s = c / 255;
@@ -33,22 +34,20 @@ describe("getServiceColor", () => {
 
 describe("getServiceTextColor", () => {
   it("returns a color that meets WCAG 4.5:1 contrast on white", () => {
-    const services = [
-      "frontend",
-      "backend",
-      "db-service",
-      "auth",
-      "gateway",
-      "cache",
-      "queue",
-      "worker",
-      "scheduler",
-      "monitor",
-      "logger",
-      "analytics",
-    ];
+    const representativeByBaseColor = new Map<string, string>();
+    const maxAttempts = CHART_COLORS.length * 20;
 
-    for (const name of services) {
+    for (let i = 0; i < maxAttempts && representativeByBaseColor.size < CHART_COLORS.length; i++) {
+      const serviceName = `service-${i}`;
+      const baseColor = getServiceColor(serviceName);
+      if (!representativeByBaseColor.has(baseColor)) {
+        representativeByBaseColor.set(baseColor, serviceName);
+      }
+    }
+
+    expect(representativeByBaseColor.size).toBe(CHART_COLORS.length);
+
+    for (const name of representativeByBaseColor.values()) {
       const textColor = getServiceTextColor(name);
       const ratio = contrastOnWhite(textColor);
       expect(ratio).toBeGreaterThanOrEqual(4.5);
@@ -83,7 +82,7 @@ describe("getServiceTextColor", () => {
     );
   });
 
-  it("returns the same color for repeated calls (caching)", () => {
+  it("returns the same color for repeated calls", () => {
     const a = getServiceTextColor("test-service");
     const b = getServiceTextColor("test-service");
     expect(a).toBe(b);
