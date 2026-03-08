@@ -1,2 +1,0 @@
-import{j as o}from"./mui-CAOFXxGC.js";import t from"./HostsPage-B8AIH3WG.js";import"./index-DHUTvtH9.js";import"./ai-sdk-CoyiOQ4i.js";import"./perses-CSwBT5Xq.js";import"./codemirror-CK4Xh5Iq.js";import"./echarts-DvDtotIb.js";import"./PageHeader-BUFivdP9.js";import"./hostHelpers-DLOSuZsZ.js";import"./useEsQuery-DY75c_kZ.js";function f(){return o.jsx(t,{osType:"linux"})}export{f as default};
-//# sourceMappingURL=HostsLinuxPage-ZjxgmHGN.js.map
