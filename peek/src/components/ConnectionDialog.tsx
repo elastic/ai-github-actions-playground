@@ -66,6 +66,7 @@ export default function ConnectionDialog() {
     buildConnection: form.buildConnection,
     connectionProfiles,
     saveConnectionProfile,
+    deleteConnectionProfile,
     lockProfile,
     setConnection,
     setConnected,

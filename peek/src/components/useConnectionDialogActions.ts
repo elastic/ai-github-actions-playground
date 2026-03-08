@@ -16,6 +16,7 @@ interface Params {
   buildConnection: () => ElasticsearchConnection;
   connectionProfiles: ConnectionProfile[];
   saveConnectionProfile: (name: string, connection: ElasticsearchConnection) => string | null;
+  deleteConnectionProfile: (id: string) => void;
   lockProfile: (id: string, pin: string) => Promise<void>;
   setConnection: (connection: ElasticsearchConnection) => void;
   setConnected: (connected: boolean) => void;
@@ -28,6 +29,7 @@ export function useConnectionDialogActions({
   buildConnection,
   connectionProfiles,
   saveConnectionProfile,
+  deleteConnectionProfile,
   lockProfile,
   setConnection,
   setConnected,
@@ -89,7 +91,18 @@ export function useConnectionDialogActions({
     const trimmedName = profileName.trim();
     await runConnectionAction(async (caps, connection) => {
       const id = saveConnectionProfile(trimmedName, connection);
-      if (id && savePin.trim()) await lockProfile(id, savePin.trim());
+      if (!id) {
+        throw new Error("Profile name already exists.");
+      }
+      const trimmedPin = savePin.trim();
+      if (trimmedPin) {
+        try {
+          await lockProfile(id, trimmedPin);
+        } catch (error) {
+          deleteConnectionProfile(id);
+          throw error;
+        }
+      }
       setConnection(connection);
       setConnected(true);
       setCapabilities(caps);
@@ -101,6 +114,7 @@ export function useConnectionDialogActions({
   }, [
     canConfirmConnectAndSave,
     closeDialog,
+    deleteConnectionProfile,
     lockProfile,
     profileName,
     runConnectionAction,
