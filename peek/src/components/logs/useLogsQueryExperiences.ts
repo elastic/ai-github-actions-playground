@@ -47,6 +47,7 @@ export function useLogsQueryExperiences({
 }: UseLogsQueryExperiencesArgs) {
   const handleAnomalyDrillIn = useCallback(
     (start: number, end: number) => {
+      if (!Number.isFinite(start) || !Number.isFinite(end)) return;
       const clause = [
         `STATS log_count = COUNT(*) BY bucket = BUCKET(@timestamp, ${histogramIntervalMinutes} minutes)`,
         "EVAL anomaly = CHANGE_POINT(log_count)",
