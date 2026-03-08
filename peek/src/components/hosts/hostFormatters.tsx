@@ -31,7 +31,6 @@ export function fmtBytesRate(value: number | null): string {
   return `${(value / 1024 / 1024 / 1024).toFixed(2)} GB/s`;
 }
 
-
 interface MetricCardProps {
   label: string;
   value: string;
