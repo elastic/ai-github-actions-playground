@@ -73,4 +73,14 @@ describe("DetailSurface", () => {
 
     expect(screen.getByText("Footer actions")).toBeInTheDocument();
   });
+
+  it("renders the mobile top offset element in the DOM", () => {
+    render(
+      <DetailSurface open={true} onClose={() => {}} title="Mobile Detail">
+        <div>Body</div>
+      </DetailSurface>,
+    );
+
+    expect(screen.getByTestId("detail-surface-mobile-offset")).toBeInTheDocument();
+  });
 });
