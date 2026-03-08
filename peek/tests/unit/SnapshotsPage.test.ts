@@ -259,6 +259,28 @@ describe("snapshot health checks", () => {
     expect(check?.status).toBe("warn");
   });
 
+  it("snapshots.failed.recent — ignores stale FAILED snapshots outside lookback", () => {
+    const nowSpy = vi.spyOn(Date, "now").mockReturnValue(8 * 24 * 60 * 60 * 1000);
+    const snapshot = makeHealthSnapshot({
+      snapshots: [{ snapshot: "snap-1", state: "FAILED", end_time_in_millis: 1_000 }],
+    });
+    const results = evaluateHealthChecks(snapshotChecks, snapshot);
+    const check = results.find((r) => r.id === "snapshots.failed.recent");
+    expect(check?.status).toBe("pass");
+    nowSpy.mockRestore();
+  });
+
+  it("snapshots.partial.recent — ignores stale PARTIAL snapshots outside lookback", () => {
+    const nowSpy = vi.spyOn(Date, "now").mockReturnValue(8 * 24 * 60 * 60 * 1000);
+    const snapshot = makeHealthSnapshot({
+      snapshots: [{ snapshot: "snap-1", state: "PARTIAL", end_time_in_millis: 1_000 }],
+    });
+    const results = evaluateHealthChecks(snapshotChecks, snapshot);
+    const check = results.find((r) => r.id === "snapshots.partial.recent");
+    expect(check?.status).toBe("pass");
+    nowSpy.mockRestore();
+  });
+
   it("slm.policy.failing — fails when last_failure > last_success", () => {
     const snapshot = makeHealthSnapshot({
       policies: {
