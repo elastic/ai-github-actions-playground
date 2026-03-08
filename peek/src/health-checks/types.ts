@@ -5,6 +5,7 @@ import type {
   ClusterHealthResponse,
   ClusterPendingTasksResponse,
   GetApiKeysResponse,
+  GetTransformStatsResponse,
   GetSlmPoliciesResponse,
   HealthReportResponse,
   IlmExplainResponse,
@@ -32,6 +33,7 @@ export type HealthQueryGroup =
   | "templatesCore"
   | "recoveryCore"
   | "securityCore"
+  | "transformsCore"
   | "snapshotsCore"
   | "healthReport";
 
@@ -68,6 +70,9 @@ export interface HealthSnapshot {
     };
     securityCore: {
       apiKeys: GetApiKeysResponse | null;
+    };
+    transformsCore: {
+      transformStats: GetTransformStatsResponse | null;
     };
     snapshotsCore: {
       snapshots: SnapshotRecord[] | null;

@@ -394,7 +394,7 @@ export default function NodesPage() {
                             "n/a"
                           ) : (
                             <Tooltip
-                              title={`${row.gcOldCount.toLocaleString()} collections, ${(row.gcOldMs ?? 0).toLocaleString()} ms total`}
+                              title={`${row.gcOldCount.toLocaleString()} collections${row.gcOldMs !== null ? `, ${row.gcOldMs.toLocaleString()} ms total` : ""}`}
                             >
                               <span>
                                 {row.gcOldCount.toLocaleString()} /{" "}
