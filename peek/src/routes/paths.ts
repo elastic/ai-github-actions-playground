@@ -81,7 +81,7 @@ export const PAGE_PATHS = {
   logs: {
     path: "/logs",
     requiresConnection: true,
-    showTimeControls: false,
+    showTimeControls: true,
     skeletonVariant: "list",
     nav: {
       label: "Logs",
