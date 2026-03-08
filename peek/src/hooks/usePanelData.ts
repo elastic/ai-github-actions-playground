@@ -81,14 +81,21 @@ export function usePanelData(
     setTimeout(() => URL.revokeObjectURL(url), 0);
   }, [data, panel.title]);
 
+  const resetResultState = useCallback(() => {
+    setData(null);
+    setExecutionTimeMs(null);
+    setLastRefreshAt(null);
+    setExportImage(null);
+  }, []);
+
   const fetchData = useCallback(async () => {
-    if (!supportsQuery) {
+    if (!supportsQuery || !connection || !panel.query.trim()) {
       abortRef.current?.abort();
       setLoading(false);
+      resetResultState();
       setError(null);
       return;
     }
-    if (!connection || !panel.query.trim()) return;
 
     abortRef.current?.abort();
     const ctrl = new AbortController();
@@ -108,6 +115,7 @@ export function usePanelData(
       }
     } catch (err: unknown) {
       if (!ctrl.signal.aborted) {
+        resetResultState();
         setError(isElasticsearchError(err) ? err.message : String(err));
       }
     } finally {
@@ -115,7 +123,7 @@ export function usePanelData(
         setLoading(false);
       }
     }
-  }, [supportsQuery, connection, panel.query, timeRange, parameters]);
+  }, [supportsQuery, connection, panel.query, timeRange, parameters, resetResultState]);
 
   useEffect(() => {
     fetchData();

@@ -1,4 +1,3 @@
-import { memo } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
@@ -34,7 +33,7 @@ interface Props {
   onEdit: () => void;
 }
 
-export default memo(function PanelToolbar({
+export default function PanelToolbar({
   title,
   loading,
   error,
@@ -153,4 +152,4 @@ export default memo(function PanelToolbar({
       </Tooltip>
     </Box>
   );
-});
+}
