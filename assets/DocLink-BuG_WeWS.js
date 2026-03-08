@@ -1,2 +1,0 @@
-import{r as i,j as o,i as t,I as c,aF as l}from"./mui-DCVzlINL.js";import{k as r}from"./index-DkRByq8l.js";function u({section:s,tooltip:a="View docs"}){const e=r(),n=i.useCallback(()=>{e(`/docs?section=${encodeURIComponent(s)}`)},[e,s]);return o.jsx(t,{title:a,children:o.jsx(c,{size:"small",onClick:n,"aria-label":a,children:o.jsx(l,{fontSize:"small"})})})}export{u as D};
-//# sourceMappingURL=DocLink-BuG_WeWS.js.map
