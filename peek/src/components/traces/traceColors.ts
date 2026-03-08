@@ -1,4 +1,5 @@
 import { CHART_COLORS } from "../../theme";
+import { contrastRatio, hexToRgb } from "../../utils/colorContrast";
 
 /**
  * Deterministic service → color mapping.
@@ -20,44 +21,22 @@ export function getServiceColor(serviceName: string): string {
 
 /* ── Accessible text color for service pills ── */
 
-function sRGBtoLinear(c: number): number {
-  const s = c / 255;
-  return s <= 0.04045 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
-}
-
-function relativeLuminance(r: number, g: number, b: number): number {
-  return 0.2126 * sRGBtoLinear(r) + 0.7152 * sRGBtoLinear(g) + 0.0722 * sRGBtoLinear(b);
-}
-
 function parseHex(hex: string): [number, number, number] {
-  return [
-    parseInt(hex.slice(1, 3), 16),
-    parseInt(hex.slice(3, 5), 16),
-    parseInt(hex.slice(5, 7), 16),
-  ];
+  return hexToRgb(hex);
 }
 
 function toHex(r: number, g: number, b: number): string {
   return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
 }
 
-/**
- * Contrast ratio between two luminance values.
- */
-function contrastRatio(lighter: number, darker: number): number {
-  return (lighter + 0.05) / (darker + 0.05);
-}
-
-/**
- * Render the alpha(serviceColor, 0.15) pill background over white.
- */
-function servicePillBackground(hex: string): [number, number, number] {
+function servicePillBackground(hex: string, surfaceHex: string): [number, number, number] {
   const [r, g, b] = parseHex(hex);
+  const [sr, sg, sb] = parseHex(surfaceHex);
   const alpha = 0.15;
   return [
-    Math.round(r * alpha + 255 * (1 - alpha)),
-    Math.round(g * alpha + 255 * (1 - alpha)),
-    Math.round(b * alpha + 255 * (1 - alpha)),
+    Math.round(r * alpha + sr * (1 - alpha)),
+    Math.round(g * alpha + sg * (1 - alpha)),
+    Math.round(b * alpha + sb * (1 - alpha)),
   ];
 }
 
@@ -65,42 +44,42 @@ function servicePillBackground(hex: string): [number, number, number] {
  * Darken a hex color until it meets WCAG AA (4.5 : 1) contrast on service pill background.
  * Returns the original color if it already passes.
  */
-function ensureContrastOnPillBackground(hex: string, minRatio = 4.5): string {
+function ensureContrastOnPillBackground(hex: string, surfaceHex: string, minRatio = 4.5): string {
   const [r, g, b] = parseHex(hex);
-  const background = servicePillBackground(hex);
-  const bgLum = relativeLuminance(background[0], background[1], background[2]);
-  const baseLum = relativeLuminance(r, g, b);
-  const contrast = contrastRatio(Math.max(baseLum, bgLum), Math.min(baseLum, bgLum));
+  const background = toHex(...servicePillBackground(hex, surfaceHex));
+  const contrast = contrastRatio(hex, background);
   if (contrast >= minRatio) return hex;
 
-  let factor = 1.0;
-  while (factor > 0) {
-    factor -= 0.02;
-    const dr = Math.round(r * factor);
-    const dg = Math.round(g * factor);
-    const db = Math.round(b * factor);
-    const dlum = relativeLuminance(dr, dg, db);
-    const darkContrast = contrastRatio(Math.max(dlum, bgLum), Math.min(dlum, bgLum));
-    if (darkContrast >= minRatio) {
-      return toHex(dr, dg, db);
+  const blackContrast = contrastRatio("#000000", background);
+  const whiteContrast = contrastRatio("#ffffff", background);
+  const target = whiteContrast >= blackContrast ? 255 : 0;
+  const blendToTarget = (channel: number, t: number) =>
+    Math.round(channel + (target - channel) * t);
+
+  for (let t = 0.02; t <= 1; t += 0.02) {
+    const adjusted = toHex(blendToTarget(r, t), blendToTarget(g, t), blendToTarget(b, t));
+    if (contrastRatio(adjusted, background) >= minRatio) {
+      return adjusted;
     }
   }
-  return "#000000";
+
+  return target === 255 ? "#ffffff" : "#000000";
 }
 
 const textColorCache = new Map<string, string>();
 
 /**
  * Returns a WCAG-safe text color derived from the service color.
- * Light chart colors are darkened so they meet 4.5 : 1 contrast on the
- * rendered service pill background.
+ * Colors are adjusted toward black or white so they meet 4.5 : 1 contrast on
+ * the rendered service pill background over the provided surface color.
  */
-export function getServiceTextColor(serviceName: string): string {
+export function getServiceTextColor(serviceName: string, surfaceHex = "#ffffff"): string {
   const base = getServiceColor(serviceName);
-  const cached = textColorCache.get(base);
+  const cacheKey = `${base}|${surfaceHex.toLowerCase()}`;
+  const cached = textColorCache.get(cacheKey);
   if (cached) return cached;
-  const safe = ensureContrastOnPillBackground(base);
-  textColorCache.set(base, safe);
+  const safe = ensureContrastOnPillBackground(base, surfaceHex);
+  textColorCache.set(cacheKey, safe);
   return safe;
 }
 

@@ -9,7 +9,7 @@ import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
 import Tooltip from "@mui/material/Tooltip";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { alpha } from "@mui/material/styles";
+import { alpha, useTheme } from "@mui/material/styles";
 
 import type { SpanTreeNode } from "../traceUtils";
 import { formatSpanDuration, formatStatusLabel, isErrorStatus } from "../traceUtils";
@@ -49,9 +49,10 @@ export const SpanTreeRow = React.memo(function SpanTreeRow({
   showTimeline = true,
   showTimestamp,
 }: SpanTreeRowProps) {
+  const theme = useTheme();
   const { span } = node;
   const serviceColor = getServiceColor(span.serviceName);
-  const serviceTextColor = getServiceTextColor(span.serviceName);
+  const serviceTextColor = getServiceTextColor(span.serviceName, theme.palette.background.default);
   const isError = isErrorStatus(span.status);
   const showDurationBar = showTimeline && !isTraceRoot;
   const clampedOffset = Math.min(Math.max(timelineOffset ?? 0, 0), 1);

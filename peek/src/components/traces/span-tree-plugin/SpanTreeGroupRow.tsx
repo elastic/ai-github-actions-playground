@@ -8,7 +8,7 @@ import ButtonBase from "@mui/material/ButtonBase";
 import Typography from "@mui/material/Typography";
 import Tooltip from "@mui/material/Tooltip";
 import Chip from "@mui/material/Chip";
-import { alpha } from "@mui/material/styles";
+import { alpha, useTheme } from "@mui/material/styles";
 
 import { formatSpanDuration } from "../traceUtils";
 import { getServiceColor, getServiceTextColor } from "../traceColors";
@@ -49,8 +49,9 @@ export const SpanTreeGroupRow = React.memo(function SpanTreeGroupRow({
   timelineFraction,
   showTimeline = true,
 }: SpanTreeGroupRowProps) {
+  const theme = useTheme();
   const serviceColor = getServiceColor(stats.serviceName);
-  const serviceTextColor = getServiceTextColor(stats.serviceName);
+  const serviceTextColor = getServiceTextColor(stats.serviceName, theme.palette.background.default);
   const showDurationBar = showTimeline && !isTraceRootGroup;
   const clampedOffset = Math.min(Math.max(timelineOffset ?? 0, 0), 1);
   const leftPct = clampedOffset * 100;

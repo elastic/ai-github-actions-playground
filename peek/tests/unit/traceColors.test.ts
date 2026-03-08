@@ -2,33 +2,18 @@ import { describe, it, expect } from "vitest";
 
 import { getServiceColor, getServiceTextColor } from "../../src/components/traces/traceColors";
 import { CHART_COLORS } from "../../src/theme";
+import { contrastRatio, relativeLuminance } from "../../src/utils/colorContrast";
 
-function sRGBtoLinear(c: number): number {
-  const s = c / 255;
-  return s <= 0.04045 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
-}
-
-function relativeLuminance(hex: string): number {
+function applyAlphaOnSurface(hex: string, alpha: number, surfaceHex: string): string {
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);
-  return 0.2126 * sRGBtoLinear(r) + 0.7152 * sRGBtoLinear(g) + 0.0722 * sRGBtoLinear(b);
-}
-
-function contrastRatio(fgHex: string, bgHex: string): number {
-  const fgLum = relativeLuminance(fgHex);
-  const bgLum = relativeLuminance(bgHex);
-  const lighter = Math.max(fgLum, bgLum);
-  const darker = Math.min(fgLum, bgLum);
-  return (lighter + 0.05) / (darker + 0.05);
-}
-
-function applyAlphaOnWhite(hex: string, alpha: number): string {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  const blend = (channel: number) => Math.round(channel * alpha + 255 * (1 - alpha));
-  return `#${blend(r).toString(16).padStart(2, "0")}${blend(g).toString(16).padStart(2, "0")}${blend(b).toString(16).padStart(2, "0")}`;
+  const sr = parseInt(surfaceHex.slice(1, 3), 16);
+  const sg = parseInt(surfaceHex.slice(3, 5), 16);
+  const sb = parseInt(surfaceHex.slice(5, 7), 16);
+  const blend = (channel: number, surfaceChannel: number) =>
+    Math.round(channel * alpha + surfaceChannel * (1 - alpha));
+  return `#${blend(r, sr).toString(16).padStart(2, "0")}${blend(g, sg).toString(16).padStart(2, "0")}${blend(b, sb).toString(16).padStart(2, "0")}`;
 }
 
 describe("getServiceColor", () => {
@@ -45,6 +30,7 @@ describe("getServiceColor", () => {
 
 describe("getServiceTextColor", () => {
   it("returns a color that meets WCAG 4.5:1 contrast on pill background", () => {
+    const surfaceColor = "#ffffff";
     const representativeByBaseColor = new Map<string, string>();
     const maxAttempts = CHART_COLORS.length * 20;
 
@@ -60,20 +46,21 @@ describe("getServiceTextColor", () => {
 
     for (const name of representativeByBaseColor.values()) {
       const baseColor = getServiceColor(name);
-      const pillBackground = applyAlphaOnWhite(baseColor, 0.15);
-      const textColor = getServiceTextColor(name);
+      const pillBackground = applyAlphaOnSurface(baseColor, 0.15, surfaceColor);
+      const textColor = getServiceTextColor(name, surfaceColor);
       const ratio = contrastRatio(textColor, pillBackground);
       expect(ratio).toBeGreaterThanOrEqual(4.5);
     }
   });
 
   it("preserves already-accessible colors unchanged", () => {
+    const surfaceColor = "#ffffff";
     for (let i = 0; i < 500; i++) {
       const name = `service-${i}`;
       const baseColor = getServiceColor(name);
-      const pillBackground = applyAlphaOnWhite(baseColor, 0.15);
+      const pillBackground = applyAlphaOnSurface(baseColor, 0.15, surfaceColor);
       const baseContrast = contrastRatio(baseColor, pillBackground);
-      const textColor = getServiceTextColor(name);
+      const textColor = getServiceTextColor(name, surfaceColor);
 
       if (baseContrast >= 4.5) {
         expect(textColor).toBe(baseColor);
@@ -84,9 +71,29 @@ describe("getServiceTextColor", () => {
     }
   });
 
+  it("meets contrast on dark surfaces too", () => {
+    const surfaceColor = "#121212";
+    const representativeByBaseColor = new Map<string, string>();
+    const maxAttempts = CHART_COLORS.length * 20;
+    for (let i = 0; i < maxAttempts && representativeByBaseColor.size < CHART_COLORS.length; i++) {
+      const name = `dark-service-${i}`;
+      const baseColor = getServiceColor(name);
+      if (!representativeByBaseColor.has(baseColor)) {
+        representativeByBaseColor.set(baseColor, name);
+      }
+    }
+
+    expect(representativeByBaseColor.size).toBe(CHART_COLORS.length);
+    for (const name of representativeByBaseColor.values()) {
+      const textColor = getServiceTextColor(name, surfaceColor);
+      const pillBackground = applyAlphaOnSurface(getServiceColor(name), 0.15, surfaceColor);
+      expect(contrastRatio(textColor, pillBackground)).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
   it("returns the same color for repeated calls", () => {
-    const a = getServiceTextColor("test-service");
-    const b = getServiceTextColor("test-service");
+    const a = getServiceTextColor("test-service", "#ffffff");
+    const b = getServiceTextColor("test-service", "#ffffff");
     expect(a).toBe(b);
   });
 });
