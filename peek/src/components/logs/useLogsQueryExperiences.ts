@@ -134,11 +134,11 @@ export function useLogsQueryExperiences({
     (opts: { serviceName?: string; topN: number }) => {
       const topN = Number.isInteger(opts.topN) && opts.topN > 0 ? opts.topN : 20;
       const serviceFilter = opts.serviceName
-        ? `WHERE service.name == "${escapeEsqlString(opts.serviceName)}" | `
-        : "";
+        ? `WHERE service.name == "${escapeEsqlString(opts.serviceName)}"`
+        : "WHERE service.name IS NOT NULL";
       const nextQuery = appendPipeClause(
         effectiveQuery,
-        `${serviceFilter}WHERE service.name IS NOT NULL | STATS log_count = COUNT(*) BY service.name | SORT log_count DESC | LIMIT ${topN}`,
+        `${serviceFilter} | STATS log_count = COUNT(*) BY service.name | SORT log_count DESC | LIMIT ${topN}`,
       );
       setRawQuery(nextQuery);
       void runQuery(nextQuery);
