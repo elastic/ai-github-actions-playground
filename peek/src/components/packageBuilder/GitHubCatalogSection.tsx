@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Alert from "@mui/material/Alert";
 import Autocomplete from "@mui/material/Autocomplete";
+import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import GitHubIcon from "@mui/icons-material/GitHub";
 
@@ -18,28 +19,34 @@ export default function GitHubCatalogSection({ open, onSelect }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!open) return;
-    let cancelled = false;
-    const controller = new AbortController();
+  const loadCatalog = useCallback(async (signal: AbortSignal) => {
     setLoading(true);
     setError(null);
-    listInputPackages(controller.signal)
-      .then((entries) => {
-        if (!cancelled) setCatalog(entries);
-      })
-      .catch((err) => {
-        if (cancelled || controller.signal.aborted) return;
-        setError(err instanceof Error ? err.message : "Failed to load catalog");
-      })
-      .finally(() => {
-        if (!cancelled && !controller.signal.aborted) setLoading(false);
-      });
+    try {
+      const entries = await listInputPackages(signal);
+      if (signal.aborted) return;
+      setCatalog(entries);
+    } catch (err) {
+      if (signal.aborted) return;
+      setError(err instanceof Error ? err.message : "Failed to load catalog");
+    } finally {
+      if (!signal.aborted) setLoading(false);
+    }
+  }, []);
+
+  const handleRetry = useCallback(() => {
+    const controller = new AbortController();
+    void loadCatalog(controller.signal);
+  }, [loadCatalog]);
+
+  useEffect(() => {
+    if (!open) return;
+    const controller = new AbortController();
+    void loadCatalog(controller.signal);
     return () => {
-      cancelled = true;
       controller.abort();
     };
-  }, [open]);
+  }, [open, loadCatalog]);
 
   return (
     <Box sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2, p: 2 }}>
@@ -50,45 +57,52 @@ export default function GitHubCatalogSection({ open, onSelect }: Props) {
         </Typography>
       </Box>
       {error ? (
-        <Alert severity="warning" sx={{ py: 0.5 }}>
+        <Alert
+          severity="warning"
+          sx={{ py: 0.5, mb: 1.5 }}
+          action={
+            <Button color="inherit" size="small" onClick={handleRetry} disabled={loading}>
+              Retry
+            </Button>
+          }
+        >
           {error}
         </Alert>
-      ) : (
-        <Autocomplete
-          options={catalog}
-          getOptionLabel={(o) => o.label}
-          loading={loading}
-          onChange={(_, entry) => {
-            if (entry) onSelect(entry);
-          }}
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              placeholder="Search input packages..."
-              size="small"
-              inputProps={{
-                ...params.inputProps,
-                "aria-label": "Search input packages",
-              }}
-            />
-          )}
-          renderOption={(props, option) => {
-            const { key, ...rest } = props;
-            return (
-              <li key={key} {...rest}>
-                <Box>
-                  <Typography variant="body2">{option.label}</Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {option.dirName}
-                  </Typography>
-                </Box>
-              </li>
-            );
-          }}
-          size="small"
-          fullWidth
-        />
-      )}
+      ) : null}
+      <Autocomplete
+        options={catalog}
+        getOptionLabel={(o) => o.label}
+        loading={loading}
+        onChange={(_, entry) => {
+          if (entry) onSelect(entry);
+        }}
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            placeholder="Search input packages..."
+            size="small"
+            inputProps={{
+              ...params.inputProps,
+              "aria-label": "Search input packages",
+            }}
+          />
+        )}
+        renderOption={(props, option) => {
+          const { key, ...rest } = props;
+          return (
+            <li key={key} {...rest}>
+              <Box>
+                <Typography variant="body2">{option.label}</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {option.dirName}
+                </Typography>
+              </Box>
+            </li>
+          );
+        }}
+        size="small"
+        fullWidth
+      />
     </Box>
   );
 }
