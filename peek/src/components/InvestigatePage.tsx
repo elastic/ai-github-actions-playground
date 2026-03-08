@@ -16,6 +16,7 @@ import { COMPONENT_HEIGHTS } from "../types/tokens";
 import EmptyState from "./EmptyState";
 import PageContainer from "./PageContainer";
 import PageHeaderSection from "./PageHeaderSection";
+import DocLink from "./DocLink";
 import InvestigateEventTimeline from "./investigate/InvestigateEventTimeline";
 import InvestigateQueryBar from "./investigate/InvestigateQueryBar";
 import InvestigateSummaryPanel from "./investigate/InvestigateSummaryPanel";
@@ -112,6 +113,7 @@ export default function InvestigatePage() {
     <PageContainer gap={1.5}>
       <PageHeaderSection
         title="Investigate"
+        titleAdornment={<DocLink section="investigate" tooltip="Investigate docs" />}
         description="Search for a user, host, IP address, domain, or file to view their recent security event timeline."
       />
       <Tabs

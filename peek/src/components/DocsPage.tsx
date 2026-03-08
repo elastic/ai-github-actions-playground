@@ -5,6 +5,8 @@ import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 import Divider from "@mui/material/Divider";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { parseAsString, useQueryState } from "nuqs";
 
 import sections from "../docs/sections";
@@ -15,6 +17,42 @@ import AskAiButton from "./AskAiButton";
 function normalizeText(text: string): string {
   return text.toLowerCase();
 }
+
+/** Markdown styles consistent with ChatMessageContent and MarkdownPanel. */
+const docsMarkdownSx = {
+  "& a": { color: "primary.main" },
+  "& blockquote": {
+    ml: 0,
+    pl: 2,
+    borderLeft: 3,
+    borderColor: "divider",
+    color: "text.secondary",
+  },
+  "& code": {
+    px: 0.5,
+    borderRadius: 0.5,
+    bgcolor: "action.selected",
+    fontSize: "0.85em",
+    fontFamily: "monospace",
+  },
+  "& h2": { mt: 2, mb: 1 },
+  "& h3": { mt: 1.5, mb: 0.5 },
+  "& hr": { my: 1, borderColor: "divider" },
+  "& li": { mb: 0.5 },
+  "& p": { mt: 0, mb: 1, color: "text.secondary" },
+  "& p:last-child": { mb: 0 },
+  "& pre": {
+    overflow: "auto",
+    p: 1,
+    borderRadius: 1,
+    bgcolor: "action.selected",
+    "& code": { p: 0, bgcolor: "transparent" },
+  },
+  "& table": { width: "100%", mb: 1, borderCollapse: "collapse" },
+  "& th": { bgcolor: "action.selected", fontWeight: 600 },
+  "& th,& td": { py: 0.5, px: 1, border: 1, borderColor: "divider", fontSize: "0.875rem" },
+  "& ul,& ol": { mb: 1, pl: 2.5 },
+} as const;
 
 export default function DocsPage() {
   const [search, setSearch] = useState("");
@@ -134,39 +172,9 @@ export default function DocsPage() {
             <Typography variant="h6" sx={{ mb: 1 }}>
               {section.title}
             </Typography>
-            {section.body.map((paragraph) => {
-              const h3Match = paragraph.match(/^### (.+)$/);
-              if (h3Match) {
-                return (
-                  <Typography
-                    key={paragraph}
-                    variant="body2"
-                    fontWeight={600}
-                    sx={{ mt: 1.5, mb: 0.5 }}
-                  >
-                    {h3Match[1]}
-                  </Typography>
-                );
-              }
-              const h2Match = paragraph.match(/^## (.+)$/);
-              if (h2Match) {
-                return (
-                  <Typography
-                    key={paragraph}
-                    variant="subtitle1"
-                    fontWeight={600}
-                    sx={{ mt: 2, mb: 1 }}
-                  >
-                    {h2Match[1]}
-                  </Typography>
-                );
-              }
-              return (
-                <Typography key={paragraph} variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                  {paragraph}
-                </Typography>
-              );
-            })}
+            <Box sx={{ ...docsMarkdownSx, typography: "body2" }}>
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{section.body.join("\n\n")}</ReactMarkdown>
+            </Box>
             <Divider sx={{ mt: 2 }} />
           </Box>
         ))}

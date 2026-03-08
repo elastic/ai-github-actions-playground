@@ -23,6 +23,16 @@ import indicesRaw from "./indices.md?raw";
 import ingestPipelinesRaw from "./ingest-pipelines.md?raw";
 import addDataRaw from "./add-data.md?raw";
 import apiKeysRaw from "./api-keys.md?raw";
+import fleetRaw from "./fleet.md?raw";
+import kubernetesRaw from "./kubernetes.md?raw";
+import ilmRaw from "./ilm.md?raw";
+import templatesRaw from "./templates.md?raw";
+import nodesRaw from "./nodes.md?raw";
+import investigateRaw from "./investigate.md?raw";
+import tasksRaw from "./tasks.md?raw";
+import watcherRaw from "./watcher.md?raw";
+import hostsRaw from "./hosts.md?raw";
+import storageExplorerRaw from "./storage-explorer.md?raw";
 
 export interface DocSection {
   id: string;
@@ -80,6 +90,16 @@ const sections: DocSection[] = [
   parseDocSection("ingest-pipelines", ingestPipelinesRaw),
   parseDocSection("add-data", addDataRaw),
   parseDocSection("api-keys", apiKeysRaw),
+  parseDocSection("fleet", fleetRaw),
+  parseDocSection("kubernetes", kubernetesRaw),
+  parseDocSection("hosts", hostsRaw),
+  parseDocSection("nodes", nodesRaw),
+  parseDocSection("ilm", ilmRaw),
+  parseDocSection("templates", templatesRaw),
+  parseDocSection("storage-explorer", storageExplorerRaw),
+  parseDocSection("watcher", watcherRaw),
+  parseDocSection("tasks", tasksRaw),
+  parseDocSection("investigate", investigateRaw),
 ];
 
 export default sections;

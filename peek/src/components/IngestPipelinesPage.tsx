@@ -16,6 +16,7 @@ import { INSIGHT_GUARDRAIL } from "../hooks/insightPromptUtils";
 import DetailDrawer from "./DetailDrawer";
 import PageContainer from "./PageContainer";
 import PageHeaderSection from "./PageHeaderSection";
+import DocLink from "./DocLink";
 import PageInsightBanner from "./PageInsightBanner";
 import { OverviewInfoCard } from "./OverviewInfoCard";
 import PipelineListPanel from "./ingest-pipelines/PipelineListPanel";
@@ -172,6 +173,7 @@ export default function IngestPipelinesPage() {
     <PageContainer>
       <PageHeaderSection
         title="Ingest Pipelines"
+        titleAdornment={<DocLink section="ingest-pipelines" tooltip="Ingest Pipelines docs" />}
         actions={
           <LoadingButton
             size="small"

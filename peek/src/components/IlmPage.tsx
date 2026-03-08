@@ -27,6 +27,7 @@ import {
 } from "./ilmSortUtils";
 import PageContainer from "./PageContainer";
 import PageHeaderSection from "./PageHeaderSection";
+import DocLink from "./DocLink";
 
 // Re-export so existing consumers still work
 export { parseDurationToMs, compareIndexRows, comparePolicyRows } from "./ilmSortUtils";
@@ -142,6 +143,7 @@ export default function IlmPage() {
     <PageContainer>
       <PageHeaderSection
         title="Index Lifecycle Management"
+        titleAdornment={<DocLink section="ilm" tooltip="ILM docs" />}
         actions={
           <Button
             size="small"
