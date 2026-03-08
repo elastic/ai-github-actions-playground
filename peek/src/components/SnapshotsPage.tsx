@@ -1,9 +1,11 @@
-import { useCallback, useDeferredValue, useMemo } from "react";
+import { useCallback, useDeferredValue, useMemo, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
+import Drawer from "@mui/material/Drawer";
 import Grid from "@mui/material/Grid";
+import IconButton from "@mui/material/IconButton";
 import Paper from "@mui/material/Paper";
 import Tab from "@mui/material/Tab";
 import Table from "@mui/material/Table";
@@ -18,6 +20,7 @@ import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import BackupIcon from "@mui/icons-material/Backup";
+import CloseIcon from "@mui/icons-material/Close";
 import { parseAsString, parseAsStringEnum, useQueryStates } from "nuqs";
 
 import { useSnapshotData } from "../hooks/useSnapshotData";
@@ -138,6 +141,7 @@ export default function SnapshotsPage() {
   const policies = useMemo(() => data?.policies ?? [], [data]);
   const repositories = useMemo(() => data?.repositories ?? [], [data]);
   const slmStats = data?.slmStats ?? null;
+  const [selectedSnapshot, setSelectedSnapshot] = useState<SnapshotRow | null>(null);
 
   const [urlState, setUrlState] = useQueryStates(
     {
@@ -400,6 +404,7 @@ export default function SnapshotsPage() {
           sortField={snapSort}
           sortDir={snapDir}
           onSort={handleSnapSort}
+          onSelectSnapshot={setSelectedSnapshot}
         />
       )}
 
@@ -426,6 +431,8 @@ export default function SnapshotsPage() {
           onSort={handleRepoSort}
         />
       )}
+
+      <SnapshotDetailDrawer snapshot={selectedSnapshot} onClose={() => setSelectedSnapshot(null)} />
     </Box>
   );
 }
@@ -441,6 +448,7 @@ interface SnapshotsTableProps {
   sortField: SnapshotSortField;
   sortDir: SortDirection;
   onSort: (field: SnapshotSortField) => void;
+  onSelectSnapshot: (snapshot: SnapshotRow) => void;
 }
 
 function SnapshotsTable({
@@ -450,7 +458,18 @@ function SnapshotsTable({
   sortField,
   sortDir,
   onSort,
+  onSelectSnapshot,
 }: SnapshotsTableProps) {
+  if (!loading && rows.length === 0 && totalCount > 0) {
+    return (
+      <EmptyState
+        icon={<BackupIcon sx={{ fontSize: 40 }} />}
+        heading="No matching snapshots"
+        description="Try adjusting your filter to find snapshots."
+      />
+    );
+  }
+
   if (!loading && totalCount === 0) {
     return (
       <EmptyState
@@ -486,6 +505,7 @@ function SnapshotsTable({
                 </TableSortLabel>
               </TableCell>
             ))}
+            <TableCell sx={{ height: COMPONENT_HEIGHTS.tableRow }}>Details</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -512,11 +532,20 @@ function SnapshotsTable({
                 </Tooltip>
               </TableCell>
               <TableCell>{formatDuration(row.duration)}</TableCell>
+              <TableCell>
+                <Button
+                  size="small"
+                  onClick={() => onSelectSnapshot(row)}
+                  aria-label={`Inspect snapshot ${row.name}`}
+                >
+                  View
+                </Button>
+              </TableCell>
             </TableRow>
           ))}
           {loading && rows.length === 0 && (
             <TableRow>
-              <TableCell colSpan={6}>
+              <TableCell colSpan={7}>
                 <Typography
                   variant="body2"
                   color="text.secondary"
@@ -554,6 +583,16 @@ function PoliciesTable({
   sortDir,
   onSort,
 }: PoliciesTableProps) {
+  if (!loading && rows.length === 0 && totalCount > 0) {
+    return (
+      <EmptyState
+        icon={<BackupIcon sx={{ fontSize: 40 }} />}
+        heading="No matching SLM policies"
+        description="Try adjusting your filter to find policies."
+      />
+    );
+  }
+
   if (!loading && totalCount === 0) {
     return (
       <EmptyState
@@ -686,6 +725,16 @@ function RepositoriesTable({
   sortDir,
   onSort,
 }: RepositoriesTableProps) {
+  if (!loading && rows.length === 0 && totalCount > 0) {
+    return (
+      <EmptyState
+        icon={<BackupIcon sx={{ fontSize: 40 }} />}
+        heading="No matching repositories"
+        description="Try adjusting your filter to find repositories."
+      />
+    );
+  }
+
   if (!loading && totalCount === 0) {
     return (
       <EmptyState
@@ -756,5 +805,73 @@ function RepositoriesTable({
         </TableBody>
       </Table>
     </TableContainer>
+  );
+}
+
+interface SnapshotDetailDrawerProps {
+  snapshot: SnapshotRow | null;
+  onClose: () => void;
+}
+
+function SnapshotDetailDrawer({ snapshot, onClose }: SnapshotDetailDrawerProps) {
+  return (
+    <Drawer
+      anchor="right"
+      open={Boolean(snapshot)}
+      onClose={onClose}
+      PaperProps={{
+        sx: {
+          width: { xs: "100%", md: 560 },
+          p: 1,
+          backgroundColor: "background.default",
+        },
+      }}
+    >
+      {snapshot && (
+        <>
+          <Box
+            sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 1 }}
+          >
+            <Typography variant="subtitle1">Snapshot Details</Typography>
+            <IconButton size="small" aria-label="Close snapshot details" onClick={onClose}>
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </Box>
+          <Box sx={{ flex: 1, minHeight: 0, overflow: "auto", px: 1, py: 1 }}>
+            <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
+              SNAPSHOT
+            </Typography>
+            <Typography variant="body2" gutterBottom>
+              {snapshot.name}
+            </Typography>
+
+            <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
+              INDICES ({snapshot.indices.length})
+            </Typography>
+            <Typography variant="body2" gutterBottom sx={{ wordBreak: "break-word" }}>
+              {snapshot.indices.length > 0 ? snapshot.indices.join(", ") : "—"}
+            </Typography>
+
+            <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
+              DATA STREAMS ({snapshot.dataStreams.length})
+            </Typography>
+            <Typography variant="body2" gutterBottom sx={{ wordBreak: "break-word" }}>
+              {snapshot.dataStreams.length > 0 ? snapshot.dataStreams.join(", ") : "—"}
+            </Typography>
+
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
+                RAW JSON
+              </Typography>
+              <Paper variant="outlined" sx={{ p: 1, maxHeight: 300, overflow: "auto" }}>
+                <pre style={{ margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                  {JSON.stringify(snapshot, null, 2)}
+                </pre>
+              </Paper>
+            </Box>
+          </Box>
+        </>
+      )}
+    </Drawer>
   );
 }

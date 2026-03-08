@@ -1,5 +1,17 @@
 import type { HealthCheckDefinition } from "../types";
 
+const STALE_SUCCESS_FALLBACK_MS = 48 * 60 * 60 * 1000;
+const POLICY_STALENESS_GRACE_MS = 60 * 60 * 1000;
+
+function unknownSnapshotsDataResult(summary: string, to: string) {
+  return {
+    status: "unknown" as const,
+    summary,
+    recommendation: "Ensure snapshot and SLM data is collected and retry the health snapshot.",
+    links: [{ label: "Snapshots", to }],
+  };
+}
+
 export const snapshotChecks: HealthCheckDefinition[] = [
   {
     id: "snapshots.failed.recent",
@@ -10,7 +22,10 @@ export const snapshotChecks: HealthCheckDefinition[] = [
     surfaces: ["global"],
     dependsOn: ["snapshotsCore"],
     evaluate: (snapshot) => {
-      const snapshots = snapshot.data.snapshotsCore?.snapshots ?? [];
+      const snapshots = snapshot.data.snapshotsCore?.snapshots;
+      if (!snapshots) {
+        return unknownSnapshotsDataResult("Snapshot data unavailable.", "/snapshots");
+      }
       const failed = snapshots.filter((s) => s.state === "FAILED");
       if (failed.length > 0) {
         return {
@@ -33,7 +48,10 @@ export const snapshotChecks: HealthCheckDefinition[] = [
     surfaces: ["global"],
     dependsOn: ["snapshotsCore"],
     evaluate: (snapshot) => {
-      const snapshots = snapshot.data.snapshotsCore?.snapshots ?? [];
+      const snapshots = snapshot.data.snapshotsCore?.snapshots;
+      if (!snapshots) {
+        return unknownSnapshotsDataResult("Snapshot data unavailable.", "/snapshots");
+      }
       const partial = snapshots.filter((s) => s.state === "PARTIAL");
       if (partial.length > 0) {
         return {
@@ -56,7 +74,13 @@ export const snapshotChecks: HealthCheckDefinition[] = [
     surfaces: ["global"],
     dependsOn: ["snapshotsCore"],
     evaluate: (snapshot) => {
-      const policies = snapshot.data.snapshotsCore?.policies ?? {};
+      const policies = snapshot.data.snapshotsCore?.policies;
+      if (!policies) {
+        return unknownSnapshotsDataResult(
+          "SLM policy data unavailable.",
+          "/snapshots?tab=policies",
+        );
+      }
       const failingPolicies = Object.entries(policies).filter(([, p]) => {
         const lastSuccess = p.last_success?.time ?? 0;
         const lastFailure = p.last_failure?.time ?? 0;
@@ -84,13 +108,22 @@ export const snapshotChecks: HealthCheckDefinition[] = [
     surfaces: ["global"],
     dependsOn: ["snapshotsCore"],
     evaluate: (snapshot) => {
-      const policies = snapshot.data.snapshotsCore?.policies ?? {};
+      const policies = snapshot.data.snapshotsCore?.policies;
+      if (!policies) {
+        return unknownSnapshotsDataResult(
+          "SLM policy data unavailable.",
+          "/snapshots?tab=policies",
+        );
+      }
       const now = Date.now();
       const stale = Object.entries(policies).filter(([, p]) => {
         const lastSuccess = p.last_success?.time ?? 0;
         if (!lastSuccess) return true;
-        // Flag if no success in last 48 hours
-        return now - lastSuccess > 48 * 60 * 60 * 1000;
+        const nextExecution = p.next_execution_millis ?? 0;
+        if (nextExecution > 0) {
+          return now > nextExecution + POLICY_STALENESS_GRACE_MS && lastSuccess < nextExecution;
+        }
+        return now - lastSuccess > STALE_SUCCESS_FALLBACK_MS;
       });
       if (stale.length > 0) {
         const names = stale.map(([name]) => name);
@@ -115,6 +148,9 @@ export const snapshotChecks: HealthCheckDefinition[] = [
     dependsOn: ["snapshotsCore"],
     evaluate: (snapshot) => {
       const slmStats = snapshot.data.snapshotsCore?.slmStats;
+      if (!slmStats) {
+        return unknownSnapshotsDataResult("SLM retention stats unavailable.", "/snapshots");
+      }
       const failures = slmStats?.total_snapshot_deletion_failures ?? 0;
       if (failures > 0) {
         return {

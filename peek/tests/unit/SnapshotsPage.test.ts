@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 
 import type { SnapshotRow, SlmPolicyRow, RepositoryRow } from "../../src/hooks/useSnapshotData";
 import {
@@ -286,6 +286,22 @@ describe("snapshot health checks", () => {
     expect(check?.status).toBe("pass");
   });
 
+  it("slm.policy.no_recent_success — warns when next run is overdue", () => {
+    const nowSpy = vi.spyOn(Date, "now").mockReturnValue(4_000_000);
+    const snapshot = makeHealthSnapshot({
+      policies: {
+        "daily-snapshots": {
+          last_success: { time: 1_000 },
+          next_execution_millis: 2_000,
+        },
+      },
+    });
+    const results = evaluateHealthChecks(snapshotChecks, snapshot);
+    const check = results.find((r) => r.id === "slm.policy.no_recent_success");
+    expect(check?.status).toBe("warn");
+    nowSpy.mockRestore();
+  });
+
   it("slm.retention.failures — warns on deletion failures", () => {
     const snapshot = makeHealthSnapshot({
       slmStats: { total_snapshot_deletion_failures: 5 },
@@ -302,5 +318,16 @@ describe("snapshot health checks", () => {
     const results = evaluateHealthChecks(snapshotChecks, snapshot);
     const check = results.find((r) => r.id === "slm.retention.failures");
     expect(check?.status).toBe("pass");
+  });
+
+  it("returns unknown when snapshotsCore data is unavailable", () => {
+    const snapshot: HealthSnapshot = {
+      fetchedAt: new Date().toISOString(),
+      data: {},
+      errors: {},
+    };
+    const results = evaluateHealthChecks(snapshotChecks, snapshot);
+    expect(results.find((r) => r.id === "snapshots.failed.recent")?.status).toBe("unknown");
+    expect(results.find((r) => r.id === "slm.retention.failures")?.status).toBe("unknown");
   });
 });
