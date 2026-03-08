@@ -1,5 +1,8 @@
 name: PR Control Panel
 
+# Security note:
+# - This workflow uses pull_request_target so it can write PR comments/labels.
+# - It must never execute untrusted PR code. Keep it API-only (no checkout of PR head).
 on:
   pull_request_target:
     types: [opened, reopened, synchronize, ready_for_review]
@@ -20,9 +23,13 @@ jobs:
        github.event.comment.user.login != 'github-actions[bot]')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/github-script@v7
+      - name: Sync control panel via GitHub API only (no checkout)
+        uses: actions/github-script@v7
         with:
           script: |
+            // Security invariant for pull_request_target:
+            // this script only reads GitHub event/API data and writes labels/comments.
+            // Do not run code from the PR branch in this workflow.
             const MARKER = "<!-- pr-control-panel -->";
             const LABEL_UPDATE_PR_BODY = "ai-update-pr-body";
             const LABEL_ADDRESS_PR_FEEDBACK = "ai-address-pr-feedback";
