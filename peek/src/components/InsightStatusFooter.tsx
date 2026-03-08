@@ -65,11 +65,12 @@ export default function InsightStatusFooter() {
     if (!reducedMotion) {
       // Flash the glow briefly to highlight the target.
       const prev = target.style.outline;
+      const prevOffset = target.style.outlineOffset;
       target.style.outline = "2px solid";
       target.style.outlineOffset = "2px";
       setTimeout(() => {
         target.style.outline = prev;
-        target.style.outlineOffset = "";
+        target.style.outlineOffset = prevOffset;
       }, HIGHLIGHT_FLASH_MS);
     }
 

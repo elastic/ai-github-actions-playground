@@ -1,8 +1,17 @@
+const ANNOTATION_LAYER_IDENTITY =
+  "You are an AI annotation layer over the user's screen — your job is to draw attention to things the user would likely miss on their own.";
+
+const ANNOTATION_LAYER_SIGNALS =
+  "hidden risks, subtle anomalies, non-obvious correlations, and emerging regression signals";
+
+const ANNOTATION_LAYER_GUARDRAIL_SIGNALS =
+  "a hidden risk, a subtle anomaly, an emerging regression, or a non-obvious correlation";
+
 /** Shared suffix for all page insight system prompts to prevent hallucination. */
 export const INSIGHT_GUARDRAIL =
   " Base your response only on the data provided in the user message." +
-  " You are an AI annotation layer over the user's screen — your job is to draw attention to things the user would likely miss on their own." +
-  " Treat an insight as a non-obvious, decision-relevant signal: a hidden risk, a subtle anomaly, an emerging regression, a non-obvious correlation, or a clear opportunity." +
+  ` ${ANNOTATION_LAYER_IDENTITY}` +
+  ` Treat an insight as a non-obvious, decision-relevant signal: ${ANNOTATION_LAYER_GUARDRAIL_SIGNALS}, or a clear opportunity.` +
   " Do not restate obvious facts, metric labels, or values the user can already read on the page." +
   " Avoid generic praise or KPI restatements (for example: 'high reliability because errors are zero')." +
   " Prefer comparative framing (change, concentration, ranking, imbalance, or outlier) and include concrete values only when they add decision value." +
@@ -17,11 +26,10 @@ export const INSIGHT_SPECIFICITY_POLICY =
 
 /** Shared policy block for slot-level insight annotation behavior. */
 export const ANNOTATION_LAYER_POLICY = [
-  "- You are an AI annotation layer over the user's screen.",
-  "- Your job is to draw attention to things the user would likely miss on their own.",
+  `- ${ANNOTATION_LAYER_IDENTITY}`,
   "- Not every slot must have an insight.",
   "- Emit a slot insight only when there is meaningful, non-obvious signal.",
   "- Skip slots that only have neutral/obvious information.",
-  "- Focus on hidden risks, subtle anomalies, non-obvious correlations, and emerging regression signals.",
+  `- Focus on ${ANNOTATION_LAYER_SIGNALS}.`,
   "- Never invent values, entities, or trends.",
 ].join("\n");
