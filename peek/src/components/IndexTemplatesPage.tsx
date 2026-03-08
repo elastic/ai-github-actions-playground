@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useDeferredValue, useMemo, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -58,15 +58,10 @@ export default function IndexTemplatesPage() {
     { history: "replace" },
   );
 
-  const [isFilterPending, startTransition] = useTransition();
-
   const activeTab = urlState.tab;
   const search = urlState.q;
-  const [deferredSearch, setDeferredSearch] = useState(search);
-
-  useEffect(() => {
-    startTransition(() => setDeferredSearch(search));
-  }, [search, startTransition]);
+  const deferredSearch = useDeferredValue(search);
+  const isFilterPending = search !== deferredSearch;
 
   const indexTplSortField = urlState.indexTplSortField;
   const indexTplSortDir = urlState.indexTplSortDir;

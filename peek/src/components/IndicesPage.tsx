@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -89,12 +89,8 @@ export default function IndicesPage() {
   const navigate = useNavigate();
 
   const [search, setSearch] = useSearchParam();
-  const [isFilterPending, startTransition] = useTransition();
-  const [deferredSearch, setDeferredSearch] = useState(search);
-
-  useEffect(() => {
-    startTransition(() => setDeferredSearch(search));
-  }, [search, startTransition]);
+  const deferredSearch = useDeferredValue(search);
+  const isFilterPending = search !== deferredSearch;
 
   const [showSystemIndices, setShowSystemIndices] = useState(false);
   const { sortField, sortDirection, getSortLabelProps } = useTableSort<IndexSortField>("index");
