@@ -359,6 +359,21 @@ export function useTracesOrchestrator() {
     ],
   );
 
+  /**
+   * Central dispatcher: build the search query from filters (or use a
+   * pre-built query), then run trace + drift-radar queries together.
+   * All filter-triggered requery paths route through here.
+   */
+  const dispatchTraceSearch = useCallback(
+    (updatedFilters: TraceFilters, query?: string) => {
+      const effectiveSearchQuery =
+        query ?? buildTraceSearchQuery(updatedFilters, DEFAULT_FIELD_MAPPING, { limit: 500 });
+      runTraceQueries(effectiveSearchQuery, updatedFilters);
+      runDriftRadarQueries(updatedFilters);
+    },
+    [runTraceQueries, runDriftRadarQueries],
+  );
+
   const handleDriftRadarBaselineChange = useCallback(
     (enabled: boolean) => {
       setDriftRadarBaselineEnabled(enabled);
@@ -373,19 +388,14 @@ export function useTracesOrchestrator() {
     (updates: Partial<TraceFilters>) => {
       updateFilters(updates);
       const updatedFilters = useTracesStore.getState().filters;
-      runTraceQueries(
-        buildTraceSearchQuery(updatedFilters, DEFAULT_FIELD_MAPPING, { limit: 500 }),
-        updatedFilters,
-      );
-      runDriftRadarQueries(updatedFilters);
+      dispatchTraceSearch(updatedFilters);
     },
-    [updateFilters, runTraceQueries, runDriftRadarQueries],
+    [updateFilters, dispatchTraceSearch],
   );
 
   const handleSearch = useCallback(() => {
-    runTraceQueries(effectiveQuery, filters);
-    runDriftRadarQueries(filters);
-  }, [runTraceQueries, runDriftRadarQueries, effectiveQuery, filters]);
+    dispatchTraceSearch(filters, effectiveQuery);
+  }, [dispatchTraceSearch, effectiveQuery, filters]);
 
   const handleFormatQuery = useCallback(() => {
     const formatted = formatEsqlQuery(effectiveQuery);
@@ -406,14 +416,10 @@ export function useTracesOrchestrator() {
     const { filters: latestFilters } = useTracesStore.getState();
     // Defer to avoid calling setState synchronously within an effect
     const id = setTimeout(() => {
-      runTraceQueries(
-        buildTraceSearchQuery(latestFilters, DEFAULT_FIELD_MAPPING, { limit: 500 }),
-        latestFilters,
-      );
-      runDriftRadarQueries(latestFilters);
+      dispatchTraceSearch(latestFilters);
     }, 0);
     return () => clearTimeout(id);
-  }, [runTraceQueries, runDriftRadarQueries]);
+  }, [dispatchTraceSearch]);
 
   const handleSelectTrace = useCallback(
     (traceId: string, spanId?: string, timestamp?: string) => {
@@ -461,13 +467,9 @@ export function useTracesOrchestrator() {
         : [...state.filters.services, serviceName];
       state.updateFilters({ services });
       const updatedFilters = useTracesStore.getState().filters;
-      runTraceQueries(
-        buildTraceSearchQuery(updatedFilters, DEFAULT_FIELD_MAPPING, { limit: 500 }),
-        updatedFilters,
-      );
-      runDriftRadarQueries(updatedFilters);
+      dispatchTraceSearch(updatedFilters);
     },
-    [runTraceQueries, runDriftRadarQueries],
+    [dispatchTraceSearch],
   );
 
   // Parse search results into full Span[] for SpanTreeView
@@ -531,26 +533,18 @@ export function useTracesOrchestrator() {
     (key: string, value: string) => {
       useTracesStore.getState().addTagFilter(key, value, false);
       const updatedFilters = useTracesStore.getState().filters;
-      runTraceQueries(
-        buildTraceSearchQuery(updatedFilters, DEFAULT_FIELD_MAPPING, { limit: 500 }),
-        updatedFilters,
-      );
-      runDriftRadarQueries(updatedFilters);
+      dispatchTraceSearch(updatedFilters);
     },
-    [runTraceQueries, runDriftRadarQueries],
+    [dispatchTraceSearch],
   );
 
   const handleDrawerExclude = useCallback(
     (key: string, value: string) => {
       useTracesStore.getState().addTagFilter(key, value, true);
       const updatedFilters = useTracesStore.getState().filters;
-      runTraceQueries(
-        buildTraceSearchQuery(updatedFilters, DEFAULT_FIELD_MAPPING, { limit: 500 }),
-        updatedFilters,
-      );
-      runDriftRadarQueries(updatedFilters);
+      dispatchTraceSearch(updatedFilters);
     },
-    [runTraceQueries, runDriftRadarQueries],
+    [dispatchTraceSearch],
   );
 
   const handleDrawerOpenInQueryLab = useCallback(
