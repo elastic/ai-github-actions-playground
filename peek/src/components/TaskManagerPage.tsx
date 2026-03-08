@@ -23,6 +23,7 @@ import { useTasks } from "../hooks/useTasks";
 import EmptyState from "./EmptyState";
 import PageContainer from "./PageContainer";
 import PageHeaderSection from "./PageHeaderSection";
+import DocLink from "./DocLink";
 import { KpiCards } from "./TaskKpiCards";
 import { NodeGroupHeader, TASK_TABLE_COLUMN_COUNT } from "./TaskNodeGroupHeader";
 import { TaskDetailDrawer } from "./TaskDetailDrawer";
@@ -131,6 +132,7 @@ export default function TaskManagerPage() {
     <PageContainer>
       <PageHeaderSection
         title="Task Manager"
+        titleAdornment={<DocLink section="tasks" tooltip="Tasks docs" />}
         actions={
           <Button
             size="small"
