@@ -35,16 +35,30 @@ export function useDiscoverOrchestrator(mode: "query-lab" | "logs") {
   const panelTitle = isLogsExplorer ? "Logs Panel" : "Query Lab Panel";
   const connection = useConnectionStore((s) => s.connection);
   const themeMode = useThemeStore((s) => s.themeMode);
-  const addPanel = useDashboardEditorStore((s) => s.addPanel);
+  const { addPanel, refreshInterval, timeRange, parameters } = useDashboardEditorStore(
+    useShallow((s) => ({
+      addPanel: s.addPanel,
+      refreshInterval: s.dashboard.refreshInterval ?? DEFAULT_REFRESH_INTERVAL,
+      timeRange: s.dashboard.timeRange,
+      parameters: s.dashboard.parameters,
+    })),
+  );
   const activeDashboardId = useDashboardCatalogStore((s) => s.activeDashboardId);
   const setEditingPanelId = useUIStore((s) => s.setEditingPanelId);
-  const discoverEditorHeight = useSearchPanelUIStore((s) => s.discoverEditorHeight);
-  const setDiscoverEditorHeight = useSearchPanelUIStore((s) => s.setDiscoverEditorHeight);
-  const discoverSearchCollapsed = useSearchPanelUIStore((s) =>
-    isLogsExplorer ? s.logsSearchCollapsed : s.discoverSearchCollapsed,
-  );
-  const setDiscoverSearchCollapsed = useSearchPanelUIStore((s) =>
-    isLogsExplorer ? s.setLogsSearchCollapsed : s.setDiscoverSearchCollapsed,
+  const {
+    discoverEditorHeight,
+    setDiscoverEditorHeight,
+    discoverSearchCollapsed,
+    setDiscoverSearchCollapsed,
+  } = useSearchPanelUIStore(
+    useShallow((s) => ({
+      discoverEditorHeight: s.discoverEditorHeight,
+      setDiscoverEditorHeight: s.setDiscoverEditorHeight,
+      discoverSearchCollapsed: isLogsExplorer ? s.logsSearchCollapsed : s.discoverSearchCollapsed,
+      setDiscoverSearchCollapsed: isLogsExplorer
+        ? s.setLogsSearchCollapsed
+        : s.setDiscoverSearchCollapsed,
+    })),
   );
   const [editorFocused, setEditorFocused] = useState(false);
   const queryClient = useQueryClient();
@@ -79,11 +93,6 @@ export function useDiscoverOrchestrator(mode: "query-lab" | "logs") {
       setSelectedFields: s.setDiscoverSelectedFields,
     })),
   );
-  const refreshInterval = useDashboardEditorStore(
-    (s) => s.dashboard.refreshInterval ?? DEFAULT_REFRESH_INTERVAL,
-  );
-  const timeRange = useDashboardEditorStore((s) => s.dashboard.timeRange);
-  const parameters = useDashboardEditorStore((s) => s.dashboard.parameters);
   const navigate = useNavigate();
   const [queryContextView, setQueryContextView] = useState<EditorView | null>(null);
   const [fieldFilter, setFieldFilter] = useState("");

@@ -26,6 +26,7 @@ import { useUIStore } from "./store/useUIStore";
 import { useDashboardHistoryStore } from "./store/useDashboardHistoryStore";
 import { useDashboardEditorStore } from "./store/useDashboardEditorStore";
 import { useResetAllStores } from "./hooks/useResetAllStores";
+import { useShallow } from "zustand/react/shallow";
 import { useSessionResume } from "./hooks/useSessionResume";
 import AppHeader from "./components/AppHeader";
 import AppSidebar from "./components/AppSidebar";
@@ -63,8 +64,12 @@ export default function App() {
   const isDashboardView = Boolean(useMatch("/dashboards/:id"));
   const { resumeError, clearResumeError } = useSessionResume();
 
-  const undoDashboardChange = useDashboardHistoryStore((s) => s.undoDashboardChange);
-  const redoDashboardChange = useDashboardHistoryStore((s) => s.redoDashboardChange);
+  const { undoDashboardChange, redoDashboardChange } = useDashboardHistoryStore(
+    useShallow((s) => ({
+      undoDashboardChange: s.undoDashboardChange,
+      redoDashboardChange: s.redoDashboardChange,
+    })),
+  );
 
   const location = useLocation();
   useEffect(() => {
