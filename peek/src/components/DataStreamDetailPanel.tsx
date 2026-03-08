@@ -12,6 +12,7 @@ import type { DataStreamInfo } from "../services/es";
 import ContentSkeleton from "./ContentSkeleton";
 import EmptyState from "./EmptyState";
 import InsightSlot from "./InsightSlot";
+import ScrollableLayout from "./ScrollableLayout";
 import { DATA_STREAMS_INSIGHT_SLOT_IDS } from "./dataStreamsInsightSlots";
 
 interface DataStreamDetailPanelProps {
@@ -109,20 +110,24 @@ export default function DataStreamDetailPanel({
             )}
           </Box>
           <Divider />
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minHeight: 0, p: 1.5 }}>
-            {displayedDataStream && (
-              <TextField
-                size="small"
-                placeholder="Search fields"
-                value={fieldSearch}
-                onChange={(e) => setFieldSearch(e.target.value)}
-                inputProps={{ "aria-label": "Search fields" }}
-              />
-            )}
+          <ScrollableLayout
+            sx={{ gap: 1, p: 1.5 }}
+            header={
+              displayedDataStream ? (
+                <TextField
+                  size="small"
+                  placeholder="Search fields"
+                  value={fieldSearch}
+                  onChange={(e) => setFieldSearch(e.target.value)}
+                  inputProps={{ "aria-label": "Search fields" }}
+                />
+              ) : undefined
+            }
+          >
             {loadingFields ? (
               <ContentSkeleton variant="detail-panel" />
             ) : (
-              <Box sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
+              <>
                 {displayedDataStream &&
                   fieldRows.map((field) => (
                     <Stack
@@ -163,9 +168,9 @@ export default function DataStreamDetailPanel({
                     No fields found for this data stream.
                   </Typography>
                 )}
-              </Box>
+              </>
             )}
-          </Box>
+          </ScrollableLayout>
         </Paper>
       </InsightSlot>
     </Box>
