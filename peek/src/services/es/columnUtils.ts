@@ -29,8 +29,10 @@ export function findColumnIndex(
   columns: ReadonlyArray<{ name: string }>,
   ...aliases: string[]
 ): number {
-  for (let i = 0; i < columns.length; i++) {
-    if (aliases.includes(columns[i]!.name)) return i;
+  for (const alias of aliases) {
+    for (let i = 0; i < columns.length; i++) {
+      if (columns[i]!.name === alias) return i;
+    }
   }
   return -1;
 }

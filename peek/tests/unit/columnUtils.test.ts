@@ -138,4 +138,17 @@ describe("findColumnIndex", () => {
     expect(findColumnIndex(columns, "foo")).toBe(getColumnIndex(lookup, "foo"));
     expect(findColumnIndex(columns, "bar")).toBe(getColumnIndex(lookup, "bar"));
   });
+
+  it("honors alias order when multiple aliases exist in columns", () => {
+    const dualAliasColumns = [
+      { name: "legacy", type: "keyword" },
+      { name: "canonical", type: "keyword" },
+    ];
+    const lookup = buildColumnLookup(dualAliasColumns);
+
+    expect(findColumnIndex(dualAliasColumns, "canonical", "legacy")).toBe(1);
+    expect(findColumnIndex(dualAliasColumns, "canonical", "legacy")).toBe(
+      getColumnIndex(lookup, "canonical", "legacy"),
+    );
+  });
 });
