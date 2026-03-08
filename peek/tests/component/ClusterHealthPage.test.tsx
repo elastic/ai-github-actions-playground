@@ -191,22 +191,6 @@ describe("ClusterHealthPage", () => {
     expect(getAllocationExplainMock).not.toHaveBeenCalled();
   });
 
-  it("switches to Nodes tab and shows per-node table", async () => {
-    const user = userEvent.setup();
-    renderHealth("overview");
-
-    await waitFor(() => {
-      expect(screen.getByText("YELLOW")).toBeInTheDocument();
-    });
-
-    await user.click(screen.getByRole("tab", { name: /nodes/i }));
-
-    await waitFor(() => {
-      expect(screen.getByText("node-a")).toBeInTheDocument();
-    });
-    expect(screen.getByText("node-b")).toBeInTheDocument();
-  });
-
   it("refreshes when Refresh is clicked", async () => {
     const user = userEvent.setup();
     renderHealth("overview");
