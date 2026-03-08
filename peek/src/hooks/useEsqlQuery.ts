@@ -154,6 +154,11 @@ export function useEsqlQuery({
     [connection, buildRequest, queryContextView, profileMode],
   );
 
+  const abort = useCallback(() => {
+    abortRef.current?.abort();
+    requestIdRef.current += 1;
+  }, []);
+
   return {
     runQuery,
     loading,
@@ -166,5 +171,6 @@ export function useEsqlQuery({
     lastRunPartialMetadata,
     clearError,
     clearTimings,
+    abort,
   };
 }

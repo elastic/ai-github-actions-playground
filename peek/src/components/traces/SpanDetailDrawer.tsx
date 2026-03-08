@@ -29,6 +29,7 @@ import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import { copyToClipboard } from "../../utils/copyToClipboard";
 import EmptyState from "../EmptyState";
 import ScrollableLayout from "../ScrollableLayout";
+import { getMobileDrawerOffsetSx, getMobileDrawerPaperSx } from "../mobileDrawerChrome";
 import { COMPONENT_HEIGHTS } from "../../types/tokens";
 
 import type { Span, SpanLink } from "./traceUtils";
@@ -262,8 +263,14 @@ export default function SpanDetailDrawer({
       anchor="right"
       open={open}
       onClose={onClose}
-      sx={{ "& .MuiDrawer-paper": { width: 440 } }}
+      sx={{
+        "& .MuiDrawer-paper": getMobileDrawerPaperSx({
+          desktopBreakpoint: "sm",
+          desktopWidth: 440,
+        }),
+      }}
     >
+      <Box sx={getMobileDrawerOffsetSx("sm")} />
       <ScrollableLayout
         header={
           <>

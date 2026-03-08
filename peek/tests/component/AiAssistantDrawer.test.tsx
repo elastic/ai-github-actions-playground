@@ -16,6 +16,14 @@ function renderDrawer() {
   );
 }
 
+function renderMobileDrawer() {
+  return render(
+    <MemoryRouter>
+      <AiAssistantDrawer isMobile />
+    </MemoryRouter>,
+  );
+}
+
 describe("AiAssistantDrawer", () => {
   beforeEach(() => {
     localStorage.clear();
@@ -117,5 +125,12 @@ describe("AiAssistantDrawer", () => {
     renderDrawer();
 
     expect(screen.getByRole("complementary")).toBeInTheDocument();
+  });
+
+  it("renders the mobile top offset element in the DOM", () => {
+    useUIStore.getState().setAiPanelOpen(true);
+    renderMobileDrawer();
+
+    expect(screen.getByTestId("ai-drawer-mobile-offset")).toBeInTheDocument();
   });
 });

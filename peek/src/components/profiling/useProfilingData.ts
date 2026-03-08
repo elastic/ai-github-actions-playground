@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { ElasticsearchClient, isElasticsearchError } from "../../services/es";
-import { buildColumnAccessor } from "../../services/es/columnUtils";
 import { escapeEsqlString } from "../../services/es/esqlUtils";
 import { useOpenInDiscover } from "../../hooks/useOpenInDiscover";
 import type { ElasticsearchConnection, EsqlResponse } from "../../types";
@@ -12,25 +11,11 @@ import {
   buildProfilingEventsQuery,
   buildProfilingFlamescopeQuery,
   buildProfilingTimelineQuery,
-  buildStackframeLookupQuery,
-  buildStacktraceLookupQuery,
-  buildTopFunctionsRequest,
   type ProfilingFocusDimension,
 } from "./profilingQueryBuilder";
-import type {
-  FlamegraphNode,
-  FrameSymbol,
-  ProfilingEvent,
-  StacktraceFrameMap,
-  SymbolizedStacktrace,
-  TopFunctionRow,
-} from "./profilingUtils";
-import {
-  buildFlamegraphTree,
-  joinStacktraces,
-  normalizeTopFunctions,
-  parseFrameIds,
-} from "./profilingUtils";
+import type { FlamegraphNode, SymbolizedStacktrace, TopFunctionRow } from "./profilingUtils";
+import { buildFlamegraphTree } from "./profilingUtils";
+import { executeProfilingRun } from "./profilingRunners";
 
 export type ViewMode = "topFunctions" | "stacktraces" | "timeline" | "flamegraph" | "flamescope";
 
@@ -117,91 +102,6 @@ export function useProfilingData({
     return buildProfilingEventsQuery(filters);
   }, [viewMode, filters]);
 
-  const runTopFunctions = useCallback(
-    async (client: ElasticsearchClient, signal: AbortSignal) => {
-      const response = await client.getTopFunctions(buildTopFunctionsRequest(filters), signal);
-      setTopFunctionsRows(normalizeTopFunctions(response));
-      setTimelineResult(null);
-      setStacktraces([]);
-    },
-    [filters],
-  );
-
-  const runTimeline = useCallback(
-    async (client: ElasticsearchClient, signal: AbortSignal) => {
-      const result = await client.query({ query: effectiveQuery }, signal);
-      setTimelineResult(result);
-      setTopFunctionsRows([]);
-      setStacktraces([]);
-    },
-    [effectiveQuery],
-  );
-
-  const runStacktraces = useCallback(
-    async (client: ElasticsearchClient, signal: AbortSignal) => {
-      const eventsResponse = await client.query({ query: effectiveQuery }, signal);
-      const getEvent = buildColumnAccessor(eventsResponse.columns);
-      const events: ProfilingEvent[] = eventsResponse.values
-        .map((row) => ({
-          timestamp: String(getEvent(row, "@timestamp") ?? ""),
-          stacktraceId: String(getEvent(row, "Stacktrace.id") ?? ""),
-          count: Number(getEvent(row, "Stacktrace.count") ?? 0),
-          serviceName: String(getEvent(row, "service.name") ?? ""),
-          hostName: String(getEvent(row, "host.name") ?? ""),
-        }))
-        .filter((event) => event.stacktraceId.length > 0);
-      const stacktraceIds = [...new Set(events.map((event) => event.stacktraceId))];
-      if (stacktraceIds.length === 0) {
-        setStacktraces([]);
-        setTopFunctionsRows([]);
-        setTimelineResult(null);
-        setFlamescopeWindow(null);
-        return;
-      }
-
-      const stacktraceResponse = await client.query(
-        { query: buildStacktraceLookupQuery(stacktraceIds) },
-        signal,
-      );
-      const getTrace = buildColumnAccessor(stacktraceResponse.columns);
-      const stacktraceRows: StacktraceFrameMap[] = stacktraceResponse.values
-        .map((row) => ({
-          id: String(getTrace(row, "_id") ?? ""),
-          frameIds: String(getTrace(row, "Stacktrace.frame.ids") ?? ""),
-          frameTypes: String(getTrace(row, "Stacktrace.frame.types") ?? ""),
-        }))
-        .filter((item) => item.id.length > 0);
-
-      const frameIds = [...new Set(stacktraceRows.flatMap((row) => parseFrameIds(row.frameIds)))];
-      const frameResponse = await client.query(
-        { query: buildStackframeLookupQuery(frameIds) },
-        signal,
-      );
-      const getFrame = buildColumnAccessor(frameResponse.columns);
-      const frames: FrameSymbol[] = frameResponse.values
-        .map((row) => ({
-          id: String(getFrame(row, "_id") ?? ""),
-          functionName: String(getFrame(row, "Stackframe.function.name") ?? "(unknown)"),
-          fileName: String(getFrame(row, "Stackframe.file.name") ?? ""),
-          lineNumber: (() => {
-            const v = getFrame(row, "Stackframe.line.number");
-            return v != null ? Number(v) : null;
-          })(),
-          functionOffset: (() => {
-            const v = getFrame(row, "Stackframe.function.offset");
-            return v != null ? Number(v) : null;
-          })(),
-        }))
-        .filter((frame) => frame.id.length > 0);
-
-      setStacktraces(joinStacktraces(events, stacktraceRows, frames));
-      setTopFunctionsRows([]);
-      setTimelineResult(null);
-      setFlamescopeWindow(null);
-    },
-    [effectiveQuery],
-  );
-
   const handleRun = useCallback(async () => {
     if (!connection) return;
     abortRef.current?.abort();
@@ -218,12 +118,18 @@ export function useProfilingData({
     setTimelineResult(null);
     setStacktraces([]);
     try {
-      if (viewMode === "topFunctions") {
-        await runTopFunctions(client, controller.signal);
-      } else if (viewMode === "timeline") {
-        await runTimeline(client, controller.signal);
-      } else {
-        await runStacktraces(client, controller.signal);
+      const result = await executeProfilingRun(
+        client,
+        controller.signal,
+        viewMode,
+        filters,
+        effectiveQuery,
+      );
+      setTopFunctionsRows(result.topFunctionsRows);
+      setTimelineResult(result.timelineResult);
+      setStacktraces(result.stacktraces);
+      if (viewMode !== "topFunctions" && viewMode !== "timeline") {
+        setFlamescopeWindow(null);
       }
     } catch (err: unknown) {
       if (controller.signal.aborted) return;
@@ -231,7 +137,7 @@ export function useProfilingData({
     } finally {
       if (!controller.signal.aborted) setLoading(false);
     }
-  }, [connection, runTopFunctions, runTimeline, runStacktraces, viewMode]);
+  }, [connection, viewMode, filters, effectiveQuery]);
 
   // Auto-run whenever we are in the results view and dependencies change
   useEffect(() => {

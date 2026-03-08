@@ -1,5 +1,4 @@
 import { useCallback, useDeferredValue, useMemo } from "react";
-import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Paper from "@mui/material/Paper";
@@ -11,6 +10,7 @@ import { parseAsString, parseAsStringEnum, useQueryStates } from "nuqs";
 import { useSnapshotData } from "../hooks/useSnapshotData";
 import { COMPONENT_HEIGHTS } from "../types/tokens";
 
+import DataFetchAlert from "./DataFetchAlert";
 import PageHeader from "./PageHeader";
 import PoliciesTable from "./snapshots/PoliciesTable";
 import RepositoriesTable from "./snapshots/RepositoriesTable";
@@ -170,19 +170,7 @@ export default function SnapshotsPage() {
         : "Filter repositories";
 
   if (result.status === "error") {
-    return (
-      <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 1 }}>
-        <Alert severity="error">{result.error}</Alert>
-        <Button
-          size="small"
-          variant="outlined"
-          onClick={result.refresh}
-          sx={{ alignSelf: "start" }}
-        >
-          Retry
-        </Button>
-      </Box>
-    );
+    return <DataFetchAlert result={result} onRetry={result.refresh} />;
   }
 
   return (

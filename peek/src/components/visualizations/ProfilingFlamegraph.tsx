@@ -20,6 +20,7 @@ import type { FlamegraphNode, FrameType } from "../profiling/profilingUtils";
 import { findSubtreeByPath } from "../profiling/profilingUtils";
 import { CHART_COLORS } from "../../theme";
 import { STATUS_COLORS } from "../../types/tokens";
+import { getLabelColor } from "../../utils/colorContrast";
 
 import { useEChartTheme } from "./useEChartTheme";
 import { escapeHtml } from "./htmlUtils";
@@ -230,12 +231,13 @@ export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
             const isMatch =
               lowerSearch.length > 0 && String(name).toLowerCase().includes(lowerSearch);
             const isDimmed = lowerSearch.length > 0 && !isMatch;
+            const fillColor = getFlameColor(String(name), frameType);
 
             return {
               type: "rect" as const,
               shape: { x, y, width: Math.max(w - 1, 1), height: Math.max(h - 2, 1) },
               style: api.style({
-                fill: getFlameColor(String(name), frameType),
+                fill: fillColor,
                 stroke: isMatch ? muiTheme.palette.primary.main : muiTheme.palette.background.paper,
                 lineWidth: isMatch ? 2 : 0.5,
                 opacity: isDimmed ? DIMMED_OPACITY : 1,
@@ -252,7 +254,7 @@ export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
                     if (label.length <= maxChars) return label;
                     return label.slice(0, maxChars - 1) + "…";
                   })(),
-                  fill: "#fff",
+                  fill: getLabelColor(fillColor),
                   fontSize: 11,
                   fontFamily: "monospace",
                   opacity: isDimmed ? DIMMED_OPACITY : 1,
