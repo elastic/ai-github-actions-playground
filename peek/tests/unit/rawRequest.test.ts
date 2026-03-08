@@ -239,21 +239,53 @@ describe("executeRawRequest", () => {
   });
 
   it("falls back to default timeout for invalid timeoutMs", async () => {
-    const doFetch: DoFetch = vi.fn().mockResolvedValueOnce(jsonResponse({ ok: true }));
+    vi.useFakeTimers();
+    try {
+      const timeoutSpy = vi.spyOn(AbortSignal, "timeout").mockImplementation((ms) => {
+        const controller = new AbortController();
+        setTimeout(
+          () =>
+            controller.abort(
+              new DOMException("The operation was aborted due to timeout", "TimeoutError"),
+            ),
+          ms,
+        );
+        return controller.signal;
+      });
+      let requestSignal: AbortSignal | undefined;
+      const doFetch: DoFetch = vi.fn((_url, _headers, opts) => {
+        requestSignal = opts?.signal;
+        return new Promise((_resolve, reject) => {
+          requestSignal?.addEventListener("abort", () => reject(requestSignal?.reason), {
+            once: true,
+          });
+        });
+      });
 
-    const result = await executeRawRequest(
-      doFetch,
-      BASE_URL,
-      HEADERS,
-      "GET",
-      "/",
-      undefined,
-      undefined,
-      -1,
-    );
-
-    expect(result.status).toBe(200);
-    expect(doFetch).toHaveBeenCalledTimes(1);
+      const pending = executeRawRequest(
+        doFetch,
+        BASE_URL,
+        HEADERS,
+        "GET",
+        "/",
+        undefined,
+        undefined,
+        -1,
+      );
+      const assertion = expect(pending).rejects.toEqual(
+        expect.objectContaining({
+          status: 0,
+          message: expect.stringMatching(/timeout/i),
+        }),
+      );
+      await vi.advanceTimersByTimeAsync(RAW_REQUEST_TIMEOUT_MS + 1);
+      await assertion;
+      expect(timeoutSpy).toHaveBeenCalledWith(RAW_REQUEST_TIMEOUT_MS);
+      expect(requestSignal?.aborted).toBe(true);
+      timeoutSpy.mockRestore();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("exports the timeout constant", () => {
@@ -412,24 +444,56 @@ describe("executeRawRequest", () => {
     },
   );
 
-  it.each([NaN, Infinity, 0])(
+  it.each([NaN, Infinity, Number.MAX_SAFE_INTEGER + 1])(
     "falls back to default timeout for invalid timeoutMs=%s",
     async (badTimeout) => {
-      const doFetch: DoFetch = vi.fn().mockResolvedValueOnce(jsonResponse({ ok: true }));
+      vi.useFakeTimers();
+      try {
+        const timeoutSpy = vi.spyOn(AbortSignal, "timeout").mockImplementation((ms) => {
+          const controller = new AbortController();
+          setTimeout(
+            () =>
+              controller.abort(
+                new DOMException("The operation was aborted due to timeout", "TimeoutError"),
+              ),
+            ms,
+          );
+          return controller.signal;
+        });
+        let requestSignal: AbortSignal | undefined;
+        const doFetch: DoFetch = vi.fn((_url, _headers, opts) => {
+          requestSignal = opts?.signal;
+          return new Promise((_resolve, reject) => {
+            requestSignal?.addEventListener("abort", () => reject(requestSignal?.reason), {
+              once: true,
+            });
+          });
+        });
 
-      const result = await executeRawRequest(
-        doFetch,
-        BASE_URL,
-        HEADERS,
-        "GET",
-        "/",
-        undefined,
-        undefined,
-        badTimeout,
-      );
-
-      expect(result.status).toBe(200);
-      expect(doFetch).toHaveBeenCalledTimes(1);
+        const pending = executeRawRequest(
+          doFetch,
+          BASE_URL,
+          HEADERS,
+          "GET",
+          "/",
+          undefined,
+          undefined,
+          badTimeout,
+        );
+        const assertion = expect(pending).rejects.toEqual(
+          expect.objectContaining({
+            status: 0,
+            message: expect.stringMatching(/timeout/i),
+          }),
+        );
+        await vi.advanceTimersByTimeAsync(RAW_REQUEST_TIMEOUT_MS + 1);
+        await assertion;
+        expect(timeoutSpy).toHaveBeenCalledWith(RAW_REQUEST_TIMEOUT_MS);
+        expect(requestSignal?.aborted).toBe(true);
+        timeoutSpy.mockRestore();
+      } finally {
+        vi.useRealTimers();
+      }
     },
   );
 });

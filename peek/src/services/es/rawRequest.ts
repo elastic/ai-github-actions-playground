@@ -75,7 +75,10 @@ export async function executeRawRequest(
   const shouldRetryMethod = RETRYABLE_METHODS.has(normalizedMethod);
   try {
     const effectiveTimeout =
-      typeof timeoutMs === "number" && Number.isFinite(timeoutMs) && timeoutMs > 0
+      typeof timeoutMs === "number" &&
+      Number.isFinite(timeoutMs) &&
+      timeoutMs >= 0 &&
+      timeoutMs <= Number.MAX_SAFE_INTEGER
         ? timeoutMs
         : RAW_REQUEST_TIMEOUT_MS;
     const signals: AbortSignal[] = [AbortSignal.timeout(effectiveTimeout)];
