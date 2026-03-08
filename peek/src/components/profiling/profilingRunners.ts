@@ -101,6 +101,9 @@ export async function fetchStacktraces(
     .filter((item) => item.id.length > 0);
 
   const frameIds = [...new Set(stacktraceRows.flatMap((row) => parseFrameIds(row.frameIds)))];
+  if (frameIds.length === 0) {
+    return joinStacktraces(events, stacktraceRows, []);
+  }
   const frameResponse = await client.query({ query: buildStackframeLookupQuery(frameIds) }, signal);
   const getFrame = buildColumnAccessor(frameResponse.columns);
   const frames: FrameSymbol[] = frameResponse.values

@@ -151,6 +151,44 @@ describe("fetchStacktraces", () => {
     expect(result[0]!.frames[1]!.functionName).toBe("main");
     expect(queryMock).toHaveBeenCalledTimes(3);
   });
+
+  it("skips frame lookup when parsed frame IDs are empty", async () => {
+    const queryMock = vi
+      .fn()
+      // 1st call: events query
+      .mockResolvedValueOnce({
+        columns: [
+          { name: "@timestamp", type: "date" },
+          { name: "Stacktrace.id", type: "keyword" },
+          { name: "Stacktrace.count", type: "long" },
+          { name: "service.name", type: "keyword" },
+          { name: "host.name", type: "keyword" },
+        ],
+        values: [["2026-01-01T00:00:00Z", "st1", 5, "my-svc", "host-a"]],
+      })
+      // 2nd call: stacktrace lookup (no frame IDs)
+      .mockResolvedValueOnce({
+        columns: [
+          { name: "_id", type: "keyword" },
+          { name: "Stacktrace.frame.ids", type: "keyword" },
+          { name: "Stacktrace.frame.types", type: "keyword" },
+        ],
+        values: [["st1", "", ""]],
+      });
+
+    const client = mockClient({ query: queryMock });
+    const result = await fetchStacktraces(
+      client,
+      "FROM profiling-events-all",
+      new AbortController().signal,
+    );
+
+    expect(result).toHaveLength(1);
+    expect(result[0]!.stacktraceId).toBe("st1");
+    expect(result[0]!.frames).toEqual([]);
+    // events + stacktrace lookup only; frame lookup should be skipped
+    expect(queryMock).toHaveBeenCalledTimes(2);
+  });
 });
 
 // ---------------------------------------------------------------------------
