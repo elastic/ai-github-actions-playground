@@ -95,14 +95,23 @@ export default function IndexTemplatesPage() {
     [compTplSortField, compTplSortDir, setUrlState],
   );
 
-  const [selectedTemplateName, setSelectedTemplateName] = useState<string | null>(null);
+  const [selectedTemplateRef, setSelectedTemplateRef] = useState<{
+    kind: "index" | "component";
+    name: string;
+  } | null>(null);
   const selectedTemplate = useMemo(
-    () => indexTemplates.find((template) => template.name === selectedTemplateName) ?? null,
-    [indexTemplates, selectedTemplateName],
+    () =>
+      selectedTemplateRef?.kind === "index"
+        ? (indexTemplates.find((t) => t.name === selectedTemplateRef.name) ?? null)
+        : null,
+    [indexTemplates, selectedTemplateRef],
   );
   const selectedComponentTemplate = useMemo(
-    () => componentTemplates.find((template) => template.name === selectedTemplateName) ?? null,
-    [componentTemplates, selectedTemplateName],
+    () =>
+      selectedTemplateRef?.kind === "component"
+        ? (componentTemplates.find((t) => t.name === selectedTemplateRef.name) ?? null)
+        : null,
+    [componentTemplates, selectedTemplateRef],
   );
   const simulatedTemplate = useSimulatedIndexTemplate(selectedTemplate?.name ?? null);
 
@@ -204,14 +213,16 @@ export default function IndexTemplatesPage() {
           filteredTemplates={filteredIndexTemplates}
           sortField={indexTplSortField}
           sortDirection={indexTplSortDir}
-          selectedTemplateName={selectedTemplateName}
+          selectedTemplateName={
+            selectedTemplateRef?.kind === "index" ? selectedTemplateRef.name : null
+          }
           search={search}
           dataStreamOnly={dataStreamOnly}
           priorityMin={priorityMin}
           priorityMax={priorityMax}
           showSystem={showSystem}
           onSort={handleIndexTplSort}
-          onSelectTemplate={setSelectedTemplateName}
+          onSelectTemplate={(name) => setSelectedTemplateRef({ kind: "index", name })}
         />
       )}
 
@@ -225,7 +236,7 @@ export default function IndexTemplatesPage() {
           search={search}
           showSystem={showSystem}
           onSort={handleCompTplSort}
-          onSelectTemplate={setSelectedTemplateName}
+          onSelectTemplate={(name) => setSelectedTemplateRef({ kind: "component", name })}
         />
       )}
 
@@ -233,7 +244,7 @@ export default function IndexTemplatesPage() {
         selectedTemplate={selectedTemplate}
         selectedComponentTemplate={selectedComponentTemplate}
         simulatedTemplate={simulatedTemplate}
-        onClose={() => setSelectedTemplateName(null)}
+        onClose={() => setSelectedTemplateRef(null)}
       />
     </PageContainer>
   );
