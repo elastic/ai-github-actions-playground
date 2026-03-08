@@ -1,5 +1,5 @@
 import Box from "@mui/material/Box";
-import ButtonBase from "@mui/material/ButtonBase";
+
 import Chip from "@mui/material/Chip";
 import LinearProgress from "@mui/material/LinearProgress";
 import Paper from "@mui/material/Paper";
@@ -108,7 +108,6 @@ export default function IndexTemplatesTable({
                 hover
                 selected={template.name === selectedTemplateName}
                 tabIndex={0}
-                role="button"
                 aria-label={`Open template details for ${template.name}`}
                 onClick={() => onSelectTemplate(template.name)}
                 onKeyDown={(event) => {
@@ -120,14 +119,9 @@ export default function IndexTemplatesTable({
                 sx={{ cursor: "pointer" }}
               >
                 <TableCell>
-                  <ButtonBase
-                    component="span"
-                    onClick={() => onSelectTemplate(template.name)}
-                    aria-label={`Open template details for ${template.name}`}
-                    sx={{ fontFamily: "monospace", fontSize: "0.8rem" }}
-                  >
+                  <Box component="span" sx={{ fontFamily: "monospace", fontSize: "0.8rem" }}>
                     {template.name}
-                  </ButtonBase>
+                  </Box>
                 </TableCell>
                 <TableCell>
                   <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
