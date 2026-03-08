@@ -318,8 +318,11 @@ function parseSpanEvents(raw: unknown): SpanEvent[] {
   if (Array.isArray(raw)) {
     items = raw;
   } else if (typeof raw === "string") {
+    const trimmed = raw.trim();
+    if (trimmed === "[]") return [];
+    if (!trimmed.startsWith("[") || !trimmed.endsWith("]")) return [];
     try {
-      const parsed: unknown = JSON.parse(raw);
+      const parsed: unknown = JSON.parse(trimmed);
       if (!Array.isArray(parsed)) return [];
       items = parsed;
     } catch {
