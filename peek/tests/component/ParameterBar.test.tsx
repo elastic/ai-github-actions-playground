@@ -288,5 +288,10 @@ describe("ParameterBar", () => {
     await waitFor(() => {
       expect(queryMock).toHaveBeenCalledTimes(3);
     });
+    await act(async () => {
+      await Promise.resolve();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(queryMock).toHaveBeenCalledTimes(3);
   });
 });
