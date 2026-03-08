@@ -99,7 +99,7 @@ async function fetchGroup(
               : undefined;
           // 404 when transforms feature is not available on the cluster
           if (status === 404 || status === 400) {
-            return { group, data: { transformStats: { count: 0, transforms: [] } } };
+            return { group, data: { transformStats: null } };
           }
           throw innerError;
         }

@@ -98,6 +98,13 @@ export function TransformTable({
               hover
               selected={row.id === selectedId}
               onClick={() => onSelect(row.id)}
+              tabIndex={0}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " " || event.key === "Spacebar") {
+                  event.preventDefault();
+                  onSelect(row.id);
+                }
+              }}
               sx={{
                 cursor: "pointer",
                 ...(row.state === "failed" && {
@@ -144,7 +151,11 @@ export function TransformTable({
                 <Typography
                   variant="body2"
                   color={
-                    row.searchFailures > 0 || row.indexFailures > 0 ? "error.main" : "text.primary"
+                    row.state === "failed"
+                      ? "inherit"
+                      : row.searchFailures > 0 || row.indexFailures > 0
+                        ? "error.main"
+                        : "text.primary"
                   }
                   fontWeight={row.searchFailures > 0 || row.indexFailures > 0 ? 700 : 400}
                   sx={{ fontFamily: "monospace", fontSize: "0.75rem" }}
