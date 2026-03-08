@@ -1,4 +1,4 @@
-import { useRef, useCallback, useState, useEffect } from "react";
+import { useRef, useCallback, useState } from "react";
 import Box from "@mui/material/Box";
 import DragHandleIcon from "@mui/icons-material/DragHandle";
 
@@ -30,9 +30,11 @@ export default function ResizableSplitPane({
   const [topFraction, setTopFraction] = useState(initialTopFraction);
 
   // Reset fraction when initialTopFraction changes (e.g. panel appears/disappears).
-  useEffect(() => {
+  const [prevInitialFraction, setPrevInitialFraction] = useState(initialTopFraction);
+  if (initialTopFraction !== prevInitialFraction) {
+    setPrevInitialFraction(initialTopFraction);
     setTopFraction(initialTopFraction);
-  }, [initialTopFraction]);
+  }
 
   const clampFraction = useCallback(
     (f: number) => {
