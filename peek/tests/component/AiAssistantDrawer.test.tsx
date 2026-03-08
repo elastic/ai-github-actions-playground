@@ -127,7 +127,7 @@ describe("AiAssistantDrawer", () => {
     expect(screen.getByRole("complementary")).toBeInTheDocument();
   });
 
-  it("renders a mobile top offset so the close button stays visible under the app header", () => {
+  it("renders the mobile top offset element in the DOM", () => {
     useUIStore.getState().setAiPanelOpen(true);
     renderMobileDrawer();
 

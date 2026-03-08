@@ -74,7 +74,7 @@ describe("DetailSurface", () => {
     expect(screen.getByText("Footer actions")).toBeInTheDocument();
   });
 
-  it("renders a mobile top offset so close actions stay below the app header", () => {
+  it("renders the mobile top offset element in the DOM", () => {
     render(
       <DetailSurface open={true} onClose={() => {}} title="Mobile Detail">
         <div>Body</div>

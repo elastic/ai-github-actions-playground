@@ -13,6 +13,7 @@ import CheckIcon from "@mui/icons-material/Check";
 
 import type { EsqlColumn } from "../../types";
 import { copyToClipboard } from "../../utils/copyToClipboard";
+import { getMobileDrawerOffsetSx, getMobileDrawerPaperSx } from "../mobileDrawerChrome";
 
 interface Props {
   open: boolean;
@@ -122,22 +123,14 @@ export default function RowInspectorFlyout({ open, onClose, columns, row }: Prop
       }}
       slotProps={{
         paper: {
-          sx: {
-            width: { xs: "calc(100vw - 16px)", sm: 480 },
-            maxWidth: "100vw",
-            display: "flex",
-            flexDirection: "column",
-          },
+          sx: getMobileDrawerPaperSx({
+            desktopBreakpoint: "sm",
+            desktopWidth: 480,
+          }),
         },
       }}
     >
-      <Box
-        sx={(theme) => ({
-          ...theme.mixins.toolbar,
-          display: { xs: "block", sm: "none" },
-          flexShrink: 0,
-        })}
-      />
+      <Box sx={getMobileDrawerOffsetSx("sm")} />
       {/* Header */}
       <Box
         sx={{

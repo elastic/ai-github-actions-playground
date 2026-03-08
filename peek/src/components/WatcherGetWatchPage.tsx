@@ -27,6 +27,7 @@ import EmptyState from "./EmptyState";
 import PageContainer from "./PageContainer";
 import PageHeaderSection from "./PageHeaderSection";
 import DocLink from "./DocLink";
+import { getMobileDrawerOffsetSx, getMobileDrawerPaperSx } from "./mobileDrawerChrome";
 
 function formatTimestamp(value: string | number | undefined): string {
   if (typeof value === "string") return value;
@@ -345,23 +346,15 @@ export default function WatcherGetWatchPage() {
         open={Boolean(selectedWatchId)}
         onClose={() => setSelectedWatchId(null)}
         PaperProps={{
-          sx: {
-            width: { xs: "calc(100vw - 16px)", md: 620 },
-            maxWidth: "100vw",
-            display: "flex",
-            flexDirection: "column",
-            p: 1,
+          sx: getMobileDrawerPaperSx({
+            desktopBreakpoint: "md",
+            desktopWidth: 620,
+            padding: 1,
             backgroundColor: "background.default",
-          },
+          }),
         }}
       >
-        <Box
-          sx={(theme) => ({
-            ...theme.mixins.toolbar,
-            display: { xs: "block", md: "none" },
-            flexShrink: 0,
-          })}
-        />
+        <Box sx={getMobileDrawerOffsetSx("md")} />
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 1 }}>
           <Typography variant="subtitle1">Watch details</Typography>
           <IconButton

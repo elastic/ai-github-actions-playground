@@ -32,6 +32,7 @@ import { InsightSlotProvider } from "./InsightSlotContext";
 import PageContainer from "./PageContainer";
 import PageHeader from "./PageHeader";
 import { HOT_THREADS_INSIGHT_SLOT_IDS, HOT_THREADS_INSIGHT_SLOTS } from "./hotThreadsInsightSlots";
+import { getMobileDrawerOffsetSx, getMobileDrawerPaperSx } from "./mobileDrawerChrome";
 
 const SAMPLE_TYPES = ["cpu", "wait", "block", "mem", "gpu"] as const;
 const SAMPLE_TYPE_LABELS: Record<HotThreadSampleType, string> = {
@@ -563,23 +564,15 @@ export default function NodesHotThreadsPage() {
           open={Boolean(selectedThread)}
           onClose={() => setSelectedThread(null)}
           PaperProps={{
-            sx: {
-              width: { xs: "calc(100vw - 16px)", md: 640 },
-              maxWidth: "100vw",
-              display: "flex",
-              flexDirection: "column",
-              p: 1,
+            sx: getMobileDrawerPaperSx({
+              desktopBreakpoint: "md",
+              desktopWidth: 640,
+              padding: 1,
               backgroundColor: "background.default",
-            },
+            }),
           }}
         >
-          <Box
-            sx={(theme) => ({
-              ...theme.mixins.toolbar,
-              display: { xs: "block", md: "none" },
-              flexShrink: 0,
-            })}
-          />
+          <Box sx={getMobileDrawerOffsetSx("md")} />
           <Box
             sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 1 }}
           >
