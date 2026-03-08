@@ -1,3 +1,4 @@
+import { matchPath } from "react-router-dom";
 import { useShallow } from "zustand/react/shallow";
 
 import { PAGE_PATHS } from "../routes/paths";
@@ -16,7 +17,8 @@ export function useChatScreenContextSummary(pathname: string): string {
   );
 
   const pageLabel =
-    Object.values(PAGE_PATHS).find((page) => page.path === pathname)?.nav.label ?? pathname;
+    Object.values(PAGE_PATHS).find((page) => matchPath({ path: page.path, end: true }, pathname))
+      ?.nav.label ?? pathname;
   const activeDashboard = dashboards.find((dashboard) => dashboard.id === activeDashboardId);
 
   const lines = [

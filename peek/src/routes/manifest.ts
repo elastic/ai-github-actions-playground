@@ -60,8 +60,6 @@ const TemplatesPage = lazy(() => import("../components/TemplatesPage"));
 
 export interface PageConfig extends PagePathConfig {
   component: ComponentType;
-  /** ContentSkeleton variant shown while the lazy page chunk loads. */
-  skeletonVariant?: "table" | "cards" | "chart" | "list" | "detail-panel";
 }
 
 export const PAGE_MANIFEST: Record<keyof typeof PAGE_PATHS, PageConfig> = {
