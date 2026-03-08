@@ -58,14 +58,14 @@ Embedded queries respect the dashboard time range and parameter values (using `?
 
 ## Choosing the right type
 
-| Data shape | Recommended type |
-|---|---|
-| Time-series trend | Time Series |
-| Category comparison | Bar Chart |
-| Distribution breakdown | Pie Chart |
-| Two-dimensional density | Heatmap |
-| Correlation of two metrics | Scatter |
-| Value frequency | Histogram |
-| Single KPI value | Stat or Gauge |
-| Detailed rows | Table |
-| Annotations and notes | Markdown |
+| Data shape                 | Recommended type |
+| -------------------------- | ---------------- |
+| Time-series trend          | Time Series      |
+| Category comparison        | Bar Chart        |
+| Distribution breakdown     | Pie Chart        |
+| Two-dimensional density    | Heatmap          |
+| Correlation of two metrics | Scatter          |
+| Value frequency            | Histogram        |
+| Single KPI value           | Stat or Gauge    |
+| Detailed rows              | Table            |
+| Annotations and notes      | Markdown         |

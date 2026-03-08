@@ -41,6 +41,7 @@ import ContentSkeleton from "./components/ContentSkeleton";
 import ErrorBoundary from "./components/ErrorBoundary";
 import PersesProviders from "./components/perses/PersesProviders";
 import LLMKeyNudgeBanner from "./components/LLMKeyNudgeBanner";
+import InsightStatusFooter from "./components/InsightStatusFooter";
 import { PAGE_PATHS } from "./routes/paths";
 import { PAGE_MANIFEST } from "./routes/manifest";
 
@@ -264,6 +265,7 @@ export default function App() {
                     Elasticsearch B.V.
                   </Link>
                 </Typography>
+                {connected && <InsightStatusFooter />}
               </Box>
             </Box>
             {connected && (
