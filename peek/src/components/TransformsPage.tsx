@@ -34,6 +34,8 @@ export default function TransformsPage() {
   useEffect(() => {
     if (result.status === "success") {
       setLastSuccessfulTransforms(result.data);
+    } else if (result.status === "error") {
+      setLastSuccessfulTransforms([]);
     }
   }, [result]);
   const transforms = useMemo(

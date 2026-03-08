@@ -231,6 +231,56 @@ describe("TransformsPage", () => {
     await screen.findByText("Internal error");
   });
 
+  it("does not keep stale rows visible after transitioning from success to error", async () => {
+    getTransformsMock.mockResolvedValueOnce({
+      count: 1,
+      transforms: [
+        {
+          id: "tx-stale",
+          source: { index: ["src"] },
+          dest: { index: "dest" },
+        },
+      ],
+    });
+    getTransformStatsMock.mockResolvedValueOnce({
+      count: 1,
+      transforms: [
+        {
+          id: "tx-stale",
+          state: "started",
+          health: { status: "green" },
+          stats: {
+            documents_processed: 1,
+            documents_indexed: 1,
+            search_failures: 0,
+            index_failures: 0,
+            search_time_in_ms: 1,
+            index_time_in_ms: 1,
+            processing_time_in_ms: 1,
+            exponential_avg_checkpoint_duration_ms: 1,
+          },
+          checkpointing: { last: { checkpoint: 1 } },
+        },
+      ],
+    });
+    getTransformsMock.mockRejectedValueOnce({ status: 500, message: "Boom after refresh" });
+    getTransformStatsMock.mockRejectedValueOnce({ status: 500, message: "Boom after refresh" });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <TransformsPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    await screen.findByText("tx-stale");
+    fireEvent.click(screen.getByRole("button", { name: "Refresh" }));
+    await screen.findByText("Boom after refresh");
+
+    expect(screen.queryByText("tx-stale")).not.toBeInTheDocument();
+  });
+
   it("opens detail drawer when a row is clicked", async () => {
     getTransformsMock.mockResolvedValue(TRANSFORMS_RESPONSE);
     getTransformStatsMock.mockResolvedValue(STATS_RESPONSE);
