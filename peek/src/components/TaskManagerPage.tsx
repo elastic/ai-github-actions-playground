@@ -19,7 +19,7 @@ import PendingActionsIcon from "@mui/icons-material/PendingActions";
 import type { TaskRow } from "../services/es";
 import { useTasks } from "../hooks/useTasks";
 
-import DataBoundary from "./DataBoundary";
+import DataFetchAlert from "./DataFetchAlert";
 import EmptyState from "./EmptyState";
 import PageContainer from "./PageContainer";
 import PageHeaderSection from "./PageHeaderSection";
@@ -111,11 +111,7 @@ export default function TaskManagerPage() {
   }, [filteredTasks, groupByNode]);
 
   if (result.status === "error") {
-    return (
-      <DataBoundary result={result} onRetry={result.refresh}>
-        {() => null}
-      </DataBoundary>
-    );
+    return <DataFetchAlert result={result} onRetry={result.refresh} />;
   }
 
   const sortLabel = (field: SortField, label: string) => (

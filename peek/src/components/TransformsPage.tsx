@@ -13,7 +13,7 @@ import TransformIcon from "@mui/icons-material/Transform";
 import { useTransforms } from "../hooks/useTransforms";
 import type { TransformRow } from "../services/es";
 
-import DataBoundary from "./DataBoundary";
+import DataFetchAlert from "./DataFetchAlert";
 import PageHeader from "./PageHeader";
 import EmptyState from "./EmptyState";
 import { TransformDetailDrawer } from "./transforms/TransformDetailDrawer";
@@ -153,9 +153,7 @@ export default function TransformsPage() {
       </Stack>
 
       {result.status === "error" && (
-        <DataBoundary result={result} onRetry={() => result.refresh()}>
-          {() => null}
-        </DataBoundary>
+        <DataFetchAlert result={result} onRetry={() => result.refresh()} />
       )}
 
       {loading && <LinearProgress />}

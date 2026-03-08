@@ -60,11 +60,11 @@ export function useAsyncAction<TResult = void>(options: {
 
   const execute = useCallback(() => {
     mutation.mutate();
-  }, [mutation]);
+  }, [mutation.mutate]);
 
   const reset = useCallback(() => {
     mutation.reset();
-  }, [mutation]);
+  }, [mutation.reset]);
 
   let status: AsyncActionStatus = "idle";
   if (mutation.isPending) status = "loading";

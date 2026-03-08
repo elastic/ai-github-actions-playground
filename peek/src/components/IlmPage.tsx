@@ -12,7 +12,7 @@ import { useIlm } from "../hooks/useIlm";
 import type { IlmPolicyRow } from "../services/es/ilmTypes";
 import { COMPONENT_HEIGHTS } from "../types/tokens";
 
-import DataBoundary from "./DataBoundary";
+import DataFetchAlert from "./DataFetchAlert";
 import IlmIndexDetailDrawer from "./IlmIndexDetailDrawer";
 import IlmIndicesTable from "./IlmIndicesTable";
 import IlmKpiCards from "./IlmKpiCards";
@@ -130,11 +130,7 @@ export default function IlmPage() {
   }, [policyRows, deferredSearch, policySortField, policySortDir]);
 
   if (result.status === "error") {
-    return (
-      <DataBoundary result={result} onRetry={result.refresh}>
-        {() => null}
-      </DataBoundary>
-    );
+    return <DataFetchAlert result={result} onRetry={result.refresh} />;
   }
 
   const hasFilters = Boolean(search || onlyErrors || managedOnly || phaseFilter);
