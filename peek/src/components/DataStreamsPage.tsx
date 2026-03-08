@@ -1,4 +1,4 @@
-import { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -125,8 +125,18 @@ export default function DataStreamsPage() {
 
   const [search, setSearch] = useSearchParam();
   const [fieldSearch, setFieldSearch] = useState("");
-  const deferredSearch = useDeferredValue(search);
-  const deferredFieldSearch = useDeferredValue(fieldSearch);
+  const [isFilterPending, startTransition] = useTransition();
+  const [deferredSearch, setDeferredSearch] = useState(search);
+  const [deferredFieldSearch, setDeferredFieldSearch] = useState(fieldSearch);
+
+  useEffect(() => {
+    startTransition(() => setDeferredSearch(search));
+  }, [search]);
+
+  useEffect(() => {
+    startTransition(() => setDeferredFieldSearch(fieldSearch));
+  }, [fieldSearch]);
+
   const [showSystemStreams, setShowSystemStreams] = useState(false);
   const {
     sortField: streamSortField,
@@ -526,7 +536,15 @@ export default function DataStreamsPage() {
                 toggleChecked={showSystemStreams}
                 onToggleChange={setShowSystemStreams}
               />
-              <TableContainer sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
+              <TableContainer
+                sx={{
+                  flex: 1,
+                  minHeight: 0,
+                  overflow: "auto",
+                  opacity: isFilterPending ? 0.6 : 1,
+                  transition: "opacity 0.2s",
+                }}
+              >
                 <Table size="small" stickyHeader aria-label="Data stream list">
                   <TableHead>
                     <TableRow>
