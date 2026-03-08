@@ -1,0 +1,35 @@
+name: React UI Boilerplate Sweeper
+on:
+  schedule:
+    - cron: "0 10 * * 1"
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+  issues: write
+  pull-requests: read
+
+jobs:
+  run:
+    uses: elastic/ai-github-actions/.github/workflows/gh-aw-bug-hunter.lock.yml@main
+    with:
+      title-prefix: "[ui-boilerplate-sweeper]"
+      additional-instructions: |
+        Focus your investigation on repetitive UI markup, CSS gymnastics, and layout boilerplate across the entire codebase (Elastic Peek). 
+        You are a "Sweeper". Do not stop at finding 2-3 isolated bugs. Your job is to identify a single, pervasive UI anti-pattern and refactor EVERY instance of it across the repository in a single, comprehensive Pull Request.
+
+        All components live under `peek/src/components/`. 
+
+        ## How to sweep:
+        1. Audit the codebase for common structural repetitions. For example: Do we copy-paste the exact same `<Box sx={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>` 100 times instead of having a `<ScrollableLayout>`? Do we manually type `<Alert severity="error">{error}</Alert>` 50 times instead of using a unified wrapper? Do we have repetitive drawer/flyout scaffolding?
+        2. Identify the worst offender.
+        3. Design a single, clean React primitive to abstract it.
+        4. Execute a sweeping pass to replace the boilerplate with your new primitive everywhere it occurs.
+        5. Verify the app still builds and passes tests.
+
+        ## Output rules
+        - Open a PR fixing the pervasive pattern. If you cannot open a PR, file an issue detailing the extent of the repetition and the proposed primitive.
+      setup-commands: "cd peek && PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 ELECTRON_SKIP_BINARY_DOWNLOAD=1 npm ci"
+    secrets:
+      COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
