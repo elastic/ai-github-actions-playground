@@ -19,7 +19,6 @@ import TableSortLabel from "@mui/material/TableSortLabel";
 import Tabs from "@mui/material/Tabs";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import ButtonBase from "@mui/material/ButtonBase";
 import CloseIcon from "@mui/icons-material/Close";
 import DescriptionIcon from "@mui/icons-material/Description";
 import { parseAsBoolean, parseAsString, parseAsStringEnum, useQueryStates } from "nuqs";
@@ -388,7 +387,6 @@ export default function TemplatesPage() {
                       selectedTemplateRef?.kind === "index" && tpl.name === selectedTemplateRef.name
                     }
                     tabIndex={0}
-                    role="button"
                     aria-label={`Open template details for ${tpl.name}`}
                     onClick={() => setSelectedTemplateRef({ kind: "index", name: tpl.name })}
                     onKeyDown={(event) => {
@@ -400,14 +398,9 @@ export default function TemplatesPage() {
                     sx={{ cursor: "pointer" }}
                   >
                     <TableCell>
-                      <ButtonBase
-                        component="span"
-                        onClick={() => setSelectedTemplateRef({ kind: "index", name: tpl.name })}
-                        aria-label={`Open template details for ${tpl.name}`}
-                        sx={{ fontFamily: "monospace", fontSize: "0.8rem" }}
-                      >
+                      <Box component="span" sx={{ fontFamily: "monospace", fontSize: "0.8rem" }}>
                         {tpl.name}
-                      </ButtonBase>
+                      </Box>
                     </TableCell>
                     <TableCell>
                       <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
@@ -500,7 +493,6 @@ export default function TemplatesPage() {
                     key={ct.name}
                     hover
                     tabIndex={0}
-                    role="button"
                     aria-label={`View component template ${ct.name}`}
                     onClick={() => setSelectedTemplateRef({ kind: "component", name: ct.name })}
                     onKeyDown={(event) => {
@@ -512,14 +504,9 @@ export default function TemplatesPage() {
                     sx={{ cursor: "pointer" }}
                   >
                     <TableCell>
-                      <ButtonBase
-                        component="span"
-                        onClick={() => setSelectedTemplateRef({ kind: "component", name: ct.name })}
-                        aria-label={`View component template ${ct.name}`}
-                        sx={{ fontFamily: "monospace", fontSize: "0.8rem" }}
-                      >
+                      <Box component="span" sx={{ fontFamily: "monospace", fontSize: "0.8rem" }}>
                         {ct.name}
-                      </ButtonBase>
+                      </Box>
                     </TableCell>
                     <TableCell>
                       <Box sx={{ display: "flex", gap: 0.5 }}>
