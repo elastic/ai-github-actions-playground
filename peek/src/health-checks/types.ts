@@ -99,6 +99,8 @@ export interface HealthCheckDefinition {
   surfaces: HealthSurface[];
   requiredPrivileges?: string[];
   dependsOn: HealthQueryGroup[];
+  docsUrl?: string;
+  recommendation?: string;
   evaluate: (snapshot: HealthSnapshot) => HealthCheckResult;
 }
 
@@ -108,4 +110,6 @@ export interface EvaluatedHealthCheck extends HealthCheckResult {
   title: string;
   description: string;
   severity: HealthSeverity | null;
+  docsUrl?: string;
+  definitionRecommendation?: string;
 }

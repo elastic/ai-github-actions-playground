@@ -28,6 +28,9 @@ export const ingestChecks: HealthCheckDefinition[] = [
     severityOnFail: "medium",
     surfaces: ["global"],
     dependsOn: ["nodesCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/nodes-stats",
+    recommendation:
+      "Ingest failures mean documents are being rejected. Check pipeline processor configurations.",
     evaluate: (snapshot) => {
       const nodes = getNodes(snapshot);
       const pipelineFailures = new Map<string, number>();
@@ -60,6 +63,9 @@ export const ingestChecks: HealthCheckDefinition[] = [
     severityOnFail: "high",
     surfaces: ["global"],
     dependsOn: ["nodesCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/nodes-stats",
+    recommendation:
+      "High error rates indicate systematic pipeline failures. Review processor configs and input data.",
     evaluate: (snapshot) => {
       const nodes = getNodes(snapshot);
       const pipelineStats = new Map<string, { count: number; failed: number }>();
@@ -95,6 +101,9 @@ export const ingestChecks: HealthCheckDefinition[] = [
     severityOnFail: "medium",
     surfaces: ["global"],
     dependsOn: ["nodesCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/nodes-stats",
+    recommendation:
+      "Slow pipelines bottleneck indexing. Optimize processors or remove unnecessary enrichment steps.",
     evaluate: (snapshot) => {
       const nodes = getNodes(snapshot);
       const pipelineStats = new Map<string, { count: number; timeMs: number }>();
@@ -131,6 +140,9 @@ export const ingestChecks: HealthCheckDefinition[] = [
     severityOnFail: "medium",
     surfaces: ["global"],
     dependsOn: ["nodesCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/nodes-stats",
+    recommendation:
+      "High in-flight ingest count may indicate slow pipelines or excessive indexing volume.",
     evaluate: (snapshot) => {
       const nodes = getNodes(snapshot);
       let totalCurrent = 0;
@@ -158,6 +170,9 @@ export const ingestChecks: HealthCheckDefinition[] = [
     severityOnFail: "low",
     surfaces: ["global"],
     dependsOn: ["nodesCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/nodes-stats",
+    recommendation:
+      "A single processor dominates pipeline time. Optimize it or split the pipeline.",
     evaluate: (snapshot) => {
       const nodes = getNodes(snapshot);
       const pipelineProcessors = new Map<string, Map<string, number>>();
@@ -202,6 +217,9 @@ export const ingestChecks: HealthCheckDefinition[] = [
     severityOnFail: "medium",
     surfaces: ["global"],
     dependsOn: ["nodesCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/nodes-stats",
+    recommendation:
+      "Ingest load is unevenly distributed. Consider load-balancing ingest traffic across nodes.",
     evaluate: (snapshot) => {
       const nodes = getNodes(snapshot);
       if (nodes.length < 2)

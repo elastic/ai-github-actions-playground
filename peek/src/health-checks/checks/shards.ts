@@ -84,6 +84,9 @@ export const shardChecks: HealthCheckDefinition[] = [
     severityOnFail: "high",
     surfaces: ["global", "local"],
     dependsOn: ["shards"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/cat-shards",
+    recommendation:
+      "Unassigned shards indicate allocation issues. Run the allocation explain API to diagnose the root cause.",
     evaluate: (snapshot) => {
       const shards = snapshot.data.shards?.catShards;
       if (!shards) return unknownShardsDataResult();
@@ -109,6 +112,9 @@ export const shardChecks: HealthCheckDefinition[] = [
     severityOnFail: "critical",
     surfaces: ["global", "local"],
     dependsOn: ["shards"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/cat-shards",
+    recommendation:
+      "Unassigned primaries cause data unavailability. Check node health, disk space, and run allocation explain.",
     evaluate: (snapshot) => {
       const shards = snapshot.data.shards?.catShards;
       if (!shards) return unknownShardsDataResult();
@@ -139,6 +145,10 @@ export const shardChecks: HealthCheckDefinition[] = [
     severityOnFail: "high",
     surfaces: ["global", "local"],
     dependsOn: ["allocationSample"],
+    docsUrl:
+      "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/cluster-allocation-explain",
+    recommendation:
+      "Allocation is blocked by deciders. Review disk watermarks, filters, and awareness settings.",
     evaluate: (snapshot) => {
       if (!snapshot.data.allocationSample) {
         return unknownAllocationDataResult();
@@ -177,6 +187,10 @@ export const shardChecks: HealthCheckDefinition[] = [
     severityOnFail: "high",
     surfaces: ["global", "local"],
     dependsOn: ["allocationSample"],
+    docsUrl:
+      "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/cluster-allocation-explain",
+    recommendation:
+      "Disk watermark is blocking allocation. Free disk space or adjust watermark thresholds.",
     evaluate: (snapshot) => {
       if (!snapshot.data.allocationSample) {
         return unknownAllocationDataResult();
@@ -227,6 +241,10 @@ export const shardChecks: HealthCheckDefinition[] = [
     severityOnFail: "high",
     surfaces: ["global", "local"],
     dependsOn: ["allocationSample"],
+    docsUrl:
+      "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/cluster-allocation-explain",
+    recommendation:
+      "Index tier preference does not match available node roles. Adjust tier settings or add appropriate nodes.",
     evaluate: (snapshot) => {
       if (!snapshot.data.allocationSample) {
         return unknownAllocationDataResult();
@@ -277,6 +295,9 @@ export const shardChecks: HealthCheckDefinition[] = [
     severityOnFail: "medium",
     surfaces: ["global"],
     dependsOn: ["shards"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/cat-shards",
+    recommendation:
+      "Many initializing shards indicate recovery in progress. Monitor for completion or investigate slowness.",
     evaluate: (snapshot) => {
       const shards = snapshot.data.shards?.catShards;
       if (!shards) return unknownShardsDataResult();
@@ -304,6 +325,9 @@ export const shardChecks: HealthCheckDefinition[] = [
     severityOnFail: "medium",
     surfaces: ["global"],
     dependsOn: ["shards"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/cat-shards",
+    recommendation:
+      "Many relocating shards may degrade performance. Check for rebalancing triggers.",
     evaluate: (snapshot) => {
       const shards = snapshot.data.shards?.catShards;
       if (!shards) return unknownShardsDataResult();
@@ -331,6 +355,9 @@ export const shardChecks: HealthCheckDefinition[] = [
     severityOnFail: "high",
     surfaces: ["global"],
     dependsOn: ["shards"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/cat-shards",
+    recommendation:
+      "Allocation failures may be caused by disk space, filters, or corrupted shards.",
     evaluate: (snapshot) => {
       const shards = snapshot.data.shards?.catShards;
       if (!shards) return unknownShardsDataResult();
@@ -356,6 +383,9 @@ export const shardChecks: HealthCheckDefinition[] = [
     severityOnFail: "critical",
     surfaces: ["global"],
     dependsOn: ["shards"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/cat-shards",
+    recommendation:
+      "Primary shard failures indicate potential data loss. Investigate the cause immediately.",
     evaluate: (snapshot) => {
       const shards = snapshot.data.shards?.catShards;
       if (!shards) return unknownShardsDataResult();
@@ -381,6 +411,9 @@ export const shardChecks: HealthCheckDefinition[] = [
     severityOnFail: "high",
     surfaces: ["global"],
     dependsOn: ["shards"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/cat-shards",
+    recommendation:
+      "Shards became unassigned when nodes departed. Check if nodes will return or need replacement.",
     evaluate: (snapshot) => {
       const shards = snapshot.data.shards?.catShards;
       if (!shards) return unknownShardsDataResult();
@@ -405,6 +438,9 @@ export const shardChecks: HealthCheckDefinition[] = [
     severityOnFail: "low",
     surfaces: ["global"],
     dependsOn: ["shards"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/cat-shards",
+    recommendation:
+      "Closed indices have unassigned shards by design. Reopen or delete if no longer needed.",
     evaluate: (snapshot) => {
       const shards = snapshot.data.shards?.catShards;
       if (!shards) return unknownShardsDataResult();
@@ -430,6 +466,9 @@ export const shardChecks: HealthCheckDefinition[] = [
     severityOnFail: "medium",
     surfaces: ["global"],
     dependsOn: ["allocationSample"],
+    docsUrl:
+      "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/cluster-allocation-explain",
+    recommendation: "Review zone distribution and awareness settings to unblock allocation.",
     evaluate: (snapshot) => {
       const explain = snapshot.data.allocationSample?.allocationExplain;
       if (!explain) return unknownAllocationDataResult();
@@ -457,6 +496,10 @@ export const shardChecks: HealthCheckDefinition[] = [
     severityOnFail: "medium",
     surfaces: ["global"],
     dependsOn: ["allocationSample"],
+    docsUrl:
+      "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/cluster-allocation-explain",
+    recommendation:
+      "Replica cannot be placed on the same node as its primary. Add nodes or reduce replica count.",
     evaluate: (snapshot) => {
       const explain = snapshot.data.allocationSample?.allocationExplain;
       if (!explain) return unknownAllocationDataResult();
@@ -485,6 +528,10 @@ export const shardChecks: HealthCheckDefinition[] = [
     severityOnFail: "high",
     surfaces: ["global"],
     dependsOn: ["allocationSample"],
+    docsUrl:
+      "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/cluster-allocation-explain",
+    recommendation:
+      "Allocation retries exhausted. Run POST /_cluster/reroute?retry_failed=true to retry.",
     evaluate: (snapshot) => {
       const explain = snapshot.data.allocationSample?.allocationExplain;
       if (!explain) return unknownAllocationDataResult();
