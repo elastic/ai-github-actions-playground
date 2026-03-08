@@ -94,7 +94,7 @@ export default function IndicesPage() {
 
   useEffect(() => {
     startTransition(() => setDeferredSearch(search));
-  }, [search]);
+  }, [search, startTransition]);
 
   const [showSystemIndices, setShowSystemIndices] = useState(false);
   const { sortField, sortDirection, getSortLabelProps } = useTableSort<IndexSortField>("index");

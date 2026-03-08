@@ -66,7 +66,7 @@ export default function IndexTemplatesPage() {
 
   useEffect(() => {
     startTransition(() => setDeferredSearch(search));
-  }, [search]);
+  }, [search, startTransition]);
 
   const indexTplSortField = urlState.indexTplSortField;
   const indexTplSortDir = urlState.indexTplSortDir;

@@ -131,11 +131,11 @@ export default function DataStreamsPage() {
 
   useEffect(() => {
     startTransition(() => setDeferredSearch(search));
-  }, [search]);
+  }, [search, startTransition]);
 
   useEffect(() => {
     startTransition(() => setDeferredFieldSearch(fieldSearch));
-  }, [fieldSearch]);
+  }, [fieldSearch, startTransition]);
 
   const [showSystemStreams, setShowSystemStreams] = useState(false);
   const {
