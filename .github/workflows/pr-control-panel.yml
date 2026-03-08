@@ -20,7 +20,7 @@ jobs:
       github.event_name == 'pull_request_target' ||
       (github.event_name == 'issue_comment' &&
        github.event.issue.pull_request != null &&
-       github.event.comment.user.login != 'github-actions[bot]')
+       github.event.sender.login != 'github-actions[bot]')
     runs-on: ubuntu-latest
     steps:
       - name: Sync control panel via GitHub API only (no checkout)
@@ -43,6 +43,16 @@ jobs:
               LABEL_PR_REVIEW,
               LABEL_PR_ACTIONS_DETECTIVE,
             ];
+            const ITEM_UPDATE_PR_BODY =
+              "<span title='Keeps the PR description aligned with the latest commits so reviewers have accurate context.'>Keep PR description updated</span>";
+            const ITEM_ADDRESS_PR_FEEDBACK =
+              "<span title='Applies straightforward bot review suggestions automatically to reduce manual cleanup.'>Auto-address bot review feedback</span>";
+            const ITEM_ADDRESS_MERGE_CONFLICTS =
+              "<span title='Automatically resolves simple main-branch merge conflicts so the PR stays mergeable.'>Auto-resolve merge conflicts</span>";
+            const ITEM_PR_REVIEW =
+              "<span title='Runs the automated PR reviewer to surface bugs, risks, and maintainability issues earlier.'>Run automated PR review</span>";
+            const ITEM_PR_ACTIONS_DETECTIVE =
+              "<span title='Posts a quick diagnosis and suggested fixes when PR checks fail, so recovery is faster.'>Automatically investigate PR Check failures</span>";
 
             const owner = context.repo.owner;
             const repo = context.repo.repo;
@@ -63,16 +73,11 @@ jobs:
                 "",
                 "Toggle automation for this PR by checking boxes below.",
                 "",
-                `- [${state.updatePrBody ? "x" : " "}] Update PR Body`,
-                `- [${state.addressPrFeedback ? "x" : " "}] Address PR Feedback`,
-                `- [${state.addressMergeConflicts ? "x" : " "}] Address Merge Conflicts`,
-                `- [${state.prReview ? "x" : " "}] PR Review`,
-                `- [${state.prActionsDetective ? "x" : " "}] PR Actions Detective`,
-                "",
-                "---",
-                "All toggles are enabled by default on first panel creation.",
-                "",
-                `Opt-out labels synced from this panel: \`${LABEL_UPDATE_PR_BODY}\`, \`${LABEL_ADDRESS_PR_FEEDBACK}\`, \`${LABEL_ADDRESS_MERGE_CONFLICTS}\`, \`${LABEL_PR_REVIEW}\`, \`${LABEL_PR_ACTIONS_DETECTIVE}\``,
+                `- [${state.updatePrBody ? "x" : " "}] ${ITEM_UPDATE_PR_BODY}`,
+                `- [${state.addressPrFeedback ? "x" : " "}] ${ITEM_ADDRESS_PR_FEEDBACK}`,
+                `- [${state.addressMergeConflicts ? "x" : " "}] ${ITEM_ADDRESS_MERGE_CONFLICTS}`,
+                `- [${state.prReview ? "x" : " "}] ${ITEM_PR_REVIEW}`,
+                `- [${state.prActionsDetective ? "x" : " "}] ${ITEM_PR_ACTIONS_DETECTIVE}`,
               ].join("\n");
             }
 
@@ -254,15 +259,17 @@ jobs:
             };
             const desiredState = {
               updatePrBody:
-                readCheckbox(commentBody, "Update PR Body") ?? currentState.updatePrBody,
+                readCheckbox(commentBody, ITEM_UPDATE_PR_BODY) ?? currentState.updatePrBody,
               addressPrFeedback:
-                readCheckbox(commentBody, "Address PR Feedback") ?? currentState.addressPrFeedback,
+                readCheckbox(commentBody, ITEM_ADDRESS_PR_FEEDBACK) ??
+                currentState.addressPrFeedback,
               addressMergeConflicts:
-                readCheckbox(commentBody, "Address Merge Conflicts") ??
+                readCheckbox(commentBody, ITEM_ADDRESS_MERGE_CONFLICTS) ??
                 currentState.addressMergeConflicts,
-              prReview: readCheckbox(commentBody, "PR Review") ?? currentState.prReview,
+              prReview: readCheckbox(commentBody, ITEM_PR_REVIEW) ?? currentState.prReview,
               prActionsDetective:
-                readCheckbox(commentBody, "PR Actions Detective") ?? currentState.prActionsDetective,
+                readCheckbox(commentBody, ITEM_PR_ACTIONS_DETECTIVE) ??
+                currentState.prActionsDetective,
             };
 
             await syncLabelsFromState(issueNumber, labels, desiredState);
