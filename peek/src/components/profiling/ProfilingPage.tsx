@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useShallow } from "zustand/react/shallow";
 
-import { PAGE_MANIFEST } from "../../routes/manifest";
+import { PAGE_PATHS } from "../../routes/paths";
 import { escapeEsqlString } from "../../services/es/esqlUtils";
 import { useConnectionStore } from "../../store/useConnectionStore";
 import {
@@ -64,7 +64,7 @@ export default function ProfilingPage() {
 
   return (
     <ProfilingAdvancedView
-      onNavigateGuided={() => navigate(PAGE_MANIFEST.profiling.path)}
+      onNavigateGuided={() => navigate(PAGE_PATHS.profiling.path)}
       onResetFilters={() => {
         resetFilters();
         data.resetResults();
