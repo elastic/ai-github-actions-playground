@@ -1,0 +1,28 @@
+name: Run Detectors – Bugs & Maintenance
+on:
+  workflow_dispatch:
+
+permissions:
+  actions: write
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        workflow:
+          - bug-hunter.yml
+          - docs-patrol.yml
+          - duplicate-issue-detector.yml
+          - flaky-test-investigator.yml
+          - give-it-some-love.yml
+          - give-it-some-love-demo.yml
+          - newbie-contributor-patrol.yml
+          - stale-issues.yml
+      fail-fast: false
+      max-parallel: 5
+    steps:
+      - name: Dispatch ${{ matrix.workflow }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run "${{ matrix.workflow }}" --repo "${{ github.repository }}" --ref "${{ github.ref_name }}"
