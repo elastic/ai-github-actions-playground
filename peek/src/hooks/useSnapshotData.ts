@@ -29,6 +29,7 @@ export interface SnapshotRow {
   duration: number;
   indices: string[];
   dataStreams: string[];
+  raw: SnapshotRecord;
 }
 
 export interface SlmPolicyRow {
@@ -81,6 +82,7 @@ function toSnapshotRows(records: SnapshotRecord[]): SnapshotRow[] {
     duration: r.duration_in_millis ?? 0,
     indices: r.indices ?? [],
     dataStreams: r.data_streams ?? [],
+    raw: r,
   }));
 }
 

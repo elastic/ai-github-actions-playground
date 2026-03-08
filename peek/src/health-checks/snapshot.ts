@@ -12,6 +12,19 @@ function isAbortError(error: unknown): boolean {
   return false;
 }
 
+function getErrorStatusCode(error: unknown): number | undefined {
+  if (typeof error === "object" && error !== null && "status" in error) {
+    const status = Number((error as { status?: unknown }).status);
+    return Number.isFinite(status) ? status : undefined;
+  }
+  return undefined;
+}
+
+function isIgnorableSnapshotsCoreError(error: unknown): boolean {
+  const status = getErrorStatusCode(error);
+  return status === 400 || status === 403 || status === 404;
+}
+
 async function fetchGroup(
   client: ElasticsearchClient,
   group: HealthQueryGroup,
@@ -80,29 +93,10 @@ async function fetchGroup(
           client.getSlmPolicies(signal),
           client.getSlmStats(signal),
         ]);
-        // Collect errors from rejected requests (exclude expected 400/403/404)
-        const partialErrors: string[] = [];
-        for (const r of [snapshotsRes, policiesRes, slmStatsRes]) {
-          if (r.status === "rejected") {
-            const status =
-              typeof r.reason === "object" && r.reason !== null && "status" in r.reason
-                ? Number((r.reason as { status?: unknown }).status)
-                : undefined;
-            // 400/403/404 are expected when feature is unavailable
-            if (status && (status === 400 || status === 403 || status === 404)) continue;
-            partialErrors.push(
-              r.reason instanceof Error ? r.reason.message : "Failed to load snapshot data",
-            );
+        for (const result of [snapshotsRes, policiesRes, slmStatsRes]) {
+          if (result.status === "rejected" && !isIgnorableSnapshotsCoreError(result.reason)) {
+            throw result.reason;
           }
-        }
-        // If all three failed with unexpected errors, propagate as group error
-        if (
-          snapshotsRes.status === "rejected" &&
-          policiesRes.status === "rejected" &&
-          slmStatsRes.status === "rejected" &&
-          partialErrors.length > 0
-        ) {
-          return { group, error: partialErrors[0] };
         }
         return {
           group,

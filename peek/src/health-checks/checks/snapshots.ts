@@ -1,20 +1,15 @@
 import type { HealthCheckDefinition } from "../types";
 
-function snapshotsCoreUnavailable(snapshot: Parameters<HealthCheckDefinition["evaluate"]>[0]) {
-  if (snapshot.errors.snapshotsCore) {
-    return {
-      status: "unknown" as const,
-      summary: "Snapshot data could not be loaded.",
-      reason: snapshot.errors.snapshotsCore,
-    };
-  }
-  if (!snapshot.data.snapshotsCore) {
-    return {
-      status: "unknown" as const,
-      summary: "Snapshot data is unavailable.",
-    };
-  }
-  return null;
+const STALE_SUCCESS_FALLBACK_MS = 48 * 60 * 60 * 1000;
+const POLICY_STALENESS_GRACE_MS = 60 * 60 * 1000;
+
+function unknownSnapshotsDataResult(summary: string, to: string) {
+  return {
+    status: "unknown" as const,
+    summary,
+    recommendation: "Ensure snapshot and SLM data is collected and retry the health snapshot.",
+    links: [{ label: "Snapshots", to }],
+  };
 }
 
 export const snapshotChecks: HealthCheckDefinition[] = [
@@ -29,9 +24,10 @@ export const snapshotChecks: HealthCheckDefinition[] = [
     docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/get-snapshot-api",
     recommendation: "Investigate failed snapshots and check repository connectivity.",
     evaluate: (snapshot) => {
-      const unavailable = snapshotsCoreUnavailable(snapshot);
-      if (unavailable) return unavailable;
-      const snapshots = snapshot.data.snapshotsCore?.snapshots ?? [];
+      const snapshots = snapshot.data.snapshotsCore?.snapshots;
+      if (!snapshots) {
+        return unknownSnapshotsDataResult("Snapshot data unavailable.", "/snapshots");
+      }
       const failed = snapshots.filter((s) => s.state === "FAILED");
       if (failed.length > 0) {
         return {
@@ -56,9 +52,10 @@ export const snapshotChecks: HealthCheckDefinition[] = [
     docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/get-snapshot-api",
     recommendation: "Partial snapshots indicate some shards failed to snapshot.",
     evaluate: (snapshot) => {
-      const unavailable = snapshotsCoreUnavailable(snapshot);
-      if (unavailable) return unavailable;
-      const snapshots = snapshot.data.snapshotsCore?.snapshots ?? [];
+      const snapshots = snapshot.data.snapshotsCore?.snapshots;
+      if (!snapshots) {
+        return unknownSnapshotsDataResult("Snapshot data unavailable.", "/snapshots");
+      }
       const partial = snapshots.filter((s) => s.state === "PARTIAL");
       if (partial.length > 0) {
         return {
@@ -81,12 +78,16 @@ export const snapshotChecks: HealthCheckDefinition[] = [
     surfaces: ["global"],
     dependsOn: ["snapshotsCore"],
     docsUrl:
-      "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/get-snapshot-lifecycle-management-policy",
+      "https://www.elastic.co/docs/deploy-manage/tools/snapshot-and-restore/create-snapshots",
     recommendation: "Check SLM policy configuration and repository health.",
     evaluate: (snapshot) => {
-      const unavailable = snapshotsCoreUnavailable(snapshot);
-      if (unavailable) return unavailable;
-      const policies = snapshot.data.snapshotsCore?.policies ?? {};
+      const policies = snapshot.data.snapshotsCore?.policies;
+      if (!policies) {
+        return unknownSnapshotsDataResult(
+          "SLM policy data unavailable.",
+          "/snapshots?tab=policies",
+        );
+      }
       const failingPolicies = Object.entries(policies).filter(([, p]) => {
         const lastSuccess = p.last_success?.time ?? 0;
         const lastFailure = p.last_failure?.time ?? 0;
@@ -109,28 +110,32 @@ export const snapshotChecks: HealthCheckDefinition[] = [
     id: "slm.policy.no_recent_success",
     domain: "snapshots",
     title: "SLM policy no recent success",
-    description: "Warns if a policy hasn't succeeded recently relative to its schedule.",
+    description: "Warns if a policy hasn't succeeded recently.",
     severityOnFail: "medium",
     surfaces: ["global"],
     dependsOn: ["snapshotsCore"],
     docsUrl:
-      "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/get-snapshot-lifecycle-management-policy",
+      "https://www.elastic.co/docs/deploy-manage/tools/snapshot-and-restore/create-snapshots",
     recommendation: "Verify SLM schedule and repository availability.",
     evaluate: (snapshot) => {
-      const unavailable = snapshotsCoreUnavailable(snapshot);
-      if (unavailable) return unavailable;
-      const policies = snapshot.data.snapshotsCore?.policies ?? {};
+      const policies = snapshot.data.snapshotsCore?.policies;
+      if (!policies) {
+        return unknownSnapshotsDataResult(
+          "SLM policy data unavailable.",
+          "/snapshots?tab=policies",
+        );
+      }
       const now = Date.now();
       const stale = Object.entries(policies).filter(([, p]) => {
-        const lastSuccess = p.last_success?.time ?? 0;
         const nextExecution = p.next_execution_millis ?? 0;
-        // Don't flag policies that haven't run yet but have a future scheduled run
-        if (!lastSuccess && nextExecution > now) return false;
-        if (!lastSuccess) return true;
-        // Use 2x the interval between now and next execution as grace window, or 48h default
-        const interval = nextExecution > now ? nextExecution - now : 0;
-        const grace = interval > 0 ? interval * 2 : 48 * 60 * 60 * 1000;
-        return now - lastSuccess > grace;
+        const lastSuccess = p.last_success?.time ?? 0;
+        if (!lastSuccess) {
+          return nextExecution > 0 ? now > nextExecution + POLICY_STALENESS_GRACE_MS : true;
+        }
+        if (nextExecution > 0) {
+          return now > nextExecution + POLICY_STALENESS_GRACE_MS && lastSuccess < nextExecution;
+        }
+        return now - lastSuccess > STALE_SUCCESS_FALLBACK_MS;
       });
       if (stale.length > 0) {
         const names = stale.map(([name]) => name);
@@ -154,12 +159,13 @@ export const snapshotChecks: HealthCheckDefinition[] = [
     surfaces: ["global"],
     dependsOn: ["snapshotsCore"],
     docsUrl:
-      "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/get-snapshot-lifecycle-management-stats",
+      "https://www.elastic.co/docs/deploy-manage/tools/snapshot-and-restore/create-snapshots",
     recommendation: "Check repository permissions and disk space for retention cleanups.",
     evaluate: (snapshot) => {
-      const unavailable = snapshotsCoreUnavailable(snapshot);
-      if (unavailable) return unavailable;
       const slmStats = snapshot.data.snapshotsCore?.slmStats;
+      if (!slmStats) {
+        return unknownSnapshotsDataResult("SLM retention stats unavailable.", "/snapshots");
+      }
       const failures = slmStats?.total_snapshot_deletion_failures ?? 0;
       if (failures > 0) {
         return {
