@@ -200,11 +200,9 @@ export function useLogsPageState() {
   }, [result]);
 
   // Reset rawQuery when the generated query changes (e.g. filters updated).
-  const [prevGeneratedQuery, setPrevGeneratedQuery] = useState(generatedQuery);
-  if (generatedQuery !== prevGeneratedQuery) {
-    setPrevGeneratedQuery(generatedQuery);
+  useEffect(() => {
     setRawQuery(null);
-  }
+  }, [generatedQuery, setRawQuery]);
 
   const { runQuery, loading, error } = useEsqlQuery({
     connection,
