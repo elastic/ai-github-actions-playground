@@ -2,6 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { useQueries } from "@tanstack/react-query";
 
 import type { ElasticsearchClient } from "../services/es";
+import { buildColumnLookup, getColumnIndex, getRowValue } from "../services/es/columnUtils";
 import { buildTimeParams } from "../services/datemath";
 import type { EsqlResponse, TimeRange } from "../types";
 
@@ -24,9 +25,9 @@ export interface OverviewQueryResult {
 export function hasOverviewData(result: OverviewQueryResult | undefined): boolean {
   if (!result?.data || result.data.values.length === 0) return false;
   if (result.status !== "success" && result.status !== "loading") return false;
-  const metricIdx = result.data.columns.findIndex((c) => c.name === "metric");
+  const metricIdx = getColumnIndex(buildColumnLookup(result.data.columns), "metric");
   if (metricIdx < 0) return false;
-  return result.data.values.some((row) => row[metricIdx] != null);
+  return result.data.values.some((row) => getRowValue(row, metricIdx) != null);
 }
 
 interface Options<T extends { name: string }> {
@@ -154,8 +155,8 @@ export function useBatchedOverviewQueries<T extends { name: string }>({
       if (q.isSuccess && q.data) {
         const data = q.data as EsqlResponse;
         if (data.values.length === 0) continue;
-        const metricIdx = data.columns.findIndex((c) => c.name === "metric");
-        if (metricIdx >= 0 && data.values.some((row) => row[metricIdx] != null)) {
+        const metricIdx = getColumnIndex(buildColumnLookup(data.columns), "metric");
+        if (metricIdx >= 0 && data.values.some((row) => getRowValue(row, metricIdx) != null)) {
           withData.add(item.name);
         }
       }

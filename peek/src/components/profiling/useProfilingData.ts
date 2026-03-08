@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { ElasticsearchClient, isElasticsearchError } from "../../services/es";
+import { buildColumnLookup, getColumnIndex, getRowValue } from "../../services/es/columnUtils";
 import { escapeEsqlString } from "../../services/es/esqlUtils";
 import { useOpenInDiscover } from "../../hooks/useOpenInDiscover";
 import type { ElasticsearchConnection, EsqlResponse } from "../../types";
@@ -34,8 +35,7 @@ import {
 export type ViewMode = "topFunctions" | "stacktraces" | "timeline" | "flamegraph" | "flamescope";
 
 function readColumn(row: unknown[], columns: Array<{ name: string }>, field: string): unknown {
-  const index = columns.findIndex((column) => column.name === field);
-  return index >= 0 ? row[index] : null;
+  return getRowValue(row, getColumnIndex(buildColumnLookup(columns), field));
 }
 
 /** Map a focus dimension + value to a partial ProfilingFilters override. */

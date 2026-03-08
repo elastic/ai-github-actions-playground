@@ -14,6 +14,7 @@ import { EMPTY_PROFILING_FILTERS } from "../../types/pageFilters";
 import EmptyState from "../EmptyState";
 import PageInsightBanner from "../PageInsightBanner";
 import { INSIGHT_GUARDRAIL } from "../../hooks/insightPromptUtils";
+import { buildColumnLookup, getColumnIndex, getRowValue } from "../../services/es/columnUtils";
 
 import { PROFILING_DIMENSION_LABELS, type ProfilingFocusDimension } from "./profilingQueryBuilder";
 import { isMissingProfilingIndex } from "./profilingUtils";
@@ -117,10 +118,10 @@ export default function ProfilingGuidedPage() {
     !loading && !error && showResults && hasRun && hasDataForCurrentView;
   const timelineCountStats = useMemo(() => {
     if (!timelineResult) return null;
-    const countIdx = timelineResult.columns.findIndex((c) => c.name === "count");
+    const countIdx = getColumnIndex(buildColumnLookup(timelineResult.columns), "count");
     if (countIdx < 0) return null;
     const counts = timelineResult.values
-      .map((row) => Number(row[countIdx] ?? 0))
+      .map((row) => Number(getRowValue(row, countIdx) ?? 0))
       .filter((v) => Number.isFinite(v));
     if (counts.length === 0) return null;
     return {

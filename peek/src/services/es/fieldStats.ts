@@ -1,4 +1,5 @@
 import type { ElasticsearchClient } from "./client";
+import { buildColumnLookup, getColumnIndex, getRowValue } from "./columnUtils";
 import { DATE_TYPES, KEYWORD_TYPES, NUMERIC_TYPES } from "./esFieldTypes";
 import { escapeEsqlIdentifier } from "./esqlUtils";
 
@@ -136,15 +137,16 @@ export async function fetchFieldStats(
 ): Promise<FieldStats> {
   const statsQuery = buildFieldStatsQuery(indexPattern, fieldName);
   const statsResp = await client.query({ query: statsQuery }, signal);
+  const statsLookup = buildColumnLookup(statsResp.columns);
 
-  const totalIdx = statsResp.columns.findIndex((c) => c.name === "total");
-  const nonNullIdx = statsResp.columns.findIndex((c) => c.name === "non_null");
-  const cardinalityIdx = statsResp.columns.findIndex((c) => c.name === "cardinality");
+  const totalIdx = getColumnIndex(statsLookup, "total");
+  const nonNullIdx = getColumnIndex(statsLookup, "non_null");
+  const cardinalityIdx = getColumnIndex(statsLookup, "cardinality");
 
   const row = statsResp.values[0] ?? [];
-  const totalCount = totalIdx >= 0 ? Number(row[totalIdx]) : 0;
-  const nonNullCount = nonNullIdx >= 0 ? Number(row[nonNullIdx]) : 0;
-  const cardinality = cardinalityIdx >= 0 ? Number(row[cardinalityIdx]) : 0;
+  const totalCount = totalIdx >= 0 ? Number(getRowValue(row, totalIdx)) : 0;
+  const nonNullCount = nonNullIdx >= 0 ? Number(getRowValue(row, nonNullIdx)) : 0;
+  const cardinality = cardinalityIdx >= 0 ? Number(getRowValue(row, cardinalityIdx)) : 0;
   const nullPercent = totalCount > 0 ? ((totalCount - nonNullCount) / totalCount) * 100 : 0;
 
   const result: FieldStats = {
@@ -161,25 +163,34 @@ export async function fetchFieldStats(
   if (isKeywordLikeType(fieldType)) {
     const topQuery = buildTopValuesQuery(indexPattern, fieldName);
     const topResp = await client.query({ query: topQuery }, signal);
-    const countIdx = topResp.columns.findIndex((c) => c.name === "count");
-    const fieldIdx = topResp.columns.findIndex((c) => c.name === fieldName);
+    const topLookup = buildColumnLookup(topResp.columns);
+    const countIdx = getColumnIndex(topLookup, "count");
+    const fieldIdx = getColumnIndex(topLookup, fieldName);
     if (countIdx >= 0 && fieldIdx >= 0) {
       result.topValues = topResp.values
-        .filter((r) => r[fieldIdx] != null)
-        .map((r) => ({ value: String(r[fieldIdx]), count: Number(r[countIdx]) }));
+        .filter((r) => getRowValue(r, fieldIdx) != null)
+        .map((r) => ({
+          value: String(getRowValue(r, fieldIdx)),
+          count: Number(getRowValue(r, countIdx)),
+        }));
     } else {
       result.topValues = [];
     }
   } else if (isNumericOrDateType(fieldType)) {
     const minMaxQuery = buildMinMaxQuery(indexPattern, fieldName);
     const minMaxResp = await client.query({ query: minMaxQuery }, signal);
-    const minIdx = minMaxResp.columns.findIndex((c) => c.name === "min_val");
-    const maxIdx = minMaxResp.columns.findIndex((c) => c.name === "max_val");
+    const minMaxLookup = buildColumnLookup(minMaxResp.columns);
+    const minIdx = getColumnIndex(minMaxLookup, "min_val");
+    const maxIdx = getColumnIndex(minMaxLookup, "max_val");
     const mmRow = minMaxResp.values[0] ?? [];
     result.min =
-      minIdx >= 0 ? ((mmRow[minIdx] as string | number | null | undefined) ?? null) : null;
+      minIdx >= 0
+        ? ((getRowValue(mmRow, minIdx) as string | number | null | undefined) ?? null)
+        : null;
     result.max =
-      maxIdx >= 0 ? ((mmRow[maxIdx] as string | number | null | undefined) ?? null) : null;
+      maxIdx >= 0
+        ? ((getRowValue(mmRow, maxIdx) as string | number | null | undefined) ?? null)
+        : null;
   }
 
   return result;

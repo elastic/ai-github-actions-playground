@@ -15,6 +15,12 @@ import { EChart } from "@perses-dev/components";
 
 import type { FieldInfo, ElasticsearchClient } from "../services/es";
 import { buildOverviewQuery } from "../services/es";
+import {
+  buildColumnLookup,
+  findDateColumnIndex,
+  getColumnIndex,
+  getRowValue,
+} from "../services/es/columnUtils";
 import { CHART_COLORS } from "../theme";
 import type { EsqlResponse, TimeRange } from "../types";
 import { useBatchedOverviewQueries, hasOverviewData } from "../hooks/useBatchedOverviewQueries";
@@ -47,10 +53,9 @@ function buildSparklineOption(
   data: EsqlResponse,
   themeOpts: ReturnType<typeof useEChartTheme>,
 ): Record<string, unknown> {
-  const dateIdx = data.columns.findIndex(
-    (c) => c.type === "date" || c.type === "date_nanos" || c.name === "@timestamp",
-  );
-  const metricIdx = data.columns.findIndex((c) => c.name === "metric");
+  const lookup = buildColumnLookup(data.columns);
+  const dateIdx = findDateColumnIndex(data);
+  const metricIdx = getColumnIndex(lookup, "metric");
 
   if (metricIdx < 0) {
     return { title: { text: "No data", left: "center", top: "center" } };
@@ -58,10 +63,13 @@ function buildSparklineOption(
 
   const xData =
     dateIdx >= 0
-      ? data.values.map((row) => (row[dateIdx] ? new Date(row[dateIdx] as string).getTime() : null))
+      ? data.values.map((row) => {
+          const timestamp = getRowValue(row, dateIdx);
+          return timestamp ? new Date(String(timestamp)).getTime() : null;
+        })
       : data.values.map((_, i) => i);
 
-  const yData = data.values.map((row) => row[metricIdx]);
+  const yData = data.values.map((row) => getRowValue(row, metricIdx));
 
   return {
     ...themeOpts,

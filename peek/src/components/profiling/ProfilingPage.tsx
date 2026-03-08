@@ -18,6 +18,7 @@ import { useShallow } from "zustand/react/shallow";
 
 import { PAGE_MANIFEST } from "../../routes/manifest";
 import { ElasticsearchClient, isElasticsearchError } from "../../services/es";
+import { buildColumnLookup, getColumnIndex, getRowValue } from "../../services/es/columnUtils";
 import { escapeEsqlString } from "../../services/es/esqlUtils";
 import DateRangePicker from "../DateRangePicker";
 import EmptyState from "../EmptyState";
@@ -60,8 +61,7 @@ import {
 } from "./profilingUtils";
 
 function readColumn(row: unknown[], columns: Array<{ name: string }>, field: string): unknown {
-  const index = columns.findIndex((column) => column.name === field);
-  return index >= 0 ? row[index] : null;
+  return getRowValue(row, getColumnIndex(buildColumnLookup(columns), field));
 }
 
 export default function ProfilingPage() {
@@ -274,10 +274,10 @@ export default function ProfilingPage() {
   const timelineHasData = (timelineResult?.values.length ?? 0) > 0;
   const timelineCountStats = useMemo(() => {
     if (!timelineResult) return null;
-    const countIdx = timelineResult.columns.findIndex((c) => c.name === "count");
+    const countIdx = getColumnIndex(buildColumnLookup(timelineResult.columns), "count");
     if (countIdx < 0) return null;
     const counts = timelineResult.values
-      .map((row) => Number(row[countIdx] ?? 0))
+      .map((row) => Number(getRowValue(row, countIdx) ?? 0))
       .filter((value) => Number.isFinite(value));
     if (counts.length === 0) return null;
     return {
