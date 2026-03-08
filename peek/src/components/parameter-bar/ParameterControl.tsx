@@ -59,7 +59,7 @@ export default function ParameterControl({
     if (tokens.size === 0) return [];
     return parameters
       .filter((p) => tokens.has(p.name))
-      .map((p) => ({ name: p.name, value: p.value }));
+      .map((p) => ({ name: p.name, type: p.type, value: p.value }));
   }, [esqlQuery, parameters]);
 
   const { data: esqlOptions = [] } = useQuery<string[]>({

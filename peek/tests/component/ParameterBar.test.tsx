@@ -247,9 +247,11 @@ describe("ParameterBar", () => {
       useDashboardStore.getState().setParameterValue("service", "checkout");
     });
 
-    await waitFor(() => {
-      expect(queryMock).toHaveBeenCalledTimes(2);
+    await act(async () => {
+      await Promise.resolve();
+      await new Promise((resolve) => setTimeout(resolve, 0));
     });
+    expect(queryMock).toHaveBeenCalledTimes(2);
   });
 
   it("refetches ES|QL options that reference a changed variable", async () => {
