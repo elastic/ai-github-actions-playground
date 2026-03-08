@@ -130,15 +130,25 @@ export default function TemplatesPage() {
     [compTplSortField, compTplSortDir, setUrlState],
   );
 
-  // Detail flyover
-  const [selectedTemplateName, setSelectedTemplateName] = useState<string | null>(null);
+  // Detail flyover – use a typed ref so same-named index/component templates
+  // don't collide in the drawer.
+  const [selectedTemplateRef, setSelectedTemplateRef] = useState<{
+    kind: "index" | "component";
+    name: string;
+  } | null>(null);
   const selectedTemplate = useMemo(
-    () => indexTemplates.find((t) => t.name === selectedTemplateName) ?? null,
-    [indexTemplates, selectedTemplateName],
+    () =>
+      selectedTemplateRef?.kind === "index"
+        ? (indexTemplates.find((t) => t.name === selectedTemplateRef.name) ?? null)
+        : null,
+    [indexTemplates, selectedTemplateRef],
   );
   const selectedComponentTemplate = useMemo(
-    () => componentTemplates.find((t) => t.name === selectedTemplateName) ?? null,
-    [componentTemplates, selectedTemplateName],
+    () =>
+      selectedTemplateRef?.kind === "component"
+        ? (componentTemplates.find((t) => t.name === selectedTemplateRef.name) ?? null)
+        : null,
+    [componentTemplates, selectedTemplateRef],
   );
   const simulatedTemplate = useSimulatedIndexTemplate(selectedTemplate?.name ?? null);
 
@@ -374,14 +384,25 @@ export default function TemplatesPage() {
                   <TableRow
                     key={tpl.name}
                     hover
-                    selected={tpl.name === selectedTemplateName}
-                    onClick={() => setSelectedTemplateName(tpl.name)}
+                    selected={
+                      selectedTemplateRef?.kind === "index" && tpl.name === selectedTemplateRef.name
+                    }
+                    tabIndex={0}
+                    role="button"
+                    aria-label={`Open template details for ${tpl.name}`}
+                    onClick={() => setSelectedTemplateRef({ kind: "index", name: tpl.name })}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " " || event.key === "Spacebar") {
+                        event.preventDefault();
+                        setSelectedTemplateRef({ kind: "index", name: tpl.name });
+                      }
+                    }}
                     sx={{ cursor: "pointer" }}
                   >
                     <TableCell>
                       <ButtonBase
                         component="span"
-                        onClick={() => setSelectedTemplateName(tpl.name)}
+                        onClick={() => setSelectedTemplateRef({ kind: "index", name: tpl.name })}
                         aria-label={`Open template details for ${tpl.name}`}
                         sx={{ fontFamily: "monospace", fontSize: "0.8rem" }}
                       >
@@ -478,13 +499,22 @@ export default function TemplatesPage() {
                   <TableRow
                     key={ct.name}
                     hover
-                    onClick={() => setSelectedTemplateName(ct.name)}
+                    tabIndex={0}
+                    role="button"
+                    aria-label={`View component template ${ct.name}`}
+                    onClick={() => setSelectedTemplateRef({ kind: "component", name: ct.name })}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " " || event.key === "Spacebar") {
+                        event.preventDefault();
+                        setSelectedTemplateRef({ kind: "component", name: ct.name });
+                      }
+                    }}
                     sx={{ cursor: "pointer" }}
                   >
                     <TableCell>
                       <ButtonBase
                         component="span"
-                        onClick={() => setSelectedTemplateName(ct.name)}
+                        onClick={() => setSelectedTemplateRef({ kind: "component", name: ct.name })}
                         aria-label={`View component template ${ct.name}`}
                         sx={{ fontFamily: "monospace", fontSize: "0.8rem" }}
                       >
@@ -533,7 +563,7 @@ export default function TemplatesPage() {
       <Drawer
         anchor="right"
         open={Boolean(selectedTemplate || selectedComponentTemplate)}
-        onClose={() => setSelectedTemplateName(null)}
+        onClose={() => setSelectedTemplateRef(null)}
         PaperProps={{
           sx: {
             width: { xs: "100%", md: 560 },
@@ -556,7 +586,7 @@ export default function TemplatesPage() {
               <IconButton
                 size="small"
                 aria-label="Close template details"
-                onClick={() => setSelectedTemplateName(null)}
+                onClick={() => setSelectedTemplateRef(null)}
               >
                 <CloseIcon fontSize="small" />
               </IconButton>
@@ -673,7 +703,7 @@ export default function TemplatesPage() {
               <IconButton
                 size="small"
                 aria-label="Close template details"
-                onClick={() => setSelectedTemplateName(null)}
+                onClick={() => setSelectedTemplateRef(null)}
               >
                 <CloseIcon fontSize="small" />
               </IconButton>

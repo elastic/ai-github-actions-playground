@@ -23,6 +23,7 @@ import { useSearchPanelUIStore } from "./useSearchPanelUIStore";
 import { useApiConsoleStore } from "./useApiConsoleStore";
 import { usePageContextStore } from "./usePageContextStore";
 import { useLogsStore } from "./useLogsStore";
+import { useInsightStatusStore } from "./useInsightStatusStore";
 import { usePackageBuilderStore } from "./usePackageBuilderStore";
 
 // Side-effect imports: each domain store registers its resetter via the
@@ -48,6 +49,7 @@ const resetSearchPanelUi = () => useSearchPanelUIStore.getState().resetSearchPan
 const resetApiConsole = () => useApiConsoleStore.getState().resetApiConsoleState();
 const resetPageContext = () => usePageContextStore.getState().resetPageContext();
 const resetLogs = () => useLogsStore.getState().reset();
+const resetInsightStatus = () => useInsightStatusStore.getState().resetInsightStatus();
 const resetPackageBuilder = () => usePackageBuilderStore.getState().reset();
 
 export const storeResetters: ReadonlyArray<() => void> = [
@@ -61,6 +63,7 @@ export const storeResetters: ReadonlyArray<() => void> = [
   resetQuery,
   resetTraces,
   resetLogs,
+  resetInsightStatus,
   resetUi,
   resetTheme,
   resetCommandPalette,
