@@ -14,6 +14,7 @@ jobs:
     if: github.event.pull_request.draft == false
     uses: elastic/ai-github-actions/.github/workflows/gh-aw-pr-labeler.lock.yml@main
     with:
+      model: gemini-3-flash
       classification-labels: big_boom, medium_boom, little_boom
       additional-instructions: |
         These labels measure the impact/risk of a pull request. They are mutually
