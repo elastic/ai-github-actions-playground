@@ -93,7 +93,7 @@ export default function AiAssistantDrawer({ isMobile = false }: AiAssistantDrawe
         ...(isMobile ? { zIndex: 1203 } : {}),
         "& .MuiDrawer-paper": {
           boxSizing: "border-box",
-          width: isMobile ? `min(100vw, ${AI_DRAWER_WIDTH}px)` : AI_DRAWER_WIDTH,
+          width: isMobile ? `min(calc(100vw - 16px), ${AI_DRAWER_WIDTH}px)` : AI_DRAWER_WIDTH,
           maxWidth: "100vw",
         },
       }}
@@ -107,7 +107,14 @@ export default function AiAssistantDrawer({ isMobile = false }: AiAssistantDrawe
           p: 2,
         }}
       >
-        {!isMobile ? <Box sx={(theme) => ({ ...theme.mixins.toolbar, flexShrink: 0 })} /> : null}
+        <Box
+          data-testid="ai-drawer-mobile-offset"
+          sx={(theme) => ({
+            ...theme.mixins.toolbar,
+            display: isMobile ? { xs: "block", md: "none" } : "block",
+            flexShrink: 0,
+          })}
+        />
         <Box sx={{ display: "flex", gap: 1, alignItems: "center", mb: 1 }}>
           <Typography id={titleId} variant="subtitle1" sx={{ flex: 1, fontWeight: 600 }}>
             AI Assistant
