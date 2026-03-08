@@ -1,17 +1,24 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { axe } from "vitest-axe";
 
 import { renderWithA11y } from "../helpers/renderWithA11y";
 import DetailSurface from "../../src/components/DetailSurface";
 
 describe("DetailSurface", () => {
   it("has no accessibility violations", async () => {
-    await renderWithA11y(
+    const result = await renderWithA11y(
       <DetailSurface open={true} onClose={() => {}} title="Test Detail">
         <p>Detail content</p>
       </DetailSurface>,
     );
+    const a11yResults = await axe(result.baseElement, {
+      rules: {
+        region: { enabled: false },
+      },
+    });
+    expect(a11yResults).toHaveNoViolations();
   });
 
   it("renders the title and children when open", () => {

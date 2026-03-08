@@ -29,7 +29,6 @@ export default function TemplateDetailsDrawer({
       open={Boolean(selectedTemplate || selectedComponentTemplate)}
       onClose={onClose}
       title={title}
-      ariaLabel="Close template details"
       bodySx={{ px: 1, py: 1 }}
     >
       {selectedTemplate && (
