@@ -1,2 +1,0 @@
-import{j as t,B as o}from"./mui-BvLY6hvE.js";function f({header:a,footer:l,children:s,gap:e,bodySx:r,sx:i}){return t.jsxs(o,{sx:[{display:"flex",flexDirection:"column",height:"100%",minHeight:0},...e!==void 0?[{gap:e}]:[],...Array.isArray(i)?i:i?[i]:[]],children:[a,t.jsx(o,{sx:[{flex:1,minHeight:0,overflow:"auto"},...Array.isArray(r)?r:r?[r]:[]],children:s}),l]})}export{f as S};
-//# sourceMappingURL=ScrollableLayout-2HUkB3tf.js.map
