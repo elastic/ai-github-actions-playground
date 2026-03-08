@@ -3,12 +3,13 @@ import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
-import Drawer from "@mui/material/Drawer";
 import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
 import type { EvaluatedHealthCheck, HealthSeverity, HealthStatus } from "../health-checks";
+
+import DetailSurface from "./DetailSurface";
 
 function statusColor(status: HealthStatus): "success" | "warning" | "error" | "default" {
   if (status === "pass") return "success";
@@ -38,25 +39,16 @@ export default function HealthCheckDrawer({ check, onClose }: HealthCheckDrawerP
   const navigate = useNavigate();
 
   return (
-    <Drawer
-      anchor="right"
+    <DetailSurface
       open={Boolean(check)}
       onClose={onClose}
-      slotProps={{
-        paper: {
-          sx: {
-            width: { xs: "100%", sm: 520 },
-            p: 2.5,
-            gap: 1.5,
-            display: "flex",
-            flexDirection: "column",
-          },
-        },
-      }}
+      title={check?.title ?? "Health Check"}
+      ariaLabel="Close health check details"
+      width={520}
+      bodySx={{ px: 1.5, py: 1, display: "flex", flexDirection: "column", gap: 1.5 }}
     >
       {check && (
         <>
-          <Typography variant="h6">{check.title}</Typography>
           <Typography variant="body2" color="text.secondary">
             {check.description}
           </Typography>
@@ -146,6 +138,6 @@ export default function HealthCheckDrawer({ check, onClose }: HealthCheckDrawerP
           </Stack>
         </>
       )}
-    </Drawer>
+    </DetailSurface>
   );
 }

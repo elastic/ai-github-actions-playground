@@ -1,8 +1,4 @@
-import Box from "@mui/material/Box";
-import Drawer from "@mui/material/Drawer";
-import IconButton from "@mui/material/IconButton";
-import Typography from "@mui/material/Typography";
-import CloseIcon from "@mui/icons-material/Close";
+import DetailSurface from "./DetailSurface";
 
 interface DetailDrawerProps {
   open: boolean;
@@ -13,6 +9,10 @@ interface DetailDrawerProps {
   children: React.ReactNode;
 }
 
+/**
+ * Thin wrapper around {@link DetailSurface} kept for backward-compatibility.
+ * New code should use `DetailSurface` directly.
+ */
 export default function DetailDrawer({
   open,
   onClose,
@@ -22,29 +22,8 @@ export default function DetailDrawer({
   children,
 }: DetailDrawerProps) {
   return (
-    <Drawer
-      anchor="right"
-      open={open}
-      onClose={onClose}
-      PaperProps={{
-        sx: {
-          width: { xs: "100%", md: width },
-          p: 1,
-          backgroundColor: "background.default",
-        },
-      }}
-    >
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 1 }}>
-        <Typography variant="subtitle1">{title}</Typography>
-        <IconButton
-          size="small"
-          aria-label={ariaLabel ?? `Close ${title.toLowerCase()}`}
-          onClick={onClose}
-        >
-          <CloseIcon fontSize="small" />
-        </IconButton>
-      </Box>
-      <Box sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>{children}</Box>
-    </Drawer>
+    <DetailSurface open={open} onClose={onClose} title={title} ariaLabel={ariaLabel} width={width}>
+      {children}
+    </DetailSurface>
   );
 }
