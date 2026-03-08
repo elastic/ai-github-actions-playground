@@ -125,17 +125,18 @@ export default function DataStreamsPage() {
 
   const [search, setSearch] = useSearchParam();
   const [fieldSearch, setFieldSearch] = useState("");
-  const [isFilterPending, startTransition] = useTransition();
+  const [isListFilterPending, startListFilterTransition] = useTransition();
+  const [isFieldFilterPending, startFieldFilterTransition] = useTransition();
   const [deferredSearch, setDeferredSearch] = useState(search);
   const [deferredFieldSearch, setDeferredFieldSearch] = useState(fieldSearch);
 
   useEffect(() => {
-    startTransition(() => setDeferredSearch(search));
-  }, [search, startTransition]);
+    startListFilterTransition(() => setDeferredSearch(search));
+  }, [search, startListFilterTransition]);
 
   useEffect(() => {
-    startTransition(() => setDeferredFieldSearch(fieldSearch));
-  }, [fieldSearch, startTransition]);
+    startFieldFilterTransition(() => setDeferredFieldSearch(fieldSearch));
+  }, [fieldSearch, startFieldFilterTransition]);
 
   const [showSystemStreams, setShowSystemStreams] = useState(false);
   const {
@@ -541,7 +542,7 @@ export default function DataStreamsPage() {
                   flex: 1,
                   minHeight: 0,
                   overflow: "auto",
-                  opacity: isFilterPending ? 0.6 : 1,
+                  opacity: isListFilterPending ? 0.6 : 1,
                   transition: "opacity 0.2s",
                 }}
               >
@@ -789,7 +790,15 @@ export default function DataStreamsPage() {
                 {loadingFields ? (
                   <ContentSkeleton variant="table" />
                 ) : (
-                  <Box sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
+                  <Box
+                    sx={{
+                      flex: 1,
+                      minHeight: 0,
+                      overflow: "auto",
+                      opacity: isFieldFilterPending ? 0.6 : 1,
+                      transition: "opacity 0.2s",
+                    }}
+                  >
                     {displayedDataStream &&
                       fieldRows.map((field) => (
                         <Stack
