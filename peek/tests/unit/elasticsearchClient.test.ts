@@ -828,13 +828,16 @@ describe("rawRequest", () => {
       );
 
       const client = makeClient();
-      const pending = expect(
-        client.rawRequest("GET", "/", undefined, undefined, 250),
-      ).rejects.toEqual(
-        expect.objectContaining({ status: 0, message: expect.stringMatching(/timeout/i) }),
-      );
+      const promise = client.rawRequest("GET", "/", undefined, undefined, 250);
+      let caughtError: unknown;
+      const handled = promise.catch((err) => {
+        caughtError = err;
+      });
       await vi.advanceTimersByTimeAsync(251);
-      await pending;
+      await handled;
+      const err = caughtError as { status: number; message: string };
+      expect(err.status).toBe(0);
+      expect(err.message).toMatch(/timeout/i);
     } finally {
       vi.useRealTimers();
     }

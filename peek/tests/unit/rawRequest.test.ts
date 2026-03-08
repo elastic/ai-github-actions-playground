@@ -224,14 +224,16 @@ describe("executeRawRequest", () => {
         undefined,
         250,
       );
-      const assertion = expect(pending).rejects.toEqual(
-        expect.objectContaining({
-          status: 0,
-          message: expect.stringMatching(/timeout/i),
-        }),
-      );
+      // Attach rejection handler before advancing timers to avoid unhandled-rejection warnings.
+      let caughtError: unknown;
+      const handled = pending.catch((err) => {
+        caughtError = err;
+      });
       await vi.advanceTimersByTimeAsync(251);
-      await assertion;
+      await handled;
+      const err = caughtError as { status: number; message: string };
+      expect(err.status).toBe(0);
+      expect(err.message).toMatch(/timeout/i);
       expect(requestSignal?.aborted).toBe(true);
     } finally {
       vi.useRealTimers();
@@ -261,11 +263,15 @@ describe("executeRawRequest", () => {
         undefined,
         0,
       );
-      const assertion = expect(pending).rejects.toEqual(
-        expect.objectContaining({ status: 0, message: expect.stringMatching(/timeout/i) }),
-      );
+      let caughtError: unknown;
+      const handled = pending.catch((err) => {
+        caughtError = err;
+      });
       await vi.advanceTimersByTimeAsync(1);
-      await assertion;
+      await handled;
+      const err = caughtError as { status: number; message: string };
+      expect(err.status).toBe(0);
+      expect(err.message).toMatch(/timeout/i);
       expect(requestSignal?.aborted).toBe(true);
     } finally {
       vi.useRealTimers();
@@ -275,17 +281,6 @@ describe("executeRawRequest", () => {
   it("falls back to default timeout for invalid timeoutMs", async () => {
     vi.useFakeTimers();
     try {
-      const timeoutSpy = vi.spyOn(AbortSignal, "timeout").mockImplementation((ms) => {
-        const controller = new AbortController();
-        setTimeout(
-          () =>
-            controller.abort(
-              new DOMException("The operation was aborted due to timeout", "TimeoutError"),
-            ),
-          ms,
-        );
-        return controller.signal;
-      });
       let requestSignal: AbortSignal | undefined;
       const doFetch: DoFetch = vi.fn((_url, _headers, opts) => {
         requestSignal = opts?.signal;
@@ -306,17 +301,16 @@ describe("executeRawRequest", () => {
         undefined,
         -1,
       );
-      const assertion = expect(pending).rejects.toEqual(
-        expect.objectContaining({
-          status: 0,
-          message: expect.stringMatching(/timeout/i),
-        }),
-      );
+      let caughtError: unknown;
+      const handled = pending.catch((err) => {
+        caughtError = err;
+      });
       await vi.advanceTimersByTimeAsync(RAW_REQUEST_TIMEOUT_MS + 1);
-      await assertion;
-      expect(timeoutSpy).toHaveBeenCalledWith(RAW_REQUEST_TIMEOUT_MS);
+      await handled;
+      const err = caughtError as { status: number; message: string };
+      expect(err.status).toBe(0);
+      expect(err.message).toMatch(/timeout/i);
       expect(requestSignal?.aborted).toBe(true);
-      timeoutSpy.mockRestore();
     } finally {
       vi.useRealTimers();
     }
@@ -482,17 +476,6 @@ describe("executeRawRequest", () => {
     "falls back to default timeout for invalid timeoutMs=%s",
     async (badTimeout) => {
       vi.useFakeTimers();
-      const timeoutSpy = vi.spyOn(AbortSignal, "timeout").mockImplementation((ms) => {
-        const controller = new AbortController();
-        setTimeout(
-          () =>
-            controller.abort(
-              new DOMException("The operation was aborted due to timeout", "TimeoutError"),
-            ),
-          ms,
-        );
-        return controller.signal;
-      });
       try {
         let requestSignal: AbortSignal | undefined;
         const doFetch: DoFetch = vi.fn((_url, _headers, opts) => {
@@ -514,18 +497,17 @@ describe("executeRawRequest", () => {
           undefined,
           badTimeout,
         );
-        const assertion = expect(pending).rejects.toEqual(
-          expect.objectContaining({
-            status: 0,
-            message: expect.stringMatching(/timeout/i),
-          }),
-        );
+        let caughtError: unknown;
+        const handled = pending.catch((err) => {
+          caughtError = err;
+        });
         await vi.advanceTimersByTimeAsync(RAW_REQUEST_TIMEOUT_MS + 1);
-        await assertion;
-        expect(timeoutSpy).toHaveBeenCalledWith(RAW_REQUEST_TIMEOUT_MS);
+        await handled;
+        const err = caughtError as { status: number; message: string };
+        expect(err.status).toBe(0);
+        expect(err.message).toMatch(/timeout/i);
         expect(requestSignal?.aborted).toBe(true);
       } finally {
-        timeoutSpy.mockRestore();
         vi.useRealTimers();
       }
     },

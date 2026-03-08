@@ -70,28 +70,33 @@ export async function executeRawRequest(
   const normalizedBaseUrl = baseUrl.replace(/\/+$/, "");
   const trimmedPath = path.trim();
   const url = `${normalizedBaseUrl}${trimmedPath.startsWith("/") ? trimmedPath : `/${trimmedPath}`}`;
+  // Keep manual timer wiring for fake-timer tests while using AbortSignal.any for composition.
+  const effectiveTimeout =
+    typeof timeoutMs === "number" &&
+    Number.isFinite(timeoutMs) &&
+    timeoutMs >= 0 &&
+    timeoutMs <= Number.MAX_SAFE_INTEGER
+      ? timeoutMs
+      : RAW_REQUEST_TIMEOUT_MS;
+  const timeoutController = new AbortController();
+  const timeoutId = setTimeout(() => {
+    timeoutController.abort(new DOMException("Request timeout", "AbortError"));
+  }, effectiveTimeout);
+  const signals: AbortSignal[] = [timeoutController.signal];
+  if (signal) {
+    try {
+      // Validate signal is acceptable to AbortSignal.any (can reject cross-realm/proxy values)
+      AbortSignal.any([signal]);
+      signals.push(signal);
+    } catch {
+      // Ignore invalid signal; use timeout only
+    }
+  }
+  const combinedSignal = AbortSignal.any(signals);
   const rawBody = body && body.trim() ? body : undefined;
   const normalizedMethod = method.toUpperCase();
   const shouldRetryMethod = RETRYABLE_METHODS.has(normalizedMethod);
   try {
-    const effectiveTimeout =
-      typeof timeoutMs === "number" &&
-      Number.isFinite(timeoutMs) &&
-      timeoutMs >= 0 &&
-      timeoutMs <= Number.MAX_SAFE_INTEGER
-        ? timeoutMs
-        : RAW_REQUEST_TIMEOUT_MS;
-    const signals: AbortSignal[] = [AbortSignal.timeout(effectiveTimeout)];
-    if (signal) {
-      try {
-        // Validate signal is acceptable to AbortSignal.any (can reject cross-realm/proxy values)
-        AbortSignal.any([signal]);
-        signals.push(signal);
-      } catch {
-        // Ignore invalid signal; use timeout only
-      }
-    }
-    const combinedSignal = AbortSignal.any(signals);
     let response: Response | undefined;
     /* eslint-disable no-await-in-loop -- sequential retry with backoff */
     for (let attempt = 0; ; attempt++) {
@@ -145,5 +150,7 @@ export async function executeRawRequest(
       status: 0,
       message: err instanceof Error ? err.message : String(err),
     } satisfies RawRequestError;
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
