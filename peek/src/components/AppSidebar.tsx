@@ -196,6 +196,7 @@ export default function AppSidebar({
         flexShrink: 0,
         flexDirection: "column",
         width: mobile ? 260 : isCollapsed ? 68 : 200,
+        height: mobile ? "100%" : undefined,
         minHeight: 0,
         overflow: "hidden",
         borderRight: mobile ? 0 : 1,
