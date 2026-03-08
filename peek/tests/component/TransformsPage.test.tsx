@@ -174,8 +174,8 @@ describe("TransformsPage", () => {
 
     const batchRow = screen.getByText("batch-job").closest("tr");
     expect(batchRow).not.toBeNull();
-    const searchFailures = within(batchRow!).getByText("3");
-    expect(window.getComputedStyle(searchFailures).fontWeight).toBe("700");
+    const failureCounts = within(batchRow!).getByText("3 / 1");
+    expect(window.getComputedStyle(failureCounts).fontWeight).toBe("700");
   });
 
   it("shows empty state when no transforms exist", async () => {

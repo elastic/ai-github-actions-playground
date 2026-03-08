@@ -66,22 +66,16 @@ export function TransformTable({
             </TableCell>
             <TableCell>Source → Dest</TableCell>
             <TableCell align="right">
-              <SortHeader field="docsProcessed">Docs Processed</SortHeader>
+              <SortHeader field="docsProcessed">Docs (P/I)</SortHeader>
             </TableCell>
             <TableCell align="right">
-              <SortHeader field="docsIndexed">Docs Indexed</SortHeader>
-            </TableCell>
-            <TableCell align="right">
-              <SortHeader field="searchFailures">Search Failures</SortHeader>
-            </TableCell>
-            <TableCell align="right">
-              <SortHeader field="indexFailures">Index Failures</SortHeader>
+              <SortHeader field="searchFailures">Fail (S/I)</SortHeader>
             </TableCell>
             <TableCell align="right">
               <SortHeader field="checkpoint">Checkpoint</SortHeader>
             </TableCell>
             <TableCell align="right">
-              <SortHeader field="avgCheckpointDurationMs">Avg Ckpt Duration</SortHeader>
+              <SortHeader field="avgCheckpointDurationMs">Avg Ckpt</SortHeader>
             </TableCell>
             <TableCell>
               <SortHeader field="nodeName">Node</SortHeader>
@@ -91,7 +85,7 @@ export function TransformTable({
         <TableBody>
           {rows.length === 0 && (
             <TableRow>
-              <TableCell colSpan={12} align="center" sx={{ py: 3 }}>
+              <TableCell colSpan={10} align="center" sx={{ py: 3 }}>
                 <Typography variant="body2" color="text.secondary">
                   No transforms found
                 </Typography>
@@ -133,7 +127,7 @@ export function TransformTable({
               <TableCell
                 sx={{
                   fontSize: "0.75rem",
-                  maxWidth: 200,
+                  maxWidth: 160,
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                   whiteSpace: "nowrap",
@@ -141,24 +135,21 @@ export function TransformTable({
               >
                 {row.sourceIndices.join(", ")} → {row.destIndex}
               </TableCell>
-              <TableCell align="right">{formatNum(row.docsProcessed)}</TableCell>
-              <TableCell align="right">{formatNum(row.docsIndexed)}</TableCell>
-              <TableCell align="right">
-                <Typography
-                  variant="body2"
-                  color={row.searchFailures > 0 ? "error.main" : "text.primary"}
-                  fontWeight={row.searchFailures > 0 ? 700 : 400}
-                >
-                  {formatNum(row.searchFailures)}
+              <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>
+                <Typography variant="body2" sx={{ fontFamily: "monospace", fontSize: "0.75rem" }}>
+                  {formatNum(row.docsProcessed)} / {formatNum(row.docsIndexed)}
                 </Typography>
               </TableCell>
-              <TableCell align="right">
+              <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>
                 <Typography
                   variant="body2"
-                  color={row.indexFailures > 0 ? "error.main" : "text.primary"}
-                  fontWeight={row.indexFailures > 0 ? 700 : 400}
+                  color={
+                    row.searchFailures > 0 || row.indexFailures > 0 ? "error.main" : "text.primary"
+                  }
+                  fontWeight={row.searchFailures > 0 || row.indexFailures > 0 ? 700 : 400}
+                  sx={{ fontFamily: "monospace", fontSize: "0.75rem" }}
                 >
-                  {formatNum(row.indexFailures)}
+                  {formatNum(row.searchFailures)} / {formatNum(row.indexFailures)}
                 </Typography>
               </TableCell>
               <TableCell align="right">{formatNum(row.checkpoint)}</TableCell>
