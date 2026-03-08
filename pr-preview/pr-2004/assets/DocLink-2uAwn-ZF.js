@@ -1,0 +1,2 @@
+import{r as i,j as o,i as t,I as c,ac as l}from"./mui-Cc3_pkuw.js";import{k as r}from"./index-CkV_5-lh.js";function u({section:s,tooltip:a="View docs"}){const e=r(),n=i.useCallback(()=>{e(`/docs?section=${encodeURIComponent(s)}`)},[e,s]);return o.jsx(t,{title:a,children:o.jsx(c,{size:"small",onClick:n,"aria-label":a,children:o.jsx(l,{fontSize:"small"})})})}export{u as D};
+//# sourceMappingURL=DocLink-2uAwn-ZF.js.map
