@@ -6,7 +6,7 @@ import Button from "@mui/material/Button";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 
-import { PAGE_MANIFEST } from "../../routes/manifest";
+import { PAGE_PATHS } from "../../routes/paths";
 import { useConnectionStore } from "../../store/useConnectionStore";
 import EmptyState from "../EmptyState";
 import PageHeaderSection from "../PageHeaderSection";
@@ -73,11 +73,7 @@ export default function K8sNamespaceDashboardPage() {
         title={namespace}
         description="Namespace-level dashboard showing pods, resource utilization, logs, and traces."
         actions={
-          <Button
-            size="small"
-            variant="text"
-            onClick={() => navigate(PAGE_MANIFEST.kubernetes.path)}
-          >
+          <Button size="small" variant="text" onClick={() => navigate(PAGE_PATHS.kubernetes.path)}>
             ← Kubernetes
           </Button>
         }
@@ -103,7 +99,7 @@ export default function K8sNamespaceDashboardPage() {
           <EmptyState
             heading="No namespace data loaded"
             description={`Click Search to load data for namespace ${namespace}.`}
-            addDataHref={PAGE_MANIFEST.addData.path}
+            addDataHref={PAGE_PATHS.addData.path}
           />
         </Paper>
       )}
@@ -148,7 +144,7 @@ export default function K8sNamespaceDashboardPage() {
             <EmptyState
               heading="No data found"
               description={`No data found for namespace ${namespace} in the selected time range.`}
-              addDataHref={PAGE_MANIFEST.addData.path}
+              addDataHref={PAGE_PATHS.addData.path}
             />
           </Paper>
         )}

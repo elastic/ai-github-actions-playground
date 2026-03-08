@@ -233,7 +233,7 @@ test-unit-staged:
 	@echo "Running unit tests related to staged JS/TS files in peek/..."
 	@STAGED=$$(git diff --cached --name-only --diff-filter=ACMR -- 'peek' | grep -E '^peek/.*\.(ts|tsx|js|jsx)$$' | sed 's#^peek/##' || true); \
 	if [ -n "$$STAGED" ]; then \
-		(cd $(PEEK_DIR) && echo "$$STAGED" | tr '\n' '\0' | xargs -0 npx vitest related --run --passWithNoTests); \
+		(cd $(PEEK_DIR) && echo "$$STAGED" | tr '\n' '\0' | xargs -0 npx vitest related --run --passWithNoTests --pool=forks --poolOptions.forks.maxForks=4); \
 	else \
 		echo "No staged JS/TS files under peek/ — skipping unit tests."; \
 	fi

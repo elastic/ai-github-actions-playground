@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { useQueryStore } from "../store/useQueryStore";
 import { useDashboardStore } from "../store/useDashboardStore";
-import { PAGE_MANIFEST, type PageId } from "../routes/manifest";
+import { PAGE_PATHS, type PageId } from "../routes/paths";
 import { openInDiscover } from "../hooks/useOpenInDiscover";
 import type { ElasticsearchConnection } from "../types";
 
@@ -202,7 +202,7 @@ export function getLocalChatTools(connection: ElasticsearchConnection | null): T
 }
 
 /** Page keys that the LLM can navigate to (excludes detail routes with params). */
-const NAVIGABLE_PAGES = Object.entries(PAGE_MANIFEST)
+const NAVIGABLE_PAGES = Object.entries(PAGE_PATHS)
   .filter(([, config]) => !config.path.includes(":"))
   .map(([key]) => key) as [PageId, ...PageId[]];
 
@@ -241,7 +241,7 @@ export function getBrowserControlTools(navigate?: (path: string) => void): ToolS
         page: z.enum(NAVIGABLE_PAGES).describe("Page identifier to navigate to."),
       }),
       execute: async ({ page }) => {
-        const config = PAGE_MANIFEST[page];
+        const config = PAGE_PATHS[page];
         navigate(config.path);
         return { navigated: page, path: config.path, label: config.nav.label };
       },
