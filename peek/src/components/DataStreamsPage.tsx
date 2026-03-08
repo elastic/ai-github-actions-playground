@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -125,18 +125,10 @@ export default function DataStreamsPage() {
 
   const [search, setSearch] = useSearchParam();
   const [fieldSearch, setFieldSearch] = useState("");
-  const [isListFilterPending, startListFilterTransition] = useTransition();
-  const [isFieldFilterPending, startFieldFilterTransition] = useTransition();
-  const [deferredSearch, setDeferredSearch] = useState(search);
-  const [deferredFieldSearch, setDeferredFieldSearch] = useState(fieldSearch);
-
-  useEffect(() => {
-    startListFilterTransition(() => setDeferredSearch(search));
-  }, [search, startListFilterTransition]);
-
-  useEffect(() => {
-    startFieldFilterTransition(() => setDeferredFieldSearch(fieldSearch));
-  }, [fieldSearch, startFieldFilterTransition]);
+  const deferredSearch = useDeferredValue(search);
+  const deferredFieldSearch = useDeferredValue(fieldSearch);
+  const isListFilterPending = search !== deferredSearch;
+  const isFieldFilterPending = fieldSearch !== deferredFieldSearch;
 
   const [showSystemStreams, setShowSystemStreams] = useState(false);
   const {
