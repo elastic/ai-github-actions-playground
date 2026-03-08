@@ -564,12 +564,22 @@ export default function NodesHotThreadsPage() {
           onClose={() => setSelectedThread(null)}
           PaperProps={{
             sx: {
-              width: { xs: "100%", md: 640 },
+              width: { xs: "calc(100vw - 16px)", md: 640 },
+              maxWidth: "100vw",
+              display: "flex",
+              flexDirection: "column",
               p: 1,
               backgroundColor: "background.default",
             },
           }}
         >
+          <Box
+            sx={(theme) => ({
+              ...theme.mixins.toolbar,
+              display: { xs: "block", md: "none" },
+              flexShrink: 0,
+            })}
+          />
           <Box
             sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 1 }}
           >

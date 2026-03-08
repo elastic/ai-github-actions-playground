@@ -122,10 +122,22 @@ export default function RowInspectorFlyout({ open, onClose, columns, row }: Prop
       }}
       slotProps={{
         paper: {
-          sx: { width: { xs: "100%", sm: 480 }, display: "flex", flexDirection: "column" },
+          sx: {
+            width: { xs: "calc(100vw - 16px)", sm: 480 },
+            maxWidth: "100vw",
+            display: "flex",
+            flexDirection: "column",
+          },
         },
       }}
     >
+      <Box
+        sx={(theme) => ({
+          ...theme.mixins.toolbar,
+          display: { xs: "block", sm: "none" },
+          flexShrink: 0,
+        })}
+      />
       {/* Header */}
       <Box
         sx={{

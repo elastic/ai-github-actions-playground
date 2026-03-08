@@ -16,6 +16,14 @@ function renderDrawer() {
   );
 }
 
+function renderMobileDrawer() {
+  return render(
+    <MemoryRouter>
+      <AiAssistantDrawer isMobile />
+    </MemoryRouter>,
+  );
+}
+
 describe("AiAssistantDrawer", () => {
   beforeEach(() => {
     localStorage.clear();
@@ -117,5 +125,12 @@ describe("AiAssistantDrawer", () => {
     renderDrawer();
 
     expect(screen.getByRole("complementary")).toBeInTheDocument();
+  });
+
+  it("renders a mobile top offset so the close button stays visible under the app header", () => {
+    useUIStore.getState().setAiPanelOpen(true);
+    renderMobileDrawer();
+
+    expect(screen.getByTestId("ai-drawer-mobile-offset")).toBeInTheDocument();
   });
 });

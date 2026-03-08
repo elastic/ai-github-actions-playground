@@ -262,8 +262,22 @@ export default function SpanDetailDrawer({
       anchor="right"
       open={open}
       onClose={onClose}
-      sx={{ "& .MuiDrawer-paper": { width: 440 } }}
+      sx={{
+        "& .MuiDrawer-paper": {
+          width: { xs: "calc(100vw - 16px)", sm: 440 },
+          maxWidth: "100vw",
+          display: "flex",
+          flexDirection: "column",
+        },
+      }}
     >
+      <Box
+        sx={(theme) => ({
+          ...theme.mixins.toolbar,
+          display: { xs: "block", sm: "none" },
+          flexShrink: 0,
+        })}
+      />
       <ScrollableLayout
         header={
           <>

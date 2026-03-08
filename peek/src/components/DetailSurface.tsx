@@ -43,12 +43,23 @@ export default function DetailSurface({
       onClose={onClose}
       PaperProps={{
         sx: {
-          width: { xs: "100%", md: width },
+          width: { xs: "calc(100vw - 16px)", md: width },
+          maxWidth: "100vw",
+          display: "flex",
+          flexDirection: "column",
           p: 1,
           backgroundColor: "background.default",
         },
       }}
     >
+      <Box
+        data-testid="detail-surface-mobile-offset"
+        sx={(theme) => ({
+          ...theme.mixins.toolbar,
+          display: { xs: "block", md: "none" },
+          flexShrink: 0,
+        })}
+      />
       <ScrollableLayout
         header={
           <Box
