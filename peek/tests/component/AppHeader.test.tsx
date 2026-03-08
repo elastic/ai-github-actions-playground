@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 
 import AppHeader from "../../src/components/AppHeader";
-import { PAGE_MANIFEST } from "../../src/routes/manifest";
+import { PAGE_PATHS } from "../../src/routes/paths";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { useCommandPaletteStore } from "../../src/store/useCommandPaletteStore";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
@@ -43,13 +43,13 @@ describe("AppHeader", () => {
   });
 
   it("hides Add Panel button on non-dashboard pages", () => {
-    renderHeader(PAGE_MANIFEST.discover.path);
+    renderHeader(PAGE_PATHS.discover.path);
 
     expect(screen.queryByRole("button", { name: /add panel/i })).not.toBeInTheDocument();
   });
 
   it("shows time controls on query pages", () => {
-    renderHeader(PAGE_MANIFEST.discover.path);
+    renderHeader(PAGE_PATHS.discover.path);
 
     const headerButtons = screen.getAllByRole("button");
     expect(headerButtons.length).toBeGreaterThanOrEqual(2);
@@ -58,25 +58,25 @@ describe("AppHeader", () => {
   });
 
   it("shows time controls on metrics page", () => {
-    renderHeader(PAGE_MANIFEST.explore.path);
+    renderHeader(PAGE_PATHS.explore.path);
 
     expect(screen.getByRole("button", { name: /last \d+(m|h|d)/i })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /add panel/i })).not.toBeInTheDocument();
   });
 
   it("hides time controls on non-time pages", () => {
-    renderHeader(PAGE_MANIFEST.settings.path);
+    renderHeader(PAGE_PATHS.settings.path);
 
     expect(screen.queryByRole("button", { name: /add panel/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /last \d+(m|h|d)/i })).not.toBeInTheDocument();
   });
 
   it("hides time controls on docs and chat pages", () => {
-    const { rerender } = renderHeader(PAGE_MANIFEST.docs.path);
+    const { rerender } = renderHeader(PAGE_PATHS.docs.path);
     expect(screen.queryByRole("button", { name: /last \d+(m|h|d)/i })).not.toBeInTheDocument();
 
     rerender(
-      <MemoryRouter initialEntries={[PAGE_MANIFEST.chat.path]}>
+      <MemoryRouter initialEntries={[PAGE_PATHS.chat.path]}>
         <AppHeader />
       </MemoryRouter>,
     );
@@ -84,7 +84,7 @@ describe("AppHeader", () => {
   });
 
   it("shows time controls for routes configured with showTimeControls", () => {
-    const timeControlRoutes = Object.values(PAGE_MANIFEST)
+    const timeControlRoutes = Object.values(PAGE_PATHS)
       .filter((page) => page.showTimeControls)
       .map((page) => page.path);
 

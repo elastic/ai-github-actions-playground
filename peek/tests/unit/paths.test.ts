@@ -1,10 +1,10 @@
 import { describe, it, expect } from "vitest";
 
-import { PAGE_MANIFEST, NAV_SECTION_ORDER, type PageId } from "../../src/routes/manifest";
+import { PAGE_PATHS, NAV_SECTION_ORDER, type PageId } from "../../src/routes/paths";
 
-const entries = Object.entries(PAGE_MANIFEST) as Array<[PageId, (typeof PAGE_MANIFEST)[PageId]]>;
+const entries = Object.entries(PAGE_PATHS) as Array<[PageId, (typeof PAGE_PATHS)[PageId]]>;
 
-describe("PAGE_MANIFEST", () => {
+describe("PAGE_PATHS", () => {
   it("every page has a unique path", () => {
     const paths = entries.map(([, config]) => config.path);
     expect(new Set(paths).size).toBe(paths.length);
@@ -42,21 +42,21 @@ describe("PAGE_MANIFEST", () => {
 
     for (const [page] of noConnectionPages) {
       expect(
-        PAGE_MANIFEST[page].nav.showInSidebar,
+        PAGE_PATHS[page].nav.showInSidebar,
         `${page} doesn't require connection but is not reachable from sidebar`,
       ).toBe(true);
     }
   });
 
   it("only docs is accessible without a connection", () => {
-    expect(PAGE_MANIFEST.docs.requiresConnection).toBe(false);
-    expect(PAGE_MANIFEST.chat.requiresConnection).toBe(true);
+    expect(PAGE_PATHS.docs.requiresConnection).toBe(false);
+    expect(PAGE_PATHS.chat.requiresConnection).toBe(true);
   });
 
-  it("every sidebar-visible manifest entry has a non-null icon", () => {
+  it("every sidebar-visible manifest entry has a non-null icon key", () => {
     for (const [page, config] of entries) {
       if (config.nav.showInSidebar) {
-        expect(config.nav.icon, `${page} is sidebar-visible but has no icon`).toBeTruthy();
+        expect(config.nav.iconKey, `${page} is sidebar-visible but has no icon key`).toBeTruthy();
       }
     }
   });
