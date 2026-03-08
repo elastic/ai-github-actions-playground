@@ -591,7 +591,7 @@ export const PAGE_MANIFEST = {
     showTimeControls: false,
     skeletonVariant: "detail-panel",
     nav: {
-      label: "Node detail",
+      label: "Node Detail",
       group: "System",
       order: 24,
       showInSidebar: false,
