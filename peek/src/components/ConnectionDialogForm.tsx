@@ -101,7 +101,7 @@ export default function ConnectionDialogForm({
     <Box
       component="form"
       onSubmit={(e: React.FormEvent) => e.preventDefault()}
-      autoComplete="on"
+      autoComplete="off"
       sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}
     >
       <Typography variant="caption" color="text.secondary">
@@ -237,7 +237,7 @@ export default function ConnectionDialogForm({
             value={profileName}
             onChange={(event) => onProfileNameChange(event.target.value)}
             onKeyDown={(event) => {
-              if (event.key === "Enter") void onConfirmConnectAndSave();
+              if (event.key === "Enter" && canConfirmConnectAndSave) void onConfirmConnectAndSave();
             }}
             error={isDuplicateProfileName}
             helperText={isDuplicateProfileName ? "A profile with this name already exists" : " "}
@@ -250,7 +250,7 @@ export default function ConnectionDialogForm({
             value={savePin}
             onChange={(event) => onSavePinChange(event.target.value)}
             onKeyDown={(event) => {
-              if (event.key === "Enter") void onConfirmConnectAndSave();
+              if (event.key === "Enter" && canConfirmConnectAndSave) void onConfirmConnectAndSave();
             }}
             helperText={
               savePin.trim()

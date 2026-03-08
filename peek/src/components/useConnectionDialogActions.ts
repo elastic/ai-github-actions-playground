@@ -77,14 +77,22 @@ export function useConnectionDialogActions({
     [buildConnection],
   );
 
+  const resetDialogState = useCallback(() => {
+    setResult(null);
+    setProfileName("");
+    setSavePin("");
+    setSavePromptOpen(false);
+  }, []);
+
   const handleConnect = useCallback(async () => {
     await runConnectionAction((caps, connection) => {
       setConnection(connection);
       setConnected(true);
       setCapabilities(caps);
+      resetDialogState();
       closeDialog();
     });
-  }, [closeDialog, runConnectionAction, setCapabilities, setConnected, setConnection]);
+  }, [closeDialog, resetDialogState, runConnectionAction, setCapabilities, setConnected, setConnection]);
 
   const handleConnectAndSave = useCallback(async () => {
     if (!canConfirmConnectAndSave) return;
@@ -132,9 +140,9 @@ export function useConnectionDialogActions({
   const handleDisconnect = useCallback(() => {
     setConnected(false);
     setCapabilities(null);
-    setResult(null);
+    resetDialogState();
     closeDialog();
-  }, [closeDialog, setCapabilities, setConnected]);
+  }, [closeDialog, resetDialogState, setCapabilities, setConnected]);
 
   return {
     testing,

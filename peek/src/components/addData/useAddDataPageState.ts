@@ -57,6 +57,7 @@ export function useAddDataPageState() {
   useEffect(() => {
     if (!connection) return;
     let cancelled = false;
+    setClusterVersion(null);
     const client = new ElasticsearchClient(connection);
     client
       .getClusterInfo()
@@ -64,7 +65,7 @@ export function useAddDataPageState() {
         if (!cancelled) setClusterVersion(info.version.number);
       })
       .catch(() => {
-        /* best effort */
+        if (!cancelled) setClusterVersion(null);
       });
     return () => {
       cancelled = true;

@@ -74,6 +74,16 @@ export default function ConnectionDialog() {
     closeDialog: () => setOpen(false),
   });
 
+  /** Wrap a form setter so any connection-affecting edit clears a stale test result. */
+  const clearResultAnd = useCallback(
+    <T,>(fn: (value: T) => void) =>
+      (value: T) => {
+        fn(value);
+        actions.setResult(null);
+      },
+    [actions],
+  );
+
   const handleAuthTypeChange = useCallback(
     (nextAuthType: AuthType) => {
       form.updateAuthType(nextAuthType);
@@ -121,13 +131,13 @@ export default function ConnectionDialog() {
           onDeleteProfile={deleteConnectionProfile}
           onRenameProfile={renameConnectionProfile}
           onUnlockProfile={unlockProfile}
-          onUrlChange={form.updateUrl}
+          onUrlChange={clearResultAnd(form.updateUrl)}
           onAuthTypeChange={handleAuthTypeChange}
-          onApiKeyChange={form.setApiKey}
-          onUsernameChange={form.setUsername}
-          onPasswordChange={form.setPassword}
-          onProxyUrlChange={form.setProxyUrl}
-          onIngestUrlChange={form.setIngestUrl}
+          onApiKeyChange={clearResultAnd(form.setApiKey)}
+          onUsernameChange={clearResultAnd(form.setUsername)}
+          onPasswordChange={clearResultAnd(form.setPassword)}
+          onProxyUrlChange={clearResultAnd(form.setProxyUrl)}
+          onIngestUrlChange={clearResultAnd(form.setIngestUrl)}
           onToggleShowSecret={() => form.setShowSecret(!form.form.showSecret)}
           onToggleAdvanced={() => form.setShowAdvanced(!form.form.showAdvanced)}
           onProfileNameChange={actions.setProfileName}
