@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 // happy-dom has a known issue with user.type + nuqs URL-based search filtering
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, within } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
+import { renderWithQueryClient } from "../helpers/renderWithQueryClient";
 import userEvent from "@testing-library/user-event";
 import { axe } from "vitest-axe";
 import { MemoryRouter, useLocation } from "react-router-dom";
@@ -138,7 +139,7 @@ function LocationDisplay() {
 function renderPage(initialEntries: string[] = ["/"]) {
   const activeEntry = initialEntries[initialEntries.length - 1] ?? "/";
   const searchParams = new URL(activeEntry, "https://example.test").search;
-  return render(
+  return renderWithQueryClient(
     <MemoryRouter initialEntries={initialEntries}>
       <NuqsTestingAdapter searchParams={searchParams} hasMemory>
         <IndicesPage />

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, within, waitFor } from "@testing-library/react";
+import { screen, within, waitFor } from "@testing-library/react";
+import { renderWithQueryClient } from "../helpers/renderWithQueryClient";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
@@ -86,7 +87,7 @@ describe("InvestigatePage", () => {
   });
 
   it("renders the page header and search controls", () => {
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <NuqsTestingAdapter hasMemory>
           <InvestigatePage />
@@ -102,7 +103,7 @@ describe("InvestigatePage", () => {
   });
 
   it("shows initial empty state prompting to search", async () => {
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <NuqsTestingAdapter hasMemory>
           <InvestigatePage />
@@ -115,7 +116,7 @@ describe("InvestigatePage", () => {
 
   it("switches to host tab and updates placeholder", async () => {
     const user = userEvent.setup();
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <NuqsTestingAdapter hasMemory>
           <InvestigatePage />
@@ -151,7 +152,7 @@ describe("InvestigatePage", () => {
       .mockResolvedValueOnce(HOST_SUGGESTIONS_RESPONSE);
     const user = userEvent.setup();
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <NuqsTestingAdapter hasMemory>
           <InvestigatePage />
@@ -170,7 +171,7 @@ describe("InvestigatePage", () => {
     queryMock.mockResolvedValueOnce(EMPTY_ESQL_RESPONSE).mockResolvedValueOnce(ESQL_RESPONSE);
     const user = userEvent.setup();
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <NuqsTestingAdapter hasMemory>
           <InvestigatePage />
@@ -193,7 +194,7 @@ describe("InvestigatePage", () => {
     queryMock.mockResolvedValue(EMPTY_ESQL_RESPONSE);
     const user = userEvent.setup();
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <NuqsTestingAdapter hasMemory>
           <InvestigatePage />
@@ -213,7 +214,7 @@ describe("InvestigatePage", () => {
       .mockRejectedValueOnce({ status: 400, message: "verification_exception" });
     const user = userEvent.setup();
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <NuqsTestingAdapter hasMemory>
           <InvestigatePage />
@@ -239,7 +240,7 @@ describe("InvestigatePage", () => {
       .mockRejectedValueOnce(unknownColumnError); // minimal flavor
     const user = userEvent.setup();
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <NuqsTestingAdapter hasMemory>
           <InvestigatePage />
@@ -275,7 +276,7 @@ describe("InvestigatePage", () => {
     queryMock.mockResolvedValueOnce(EMPTY_ESQL_RESPONSE).mockResolvedValueOnce(ESQL_RESPONSE);
     const user = userEvent.setup();
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <NuqsTestingAdapter hasMemory>
           <InvestigatePage />
@@ -297,7 +298,7 @@ describe("InvestigatePage", () => {
     queryMock.mockResolvedValueOnce(EMPTY_ESQL_RESPONSE).mockResolvedValueOnce(ESQL_RESPONSE);
     const user = userEvent.setup();
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <NuqsTestingAdapter hasMemory>
           <InvestigatePage />
@@ -314,7 +315,7 @@ describe("InvestigatePage", () => {
   });
 
   it("disables search button when input is empty", () => {
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <NuqsTestingAdapter hasMemory>
           <InvestigatePage />
@@ -329,7 +330,7 @@ describe("InvestigatePage", () => {
     queryMock.mockResolvedValueOnce(EMPTY_ESQL_RESPONSE).mockResolvedValueOnce(ESQL_RESPONSE);
     const user = userEvent.setup();
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <NuqsTestingAdapter hasMemory>
           <InvestigatePage />
@@ -357,7 +358,7 @@ describe("InvestigatePage", () => {
     };
     queryMock.mockResolvedValueOnce(SUGGESTIONS_RESPONSE);
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <NuqsTestingAdapter hasMemory>
           <InvestigatePage />
@@ -374,7 +375,7 @@ describe("InvestigatePage", () => {
     queryMock.mockResolvedValueOnce(EMPTY_ESQL_RESPONSE).mockReturnValueOnce(new Promise(() => {}));
     const user = userEvent.setup();
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <NuqsTestingAdapter hasMemory>
           <InvestigatePage />
