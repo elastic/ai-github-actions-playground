@@ -17,6 +17,7 @@ import { useApiConsoleStore } from "../../src/store/useApiConsoleStore";
 import { usePageContextStore } from "../../src/store/usePageContextStore";
 import { useLogsStore } from "../../src/store/useLogsStore";
 import { useInsightStatusStore } from "../../src/store/useInsightStatusStore";
+import { usePackageBuilderStore } from "../../src/store/usePackageBuilderStore";
 
 /**
  * Each entry pairs a store's display name with the reset method name it exposes.
@@ -71,6 +72,7 @@ const STORES_WITH_RESET_API = [
     store: useInsightStatusStore,
     method: "resetInsightStatus",
   },
+  { name: "usePackageBuilderStore", store: usePackageBuilderStore, method: "reset" },
 ] as const;
 
 describe("storeResetters registry", () => {

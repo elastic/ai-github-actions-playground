@@ -23,6 +23,7 @@ import { useApiConsoleStore } from "./useApiConsoleStore";
 import { usePageContextStore } from "./usePageContextStore";
 import { useLogsStore } from "./useLogsStore";
 import { useInsightStatusStore } from "./useInsightStatusStore";
+import { usePackageBuilderStore } from "./usePackageBuilderStore";
 
 const resetConnection = () => useConnectionStore.getState().resetConnectionState();
 const resetDashboard = () => useDashboardStore.getState().resetDashboardState();
@@ -43,6 +44,7 @@ const resetApiConsole = () => useApiConsoleStore.getState().resetApiConsoleState
 const resetPageContext = () => usePageContextStore.getState().resetPageContext();
 const resetLogs = () => useLogsStore.getState().reset();
 const resetInsightStatus = () => useInsightStatusStore.getState().resetInsightStatus();
+const resetPackageBuilder = () => usePackageBuilderStore.getState().reset();
 
 export const storeResetters: ReadonlyArray<() => void> = [
   resetConnection,
@@ -64,6 +66,7 @@ export const storeResetters: ReadonlyArray<() => void> = [
   resetSearchPanelUi,
   resetApiConsole,
   resetPageContext,
+  resetPackageBuilder,
 ];
 
 export const RESET_SCOPE: ReadonlyArray<{ label: string; reset: () => void }> = [
@@ -108,5 +111,9 @@ export const RESET_SCOPE: ReadonlyArray<{ label: string; reset: () => void }> = 
   {
     label: "Console history and request state",
     reset: resetApiConsole,
+  },
+  {
+    label: "Package Builder wizard drafts",
+    reset: resetPackageBuilder,
   },
 ];
