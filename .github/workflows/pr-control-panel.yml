@@ -98,14 +98,20 @@ jobs:
             function buildControlPanelBody(state) {
               return [
                 MARKER,
-                "## PR Control Panel",
-                "",
-                "Toggle automation for this PR by checking boxes below.",
+                "Toggle AI automation for this PR by checking boxes below.",
                 "",
                 ...ITEMS.map(
                   (item) =>
                     `- [${state[item.label] ? "x" : " "}] ${item.displayLabel} <!-- ${KEY_PREFIX}:${item.label} -->`,
                 ),
+                "",
+                "<details>",
+                "<summary>Troubleshooting</summary>",
+                "",
+                "This control panel only adds or removes labels on the PR.",
+                "It does not directly start workflows.",
+                "If you toggle an option, related automation may not run until its next normal trigger event.",
+                "</details>",
               ].join("\n");
             }
 
