@@ -1,7 +1,6 @@
 import type { z } from "zod";
 
 import type { dashboardDefinitionSchema, panelDefinitionSchema } from "../schemas";
-import type { EsqlResponse, ElasticsearchError } from "../services/es";
 import type { ParameterType } from "../contracts/dashboard/literals";
 
 import type { VisualizationOptions } from "./visualization";
@@ -48,9 +47,3 @@ export interface TimeRange {
 
 /** Default auto-refresh interval in seconds */
 export const DEFAULT_REFRESH_INTERVAL = 15;
-
-export type QueryResult =
-  | { status: "idle" }
-  | { status: "loading" }
-  | { status: "success"; data: EsqlResponse; executionTimeMs: number }
-  | { status: "error"; error: ElasticsearchError };

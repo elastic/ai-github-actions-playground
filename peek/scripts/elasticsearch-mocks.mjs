@@ -327,6 +327,61 @@ const DEFAULT_MOCK_DATA = {
   ingestPipelines: {
     "logs-parse-nginx": { description: "Parse NGINX access logs", processors: [] },
   },
+  transforms: {
+    count: 2,
+    transforms: [
+      {
+        id: "ecommerce-summary",
+        description: "Summarize ecommerce transactions by day and category",
+        source: { index: ["ecommerce-events"] },
+        dest: { index: "ecommerce-summary" },
+        frequency: "5m",
+        sync: { time: { field: "@timestamp", delay: "60s" } },
+        settings: { max_page_search_size: 500 },
+      },
+      {
+        id: "batch-report",
+        description: "One-time batch report",
+        source: { index: ["raw-data"] },
+        dest: { index: "batch-output" },
+      },
+    ],
+  },
+  transformStats: {
+    count: 2,
+    transforms: [
+      {
+        id: "ecommerce-summary",
+        state: "started",
+        health: { status: "green" },
+        node: { id: "n1", name: "node-1" },
+        stats: {
+          documents_processed: 1250000,
+          documents_indexed: 42000,
+          search_failures: 0,
+          index_failures: 0,
+          search_time_in_ms: 45200,
+          index_time_in_ms: 12800,
+          processing_time_in_ms: 58000,
+          exponential_avg_checkpoint_duration_ms: 3200,
+        },
+        checkpointing: { last: { checkpoint: 287 } },
+      },
+      {
+        id: "batch-report",
+        state: "stopped",
+        health: { status: "green" },
+        stats: {
+          documents_processed: 500,
+          documents_indexed: 100,
+          search_failures: 0,
+          index_failures: 0,
+          exponential_avg_checkpoint_duration_ms: 0,
+        },
+        checkpointing: { last: { checkpoint: 1 } },
+      },
+    ],
+  },
   esqlLimit0: {
     columns: [
       { name: "@timestamp", type: "date" },
@@ -388,7 +443,8 @@ export async function registerElasticsearchMocks(
   await page.route(`${esUrl}/**`, async (route) => {
     const req = route.request();
     const method = req.method();
-    const path = new URL(req.url()).pathname;
+    const requestUrl = new URL(req.url());
+    const path = requestUrl.pathname;
 
     if (method === "OPTIONS") {
       await route.fulfill({ status: 204, headers: corsHeaders, body: "" });
@@ -520,6 +576,26 @@ export async function registerElasticsearchMocks(
     if (path.match(/^\/[^_][^/]*\/_stats$/) && method === "GET") return json(resolved.indexStats);
 
     if (path === "/_ingest/pipeline" && method === "GET") return json(resolved.ingestPipelines);
+    if (path === "/_transform" && method === "GET") {
+      const from = Number.parseInt(requestUrl.searchParams.get("from") ?? "0", 10);
+      const size = Number.parseInt(requestUrl.searchParams.get("size") ?? "100", 10);
+      const start = Number.isNaN(from) ? 0 : Math.max(from, 0);
+      const end = start + (Number.isNaN(size) ? 100 : Math.max(size, 0));
+      return json({
+        ...resolved.transforms,
+        transforms: (resolved.transforms?.transforms ?? []).slice(start, end),
+      });
+    }
+    if (path === "/_transform/_stats" && method === "GET") {
+      const from = Number.parseInt(requestUrl.searchParams.get("from") ?? "0", 10);
+      const size = Number.parseInt(requestUrl.searchParams.get("size") ?? "100", 10);
+      const start = Number.isNaN(from) ? 0 : Math.max(from, 0);
+      const end = start + (Number.isNaN(size) ? 100 : Math.max(size, 0));
+      return json({
+        ...resolved.transformStats,
+        transforms: (resolved.transformStats?.transforms ?? []).slice(start, end),
+      });
+    }
     if (path.startsWith("/_fleet/")) return json({});
 
     if (path === "/_query" && method === "POST") {

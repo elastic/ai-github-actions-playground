@@ -1,6 +1,7 @@
 import JSZip from "jszip";
 import type { PackageBuilderData } from "../../types/packageBuilder";
 import { generateManifest, generateChangelog, getIconFileName } from "./generateManifest";
+import { downloadBlob } from "../../utils/downloadBlob";
 
 function getFullName(data: PackageBuilderData): string {
   return data.identity.name.endsWith("_input_otel")
@@ -28,16 +29,7 @@ export async function exportPackageZip(data: PackageBuilderData): Promise<Blob> 
   return zip.generateAsync({ type: "blob" });
 }
 
-export function downloadBlob(blob: Blob, filename: string) {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 0);
-}
+export { downloadBlob };
 
 /** Returns true if the File System Access API is available (Chromium browsers). */
 export function supportsDirectoryExport(): boolean {

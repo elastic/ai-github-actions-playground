@@ -10,6 +10,7 @@ import {
 } from "../services/perses/esqlDatasource";
 import type { PanelDefinition, EsqlResponse } from "../types";
 import { toCsv } from "../components/discoverUtils";
+import { downloadBlob } from "../utils/downloadBlob";
 
 const buildExportFilename = (title: string, extension: "png" | "csv"): string => {
   const safeTitle =
@@ -70,12 +71,7 @@ export function usePanelData(
     if (!data || data.columns.length === 0) return;
     const csv = toCsv(data);
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = buildExportFilename(panel.title, "csv");
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 500);
+    downloadBlob(blob, buildExportFilename(panel.title, "csv"));
   }, [data, panel.title]);
 
   const resetResultState = useCallback(() => {
