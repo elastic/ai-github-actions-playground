@@ -4,7 +4,7 @@ on:
   pull_request_target:
     types: [opened, reopened, synchronize, ready_for_review]
   issue_comment:
-    types: [created, edited]
+    types: [edited]
 
 permissions:
   contents: read
@@ -24,9 +24,18 @@ jobs:
         with:
           script: |
             const MARKER = "<!-- pr-control-panel -->";
-            const LABEL_SKIP_PR_BODY = "skip-pr-body-update";
-            const LABEL_SKIP_PR_FEEDBACK = "skip-auto-pr-address";
-            const LABEL_AUTO_MERGE_CONFLICTS = "auto-merge-conflicts";
+            const LABEL_UPDATE_PR_BODY = "ai-update-pr-body";
+            const LABEL_ADDRESS_PR_FEEDBACK = "ai-address-pr-feedback";
+            const LABEL_ADDRESS_MERGE_CONFLICTS = "ai-address-merge-conflicts";
+            const LABEL_PR_REVIEW = "ai-pr-review";
+            const LABEL_PR_ACTIONS_DETECTIVE = "ai-pr-actions-detective";
+            const LABELS = [
+              LABEL_UPDATE_PR_BODY,
+              LABEL_ADDRESS_PR_FEEDBACK,
+              LABEL_ADDRESS_MERGE_CONFLICTS,
+              LABEL_PR_REVIEW,
+              LABEL_PR_ACTIONS_DETECTIVE,
+            ];
 
             const owner = context.repo.owner;
             const repo = context.repo.repo;
@@ -50,10 +59,50 @@ jobs:
                 `- [${state.updatePrBody ? "x" : " "}] Update PR Body`,
                 `- [${state.addressPrFeedback ? "x" : " "}] Address PR Feedback`,
                 `- [${state.addressMergeConflicts ? "x" : " "}] Address Merge Conflicts`,
+                `- [${state.prReview ? "x" : " "}] PR Review`,
+                `- [${state.prActionsDetective ? "x" : " "}] PR Actions Detective`,
                 "",
                 "---",
-                `Labels synced from this panel: \`${LABEL_SKIP_PR_BODY}\`, \`${LABEL_SKIP_PR_FEEDBACK}\`, \`${LABEL_AUTO_MERGE_CONFLICTS}\``,
+                "All toggles are enabled by default on first panel creation.",
+                "",
+                `Labels synced from this panel: \`${LABEL_UPDATE_PR_BODY}\`, \`${LABEL_ADDRESS_PR_FEEDBACK}\`, \`${LABEL_ADDRESS_MERGE_CONFLICTS}\`, \`${LABEL_PR_REVIEW}\`, \`${LABEL_PR_ACTIONS_DETECTIVE}\``,
               ].join("\n");
+            }
+
+            async function ensureLabel(name, color, description) {
+              try {
+                await github.rest.issues.getLabel({ owner, repo, name });
+              } catch (error) {
+                if (error?.status !== 404) throw error;
+                await github.rest.issues.createLabel({
+                  owner,
+                  repo,
+                  name,
+                  color,
+                  description,
+                });
+                core.info(`Created label: ${name}`);
+              }
+            }
+
+            async function ensureControlLabels() {
+              await ensureLabel(LABEL_UPDATE_PR_BODY, "1d76db", "Enable Update PR Body workflow");
+              await ensureLabel(
+                LABEL_ADDRESS_PR_FEEDBACK,
+                "5319e7",
+                "Enable Address PR Review Feedback workflow",
+              );
+              await ensureLabel(
+                LABEL_ADDRESS_MERGE_CONFLICTS,
+                "d73a4a",
+                "Enable Address Merge Conflicts workflow",
+              );
+              await ensureLabel(LABEL_PR_REVIEW, "0e8a16", "Enable PR Review workflow");
+              await ensureLabel(
+                LABEL_PR_ACTIONS_DETECTIVE,
+                "fbca04",
+                "Enable PR Actions Detective workflow",
+              );
             }
 
             async function listComments(issueNumber) {
@@ -74,6 +123,10 @@ jobs:
               const body = buildControlPanelBody(state);
               const existing = await findControlPanelComment(issueNumber);
               if (existing) {
+                if ((existing.body ?? "") === body) {
+                  core.info(`Control panel comment ${existing.id} already up to date; skipping.`);
+                  return existing.id;
+                }
                 await github.rest.issues.updateComment({
                   owner,
                   repo,
@@ -131,26 +184,45 @@ jobs:
                 core.info(`Removed label: ${name}`);
               }
 
-              // Checked => enabled => remove skip labels
-              if (state.updatePrBody) await removeLabel(LABEL_SKIP_PR_BODY);
-              else await addLabel(LABEL_SKIP_PR_BODY);
+              if (state.updatePrBody) await addLabel(LABEL_UPDATE_PR_BODY);
+              else await removeLabel(LABEL_UPDATE_PR_BODY);
 
-              if (state.addressPrFeedback) await removeLabel(LABEL_SKIP_PR_FEEDBACK);
-              else await addLabel(LABEL_SKIP_PR_FEEDBACK);
+              if (state.addressPrFeedback) await addLabel(LABEL_ADDRESS_PR_FEEDBACK);
+              else await removeLabel(LABEL_ADDRESS_PR_FEEDBACK);
 
-              // Checked => add enable label
-              if (state.addressMergeConflicts) await addLabel(LABEL_AUTO_MERGE_CONFLICTS);
-              else await removeLabel(LABEL_AUTO_MERGE_CONFLICTS);
+              if (state.addressMergeConflicts) await addLabel(LABEL_ADDRESS_MERGE_CONFLICTS);
+              else await removeLabel(LABEL_ADDRESS_MERGE_CONFLICTS);
+
+              if (state.prReview) await addLabel(LABEL_PR_REVIEW);
+              else await removeLabel(LABEL_PR_REVIEW);
+
+              if (state.prActionsDetective) await addLabel(LABEL_PR_ACTIONS_DETECTIVE);
+              else await removeLabel(LABEL_PR_ACTIONS_DETECTIVE);
             }
 
             if (context.eventName === "pull_request_target") {
               const prNumber = context.payload.pull_request.number;
+              await ensureControlLabels();
+              const existing = await findControlPanelComment(prNumber);
               const labels = new Set((context.payload.pull_request.labels || []).map((l) => l.name));
-              const state = {
-                updatePrBody: !labels.has(LABEL_SKIP_PR_BODY),
-                addressPrFeedback: !labels.has(LABEL_SKIP_PR_FEEDBACK),
-                addressMergeConflicts: labels.has(LABEL_AUTO_MERGE_CONFLICTS),
-              };
+              const hasAnyAiLabel = LABELS.some((name) => labels.has(name));
+              const state =
+                existing || hasAnyAiLabel
+                  ? {
+                      updatePrBody: labels.has(LABEL_UPDATE_PR_BODY),
+                      addressPrFeedback: labels.has(LABEL_ADDRESS_PR_FEEDBACK),
+                      addressMergeConflicts: labels.has(LABEL_ADDRESS_MERGE_CONFLICTS),
+                      prReview: labels.has(LABEL_PR_REVIEW),
+                      prActionsDetective: labels.has(LABEL_PR_ACTIONS_DETECTIVE),
+                    }
+                  : {
+                      updatePrBody: true,
+                      addressPrFeedback: true,
+                      addressMergeConflicts: true,
+                      prReview: true,
+                      prActionsDetective: true,
+                    };
+              await syncLabelsFromState(prNumber, labels, state);
               await upsertControlPanel(prNumber, state);
               return;
             }
@@ -163,12 +235,15 @@ jobs:
               return;
             }
 
+            await ensureControlLabels();
             const pr = await getPullRequest(issueNumber);
             const labels = new Set((pr.labels || []).map((l) => l.name));
             const currentState = {
-              updatePrBody: !labels.has(LABEL_SKIP_PR_BODY),
-              addressPrFeedback: !labels.has(LABEL_SKIP_PR_FEEDBACK),
-              addressMergeConflicts: labels.has(LABEL_AUTO_MERGE_CONFLICTS),
+              updatePrBody: labels.has(LABEL_UPDATE_PR_BODY),
+              addressPrFeedback: labels.has(LABEL_ADDRESS_PR_FEEDBACK),
+              addressMergeConflicts: labels.has(LABEL_ADDRESS_MERGE_CONFLICTS),
+              prReview: labels.has(LABEL_PR_REVIEW),
+              prActionsDetective: labels.has(LABEL_PR_ACTIONS_DETECTIVE),
             };
             const desiredState = {
               updatePrBody:
@@ -178,6 +253,9 @@ jobs:
               addressMergeConflicts:
                 readCheckbox(commentBody, "Address Merge Conflicts") ??
                 currentState.addressMergeConflicts,
+              prReview: readCheckbox(commentBody, "PR Review") ?? currentState.prReview,
+              prActionsDetective:
+                readCheckbox(commentBody, "PR Actions Detective") ?? currentState.prActionsDetective,
             };
 
             await syncLabelsFromState(issueNumber, labels, desiredState);

@@ -7,9 +7,9 @@ on:
 
 permissions:
   actions: read
-  contents: write
-  issues: write
-  pull-requests: write
+  contents: read
+  issues: read
+  pull-requests: read
 
 concurrency:
   group: merge-conflict-addresser-${{ github.ref }}
@@ -78,6 +78,10 @@ jobs:
   address-conflicts:
     needs: detect-conflicted-prs
     if: needs.detect-conflicted-prs.outputs.count != '0'
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
     strategy:
       fail-fast: false
       max-parallel: 5
