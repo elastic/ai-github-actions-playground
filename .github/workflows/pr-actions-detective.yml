@@ -29,8 +29,8 @@ jobs:
               repo: context.repo.repo,
               pull_number: prNumber,
             });
-            const enabled = (pr.data.labels || []).some((label) => label.name === "ai-pr-actions-detective");
-            core.info(`PR #${prNumber} ai-pr-actions-detective enabled: ${enabled}`);
+            const enabled = !(pr.data.labels || []).some((label) => label.name === "no-pr-actions-detective");
+            core.info(`PR #${prNumber} no-pr-actions-detective absent (enabled): ${enabled}`);
             core.setOutput("enabled", enabled ? "true" : "false");
 
   run:
