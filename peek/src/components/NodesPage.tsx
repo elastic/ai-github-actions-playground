@@ -167,7 +167,7 @@ export default function NodesPage() {
             value={summary.avgDisk !== null ? `${summary.avgDisk.toFixed(0)}%` : "n/a"}
           />
           <MetricChip label="Docs" value={summary.totalDocs.toLocaleString()} />
-          <MetricChip label="Shards" value={String(summary.totalShards)} />
+          <MetricChip label="Shards" value={summary.totalShards.toLocaleString()} />
         </Box>
       )}
 

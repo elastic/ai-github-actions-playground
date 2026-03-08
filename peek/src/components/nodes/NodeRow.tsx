@@ -61,7 +61,7 @@ export function NodeRow({ row, onClick }: { row: NodeTableRow; onClick: () => vo
       aria-label={`Open node details for ${row.name}`}
       onClick={onClick}
       onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " " || event.key === "Spacebar") {
+        if (event.key === "Enter" || event.key === " ") {
           event.preventDefault();
           onClick();
         }
