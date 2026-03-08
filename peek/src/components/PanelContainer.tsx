@@ -17,6 +17,7 @@ import { useDashboardEditorStore } from "../store/useDashboardEditorStore";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useUIStore } from "../store/useUIStore";
 import { isElasticsearchError } from "../services/es";
+import { downloadBlob } from "../utils/downloadBlob";
 import {
   buildPersesEsqlRequest,
   createPersesEsqlDatasource,
@@ -90,7 +91,6 @@ export default memo(function PanelContainer({ panel }: Props) {
     if (!data || data.columns.length === 0) return;
     const csv = toCsv(data);
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
     const safeTitle =
       panel.title
         .trim()
@@ -98,11 +98,7 @@ export default memo(function PanelContainer({ panel }: Props) {
         .replace(/^-+|-+$/g, "")
         .toLowerCase() || "panel";
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${safeTitle}-${timestamp}.csv`;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 0);
+    downloadBlob(blob, `${safeTitle}-${timestamp}.csv`);
   }, [data, panel.title]);
 
   const fetchData = useCallback(async () => {

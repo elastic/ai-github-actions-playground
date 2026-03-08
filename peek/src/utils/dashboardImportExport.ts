@@ -1,5 +1,6 @@
 import type { DashboardDefinition } from "../types";
 import { toPersesDashboard } from "../services/perses/dashboardAdapters";
+import { downloadBlob } from "./downloadBlob";
 
 export function exportDashboardJson(dashboard: DashboardDefinition): void {
   const json = JSON.stringify(toPersesDashboard(dashboard), null, 2);
@@ -12,23 +13,13 @@ export function exportDashboardJson(dashboard: DashboardDefinition): void {
       .replace(/^-+|-+$/g, "")
       .slice(0, 200) || "dashboard";
   const blob = new Blob([json], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = `${safeTitle}.json`;
-  anchor.click();
-  URL.revokeObjectURL(url);
+  downloadBlob(blob, `${safeTitle}.json`);
 }
 
 export function exportWorkspaceJson(exportWorkspace: () => string): void {
   const json = exportWorkspace();
   const blob = new Blob([json], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = "peek-workspace.json";
-  anchor.click();
-  URL.revokeObjectURL(url);
+  downloadBlob(blob, "peek-workspace.json");
 }
 
 export function triggerFileImport(

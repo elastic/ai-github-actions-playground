@@ -17,6 +17,7 @@ import { DEFAULT_REFRESH_INTERVAL } from "../types";
 import type { EsqlQueryParams } from "../services/es";
 import { useEsqlQuery } from "../hooks/useEsqlQuery";
 import { buildPersesEsqlRequest } from "../services/perses/esqlDatasource";
+import { downloadBlob } from "../utils/downloadBlob";
 
 import {
   filterColumnsByName,
@@ -323,12 +324,7 @@ export function useDiscoverOrchestrator(mode: "query-lab" | "logs") {
     if (!filteredResult || filteredResult.columns.length === 0) return;
     const csv = toCsv(filteredResult);
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = isLogsExplorer ? "logs-explorer-results.csv" : "query-lab-results.csv";
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 0);
+    downloadBlob(blob, isLogsExplorer ? "logs-explorer-results.csv" : "query-lab-results.csv");
   }, [filteredResult, isLogsExplorer]);
   const columns = useMemo<EsqlColumn[]>(() => result?.columns ?? [], [result]);
   const visibleColumns = useMemo(
