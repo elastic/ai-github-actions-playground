@@ -16,6 +16,13 @@ vi.mock("../../src/services/es", () => ({
   })),
 }));
 
+async function flushAsyncEffects(): Promise<void> {
+  await act(async () => {
+    await Promise.resolve();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
+}
+
 describe("ParameterBar", () => {
   beforeEach(() => {
     queryMock.mockReset();
@@ -247,10 +254,7 @@ describe("ParameterBar", () => {
       useDashboardStore.getState().setParameterValue("service", "checkout");
     });
 
-    await act(async () => {
-      await Promise.resolve();
-      await new Promise((resolve) => setTimeout(resolve, 0));
-    });
+    await flushAsyncEffects();
     expect(queryMock).toHaveBeenCalledTimes(2);
   });
 
@@ -288,10 +292,7 @@ describe("ParameterBar", () => {
     await waitFor(() => {
       expect(queryMock).toHaveBeenCalledTimes(3);
     });
-    await act(async () => {
-      await Promise.resolve();
-      await new Promise((resolve) => setTimeout(resolve, 0));
-    });
+    await flushAsyncEffects();
     expect(queryMock).toHaveBeenCalledTimes(3);
   });
 });
