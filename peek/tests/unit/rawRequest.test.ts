@@ -482,18 +482,18 @@ describe("executeRawRequest", () => {
     "falls back to default timeout for invalid timeoutMs=%s",
     async (badTimeout) => {
       vi.useFakeTimers();
+      const timeoutSpy = vi.spyOn(AbortSignal, "timeout").mockImplementation((ms) => {
+        const controller = new AbortController();
+        setTimeout(
+          () =>
+            controller.abort(
+              new DOMException("The operation was aborted due to timeout", "TimeoutError"),
+            ),
+          ms,
+        );
+        return controller.signal;
+      });
       try {
-        const timeoutSpy = vi.spyOn(AbortSignal, "timeout").mockImplementation((ms) => {
-          const controller = new AbortController();
-          setTimeout(
-            () =>
-              controller.abort(
-                new DOMException("The operation was aborted due to timeout", "TimeoutError"),
-              ),
-            ms,
-          );
-          return controller.signal;
-        });
         let requestSignal: AbortSignal | undefined;
         const doFetch: DoFetch = vi.fn((_url, _headers, opts) => {
           requestSignal = opts?.signal;
@@ -524,8 +524,8 @@ describe("executeRawRequest", () => {
         await assertion;
         expect(timeoutSpy).toHaveBeenCalledWith(RAW_REQUEST_TIMEOUT_MS);
         expect(requestSignal?.aborted).toBe(true);
-        timeoutSpy.mockRestore();
       } finally {
+        timeoutSpy.mockRestore();
         vi.useRealTimers();
       }
     },
