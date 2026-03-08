@@ -472,11 +472,11 @@ test.describe("smoke – site navigation", () => {
       .getByRole("button", { name: /^All logs/ })
       .click();
 
-    // Assert that we navigated to Query Lab and the time filter is present
+    // Assert that we navigated to Query Lab with the logs query text
     await expect(page).toHaveURL(/\/discover$/);
     const queryInput = page.getByRole("textbox", { name: "ES|QL query editor" });
     await expect(queryInput).toBeVisible();
-    await expect(queryInput).toContainText("@timestamp >=");
+    await expect(queryInput).toContainText("FROM logs-*");
 
     // Run the query to see results
     await page.getByRole("button", { name: "Run query" }).click();
@@ -487,7 +487,7 @@ test.describe("smoke – site navigation", () => {
     await expect(page.getByRole("columnheader", { name: "message" })).toBeVisible();
   });
 
-  test("logs landing page dimension drill-down passes time filter to query lab", async ({
+  test("logs landing page dimension drill-down opens query lab with selected filter", async ({
     page,
   }) => {
     test.setTimeout(60_000);
@@ -514,7 +514,7 @@ test.describe("smoke – site navigation", () => {
     await expect(page).toHaveURL(/\/discover$/);
     const queryInput = page.getByRole("textbox", { name: "ES|QL query editor" });
     await expect(queryInput).toBeVisible();
-    await expect(queryInput).toContainText("@timestamp >=");
+    await expect(queryInput).toContainText("FROM logs-*");
     await expect(queryInput).toContainText('service.name == "checkout-service"');
   });
 

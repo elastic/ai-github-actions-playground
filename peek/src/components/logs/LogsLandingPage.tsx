@@ -25,7 +25,6 @@ import { interactiveCardSx } from "../interactiveCardSx";
 
 import LogsDimensionListPage from "./LogsDimensionListPage";
 import { LOGS_DIMENSION_LABELS, type LogsFocusDimension } from "./logsDimensions";
-import { timeRangeToEsqlFilter } from "./logsQueryBuilder";
 
 interface FocusOption {
   dimension: LogsFocusDimension | null;
@@ -83,13 +82,12 @@ export default function LogsLandingPage() {
   const handleSelect = useCallback(
     async (dim: LogsFocusDimension | null) => {
       if (dim === null) {
-        const timeFilter = timeRangeToEsqlFilter(timeRange);
-        openInDiscover(`FROM logs-* | WHERE ${timeFilter} | SORT @timestamp DESC | LIMIT 500`);
+        openInDiscover(`FROM logs-* | SORT @timestamp DESC | LIMIT 500`);
         return;
       }
       await setUrlDimension(dim);
     },
-    [openInDiscover, setUrlDimension, timeRange],
+    [openInDiscover, setUrlDimension],
   );
 
   const handleBack = useCallback(async () => {
@@ -132,7 +130,7 @@ export default function LogsLandingPage() {
         {FOCUS_OPTIONS.map((option) => {
           const dim = option.dimension;
           // "All logs" always visible; dimension tiles show based on count state
-          if (dim !== null && counts[dim] === "hidden") return null;
+          if (dim !== null && (counts[dim] === "hidden" || counts[dim] === "error")) return null;
 
           const isLoading = dim !== null && counts[dim] === "loading";
           const subtext = dim !== null && subtexts[dim] ? subtexts[dim] : option.subtext;
