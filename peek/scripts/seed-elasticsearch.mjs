@@ -187,6 +187,84 @@ async function seedIngestPipelines(client) {
 }
 
 // ---------------------------------------------------------------------------
+// Seed: transforms (Transforms page)
+// ---------------------------------------------------------------------------
+
+async function seedTransforms(client, count = 250) {
+  const existing = await client.transform
+    .getTransform({ transform_id: "*" })
+    .catch((error) => {
+      if (error.meta?.statusCode === 404) return { transforms: [] };
+      throw error;
+    });
+
+  for (const transform of existing.transforms ?? []) {
+    await client.transform
+      .deleteTransform({
+        transform_id: transform.id,
+        force: true,
+        wait_for_completion: true,
+      })
+      .catch((error) => {
+        if (error.meta?.statusCode !== 404) {
+          console.warn(`  Warning: could not delete transform ${transform.id}: ${error.message}`);
+        }
+      });
+  }
+
+  const hosts = ["web-1", "web-2", "web-3"];
+  const CHUNK_SIZE = 25;
+  for (let i = 0; i < count; i += CHUNK_SIZE) {
+    const chunkEnd = Math.min(i + CHUNK_SIZE, count);
+    const chunk = [];
+    for (let j = i; j < chunkEnd; j += 1) {
+      const id = `web-logs-summary-${String(j + 1).padStart(3, "0")}`;
+      const host = hosts[j % hosts.length];
+      chunk.push(
+        client.transform.putTransform({
+          transform_id: id,
+          description: `Synthetic transform ${j + 1} for UI pagination coverage`,
+          source: {
+            index: ["web_logs"],
+            query: { term: { host } },
+          },
+          dest: {
+            index: `web_logs_summary_${String(j + 1).padStart(3, "0")}`,
+          },
+          frequency: "5m",
+          sync: {
+            time: {
+              field: "@timestamp",
+              delay: "60s",
+            },
+          },
+          pivot: {
+            group_by: {
+              hour: {
+                date_histogram: {
+                  field: "@timestamp",
+                  calendar_interval: "1h",
+                },
+              },
+              status: { terms: { field: "status" } },
+            },
+            aggregations: {
+              total_bytes: { sum: { field: "bytes" } },
+              request_count: { value_count: { field: "path" } },
+            },
+          },
+        }).catch((error) => {
+          console.warn(`  Warning: could not create transform ${id}: ${error.message}`);
+        }),
+      );
+    }
+    await Promise.all(chunk);
+  }
+
+  console.log(`  transforms: ${count} transform definitions`);
+}
+
+// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 
@@ -203,6 +281,7 @@ async function run() {
 
   await Promise.all([seedWebLogs(client), seedOrders(client)]);
   await seedIngestPipelines(client);
+  await seedTransforms(client);
 
   console.log("\nSeeding complete.");
 }

@@ -566,6 +566,19 @@ export const PAGE_PATHS = {
       iconKey: "PolicyIcon",
     },
   },
+  transforms: {
+    path: "/transforms",
+    requiresConnection: true,
+    showTimeControls: false,
+    skeletonVariant: "table",
+    nav: {
+      label: "Transforms",
+      group: "System",
+      order: 32,
+      showInSidebar: true,
+      iconKey: "TransformIcon",
+    },
+  },
   snapshots: {
     path: "/snapshots",
     requiresConnection: true,
@@ -574,7 +587,7 @@ export const PAGE_PATHS = {
     nav: {
       label: "Snapshots",
       group: "System",
-      order: 32,
+      order: 33,
       showInSidebar: true,
       iconKey: "BackupIcon",
     },
