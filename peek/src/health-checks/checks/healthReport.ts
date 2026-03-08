@@ -10,6 +10,8 @@ export const healthReportChecks: HealthCheckDefinition[] = [
     severityOnFail: "critical",
     surfaces: ["global"],
     dependsOn: ["healthReport"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/health-api",
+    recommendation: "Open Cluster Diagnostics to review impacted indicators and diagnoses.",
     evaluate: (snapshot) => {
       if (snapshot.errors.healthReport) {
         return {
@@ -58,6 +60,8 @@ export const healthReportChecks: HealthCheckDefinition[] = [
     severityOnFail: "high",
     surfaces: ["global"],
     dependsOn: ["healthReport"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/health-api",
+    recommendation: "Open Cluster Diagnostics to review impacted indicators and diagnoses.",
     evaluate: (snapshot) => {
       if (snapshot.errors.healthReport) {
         return {

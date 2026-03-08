@@ -54,7 +54,6 @@ const DocsPage = lazy(() => import("../components/DocsPage"));
 const ExplorePage = lazy(() => import("../components/ExplorePage"));
 const FleetAgentPage = lazy(() => import("../components/FleetAgentPage"));
 const FleetPage = lazy(() => import("../components/FleetPage"));
-const GlobalHealthPage = lazy(() => import("../components/GlobalHealthPage"));
 const ClusterDiagnosticsPage = lazy(() => import("../components/ClusterDiagnosticsPage"));
 const IngestPipelinesPage = lazy(() => import("../components/IngestPipelinesPage"));
 const IndicesPage = lazy(() => import("../components/IndicesPage"));
@@ -441,22 +440,22 @@ export const PAGE_MANIFEST = {
     nav: {
       label: "Health",
       group: "System",
-      order: 12,
+      order: 11,
       showInSidebar: true,
       icon: createElement(HealthAndSafetyIcon, { fontSize: "small" }),
     },
   },
   globalHealth: {
     path: "/health",
-    component: GlobalHealthPage,
+    component: ClusterHealthPage,
     requiresConnection: true,
     showTimeControls: false,
     skeletonVariant: "table",
     nav: {
-      label: "Global Health",
+      label: "Health",
       group: "System",
       order: 11,
-      showInSidebar: true,
+      showInSidebar: false,
       icon: createElement(HealthAndSafetyIcon, { fontSize: "small" }),
     },
   },

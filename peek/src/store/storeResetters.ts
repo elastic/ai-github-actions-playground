@@ -80,7 +80,7 @@ export const RESET_SCOPE: ReadonlyArray<{ label: string; reset: () => void }> = 
     reset: resetQuery,
   },
   {
-    label: "Observability filters (traces, metrics, logs, fleet, profiling, services)",
+    label: "Observability filters (traces, metrics, logs, fleet, hosts, profiling, services)",
     reset: () => {
       resetTraces();
       resetExplorer();

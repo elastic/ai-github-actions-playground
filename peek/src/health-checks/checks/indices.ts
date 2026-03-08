@@ -25,6 +25,9 @@ export const indicesChecks: HealthCheckDefinition[] = [
     severityOnFail: "critical",
     surfaces: ["global", "local"],
     dependsOn: ["indicesCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/cat-indices",
+    recommendation:
+      "Red indices have unassigned primary shards. Check allocation explain and node health.",
     evaluate: (snapshot) => {
       const indices = snapshot.data.indicesCore?.catIndices;
       if (!indices) return unknownIndicesDataResult();
@@ -51,6 +54,8 @@ export const indicesChecks: HealthCheckDefinition[] = [
     severityOnFail: "medium",
     surfaces: ["global"],
     dependsOn: ["indicesCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/cat-indices",
+    recommendation: "Yellow indices have unassigned replicas. Add nodes or adjust replica count.",
     evaluate: (snapshot) => {
       const indices = snapshot.data.indicesCore?.catIndices;
       if (!indices) return unknownIndicesDataResult();
@@ -77,6 +82,9 @@ export const indicesChecks: HealthCheckDefinition[] = [
     severityOnFail: "medium",
     surfaces: ["global"],
     dependsOn: ["indicesCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/cat-indices",
+    recommendation:
+      "Shards over 50 GB slow recovery and merges. Increase primary shard count or use rollover.",
     evaluate: (snapshot) => {
       const indices = snapshot.data.indicesCore?.catIndices;
       if (!indices) return unknownIndicesDataResult();
@@ -109,6 +117,9 @@ export const indicesChecks: HealthCheckDefinition[] = [
     severityOnFail: "low",
     surfaces: ["global"],
     dependsOn: ["indicesCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/cat-indices",
+    recommendation:
+      "Many tiny shards waste heap and cluster state. Merge indices or reduce shard count.",
     evaluate: (snapshot) => {
       const indices = snapshot.data.indicesCore?.catIndices;
       if (!indices) return unknownIndicesDataResult();
@@ -139,6 +150,9 @@ export const indicesChecks: HealthCheckDefinition[] = [
     severityOnFail: "low",
     surfaces: ["global"],
     dependsOn: ["indicesCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/cat-indices",
+    recommendation:
+      "High deleted doc ratio wastes disk. Force-merge read-only indices to expunge deletes.",
     evaluate: (snapshot) => {
       const indices = snapshot.data.indicesCore?.catIndices;
       if (!indices) return unknownIndicesDataResult();
@@ -172,6 +186,9 @@ export const indicesChecks: HealthCheckDefinition[] = [
     severityOnFail: "medium",
     surfaces: ["global"],
     dependsOn: ["indicesCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/cat-indices",
+    recommendation:
+      "Too many indices increase cluster state size and master node pressure. Use ILM or data streams.",
     evaluate: (snapshot) => {
       const indices = snapshot.data.indicesCore?.catIndices;
       if (!indices) return unknownIndicesDataResult();
@@ -197,6 +214,9 @@ export const indicesChecks: HealthCheckDefinition[] = [
     severityOnFail: "low",
     surfaces: ["global"],
     dependsOn: ["indicesCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/cat-indices",
+    recommendation:
+      "Closed indices consume cluster state resources. Delete them if no longer needed.",
     evaluate: (snapshot) => {
       const indices = snapshot.data.indicesCore?.catIndices;
       if (!indices) return unknownIndicesDataResult();

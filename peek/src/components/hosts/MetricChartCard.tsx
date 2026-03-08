@@ -13,6 +13,7 @@ import {
   type HostQueryFilters,
   type HostTimeSeriesMetric,
 } from "./hostQueryBuilder";
+import { fmtBytesRate } from "./hostFormatters";
 import { parseSimpleTimeSeries } from "./hostTimeSeriesParsers";
 
 interface MetricChartCardProps {
@@ -21,6 +22,8 @@ interface MetricChartCardProps {
   filters: HostQueryFilters;
   /** Format values as percentage (multiply by 100). */
   asPercent?: boolean;
+  /** Format values as bytes/s. */
+  asBytes?: boolean;
   color?: string;
 }
 
@@ -29,6 +32,7 @@ export default function MetricChartCard({
   metricField,
   filters,
   asPercent,
+  asBytes,
   color,
 }: MetricChartCardProps) {
   const theme = useEChartTheme();
@@ -36,9 +40,21 @@ export default function MetricChartCard({
     () => buildHostTimeSeriesQuery(metricField, filters),
     [metricField, filters],
   );
-  const { data, loading } = useSimpleEsqlQuery({ query });
+  const { data, loading, error } = useSimpleEsqlQuery({ query });
 
   const points = useMemo(() => parseSimpleTimeSeries(data), [data]);
+
+  const fmtValue = useMemo(() => {
+    if (asPercent) return (v: number) => `${v.toFixed(1)}%`;
+    if (asBytes) return (v: number) => fmtBytesRate(v);
+    return (v: number) => v.toFixed(2);
+  }, [asPercent, asBytes]);
+
+  const fmtAxis = useMemo(() => {
+    if (asPercent) return (v: number) => `${v.toFixed(0)}%`;
+    if (asBytes) return (v: number) => fmtBytesRate(v);
+    return (v: number) => String(v);
+  }, [asPercent, asBytes]);
 
   const option = useMemo(() => {
     const seriesData = points.map((p) => [
@@ -48,11 +64,11 @@ export default function MetricChartCard({
     const seriesColor = color ?? (theme.color[0] as string | undefined) ?? "#4fc3f7";
 
     return {
-      grid: { left: 48, right: 16, top: 12, bottom: 28 },
+      grid: { left: 72, right: 16, top: 12, bottom: 28 },
       tooltip: {
         ...theme.tooltip,
         trigger: "axis",
-        valueFormatter: (v: number) => (asPercent ? `${v.toFixed(1)}%` : v.toFixed(2)),
+        valueFormatter: fmtValue,
       },
       xAxis: {
         ...theme.xAxis,
@@ -65,7 +81,7 @@ export default function MetricChartCard({
         axisLabel: {
           ...theme.yAxis?.axisLabel,
           fontSize: 10,
-          formatter: (v: number) => (asPercent ? `${v.toFixed(0)}%` : String(v)),
+          formatter: fmtAxis,
         },
         ...(asPercent ? { max: 100, min: 0 } : {}),
       },
@@ -81,7 +97,7 @@ export default function MetricChartCard({
         },
       ],
     };
-  }, [points, theme, asPercent, color]);
+  }, [points, theme, asPercent, fmtValue, fmtAxis, color]);
 
   return (
     <Paper variant="outlined" sx={{ overflow: "hidden" }}>
@@ -108,8 +124,8 @@ export default function MetricChartCard({
           <Box
             sx={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}
           >
-            <Typography variant="body2" color="text.secondary">
-              {loading ? "Loading..." : "No data"}
+            <Typography variant="body2" color={error ? "error" : "text.secondary"}>
+              {loading ? "Loading..." : (error ?? "No data")}
             </Typography>
           </Box>
         )}

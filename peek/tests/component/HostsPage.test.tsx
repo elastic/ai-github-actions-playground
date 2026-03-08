@@ -98,7 +98,6 @@ describe("HostsPage", () => {
     useConnectionStore
       .getState()
       .setConnection({ url: "https://example.es.local:9200", apiKey: "key" });
-    usePageFiltersStore.getState().resetHostsFilters();
   });
 
   it("renders page header", () => {
