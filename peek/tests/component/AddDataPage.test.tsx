@@ -104,7 +104,7 @@ describe("AddDataPage", () => {
     useConnectionStore.setState({ capabilities: defaultCapabilities });
   });
 
-  it("renders Step 1 with search and experience tiles", () => {
+  it("renders Step 1 with search and experience tiles", { timeout: 15_000 }, () => {
     renderPage();
     expect(
       screen.getByRole("heading", { name: /What do you want to monitor\?/i }),
@@ -116,9 +116,9 @@ describe("AddDataPage", () => {
     expect(screen.getByText("Kubernetes")).toBeInTheDocument();
     expect(screen.getByText("Laptops and Servers")).toBeInTheDocument();
     expect(screen.getByText("Applications (APM Agents)")).toBeInTheDocument();
-  }, 15_000);
+  });
 
-  it("shows third-party collectors under Advanced", async () => {
+  it("shows third-party collectors under Advanced", { timeout: 15_000 }, async () => {
     const user = userEvent.setup();
     renderPage();
 
@@ -130,9 +130,9 @@ describe("AddDataPage", () => {
     expect(screen.getByRole("button", { name: /^Filebeat/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^Logstash/i })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^Java$/i })).not.toBeInTheDocument();
-  }, 15_000);
+  });
 
-  it("filters technologies by search and experience selection", async () => {
+  it("filters technologies by search and experience selection", { timeout: 15_000 }, async () => {
     const user = userEvent.setup();
     renderPage();
 
@@ -154,9 +154,9 @@ describe("AddDataPage", () => {
     await user.click(screen.getAllByRole("button", { name: /SaaS & Databases/i })[0]!);
     expect(screen.getByText("PostgreSQL")).toBeInTheDocument();
     expect(screen.queryByText(/^AWS$/i)).not.toBeInTheDocument();
-  }, 15_000);
+  });
 
-  it("keeps next steps locked until verification", async () => {
+  it("keeps next steps locked until verification", { timeout: 30_000 }, async () => {
     const user = userEvent.setup();
     renderPage();
 
@@ -171,9 +171,9 @@ describe("AddDataPage", () => {
     // Step 2 keeps Continue disabled until verification signals are detected.
     expect(screen.getByRole("button", { name: /^Continue$/i })).toBeDisabled();
     expect(screen.queryByRole("heading", { name: /next steps/i })).not.toBeInTheDocument();
-  }, 30_000);
+  });
 
-  it("allows skipping verification to proceed to Step 3", async () => {
+  it("allows skipping verification to proceed to Step 3", { timeout: 30_000 }, async () => {
     // Return empty data streams so verification never detects data
     mockGetDataStreams.mockResolvedValue({ data_streams: [] });
     mockRawRequest.mockResolvedValue({
@@ -207,42 +207,48 @@ describe("AddDataPage", () => {
     // Click Continue to reach Step 3
     await user.click(screen.getByRole("button", { name: /^Continue$/i }));
     expect(screen.getByRole("button", { name: "Add another source" })).toBeInTheDocument();
-  }, 30_000);
+  });
 
-  it("shows configure and install sections with credentials in merged Step 2", async () => {
-    const user = userEvent.setup();
-    renderPage();
+  it(
+    "shows configure and install sections with credentials in merged Step 2",
+    { timeout: 30_000 },
+    async () => {
+      const user = userEvent.setup();
+      renderPage();
 
-    await goToStep2(user);
+      await goToStep2(user);
 
-    // Configure section requires explicit choice and exposes alternatives.
-    expect(
-      screen.getByRole("button", { name: /Monitor with OpenTelemetry Collector/i }),
-    ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Other collector options/i })).toBeInTheDocument();
-    // Kubernetes has a single supported environment, so no redundant selector is shown.
-    expect(screen.queryByRole("tab", { name: "Kubernetes" })).not.toBeInTheDocument();
+      // Configure section requires explicit choice and exposes alternatives.
+      expect(
+        screen.getByRole("button", { name: /Monitor with OpenTelemetry Collector/i }),
+      ).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /Other collector options/i })).toBeInTheDocument();
+      // Kubernetes has a single supported environment, so no redundant selector is shown.
+      expect(screen.queryByRole("tab", { name: "Kubernetes" })).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: /Monitor with OpenTelemetry Collector/i }));
+      await user.click(
+        screen.getByRole("button", { name: /Monitor with OpenTelemetry Collector/i }),
+      );
 
-    // Credentials section appears as its own section (between Configure and Install)
-    expect(screen.getByText("Collector configuration")).toBeInTheDocument();
-    expect(
-      screen.queryByText(/Managed OTLP endpoint detected and selected/i),
-    ).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Generate API key/i })).toBeInTheDocument();
+      // Credentials section appears as its own section (between Configure and Install)
+      expect(screen.getByText("Collector configuration")).toBeInTheDocument();
+      expect(
+        screen.queryByText(/Managed OTLP endpoint detected and selected/i),
+      ).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /Generate API key/i })).toBeInTheDocument();
 
-    // Install section shows quick command / step by step toggle
-    expect(screen.getByRole("button", { name: /Quick command/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Step by step/i })).toBeInTheDocument();
+      // Install section shows quick command / step by step toggle
+      expect(screen.getByRole("button", { name: /Quick command/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /Step by step/i })).toBeInTheDocument();
 
-    // Verify section is shown and AI troubleshooting action is available while listening
-    expect(
-      screen.getAllByText(/Kubernetes sends metrics, logs, and traces/i).length,
-    ).toBeGreaterThan(0);
-  }, 30_000);
+      // Verify section is shown and AI troubleshooting action is available while listening
+      expect(
+        screen.getAllByText(/Kubernetes sends metrics, logs, and traces/i).length,
+      ).toBeGreaterThan(0);
+    },
+  );
 
-  it("hides configure output for single-mode collectors", async () => {
+  it("hides configure output for single-mode collectors", { timeout: 30_000 }, async () => {
     const user = userEvent.setup();
     renderPage();
 
@@ -253,38 +259,42 @@ describe("AddDataPage", () => {
     expect(screen.queryByText("Configure output")).not.toBeInTheDocument();
     expect(screen.getByText("Install collector")).toBeInTheDocument();
     expect(screen.getByText("Collector configuration")).toBeInTheDocument();
-  }, 30_000);
+  });
 
-  it("guides AWS setup step-by-step (configure -> credentials -> deploy)", async () => {
-    const user = userEvent.setup();
-    renderPage();
+  it(
+    "guides AWS setup step-by-step (configure -> credentials -> deploy)",
+    { timeout: 30_000 },
+    async () => {
+      const user = userEvent.setup();
+      renderPage();
 
-    await user.click(screen.getByRole("button", { name: /Cloud and SaaS/i }));
-    await user.click(screen.getByRole("button", { name: /^AWS/i }));
+      await user.click(screen.getByRole("button", { name: /Cloud and SaaS/i }));
+      await user.click(screen.getByRole("button", { name: /^AWS/i }));
 
-    expect(
-      screen.getByRole("heading", { name: /Set up Amazon Web Services/i }),
-    ).toBeInTheDocument();
-    expect(screen.getByText("How should we connect?")).toBeInTheDocument();
-    expect(
-      screen.queryByText("Amazon Data Firehose -> Elastic Credentials"),
-    ).not.toBeInTheDocument();
-    expect(screen.queryByText("Deploy stack")).not.toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { name: /Set up Amazon Web Services/i }),
+      ).toBeInTheDocument();
+      expect(screen.getByText("How should we connect?")).toBeInTheDocument();
+      expect(
+        screen.queryByText("Amazon Data Firehose -> Elastic Credentials"),
+      ).not.toBeInTheDocument();
+      expect(screen.queryByText("Deploy stack")).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: /Amazon Data Firehose/i }));
-    expect(screen.getByText("Connecting using AWS Firehose")).toBeInTheDocument();
+      await user.click(screen.getByRole("button", { name: /Amazon Data Firehose/i }));
+      expect(screen.getByText("Connecting using AWS Firehose")).toBeInTheDocument();
 
-    expect(screen.getByText("Amazon Data Firehose -> Elastic Credentials")).toBeInTheDocument();
-    await waitFor(() => {
-      expect(screen.getByText("Deploy stack")).toBeInTheDocument();
-    });
-    expect(screen.queryByText(/Checking\.\.\./i)).not.toBeInTheDocument();
+      expect(screen.getByText("Amazon Data Firehose -> Elastic Credentials")).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByText("Deploy stack")).toBeInTheDocument();
+      });
+      expect(screen.queryByText(/Checking\.\.\./i)).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole("link", { name: /Launch stack in AWS Console/i }));
-    expect(screen.getAllByText(/Checking\.\.\./i).length).toBeGreaterThan(0);
-  }, 30_000);
+      await user.click(screen.getByRole("link", { name: /Launch stack in AWS Console/i }));
+      expect(screen.getAllByText(/Checking\.\.\./i).length).toBeGreaterThan(0);
+    },
+  );
 
-  it("shows manual CLI tab for AWS deploy", async () => {
+  it("shows manual CLI tab for AWS deploy", { timeout: 30_000 }, async () => {
     const user = userEvent.setup();
     renderPage();
 
@@ -300,20 +310,24 @@ describe("AddDataPage", () => {
     expect(screen.getByRole("button", { name: /Copy CLI command/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Open CloudShell/i })).toBeInTheDocument();
     expect(screen.getByText(/aws cloudformation deploy/)).toBeInTheDocument();
-  }, 30_000);
+  });
 
-  it("hides environment tabs when only one environment is supported", async () => {
-    const user = userEvent.setup();
-    renderPage();
+  it(
+    "hides environment tabs when only one environment is supported",
+    { timeout: 30_000 },
+    async () => {
+      const user = userEvent.setup();
+      renderPage();
 
-    await user.click(screen.getByRole("button", { name: /Servers/i }));
-    await user.click(screen.getByRole("button", { name: /^Windows Host/i }));
+      await user.click(screen.getByRole("button", { name: /Servers/i }));
+      await user.click(screen.getByRole("button", { name: /^Windows Host/i }));
 
-    expect(screen.getByRole("heading", { name: /Set up Windows Host/i })).toBeInTheDocument();
-    expect(screen.queryByRole("tab", { name: "Windows" })).not.toBeInTheDocument();
-  }, 30_000);
+      expect(screen.getByRole("heading", { name: /Set up Windows Host/i })).toBeInTheDocument();
+      expect(screen.queryByRole("tab", { name: "Windows" })).not.toBeInTheDocument();
+    },
+  );
 
-  it("does not show host runtime tabs in Prometheus setup", async () => {
+  it("does not show host runtime tabs in Prometheus setup", { timeout: 30_000 }, async () => {
     const user = userEvent.setup();
     renderPage();
 
@@ -326,9 +340,9 @@ describe("AddDataPage", () => {
     expect(screen.queryByRole("tab", { name: /^Linux$/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("tab", { name: /^macOS$/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("tab", { name: /^Windows$/i })).not.toBeInTheDocument();
-  }, 30_000);
+  });
 
-  it("shows a separate Prometheus Remote Write tile", async () => {
+  it("shows a separate Prometheus Remote Write tile", { timeout: 15_000 }, async () => {
     const user = userEvent.setup();
     renderPage();
     await user.click(screen.getByRole("button", { name: /^Advanced\b/i }));
@@ -336,9 +350,9 @@ describe("AddDataPage", () => {
       screen.getByRole("button", { name: /Scrape Prometheus Metrics with OTel/i }),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Prometheus Remote Write/i })).toBeInTheDocument();
-  }, 15_000);
+  });
 
-  it("auto-detects host architecture in generated commands", async () => {
+  it("auto-detects host architecture in generated commands", { timeout: 30_000 }, async () => {
     const user = userEvent.setup();
     renderPage();
 
@@ -375,9 +389,9 @@ describe("AddDataPage", () => {
     expect(
       screen.getAllByText(/systemctl enable --now elastic-agent-otel\.service/i).length,
     ).toBeGreaterThan(0);
-  }, 30_000);
+  });
 
-  it("shows contextual verification expectations in Step 2", async () => {
+  it("shows contextual verification expectations in Step 2", { timeout: 30_000 }, async () => {
     const user = userEvent.setup();
     renderPage();
 
@@ -386,9 +400,9 @@ describe("AddDataPage", () => {
     expect(
       screen.getAllByText(/Kubernetes sends metrics, logs, and traces/i).length,
     ).toBeGreaterThan(0);
-  }, 30_000);
+  });
 
-  it("uses managed OTLP endpoint for APM SDK snippets", async () => {
+  it("uses managed OTLP endpoint for APM SDK snippets", { timeout: 30_000 }, async () => {
     const user = userEvent.setup();
     renderPage();
 
@@ -405,38 +419,42 @@ describe("AddDataPage", () => {
     expect(
       screen.queryByText(/my-project\.es\.us-east-1\.aws\.elastic\.cloud/i),
     ).not.toBeInTheDocument();
-  }, 30_000);
+  });
 
-  it("shows Step 3 outcomes with dashboard/alerting/additional source CTAs", async () => {
-    const user = userEvent.setup();
-    // Baseline capture will see empty data streams; subsequent poll calls
-    // will see the new metrics data stream, triggering dataStreamAppeared.
-    mockGetDataStreams.mockResolvedValueOnce({ data_streams: [] }).mockResolvedValue({
-      data_streams: [{ name: "metrics-host.otel-default" }],
-    });
+  it(
+    "shows Step 3 outcomes with dashboard/alerting/additional source CTAs",
+    { timeout: 30_000 },
+    async () => {
+      const user = userEvent.setup();
+      // Baseline capture will see empty data streams; subsequent poll calls
+      // will see the new metrics data stream, triggering dataStreamAppeared.
+      mockGetDataStreams.mockResolvedValueOnce({ data_streams: [] }).mockResolvedValue({
+        data_streams: [{ name: "metrics-host.otel-default" }],
+      });
 
-    renderPage();
-    await goToStep2(user);
-    await chooseRecommendedCollector(user);
+      renderPage();
+      await goToStep2(user);
+      await chooseRecommendedCollector(user);
 
-    // Wait for detection and unlocked progression.
-    await waitFor(
-      () => {
-        expect(screen.getByRole("button", { name: /^Continue$/i })).toBeEnabled();
-      },
-      { timeout: 10_000 },
-    );
+      // Wait for detection and unlocked progression.
+      await waitFor(
+        () => {
+          expect(screen.getByRole("button", { name: /^Continue$/i })).toBeEnabled();
+        },
+        { timeout: 10_000 },
+      );
 
-    // Navigate to Step 3
-    await user.click(screen.getByRole("button", { name: /^Continue$/i }));
+      // Navigate to Step 3
+      await user.click(screen.getByRole("button", { name: /^Continue$/i }));
 
-    // Technology-specific recommended next steps from Kubernetes catalog entry
-    expect(screen.getByRole("button", { name: "Explore metrics" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Open Logs" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Open Query Lab" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Open traces" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Add another source" })).toBeInTheDocument();
-  }, 30_000);
+      // Technology-specific recommended next steps from Kubernetes catalog entry
+      expect(screen.getByRole("button", { name: "Explore metrics" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Open Logs" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Open Query Lab" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Open traces" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Add another source" })).toBeInTheDocument();
+    },
+  );
 
   it("ensures every log-emitting technology has an Open Logs next step", () => {
     const missing = ADD_DATA_TECHNOLOGY_CATALOG.filter((entry) =>
@@ -453,7 +471,7 @@ describe("AddDataPage", () => {
     expect(missing).toEqual([]);
   });
 
-  it("resets state when clicking 'Add another source'", async () => {
+  it("resets state when clicking 'Add another source'", { timeout: 30_000 }, async () => {
     mockGetDataStreams.mockResolvedValueOnce({ data_streams: [] }).mockResolvedValue({
       data_streams: [{ name: "metrics-host.otel-default" }],
     });
@@ -483,29 +501,35 @@ describe("AddDataPage", () => {
       screen.getByPlaceholderText("Search technologies (e.g., PostgreSQL, Kubernetes...)"),
     ).toHaveValue("");
     expect(screen.queryByRole("button", { name: /^Continue$/i })).not.toBeInTheDocument();
-  }, 30_000);
+  });
 
-  it("shows collector output and API key section for collector setup", async () => {
-    useConnectionStore.getState().setConnection({
-      url: "http://localhost:9200",
-      apiKey: "testkey",
-    });
+  it(
+    "shows collector output and API key section for collector setup",
+    { timeout: 30_000 },
+    async () => {
+      useConnectionStore.getState().setConnection({
+        url: "http://localhost:9200",
+        apiKey: "testkey",
+      });
 
-    const user = userEvent.setup();
-    renderPage();
+      const user = userEvent.setup();
+      renderPage();
 
-    await user.click(screen.getByRole("button", { name: /Laptops and Servers/i }));
-    await user.click(screen.getByRole("button", { name: /Linux Host/i }));
-    await user.click(screen.getByRole("button", { name: /Monitor with OpenTelemetry Collector/i }));
+      await user.click(screen.getByRole("button", { name: /Laptops and Servers/i }));
+      await user.click(screen.getByRole("button", { name: /Linux Host/i }));
+      await user.click(
+        screen.getByRole("button", { name: /Monitor with OpenTelemetry Collector/i }),
+      );
 
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: /Bulk/i })).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /OTLP/i })).toBeInTheDocument();
-      expect(screen.getByDisplayValue("http://localhost:9200")).toBeInTheDocument();
-    });
-  }, 30_000);
+      await waitFor(() => {
+        expect(screen.getByRole("button", { name: /Bulk/i })).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: /OTLP/i })).toBeInTheDocument();
+        expect(screen.getByDisplayValue("http://localhost:9200")).toBeInTheDocument();
+      });
+    },
+  );
 
-  it("clears technology selection when search input is cleared", async () => {
+  it("clears technology selection when search input is cleared", { timeout: 15_000 }, async () => {
     const user = userEvent.setup();
     renderPage();
 
@@ -534,29 +558,33 @@ describe("AddDataPage", () => {
       "java",
     );
     expect(screen.getByRole("button", { name: /^Java/i, pressed: false })).toBeInTheDocument();
-  }, 15_000);
+  });
 
-  it("filters verified signals to only expected signals for APM technologies", async () => {
-    const user = userEvent.setup();
-    renderPage();
+  it(
+    "filters verified signals to only expected signals for APM technologies",
+    { timeout: 30_000 },
+    async () => {
+      const user = userEvent.setup();
+      renderPage();
 
-    // Search for Java to find APM tile, select it (auto-advances to Step 2)
-    await user.type(
-      screen.getByPlaceholderText("Search technologies (e.g., PostgreSQL, Kubernetes...)"),
-      "java",
-    );
-    const javaCard = screen.getByRole("button", { name: /^Java/i, pressed: false });
-    await user.click(javaCard);
+      // Search for Java to find APM tile, select it (auto-advances to Step 2)
+      await user.type(
+        screen.getByPlaceholderText("Search technologies (e.g., PostgreSQL, Kubernetes...)"),
+        "java",
+      );
+      const javaCard = screen.getByRole("button", { name: /^Java/i, pressed: false });
+      await user.click(javaCard);
 
-    // Now on Step 2 — advance to Step 3
-    await user.click(screen.getByRole("button", { name: /^Continue$/i }));
+      // Now on Step 2 — advance to Step 3
+      await user.click(screen.getByRole("button", { name: /^Continue$/i }));
 
-    // Step 3: with no foundSignals, should show expected signals (traces, metrics) — not logs
-    expect(screen.getByText(/Expected signals: Traces, Metrics\./)).toBeInTheDocument();
-    expect(screen.queryByText(/Logs/)).not.toBeInTheDocument();
-  }, 30_000);
+      // Step 3: with no foundSignals, should show expected signals (traces, metrics) — not logs
+      expect(screen.getByText(/Expected signals: Traces, Metrics\./)).toBeInTheDocument();
+      expect(screen.queryByText(/Logs/)).not.toBeInTheDocument();
+    },
+  );
 
-  it("shows Open Services CTA for APM technologies in Step 3", async () => {
+  it("shows Open Services CTA for APM technologies in Step 3", { timeout: 30_000 }, async () => {
     // Baseline call sees no data streams; subsequent polls see APM traces stream.
     mockGetDataStreams.mockResolvedValueOnce({ data_streams: [] }).mockResolvedValue({
       data_streams: [{ name: "traces-apm-default" }],
@@ -588,9 +616,9 @@ describe("AddDataPage", () => {
     expect(screen.getByRole("button", { name: "Open Services" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Open traces" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Explore metrics" })).toBeInTheDocument();
-  }, 30_000);
+  });
 
-  it("resets setup flow when clicking Start over", async () => {
+  it("resets setup flow when clicking Start over", { timeout: 30_000 }, async () => {
     const user = userEvent.setup();
     renderPage();
 
@@ -610,7 +638,7 @@ describe("AddDataPage", () => {
     expect(
       screen.queryByRole("heading", { name: /Set up Amazon Web Services/i }),
     ).not.toBeInTheDocument();
-  }, 30_000);
+  });
 });
 
 describe("probeOtlpEndpoint", () => {
