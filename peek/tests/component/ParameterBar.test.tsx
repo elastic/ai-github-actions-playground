@@ -1,4 +1,5 @@
-import { act, render, screen, waitFor, within } from "@testing-library/react";
+import { act, screen, waitFor, within } from "@testing-library/react";
+import { renderWithQueryClient } from "../helpers/renderWithQueryClient";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
 
@@ -37,7 +38,7 @@ describe("ParameterBar", () => {
       value: "",
     });
 
-    render(<ParameterBar />);
+    renderWithQueryClient(<ParameterBar />);
 
     await waitFor(() => {
       expect(screen.getByRole("combobox")).toBeInTheDocument();
@@ -65,7 +66,7 @@ describe("ParameterBar", () => {
       value: "",
     });
 
-    render(<ParameterBar />);
+    renderWithQueryClient(<ParameterBar />);
 
     await waitFor(() => {
       expect(screen.getByRole("combobox")).toBeInTheDocument();
@@ -85,7 +86,7 @@ describe("ParameterBar", () => {
 
   it("adds a text variable through the dialog", async () => {
     const user = userEvent.setup();
-    render(<ParameterBar />);
+    renderWithQueryClient(<ParameterBar />);
 
     await user.click(screen.getByRole("button", { name: /add variable/i }));
     await screen.findByRole("dialog");
@@ -127,7 +128,7 @@ describe("ParameterBar", () => {
       value: "prod",
     });
 
-    render(<ParameterBar />);
+    renderWithQueryClient(<ParameterBar />);
 
     const serviceRow = screen.getByTestId("parameter-row-service");
     const [editButton] = within(serviceRow).getAllByRole("button");
@@ -147,7 +148,7 @@ describe("ParameterBar", () => {
 
   it("adds a number variable and stores numeric value", async () => {
     const user = userEvent.setup();
-    render(<ParameterBar />);
+    renderWithQueryClient(<ParameterBar />);
 
     await user.click(screen.getByRole("button", { name: /add variable/i }));
     await screen.findByRole("dialog");
@@ -174,7 +175,7 @@ describe("ParameterBar", () => {
 
   it("blocks invalid date values with inline validation", async () => {
     const user = userEvent.setup();
-    render(<ParameterBar />);
+    renderWithQueryClient(<ParameterBar />);
 
     await user.click(screen.getByRole("button", { name: /add variable/i }));
     await screen.findByRole("dialog");
@@ -199,7 +200,7 @@ describe("ParameterBar", () => {
       value: 42,
     });
 
-    render(<ParameterBar />);
+    renderWithQueryClient(<ParameterBar />);
     const input = screen.getByRole("textbox");
 
     await user.clear(input);

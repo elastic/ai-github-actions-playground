@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
+import { renderWithQueryClient } from "../helpers/renderWithQueryClient";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 
@@ -42,7 +43,7 @@ describe("GlobalHealthPage", () => {
   });
 
   it("renders check table with rules", async () => {
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <GlobalHealthPage />
       </MemoryRouter>,
@@ -59,7 +60,7 @@ describe("GlobalHealthPage", () => {
   it("opens flyover with check details and docs link", async () => {
     const user = userEvent.setup();
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <GlobalHealthPage />
       </MemoryRouter>,

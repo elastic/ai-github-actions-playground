@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import HostsPage from "../../src/components/hosts/HostsPage";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
-import { usePageFiltersStore } from "../../src/store/usePageFiltersStore";
+import { useHostsFiltersStore } from "../../src/store/useHostsFiltersStore";
 import { resetAllStores } from "../fixtures/test-utils";
 
 const INVENTORY_RESPONSE = {
@@ -150,7 +150,7 @@ describe("HostsPage", () => {
     // Click reset
     await user.click(screen.getByRole("button", { name: "Reset" }));
     // After reset, filters should be back to defaults (the page still auto-loads)
-    const store = usePageFiltersStore.getState();
+    const store = useHostsFiltersStore.getState();
     expect(store.hostsFilters.search).toBe("");
   });
 });

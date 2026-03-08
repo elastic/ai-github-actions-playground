@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
+import { renderWithQueryClient } from "../helpers/renderWithQueryClient";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Routes, Route, useLocation } from "react-router-dom";
 
@@ -175,7 +176,7 @@ describe("ClusterOverviewPage", () => {
   });
 
   it("renders cluster info with nodes and fleet status after loading", async () => {
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <ClusterOverviewPage />
       </MemoryRouter>,
@@ -211,7 +212,7 @@ describe("ClusterOverviewPage", () => {
       unassigned_shards: 2,
     });
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <ClusterOverviewPage />
       </MemoryRouter>,
@@ -234,7 +235,7 @@ describe("ClusterOverviewPage", () => {
     resolveIndexMock.mockRejectedValue({ status: 401, message: "Unauthorized" });
     rawRequestMock.mockRejectedValue({ status: 401, message: "Unauthorized" });
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <ClusterOverviewPage />
       </MemoryRouter>,
@@ -248,7 +249,7 @@ describe("ClusterOverviewPage", () => {
   it("refreshes data when Refresh button is clicked", async () => {
     const user = userEvent.setup();
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <ClusterOverviewPage />
       </MemoryRouter>,
@@ -276,7 +277,7 @@ describe("ClusterOverviewPage", () => {
     getNodesMock.mockRejectedValue({ status: 403, message: "Forbidden" });
     getNodeStatsMock.mockRejectedValue({ status: 403, message: "Forbidden" });
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <ClusterOverviewPage />
       </MemoryRouter>,
@@ -300,7 +301,7 @@ describe("ClusterOverviewPage", () => {
     }
 
     const renderOverviewPage = () =>
-      render(
+      renderWithQueryClient(
         <MemoryRouter initialEntries={["/cluster-overview"]}>
           <Routes>
             <Route path="/cluster-overview" element={<ClusterOverviewPage />} />
