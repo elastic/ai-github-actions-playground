@@ -6,6 +6,7 @@ import type {
   ClusterPendingTasksResponse,
   GetApiKeysResponse,
   GetSlmPoliciesResponse,
+  HealthReportResponse,
   IlmExplainResponse,
   IlmPolicyResponse,
   NodesStatsResponse,
@@ -31,7 +32,8 @@ export type HealthQueryGroup =
   | "templatesCore"
   | "recoveryCore"
   | "securityCore"
-  | "snapshotsCore";
+  | "snapshotsCore"
+  | "healthReport";
 
 export interface HealthSnapshot {
   fetchedAt: string;
@@ -71,6 +73,9 @@ export interface HealthSnapshot {
       snapshots: SnapshotRecord[] | null;
       policies: GetSlmPoliciesResponse | null;
       slmStats: SlmStatsResponse | null;
+    };
+    healthReport: {
+      healthReport: HealthReportResponse | null;
     };
   }>;
   errors: Partial<Record<HealthQueryGroup, string>>;
