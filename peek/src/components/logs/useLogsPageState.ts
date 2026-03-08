@@ -199,9 +199,12 @@ export function useLogsPageState() {
     return Array.from(groups.values()).sort((a, b) => b.count - a.count);
   }, [result]);
 
-  useEffect(() => {
+  // Reset rawQuery when the generated query changes (e.g. filters updated).
+  const [prevGeneratedQuery, setPrevGeneratedQuery] = useState(generatedQuery);
+  if (generatedQuery !== prevGeneratedQuery) {
+    setPrevGeneratedQuery(generatedQuery);
     setRawQuery(null);
-  }, [generatedQuery, setRawQuery]);
+  }
 
   const { runQuery, loading, error } = useEsqlQuery({
     connection,
