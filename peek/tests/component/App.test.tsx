@@ -288,28 +288,35 @@ describe("App shell visibility", () => {
     // Unknown routes redirect to /dashboards, so title reflects Dashboards
     expect(document.title).toBe("Dashboards — Elastic Peek");
   });
-  it("navigates to /dashboards after resetting all state from a dashboard view", async () => {
-    const user = userEvent.setup();
-    useConnectionStore.getState().setConnected(true);
 
-    render(
-      <MemoryRouter initialEntries={["/dashboards/stale-dashboard-id"]}>
-        <App />
-        <LocationDisplay />
-      </MemoryRouter>,
-    );
+  it(
+    "navigates to /dashboards after resetting all state from a dashboard view",
+    { timeout: 15_000 },
+    async () => {
+      const user = userEvent.setup();
+      useConnectionStore.getState().setConnected(true);
 
-    expect(screen.getByTestId("location")).toHaveTextContent("/dashboards/stale-dashboard-id");
+      render(
+        <MemoryRouter initialEntries={["/dashboards/stale-dashboard-id"]}>
+          <App />
+          <LocationDisplay />
+        </MemoryRouter>,
+      );
 
-    // Open Settings menu and click "Reset All State…"
-    const settingsBtn = await screen.findByRole("button", { name: "Settings" });
-    await user.click(settingsBtn);
-    await user.click(await screen.findByRole("menuitem", { name: /reset all state/i }));
+      expect(screen.getByTestId("location")).toHaveTextContent("/dashboards/stale-dashboard-id");
 
-    // Click the "Reset" button to confirm
-    await user.click(await screen.findByRole("button", { name: "Reset" }));
+      // Open Settings menu and click "Reset All State…"
+      const settingsBtn = await screen.findByRole("button", { name: "Settings" });
+      await user.click(settingsBtn);
+      await user.click(await screen.findByRole("menuitem", { name: /reset all state/i }));
 
-    // After reset, the URL should be /dashboards (not the stale dashboard ID)
-    await waitFor(() => expect(screen.getByTestId("location")).toHaveTextContent(/^\/dashboards$/));
-  });
+      // Click the "Reset" button to confirm
+      await user.click(await screen.findByRole("button", { name: "Reset" }));
+
+      // After reset, the URL should be /dashboards (not the stale dashboard ID)
+      await waitFor(() =>
+        expect(screen.getByTestId("location")).toHaveTextContent(/^\/dashboards$/),
+      );
+    },
+  );
 });

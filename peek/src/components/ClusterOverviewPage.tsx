@@ -190,7 +190,7 @@ export default function ClusterOverviewPage() {
         <Stack spacing={2}>
           <Stack direction="row" spacing={2}>
             <Box sx={{ flex: 1 }}>
-              <OverviewInfoCard title="Cluster">
+              <OverviewInfoCard title="Cluster" surfaceTier="primary">
                 {clusterInfo ? (
                   <Stack spacing={1}>
                     <Typography variant="h5" component="div">
@@ -253,7 +253,11 @@ export default function ClusterOverviewPage() {
 
           <Stack direction="row" spacing={2}>
             <Box sx={{ flex: 1 }}>
-              <OverviewInfoCard title="Health" onClick={() => navigate("/cluster-health")}>
+              <OverviewInfoCard
+                title="Health"
+                onClick={() => navigate("/cluster-health")}
+                surfaceTier="primary"
+              >
                 {clusterHealth ? (
                   <Stack spacing={1}>
                     <Chip
@@ -328,28 +332,28 @@ export default function ClusterOverviewPage() {
 
           <Stack direction="row" spacing={2}>
             <Box sx={{ flex: 1 }}>
-              <OverviewInfoCard title="Docs">
+              <OverviewInfoCard title="Docs" surfaceTier="primary">
                 <Typography variant="h5" component="p">
                   {formatCompactNumber(clusterDocsCount)}
                 </Typography>
               </OverviewInfoCard>
             </Box>
             <Box sx={{ flex: 1 }}>
-              <OverviewInfoCard title="Store Size">
+              <OverviewInfoCard title="Store Size" surfaceTier="primary">
                 <Typography variant="h5" component="p">
                   {formatBytes(clusterStoreBytes, "Unavailable")}
                 </Typography>
               </OverviewInfoCard>
             </Box>
             <Box sx={{ flex: 1 }}>
-              <OverviewInfoCard title="Total Shards">
+              <OverviewInfoCard title="Total Shards" surfaceTier="primary">
                 <Typography variant="h5" component="p">
                   {formatCompactNumber(clusterShardCount)}
                 </Typography>
               </OverviewInfoCard>
             </Box>
             <Box sx={{ flex: 1 }}>
-              <OverviewInfoCard title="Total Indices">
+              <OverviewInfoCard title="Total Indices" surfaceTier="primary">
                 <Typography variant="h5" component="p">
                   {formatCompactNumber(clusterIndexCount)}
                 </Typography>
