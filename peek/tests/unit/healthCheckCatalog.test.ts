@@ -1565,4 +1565,58 @@ describe("check metadata", () => {
       }
     }
   });
+
+  describe("every check has docs and recommendation", () => {
+    it("all checks have docsUrl", () => {
+      for (const check of INITIAL_HEALTH_CHECKS) {
+        expect(check.docsUrl, `${check.id} missing docsUrl`).toBeTruthy();
+      }
+    });
+
+    it("all checks have recommendation", () => {
+      for (const check of INITIAL_HEALTH_CHECKS) {
+        expect(check.recommendation, `${check.id} missing recommendation`).toBeTruthy();
+      }
+    });
+  });
+
+  describe("nodes.jvm.heap_percent.high — voting-only exclusion", () => {
+    it("ignores voting-only nodes with high heap", () => {
+      const check = findCheck(INITIAL_HEALTH_CHECKS, "nodes.jvm.heap_percent.high");
+      const snap = makeSnapshot({
+        nodesCore: {
+          nodeStats: {
+            nodes: {
+              "node-1": {
+                name: "voting-tiebreaker",
+                roles: ["master", "voting_only"],
+                jvm: { mem: { heap_used_percent: 95, heap_max_in_bytes: 1e9 } },
+              } as any,
+            },
+          },
+          nodeInfo: { nodes: {} },
+        },
+      });
+      expect(check.evaluate(snap).status).toBe("pass");
+    });
+
+    it("still warns on high heap for data nodes", () => {
+      const check = findCheck(INITIAL_HEALTH_CHECKS, "nodes.jvm.heap_percent.high");
+      const snap = makeSnapshot({
+        nodesCore: {
+          nodeStats: {
+            nodes: {
+              "node-1": {
+                name: "data-node",
+                roles: ["data"],
+                jvm: { mem: { heap_used_percent: 90, heap_max_in_bytes: 1e9 } },
+              } as any,
+            },
+          },
+          nodeInfo: { nodes: {} },
+        },
+      });
+      expect(check.evaluate(snap).status).toBe("warn");
+    });
+  });
 });
