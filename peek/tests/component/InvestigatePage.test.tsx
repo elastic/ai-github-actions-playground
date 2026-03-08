@@ -228,49 +228,53 @@ describe("InvestigatePage", () => {
     await screen.findByText("verification_exception");
   });
 
-  it("shows friendly warning when all flavors fail with unknown column error", async () => {
-    const unknownColumnError = {
-      status: 400,
-      message: "Found 1 problem line 1:88: Unknown column [user.name]",
-    };
-    queryMock
-      .mockResolvedValueOnce(EMPTY_ESQL_RESPONSE) // suggestions
-      .mockRejectedValueOnce(unknownColumnError) // full flavor
-      .mockRejectedValueOnce(unknownColumnError) // otel flavor
-      .mockRejectedValueOnce(unknownColumnError); // minimal flavor
-    const user = userEvent.setup();
+  it(
+    "shows friendly warning when all flavors fail with unknown column error",
+    { timeout: 10000 },
+    async () => {
+      const unknownColumnError = {
+        status: 400,
+        message: "Found 1 problem line 1:88: Unknown column [user.name]",
+      };
+      queryMock
+        .mockResolvedValueOnce(EMPTY_ESQL_RESPONSE) // suggestions
+        .mockRejectedValueOnce(unknownColumnError) // full flavor
+        .mockRejectedValueOnce(unknownColumnError) // otel flavor
+        .mockRejectedValueOnce(unknownColumnError); // minimal flavor
+      const user = userEvent.setup();
 
-    renderWithQueryClient(
-      <MemoryRouter>
-        <NuqsTestingAdapter hasMemory>
-          <InvestigatePage />
-        </NuqsTestingAdapter>
-      </MemoryRouter>,
-    );
+      renderWithQueryClient(
+        <MemoryRouter>
+          <NuqsTestingAdapter hasMemory>
+            <InvestigatePage />
+          </NuqsTestingAdapter>
+        </MemoryRouter>,
+      );
 
-    await user.type(screen.getByRole("textbox", { name: /user name/i }), "alice");
-    await user.click(screen.getByRole("button", { name: /search/i }));
+      await user.type(screen.getByRole("textbox", { name: /user name/i }), "alice");
+      await user.click(screen.getByRole("button", { name: /search/i }));
 
-    // Wait for the full retry chain (full → otel → minimal) to complete
-    await waitFor(
-      // Wait for the full retry chain (full → otel → minimal); in practice
-      // completes in <1 s, the 5 s cap is a generous safety margin.
-      () => {
-        expect(queryMock).toHaveBeenCalledTimes(4);
-      },
-      { timeout: 5000 },
-    );
+      // Wait for the full retry chain (full → otel → minimal) to complete
+      await waitFor(
+        // Wait for the full retry chain (full → otel → minimal); in practice
+        // completes in <1 s, the 5 s cap is a generous safety margin.
+        () => {
+          expect(queryMock).toHaveBeenCalledTimes(4);
+        },
+        { timeout: 5000 },
+      );
 
-    // Friendly warning should appear after all flavors are exhausted
-    await waitFor(() => {
-      expect(screen.getByText(/no security logs with user information/i)).toBeInTheDocument();
-    });
+      // Friendly warning should appear after all flavors are exhausted
+      await waitFor(() => {
+        expect(screen.getByText(/no security logs with user information/i)).toBeInTheDocument();
+      });
 
-    const alert = screen.getByText(/no security logs with user information/i);
-    expect(alert.textContent).toContain('"user.name" does not exist');
-    // Raw ES|QL error should NOT be shown
-    expect(screen.queryByText(/Unknown column/i)).not.toBeInTheDocument();
-  }, 10000);
+      const alert = screen.getByText(/no security logs with user information/i);
+      expect(alert.textContent).toContain('"user.name" does not exist');
+      // Raw ES|QL error should NOT be shown
+      expect(screen.queryByText(/Unknown column/i)).not.toBeInTheDocument();
+    },
+  );
 
   it("does not show AI insight section when no LLM key is configured", async () => {
     queryMock.mockResolvedValueOnce(EMPTY_ESQL_RESPONSE).mockResolvedValueOnce(ESQL_RESPONSE);
