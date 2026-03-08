@@ -1,0 +1,97 @@
+name: Address Merge Conflicts
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: merge-conflict-addresser-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  detect-conflicted-prs:
+    runs-on: ubuntu-latest
+    outputs:
+      prs: ${{ steps.detect.outputs.prs }}
+      count: ${{ steps.detect.outputs.count }}
+    steps:
+      - name: Detect open PRs with merge conflicts
+        id: detect
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const LABEL = "ai-address-merge-conflicts";
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            const prs = [];
+            let cursor = null;
+
+            while (true) {
+              const result = await github.graphql(
+                `query($owner: String!, $repo: String!, $cursor: String) {
+                  repository(owner: $owner, name: $repo) {
+                    pullRequests(first: 50, states: OPEN, after: $cursor, orderBy: { field: UPDATED_AT, direction: DESC }) {
+                      nodes {
+                        number
+                        isDraft
+                        mergeStateStatus
+                        labels(first: 50) {
+                          nodes { name }
+                        }
+                      }
+                      pageInfo {
+                        hasNextPage
+                        endCursor
+                      }
+                    }
+                  }
+                }`,
+                { owner, repo, cursor },
+              );
+
+              const connection = result.repository.pullRequests;
+              for (const pr of connection.nodes) {
+                const labels = new Set((pr.labels?.nodes ?? []).map((l) => l.name));
+                const optedIn = labels.has(LABEL);
+                const conflicted = pr.mergeStateStatus === "DIRTY";
+                if (!pr.isDraft && optedIn && conflicted) {
+                  prs.push({ number: pr.number });
+                }
+              }
+
+              if (!connection.pageInfo.hasNextPage) break;
+              cursor = connection.pageInfo.endCursor;
+            }
+
+            core.info(`Found ${prs.length} conflicted PR(s) with label '${LABEL}'.`);
+            core.setOutput("prs", JSON.stringify(prs));
+            core.setOutput("count", String(prs.length));
+
+  address-conflicts:
+    needs: detect-conflicted-prs
+    if: needs.detect-conflicted-prs.outputs.count != '0'
+    strategy:
+      fail-fast: false
+      max-parallel: 5
+      matrix:
+        pr: ${{ fromJson(needs.detect-conflicted-prs.outputs.prs) }}
+    uses: elastic/ai-github-actions/.github/workflows/gh-aw-mention-in-pr-by-id.lock.yml@main
+    with:
+      target-pr-number: ${{ matrix.pr.number }}
+      prompt: |
+        Resolve merge conflicts with the current base branch.
+      additional-instructions: |
+        This run was started by the Address Merge Conflicts workflow.
+        Work only on PR #${{ matrix.pr.number }}.
+        If the PR has merge conflicts, resolve them by merging the latest origin/main into the PR branch and push.
+        If there are no merge conflicts anymore, post a short note and make no code changes.
+    secrets:
+      COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
