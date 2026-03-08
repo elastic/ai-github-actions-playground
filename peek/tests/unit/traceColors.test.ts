@@ -56,14 +56,15 @@ describe("getServiceTextColor", () => {
   });
 
   it("preserves already-accessible colors unchanged", () => {
-    // #0077CC has ~4.66:1 contrast on white — should be kept as-is.
-    // We need a service name that hashes to index 0 in CHART_COLORS.
-    // Instead, just check that the text color is at least as dark as the base.
     const base = getServiceColor("frontend");
     const text = getServiceTextColor("frontend");
-    const baseLum = relativeLuminance(base);
-    const textLum = relativeLuminance(text);
-    expect(textLum).toBeLessThanOrEqual(baseLum);
+    const baseContrast = contrastOnWhite(base);
+
+    if (baseContrast >= 4.5) {
+      expect(text).toBe(base);
+    } else {
+      expect(relativeLuminance(text)).toBeLessThanOrEqual(relativeLuminance(base));
+    }
   });
 
   it("returns the same color for repeated calls (caching)", () => {
