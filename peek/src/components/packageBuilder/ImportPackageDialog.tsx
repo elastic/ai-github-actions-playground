@@ -190,7 +190,10 @@ export default function ImportPackageDialog({ open, onClose, onImportComplete }:
               )}
             </Box>
 
-            <ImportUploadSection onZipUpload={handleZipUpload} onFolderUpload={handleFolderUpload} />
+            <ImportUploadSection
+              onZipUpload={handleZipUpload}
+              onFolderUpload={handleFolderUpload}
+            />
           </Stack>
         )}
 

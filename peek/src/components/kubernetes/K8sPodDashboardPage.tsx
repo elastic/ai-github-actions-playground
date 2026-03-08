@@ -9,12 +9,14 @@ import Typography from "@mui/material/Typography";
 import { PAGE_MANIFEST } from "../../routes/manifest";
 import { useConnectionStore } from "../../store/useConnectionStore";
 import EmptyState from "../EmptyState";
+import PageContainer from "../PageContainer";
 import PageHeaderSection from "../PageHeaderSection";
 
 import K8sDashboardControls from "./K8sDashboardControls";
 import K8sDashboardSummaryCards, { type K8sDashboardSummary } from "./K8sDashboardSummaryCards";
+import K8sPodContainerTable from "./K8sPodContainerTable";
 import K8sServiceLinks from "./K8sServiceLinks";
-import { parsePodDetail, formatCpu, formatMemory, extractServiceNames } from "./k8sHelpers";
+import { parsePodDetail, extractServiceNames } from "./k8sHelpers";
 import { useK8sDashboardQueries } from "./useK8sDashboardQueries";
 
 export default function K8sPodDashboardPage() {
@@ -73,7 +75,7 @@ export default function K8sPodDashboardPage() {
   );
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 2, minHeight: "100%" }}>
+    <PageContainer gap={2}>
       <PageHeaderSection
         title={podName}
         description="Pod-level dashboard showing containers, resource utilization, logs, and traces."
@@ -115,60 +117,7 @@ export default function K8sPodDashboardPage() {
 
       {summary && <K8sDashboardSummaryCards summary={summary} />}
 
-      {containerRows.length > 0 && (
-        <Paper variant="outlined" sx={{ overflow: "auto" }}>
-          <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-              Containers
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {containerRows.length} container{containerRows.length !== 1 ? "s" : ""} in this pod
-            </Typography>
-          </Box>
-          <Box component="table" sx={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr>
-                <Box component="th" sx={{ p: 1, textAlign: "left" }}>
-                  Container
-                </Box>
-                <Box component="th" sx={{ p: 1, textAlign: "left" }}>
-                  Node
-                </Box>
-                <Box component="th" sx={{ p: 1, textAlign: "right" }}>
-                  Avg CPU
-                </Box>
-                <Box component="th" sx={{ p: 1, textAlign: "right" }}>
-                  Avg Memory
-                </Box>
-                <Box component="th" sx={{ p: 1, textAlign: "right" }}>
-                  Restarts
-                </Box>
-              </tr>
-            </thead>
-            <tbody>
-              {containerRows.map((row) => (
-                <tr key={row.containerName}>
-                  <Box component="td" sx={{ p: 1 }}>
-                    {row.containerName}
-                  </Box>
-                  <Box component="td" sx={{ p: 1 }}>
-                    {row.nodeName}
-                  </Box>
-                  <Box component="td" sx={{ p: 1, textAlign: "right" }}>
-                    {formatCpu(row.avgCpu)}
-                  </Box>
-                  <Box component="td" sx={{ p: 1, textAlign: "right" }}>
-                    {formatMemory(row.avgMemory)}
-                  </Box>
-                  <Box component="td" sx={{ p: 1, textAlign: "right" }}>
-                    {row.restarts}
-                  </Box>
-                </tr>
-              ))}
-            </tbody>
-          </Box>
-        </Paper>
-      )}
+      <K8sPodContainerTable rows={containerRows} />
 
       {serviceNames.length > 0 && <K8sServiceLinks serviceNames={serviceNames} />}
 
@@ -207,6 +156,6 @@ export default function K8sPodDashboardPage() {
           />
         </Paper>
       )}
-    </Box>
+    </PageContainer>
   );
 }
