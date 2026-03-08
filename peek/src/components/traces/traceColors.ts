@@ -42,13 +42,35 @@ function toHex(r: number, g: number, b: number): string {
 }
 
 /**
- * Darken a hex color until it meets WCAG AA (4.5 : 1) contrast against white.
+ * Contrast ratio between two luminance values.
+ */
+function contrastRatio(lighter: number, darker: number): number {
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+/**
+ * Render the alpha(serviceColor, 0.15) pill background over white.
+ */
+function servicePillBackground(hex: string): [number, number, number] {
+  const [r, g, b] = parseHex(hex);
+  const alpha = 0.15;
+  return [
+    Math.round(r * alpha + 255 * (1 - alpha)),
+    Math.round(g * alpha + 255 * (1 - alpha)),
+    Math.round(b * alpha + 255 * (1 - alpha)),
+  ];
+}
+
+/**
+ * Darken a hex color until it meets WCAG AA (4.5 : 1) contrast on service pill background.
  * Returns the original color if it already passes.
  */
-function ensureContrastOnWhite(hex: string, minRatio = 4.5): string {
+function ensureContrastOnPillBackground(hex: string, minRatio = 4.5): string {
   const [r, g, b] = parseHex(hex);
-  const lum = relativeLuminance(r, g, b);
-  const contrast = 1.05 / (lum + 0.05);
+  const background = servicePillBackground(hex);
+  const bgLum = relativeLuminance(background[0], background[1], background[2]);
+  const baseLum = relativeLuminance(r, g, b);
+  const contrast = contrastRatio(Math.max(baseLum, bgLum), Math.min(baseLum, bgLum));
   if (contrast >= minRatio) return hex;
 
   let factor = 1.0;
@@ -58,7 +80,8 @@ function ensureContrastOnWhite(hex: string, minRatio = 4.5): string {
     const dg = Math.round(g * factor);
     const db = Math.round(b * factor);
     const dlum = relativeLuminance(dr, dg, db);
-    if (1.05 / (dlum + 0.05) >= minRatio) {
+    const darkContrast = contrastRatio(Math.max(dlum, bgLum), Math.min(dlum, bgLum));
+    if (darkContrast >= minRatio) {
       return toHex(dr, dg, db);
     }
   }
@@ -69,14 +92,14 @@ const textColorCache = new Map<string, string>();
 
 /**
  * Returns a WCAG-safe text color derived from the service color.
- * Light chart colors are darkened so they meet 4.5 : 1 contrast on white
- * (and on the light pill background).
+ * Light chart colors are darkened so they meet 4.5 : 1 contrast on the
+ * rendered service pill background.
  */
 export function getServiceTextColor(serviceName: string): string {
   const base = getServiceColor(serviceName);
   const cached = textColorCache.get(base);
   if (cached) return cached;
-  const safe = ensureContrastOnWhite(base);
+  const safe = ensureContrastOnPillBackground(base);
   textColorCache.set(base, safe);
   return safe;
 }

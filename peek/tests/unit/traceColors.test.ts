@@ -15,9 +15,20 @@ function relativeLuminance(hex: string): number {
   return 0.2126 * sRGBtoLinear(r) + 0.7152 * sRGBtoLinear(g) + 0.0722 * sRGBtoLinear(b);
 }
 
-function contrastOnWhite(hex: string): number {
-  const lum = relativeLuminance(hex);
-  return 1.05 / (lum + 0.05);
+function contrastRatio(fgHex: string, bgHex: string): number {
+  const fgLum = relativeLuminance(fgHex);
+  const bgLum = relativeLuminance(bgHex);
+  const lighter = Math.max(fgLum, bgLum);
+  const darker = Math.min(fgLum, bgLum);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+function applyAlphaOnWhite(hex: string, alpha: number): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  const blend = (channel: number) => Math.round(channel * alpha + 255 * (1 - alpha));
+  return `#${blend(r).toString(16).padStart(2, "0")}${blend(g).toString(16).padStart(2, "0")}${blend(b).toString(16).padStart(2, "0")}`;
 }
 
 describe("getServiceColor", () => {
@@ -27,13 +38,13 @@ describe("getServiceColor", () => {
     expect(a).toBe(b);
   });
 
-  it("returns a valid hex color", () => {
-    expect(getServiceColor("foo")).toMatch(/^#[0-9a-fA-F]{6}$/);
+  it("returns a chart palette color", () => {
+    expect(CHART_COLORS).toContain(getServiceColor("foo"));
   });
 });
 
 describe("getServiceTextColor", () => {
-  it("returns a color that meets WCAG 4.5:1 contrast on white", () => {
+  it("returns a color that meets WCAG 4.5:1 contrast on pill background", () => {
     const representativeByBaseColor = new Map<string, string>();
     const maxAttempts = CHART_COLORS.length * 20;
 
@@ -48,38 +59,29 @@ describe("getServiceTextColor", () => {
     expect(representativeByBaseColor.size).toBe(CHART_COLORS.length);
 
     for (const name of representativeByBaseColor.values()) {
+      const baseColor = getServiceColor(name);
+      const pillBackground = applyAlphaOnWhite(baseColor, 0.15);
       const textColor = getServiceTextColor(name);
-      const ratio = contrastOnWhite(textColor);
+      const ratio = contrastRatio(textColor, pillBackground);
       expect(ratio).toBeGreaterThanOrEqual(4.5);
     }
   });
 
   it("preserves already-accessible colors unchanged", () => {
-    let accessibleService: string | null = null;
-    let inaccessibleService: string | null = null;
-
-    for (let i = 0; i < 500 && (!accessibleService || !inaccessibleService); i++) {
+    for (let i = 0; i < 500; i++) {
       const name = `service-${i}`;
-      const baseContrast = contrastOnWhite(getServiceColor(name));
+      const baseColor = getServiceColor(name);
+      const pillBackground = applyAlphaOnWhite(baseColor, 0.15);
+      const baseContrast = contrastRatio(baseColor, pillBackground);
+      const textColor = getServiceTextColor(name);
+
       if (baseContrast >= 4.5) {
-        accessibleService = name;
+        expect(textColor).toBe(baseColor);
       } else {
-        inaccessibleService = name;
+        expect(contrastRatio(textColor, pillBackground)).toBeGreaterThanOrEqual(4.5);
+        expect(relativeLuminance(textColor)).toBeLessThanOrEqual(relativeLuminance(baseColor));
       }
     }
-
-    expect(accessibleService).not.toBeNull();
-    expect(inaccessibleService).not.toBeNull();
-
-    const accessibleBase = getServiceColor(accessibleService!);
-    const accessibleText = getServiceTextColor(accessibleService!);
-    expect(accessibleText).toBe(accessibleBase);
-
-    const inaccessibleBase = getServiceColor(inaccessibleService!);
-    const inaccessibleText = getServiceTextColor(inaccessibleService!);
-    expect(relativeLuminance(inaccessibleText)).toBeLessThanOrEqual(
-      relativeLuminance(inaccessibleBase),
-    );
   });
 
   it("returns the same color for repeated calls", () => {
