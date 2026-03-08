@@ -42,7 +42,7 @@ export function roleLabel(role: string): string {
 
 // ── Health classification ─────────────────────────────────────────────────
 
-export type HealthLevel = "critical" | "warning" | "ok";
+export type HealthLevel = "critical" | "warning" | "ok" | "unknown";
 
 export const NODE_THRESHOLDS = {
   cpu: { warning: 70, critical: 90 },
@@ -69,6 +69,9 @@ export interface NodeTableRow {
 }
 
 export function nodeHealth(row: NodeTableRow): HealthLevel {
+  if (row.heapPercent === null && row.fsUsedPercent === null && row.totalBreakerTrips === null) {
+    return "unknown";
+  }
   // Critical: heap > 90%, disk > 95%, any breaker trips
   if (row.heapPercent !== null && row.heapPercent >= NODE_THRESHOLDS.heap.critical)
     return "critical";
@@ -112,14 +115,22 @@ export interface NodeSummary {
   avgHeap: number | null;
   maxDisk: number | null;
   avgDisk: number | null;
-  totalDocs: number;
-  totalShards: number;
+  totalDocs: number | null;
+  totalShards: number | null;
 }
 
 export function computeSummary(rows: NodeTableRow[]): NodeSummary {
   const cpus = rows.map((r) => r.cpuPercent).filter((v): v is number => v !== null);
   const heaps = rows.map((r) => r.heapPercent).filter((v): v is number => v !== null);
   const disks = rows.map((r) => r.fsUsedPercent).filter((v): v is number => v !== null);
+  const totalDocs =
+    rows.length > 0 && rows.some((r) => r.docCount === null)
+      ? null
+      : rows.reduce((sum, r) => sum + (r.docCount ?? 0), 0);
+  const totalShards =
+    rows.length > 0 && rows.some((r) => r.shardCount === null)
+      ? null
+      : rows.reduce((sum, r) => sum + (r.shardCount ?? 0), 0);
 
   return {
     count: rows.length,
@@ -129,7 +140,7 @@ export function computeSummary(rows: NodeTableRow[]): NodeSummary {
     avgHeap: heaps.length > 0 ? heaps.reduce((a, b) => a + b, 0) / heaps.length : null,
     maxDisk: disks.length > 0 ? Math.max(...disks) : null,
     avgDisk: disks.length > 0 ? disks.reduce((a, b) => a + b, 0) / disks.length : null,
-    totalDocs: rows.reduce((sum, r) => sum + (r.docCount ?? 0), 0),
-    totalShards: rows.reduce((sum, r) => sum + (r.shardCount ?? 0), 0),
+    totalDocs,
+    totalShards,
   };
 }

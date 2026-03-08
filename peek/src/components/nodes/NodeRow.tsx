@@ -6,6 +6,7 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ErrorIcon from "@mui/icons-material/Error";
+import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import WarningIcon from "@mui/icons-material/Warning";
 
 import {
@@ -30,6 +31,12 @@ function HealthIcon({ level }: { level: HealthLevel }) {
     return (
       <Tooltip title="Warning: elevated resource usage">
         <WarningIcon fontSize="small" color="warning" aria-label="Warning" />
+      </Tooltip>
+    );
+  if (level === "unknown")
+    return (
+      <Tooltip title="Unknown: no metrics available">
+        <HelpOutlineIcon fontSize="small" color="disabled" aria-label="Unknown" />
       </Tooltip>
     );
   return (

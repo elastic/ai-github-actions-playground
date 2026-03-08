@@ -193,8 +193,14 @@ export default function NodesPage() {
                 : "ok"
             }
           />
-          <MetricChip label="Docs" value={summary.totalDocs.toLocaleString()} />
-          <MetricChip label="Shards" value={summary.totalShards.toLocaleString()} />
+          <MetricChip
+            label="Docs"
+            value={summary.totalDocs !== null ? summary.totalDocs.toLocaleString() : "n/a"}
+          />
+          <MetricChip
+            label="Shards"
+            value={summary.totalShards !== null ? summary.totalShards.toLocaleString() : "n/a"}
+          />
         </Box>
       )}
 

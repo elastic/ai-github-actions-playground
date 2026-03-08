@@ -11,7 +11,8 @@ export const healthReportChecks: HealthCheckDefinition[] = [
     surfaces: ["global"],
     dependsOn: ["healthReport"],
     docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/health-api",
-    recommendation: "Review the non-green indicators below for details.",
+    recommendation:
+      "Review non-green indicators in the Health Report API response for details, including indicators without dedicated checks.",
     evaluate: (snapshot) => {
       if (snapshot.errors.healthReport) {
         return {
@@ -35,7 +36,8 @@ export const healthReportChecks: HealthCheckDefinition[] = [
           status: "fail",
           summary: `Elasticsearch Health Report status is RED. Non-green indicators: ${nonGreen.join(", ") || "none"}.`,
           observed: { status: report.status, nonGreenIndicators: nonGreen },
-          recommendation: "Review the non-green indicator checks below for details.",
+          recommendation:
+            "Review non-green indicators in the Health Report API response for details, including indicators without dedicated checks.",
         };
       }
       if (report.status !== "green" && report.status !== "yellow") {
@@ -60,7 +62,8 @@ export const healthReportChecks: HealthCheckDefinition[] = [
     surfaces: ["global"],
     dependsOn: ["healthReport"],
     docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/health-api",
-    recommendation: "Review the non-green indicator checks below for details.",
+    recommendation:
+      "Review non-green indicators in the Health Report API response for details, including indicators without dedicated checks.",
     evaluate: (snapshot) => {
       if (snapshot.errors.healthReport) {
         return {
@@ -84,7 +87,8 @@ export const healthReportChecks: HealthCheckDefinition[] = [
           status: "warn",
           summary: `Elasticsearch Health Report status is YELLOW. Non-green indicators: ${nonGreen.join(", ") || "none"}.`,
           observed: { status: report.status, nonGreenIndicators: nonGreen },
-          recommendation: "Review the non-green indicator checks below for details.",
+          recommendation:
+            "Review non-green indicators in the Health Report API response for details, including indicators without dedicated checks.",
         };
       }
       if (report.status !== "green" && report.status !== "red") {
@@ -105,43 +109,43 @@ export const healthReportChecks: HealthCheckDefinition[] = [
       {
         key: "master_is_stable",
         title: "Master stability",
-        description: "Warns when the master node is unstable.",
+        description: "Flags master node instability.",
         severityOnFail: "critical" as HealthSeverity,
       },
       {
         key: "shards_availability",
         title: "Shard availability",
-        description: "Warns when shards are unavailable.",
+        description: "Flags unavailable shards.",
         severityOnFail: "critical" as HealthSeverity,
       },
       {
         key: "disk",
         title: "Disk watermarks",
-        description: "Warns when disk watermarks are breached.",
+        description: "Flags breached disk watermarks.",
         severityOnFail: "high" as HealthSeverity,
       },
       {
         key: "repository_integrity",
         title: "Repository integrity",
-        description: "Warns when snapshot repository integrity is degraded.",
+        description: "Flags degraded snapshot repository integrity.",
         severityOnFail: "high" as HealthSeverity,
       },
       {
         key: "ilm",
         title: "ILM status",
-        description: "Warns when Index Lifecycle Management reports issues.",
+        description: "Flags Index Lifecycle Management issues.",
         severityOnFail: "medium" as HealthSeverity,
       },
       {
         key: "slm",
         title: "SLM status",
-        description: "Warns when Snapshot Lifecycle Management reports issues.",
+        description: "Flags Snapshot Lifecycle Management issues.",
         severityOnFail: "medium" as HealthSeverity,
       },
       {
         key: "shards_capacity",
         title: "Shard capacity",
-        description: "Warns when the cluster is approaching its shard limits.",
+        description: "Flags when the cluster approaches shard limits.",
         severityOnFail: "medium" as HealthSeverity,
       },
     ] as const
@@ -178,30 +182,38 @@ export const healthReportChecks: HealthCheckDefinition[] = [
             summary: `Indicator "${key}" not present in Health Report.`,
           };
         }
-        if (indicator.status === "red") {
+        const indicatorStatus = indicator.status as string | undefined;
+        if (indicatorStatus === "red") {
           return {
             status: "fail",
             summary: indicator.symptom ?? `${title} is RED.`,
-            observed: { status: indicator.status },
+            observed: { status: indicatorStatus },
           };
         }
-        if (indicator.status === "yellow") {
+        if (indicatorStatus === "yellow") {
           return {
             status: "warn",
             summary: indicator.symptom ?? `${title} is YELLOW.`,
-            observed: { status: indicator.status },
+            observed: { status: indicatorStatus },
           };
         }
-        if (indicator.status === "unknown") {
+        if (indicatorStatus === "unknown" || indicatorStatus === "unavailable") {
           return {
             status: "unknown",
-            summary: indicator.symptom ?? `${title} status is unknown.`,
-            observed: { status: indicator.status },
+            summary: indicator.symptom ?? `${title} status is ${indicatorStatus}.`,
+            observed: { status: indicatorStatus },
+          };
+        }
+        if (indicatorStatus === "green") {
+          return {
+            status: "pass",
+            summary: indicator.symptom ?? `${title} is GREEN.`,
           };
         }
         return {
-          status: "pass",
-          summary: indicator.symptom ?? `${title} is GREEN.`,
+          status: "unknown",
+          summary: indicator.symptom ?? `${title} status is ${indicatorStatus}.`,
+          observed: { status: indicatorStatus },
         };
       },
     }),
