@@ -33,7 +33,7 @@ describe("DetailSurface", () => {
       </DetailSurface>,
     );
 
-    await userEvent.click(screen.getByLabelText("Close task details"));
+    await userEvent.click(screen.getByLabelText("Close Task Details"));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 

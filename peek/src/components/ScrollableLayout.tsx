@@ -32,7 +32,7 @@ export default function ScrollableLayout({
         ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
       ]}
     >
-      {header}
+      {header ? <Box sx={{ flexShrink: 0 }}>{header}</Box> : null}
       <Box
         sx={[
           { flex: 1, minHeight: 0, overflow: "auto" },
@@ -41,7 +41,7 @@ export default function ScrollableLayout({
       >
         {children}
       </Box>
-      {footer}
+      {footer ? <Box sx={{ flexShrink: 0 }}>{footer}</Box> : null}
     </Box>
   );
 }

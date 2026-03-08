@@ -176,6 +176,20 @@ export default function TemplateDetailsDrawer({
             {selectedComponentTemplate.usedByCount} index template
             {selectedComponentTemplate.usedByCount !== 1 ? "s" : ""}
           </Typography>
+
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
+              RAW JSON
+            </Typography>
+            <Paper
+              variant="outlined"
+              sx={{ p: 1, maxHeight: 300, overflow: "auto", fontSize: "0.75rem" }}
+            >
+              <pre style={{ margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                {JSON.stringify(selectedComponentTemplate, null, 2)}
+              </pre>
+            </Paper>
+          </Box>
         </>
       )}
     </DetailSurface>

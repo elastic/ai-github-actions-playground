@@ -93,10 +93,7 @@ export default function StorageExplorerDetailsDrawer({
             <Button
               size="small"
               variant="outlined"
-              onClick={() => {
-                const indexName = selectedNode.indexName;
-                if (indexName) onOpenIndex(indexName);
-              }}
+              onClick={() => onOpenIndex(selectedNode.indexName!)}
             >
               Open index in Indices
             </Button>

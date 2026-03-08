@@ -57,11 +57,7 @@ export default function DetailSurface({
             <Typography variant="subtitle1" noWrap sx={{ minWidth: 0, flex: 1 }}>
               {title}
             </Typography>
-            <IconButton
-              size="small"
-              aria-label={ariaLabel ?? `Close ${title.toLowerCase()}`}
-              onClick={onClose}
-            >
+            <IconButton size="small" aria-label={ariaLabel ?? `Close ${title}`} onClick={onClose}>
               <CloseIcon fontSize="small" />
             </IconButton>
           </Box>
