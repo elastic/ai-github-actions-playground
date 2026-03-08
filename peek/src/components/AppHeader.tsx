@@ -23,7 +23,7 @@ import { useDashboardHistoryStore } from "../store/useDashboardHistoryStore";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useUIStore } from "../store/useUIStore";
 import { useCommandPaletteStore } from "../store/useCommandPaletteStore";
-import { PAGE_MANIFEST } from "../routes/manifest";
+import { PAGE_PATHS } from "../routes/paths";
 import { DEFAULT_REFRESH_INTERVAL } from "../types";
 import { COMPONENT_HEIGHTS } from "../types/tokens";
 import { createDefaultPanel } from "../dashboards/panel";
@@ -77,7 +77,7 @@ export default function AppHeader({
 
   const location = useLocation();
   const navigate = useNavigate();
-  const activePage = Object.values(PAGE_MANIFEST).find((page) => page.path === location.pathname);
+  const activePage = Object.values(PAGE_PATHS).find((page) => page.path === location.pathname);
   const isDashboardView =
     location.pathname.startsWith("/dashboards/") && location.pathname !== "/dashboards";
   const theme = useTheme();
