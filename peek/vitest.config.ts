@@ -2,15 +2,30 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
-    include: [
-      "tests/unit/**/*.test.{ts,tsx}",
-      "tests/smoke/**/*.test.{ts,tsx}",
-      "tests/component/**/*.test.{ts,tsx}",
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: "unit-node",
+          // Pure .ts unit tests use the lightweight node environment.
+          include: ["tests/unit/**/*.test.ts"],
+          environment: "node",
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: "dom",
+          // happy-dom is 2-5x faster than jsdom for DOM operations.
+          include: [
+            "tests/unit/**/*.test.tsx",
+            "tests/smoke/**/*.test.{ts,tsx}",
+            "tests/component/**/*.test.{ts,tsx}",
+          ],
+          environment: "happy-dom",
+        },
+      },
     ],
-    environment: "happy-dom",
-    // Pure .ts unit tests default to the lightweight node environment.
-    // happy-dom is 2-5x faster than jsdom for DOM operations.
-    environmentMatchGlobs: [["tests/unit/**/*.test.ts", "node"]],
     setupFiles: ["./vitest.setup.ts"],
     css: false,
     pool: "forks",
