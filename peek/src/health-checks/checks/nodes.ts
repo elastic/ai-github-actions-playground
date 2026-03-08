@@ -42,6 +42,12 @@ function unknownNodeStatsResult() {
   };
 }
 
+function allBreakerNames(nodes: Record<string, NodeStatsNode>): string[] {
+  return Array.from(
+    new Set(Object.values(nodes).flatMap((node) => Object.keys(node.breakers ?? {}))),
+  );
+}
+
 export const nodeChecks: HealthCheckDefinition[] = [
   // #31
   {
@@ -272,7 +278,7 @@ export const nodeChecks: HealthCheckDefinition[] = [
     evaluate: (snapshot) => {
       const nodes = snapshot.data.nodesCore?.nodeStats?.nodes;
       if (!nodes) return unknownNodeStatsResult();
-      const totalTrips = totalCircuitBreakerTrips(nodes);
+      const totalTrips = totalCircuitBreakerTrips(nodes, allBreakerNames(nodes));
       if (totalTrips > 0) {
         return {
           status: "warn",
