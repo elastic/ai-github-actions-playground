@@ -1,4 +1,4 @@
-import { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -89,6 +89,13 @@ export default function IndicesPage() {
   const navigate = useNavigate();
 
   const [search, setSearch] = useSearchParam();
+  const [isFilterPending, startTransition] = useTransition();
+  const [deferredSearch, setDeferredSearch] = useState(search);
+
+  useEffect(() => {
+    startTransition(() => setDeferredSearch(search));
+  }, [search, startTransition]);
+
   const [showSystemIndices, setShowSystemIndices] = useState(false);
   const { sortField, sortDirection, getSortLabelProps } = useTableSort<IndexSortField>("index");
   const [selectedIndex, setSelectedIndex] = useQueryState("selectedIndex", parseAsString);
@@ -130,7 +137,6 @@ export default function IndicesPage() {
     void setSelectedIndex(null);
   }, [showSystemIndices, selectedIndex, indices, setSelectedIndex]);
 
-  const deferredSearch = useDeferredValue(search);
   const filteredIndices = useMemo(() => {
     const filtered = indices.filter((idx) => {
       if (!showSystemIndices && idx.index.startsWith(".")) return false;
@@ -416,7 +422,15 @@ export default function IndicesPage() {
                 onToggleChange={setShowSystemIndices}
                 divider={false}
               />
-              <TableContainer sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
+              <TableContainer
+                sx={{
+                  flex: 1,
+                  minHeight: 0,
+                  overflow: "auto",
+                  opacity: isFilterPending ? 0.6 : 1,
+                  transition: "opacity 0.2s",
+                }}
+              >
                 <Table size="small" stickyHeader aria-label="Index list">
                   <TableHead>
                     <TableRow>

@@ -1,4 +1,4 @@
-import { useCallback, useDeferredValue, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -58,9 +58,16 @@ export default function IndexTemplatesPage() {
     { history: "replace" },
   );
 
+  const [isFilterPending, startTransition] = useTransition();
+
   const activeTab = urlState.tab;
   const search = urlState.q;
-  const deferredSearch = useDeferredValue(search);
+  const [deferredSearch, setDeferredSearch] = useState(search);
+
+  useEffect(() => {
+    startTransition(() => setDeferredSearch(search));
+  }, [search, startTransition]);
+
   const indexTplSortField = urlState.indexTplSortField;
   const indexTplSortDir = urlState.indexTplSortDir;
   const compTplSortField = urlState.compTplSortField;
@@ -206,39 +213,41 @@ export default function IndexTemplatesPage() {
         onToggleDataStreamOnly={() => void setUrlState({ dataStreamOnly: !dataStreamOnly })}
       />
 
-      {activeTab === "index" && (
-        <IndexTemplatesTable
-          loading={loading}
-          indexTemplatesCount={indexTemplates.length}
-          filteredTemplates={filteredIndexTemplates}
-          sortField={indexTplSortField}
-          sortDirection={indexTplSortDir}
-          selectedTemplateName={
-            selectedTemplateRef?.kind === "index" ? selectedTemplateRef.name : null
-          }
-          search={search}
-          dataStreamOnly={dataStreamOnly}
-          priorityMin={priorityMin}
-          priorityMax={priorityMax}
-          showSystem={showSystem}
-          onSort={handleIndexTplSort}
-          onSelectTemplate={(name) => setSelectedTemplateRef({ kind: "index", name })}
-        />
-      )}
+      <Box sx={{ opacity: isFilterPending ? 0.6 : 1, transition: "opacity 0.2s" }}>
+        {activeTab === "index" && (
+          <IndexTemplatesTable
+            loading={loading}
+            indexTemplatesCount={indexTemplates.length}
+            filteredTemplates={filteredIndexTemplates}
+            sortField={indexTplSortField}
+            sortDirection={indexTplSortDir}
+            selectedTemplateName={
+              selectedTemplateRef?.kind === "index" ? selectedTemplateRef.name : null
+            }
+            search={search}
+            dataStreamOnly={dataStreamOnly}
+            priorityMin={priorityMin}
+            priorityMax={priorityMax}
+            showSystem={showSystem}
+            onSort={handleIndexTplSort}
+            onSelectTemplate={(name) => setSelectedTemplateRef({ kind: "index", name })}
+          />
+        )}
 
-      {activeTab === "component" && (
-        <ComponentTemplatesTable
-          loading={loading}
-          componentTemplatesCount={componentTemplates.length}
-          filteredTemplates={filteredComponentTemplates}
-          sortField={compTplSortField}
-          sortDirection={compTplSortDir}
-          search={search}
-          showSystem={showSystem}
-          onSort={handleCompTplSort}
-          onSelectTemplate={(name) => setSelectedTemplateRef({ kind: "component", name })}
-        />
-      )}
+        {activeTab === "component" && (
+          <ComponentTemplatesTable
+            loading={loading}
+            componentTemplatesCount={componentTemplates.length}
+            filteredTemplates={filteredComponentTemplates}
+            sortField={compTplSortField}
+            sortDirection={compTplSortDir}
+            search={search}
+            showSystem={showSystem}
+            onSort={handleCompTplSort}
+            onSelectTemplate={(name) => setSelectedTemplateRef({ kind: "component", name })}
+          />
+        )}
+      </Box>
 
       <TemplateDetailsDrawer
         selectedTemplate={selectedTemplate}
