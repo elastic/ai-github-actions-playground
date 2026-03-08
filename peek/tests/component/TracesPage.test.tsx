@@ -34,7 +34,12 @@ vi.mock("../../src/hooks/useEsqlQuery", () => ({
     const hookIndex = esqlHookCallCount;
     esqlHookCallCount += 1;
     capturedCallbacks.push(opts.onSuccess);
-    return { runQuery: mockRunQuery, loading: false, error: mockErrorsByHook[hookIndex] ?? null };
+    return {
+      runQuery: mockRunQuery,
+      loading: false,
+      error: mockErrorsByHook[hookIndex] ?? null,
+      abort: vi.fn(),
+    };
   },
 }));
 

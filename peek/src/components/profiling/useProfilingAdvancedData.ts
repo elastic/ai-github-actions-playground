@@ -9,28 +9,10 @@ import {
   buildProfilingEventsQuery,
   buildProfilingFlamescopeQuery,
   buildProfilingTimelineQuery,
-  buildStackframeLookupQuery,
-  buildStacktraceLookupQuery,
-  buildTopFunctionsRequest,
 } from "./profilingQueryBuilder";
-import type {
-  FrameSymbol,
-  ProfilingEvent,
-  StacktraceFrameMap,
-  SymbolizedStacktrace,
-  TopFunctionRow,
-} from "./profilingUtils";
-import {
-  buildFlamegraphTree,
-  joinStacktraces,
-  normalizeTopFunctions,
-  parseFrameIds,
-} from "./profilingUtils";
-
-function readColumn(row: unknown[], columns: Array<{ name: string }>, field: string): unknown {
-  const index = columns.findIndex((column) => column.name === field);
-  return index >= 0 ? row[index] : null;
-}
+import type { SymbolizedStacktrace, TopFunctionRow } from "./profilingUtils";
+import { buildFlamegraphTree } from "./profilingUtils";
+import { executeProfilingRun } from "./profilingRunners";
 
 interface UseProfilingAdvancedDataParams {
   connection: ElasticsearchConnection | null;
@@ -69,97 +51,6 @@ export function useProfilingAdvancedData({
   }, [viewMode, filters]);
   const effectiveQuery = rawQuery ?? generatedQuery;
 
-  const runTopFunctions = useCallback(
-    async (client: ElasticsearchClient, signal: AbortSignal) => {
-      const response = await client.getTopFunctions(buildTopFunctionsRequest(filters), signal);
-      setTopFunctionsRows(normalizeTopFunctions(response));
-      setTimelineResult(null);
-      setStacktraces([]);
-    },
-    [filters],
-  );
-
-  const runTimeline = useCallback(
-    async (client: ElasticsearchClient, signal: AbortSignal) => {
-      const result = await client.query({ query: effectiveQuery }, signal);
-      setTimelineResult(result);
-      setTopFunctionsRows([]);
-      setStacktraces([]);
-    },
-    [effectiveQuery],
-  );
-
-  const runStacktraces = useCallback(
-    async (client: ElasticsearchClient, signal: AbortSignal) => {
-      const eventsResponse = await client.query({ query: effectiveQuery }, signal);
-      const events: ProfilingEvent[] = eventsResponse.values
-        .map((row) => ({
-          timestamp: String(readColumn(row, eventsResponse.columns, "@timestamp") ?? ""),
-          stacktraceId: String(readColumn(row, eventsResponse.columns, "Stacktrace.id") ?? ""),
-          count: Number(readColumn(row, eventsResponse.columns, "Stacktrace.count") ?? 0),
-          serviceName: String(readColumn(row, eventsResponse.columns, "service.name") ?? ""),
-          hostName: String(readColumn(row, eventsResponse.columns, "host.name") ?? ""),
-        }))
-        .filter((event) => event.stacktraceId.length > 0);
-      const stacktraceIds = [...new Set(events.map((event) => event.stacktraceId))];
-      if (stacktraceIds.length === 0) {
-        setStacktraces([]);
-        setTopFunctionsRows([]);
-        setTimelineResult(null);
-        return;
-      }
-
-      const stacktraceResponse = await client.query(
-        {
-          query: buildStacktraceLookupQuery(stacktraceIds),
-        },
-        signal,
-      );
-      const stacktraceRows: StacktraceFrameMap[] = stacktraceResponse.values
-        .map((row) => ({
-          id: String(readColumn(row, stacktraceResponse.columns, "_id") ?? ""),
-          frameIds: String(
-            readColumn(row, stacktraceResponse.columns, "Stacktrace.frame.ids") ?? "",
-          ),
-          frameTypes: String(
-            readColumn(row, stacktraceResponse.columns, "Stacktrace.frame.types") ?? "",
-          ),
-        }))
-        .filter((item) => item.id.length > 0);
-
-      const frameIds = [...new Set(stacktraceRows.flatMap((row) => parseFrameIds(row.frameIds)))];
-      const frameResponse = await client.query(
-        {
-          query: buildStackframeLookupQuery(frameIds),
-        },
-        signal,
-      );
-      const frames: FrameSymbol[] = frameResponse.values
-        .map((row) => ({
-          id: String(readColumn(row, frameResponse.columns, "_id") ?? ""),
-          functionName: String(
-            readColumn(row, frameResponse.columns, "Stackframe.function.name") ?? "(unknown)",
-          ),
-          fileName: String(readColumn(row, frameResponse.columns, "Stackframe.file.name") ?? ""),
-          lineNumber: (() => {
-            const value = readColumn(row, frameResponse.columns, "Stackframe.line.number");
-            return value != null ? Number(value) : null;
-          })(),
-          functionOffset: (() => {
-            const value = readColumn(row, frameResponse.columns, "Stackframe.function.offset");
-            return value != null ? Number(value) : null;
-          })(),
-        }))
-        .filter((frame) => frame.id.length > 0);
-
-      setStacktraces(joinStacktraces(events, stacktraceRows, frames));
-      setTopFunctionsRows([]);
-      setTimelineResult(null);
-      setFlamescopeWindow(null);
-    },
-    [effectiveQuery],
-  );
-
   const handleRun = useCallback(async () => {
     if (!connection) return;
     abortRef.current?.abort();
@@ -170,12 +61,18 @@ export function useProfilingAdvancedData({
     setError(null);
     setHasRunByMode((previous) => ({ ...previous, [viewMode]: true }));
     try {
-      if (viewMode === "topFunctions") {
-        await runTopFunctions(client, controller.signal);
-      } else if (viewMode === "timeline") {
-        await runTimeline(client, controller.signal);
-      } else {
-        await runStacktraces(client, controller.signal);
+      const result = await executeProfilingRun(
+        client,
+        controller.signal,
+        viewMode,
+        filters,
+        effectiveQuery,
+      );
+      setTopFunctionsRows(result.topFunctionsRows);
+      setTimelineResult(result.timelineResult);
+      setStacktraces(result.stacktraces);
+      if (viewMode !== "topFunctions" && viewMode !== "timeline") {
+        setFlamescopeWindow(null);
       }
     } catch (err: unknown) {
       if (controller.signal.aborted) return;
@@ -183,7 +80,7 @@ export function useProfilingAdvancedData({
     } finally {
       if (!controller.signal.aborted) setLoading(false);
     }
-  }, [connection, runTopFunctions, runTimeline, runStacktraces, viewMode]);
+  }, [connection, viewMode, filters, effectiveQuery]);
 
   const resetResults = useCallback(() => {
     abortRef.current?.abort();
