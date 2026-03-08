@@ -65,15 +65,23 @@ export async function executeRawRequest(
   path: string,
   body?: string,
   signal?: AbortSignal,
+  timeoutMs?: number,
 ): Promise<{ status: number; body: unknown }> {
   const normalizedBaseUrl = baseUrl.replace(/\/+$/, "");
   const trimmedPath = path.trim();
   const url = `${normalizedBaseUrl}${trimmedPath.startsWith("/") ? trimmedPath : `/${trimmedPath}`}`;
   // Keep manual timer wiring for fake-timer tests while using AbortSignal.any for composition.
+  const effectiveTimeout =
+    typeof timeoutMs === "number" &&
+    Number.isFinite(timeoutMs) &&
+    timeoutMs >= 0 &&
+    timeoutMs <= Number.MAX_SAFE_INTEGER
+      ? timeoutMs
+      : RAW_REQUEST_TIMEOUT_MS;
   const timeoutController = new AbortController();
   const timeoutId = setTimeout(() => {
-    timeoutController.abort(new DOMException("Request timed out", "AbortError"));
-  }, RAW_REQUEST_TIMEOUT_MS);
+    timeoutController.abort(new DOMException("Request timeout", "AbortError"));
+  }, effectiveTimeout);
   const signals: AbortSignal[] = [timeoutController.signal];
   if (signal) {
     try {
