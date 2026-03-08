@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Paper from "@mui/material/Paper";
@@ -16,6 +16,10 @@ interface TransformDetailDrawerProps {
 
 export function TransformDetailDrawer({ row, onClose }: TransformDetailDrawerProps) {
   const [showRawJson, setShowRawJson] = useState(false);
+
+  useEffect(() => {
+    setShowRawJson(false);
+  }, [row]);
 
   return (
     <DetailSurface
