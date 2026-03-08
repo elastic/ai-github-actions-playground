@@ -1,2 +1,0 @@
-import{j as o}from"./mui-BTPp9MFl.js";import t from"./HostsPage-CjzeX9Ix.js";import"./index-RiomSXiS.js";import"./ai-sdk-CoyiOQ4i.js";import"./perses-DYHCTcwg.js";import"./codemirror-BqJWUuoV.js";import"./echarts-DvDtotIb.js";import"./PageHeader-Dx97_oYD.js";import"./hostHelpers-Dz76ARGB.js";import"./useEsQuery-XnUXlhZp.js";function x(){return o.jsx(t,{osType:"windows"})}export{x as default};
-//# sourceMappingURL=HostsWindowsPage-KAwzKkq7.js.map
