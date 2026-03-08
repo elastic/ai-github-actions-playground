@@ -21,8 +21,8 @@ export const PAGE_NAV_BUTTONS = {
   health: "Health",
   docs: "Docs",
   tasks: "Tasks",
-  ilm: "ILM",
-  templates: "Templates",
+  ilm: "Index Lifecycle Management",
+  templates: "Index Templates",
   transforms: "Transforms",
   snapshots: "Snapshots",
 };

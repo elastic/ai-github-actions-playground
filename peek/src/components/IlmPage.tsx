@@ -1,5 +1,4 @@
 import { useCallback, useDeferredValue, useMemo, useState } from "react";
-import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import FormControlLabel from "@mui/material/FormControlLabel";
@@ -13,6 +12,7 @@ import { useIlm } from "../hooks/useIlm";
 import type { IlmPolicyRow } from "../services/es/ilmTypes";
 import { COMPONENT_HEIGHTS } from "../types/tokens";
 
+import DataFetchAlert from "./DataFetchAlert";
 import IlmIndexDetailDrawer from "./IlmIndexDetailDrawer";
 import IlmIndicesTable from "./IlmIndicesTable";
 import IlmKpiCards from "./IlmKpiCards";
@@ -130,11 +130,7 @@ export default function IlmPage() {
   }, [policyRows, deferredSearch, policySortField, policySortDir]);
 
   if (result.status === "error") {
-    return (
-      <Box sx={{ p: 2 }}>
-        <Alert severity="error">{result.error}</Alert>
-      </Box>
-    );
+    return <DataFetchAlert result={result} onRetry={result.refresh} />;
   }
 
   const hasFilters = Boolean(search || onlyErrors || managedOnly || phaseFilter);

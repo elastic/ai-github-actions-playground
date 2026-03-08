@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
 import type { EditorView } from "@codemirror/view";
 import { parseAsString, useQueryState } from "nuqs";
+import { useShallow } from "zustand/react/shallow";
 
 import { useEsqlQuery } from "../../hooks/useEsqlQuery";
 import { useOpenInDiscover } from "../../hooks/useOpenInDiscover";
@@ -30,28 +31,55 @@ export function useTracesOrchestrator() {
   const openInDiscover = useOpenInDiscover();
   const connection = useConnectionStore((s) => s.connection);
 
-  const filters = useTracesStore((s) => s.filters);
-  const rawQuery = useTracesStore((s) => s.rawQuery);
-  const setRawQuery = useTracesStore((s) => s.setRawQuery);
-  const updateFilters = useTracesStore((s) => s.updateFilters);
-  const setTimeRange = useTracesStore((s) => s.setTimeRange);
-  const selectedTraceId = useTracesStore((s) => s.selectedTraceId);
-  const setSelectedTraceId = useTracesStore((s) => s.setSelectedTraceId);
-  const setSelectedTraceSpans = useTracesStore((s) => s.setSelectedTraceSpans);
-  const selectedTraceSpans = useTracesStore((s) => s.selectedTraceSpans);
-  const selectedSpanId = useTracesStore((s) => s.selectedSpanId);
-  const setSelectedSpanId = useTracesStore((s) => s.setSelectedSpanId);
-  const drawerOpen = useTracesStore((s) => s.drawerOpen);
-  const setDrawerOpen = useTracesStore((s) => s.setDrawerOpen);
-  const viewMode = useTracesStore((s) => s.viewMode);
-  const setViewMode = useTracesStore((s) => s.setViewMode);
-  const resetFilters = useTracesStore((s) => s.resetFilters);
-  const searchResult = useTracesStore((s) => s.searchResult);
-  const setSearchResult = useTracesStore((s) => s.setSearchResult);
-  const searchTraceSpans = useTracesStore((s) => s.searchSpans);
-  const setSearchTraceSpans = useTracesStore((s) => s.setSearchSpans);
-  const timeseriesResult = useTracesStore((s) => s.timeseriesResult);
-  const setTimeseriesResult = useTracesStore((s) => s.setTimeseriesResult);
+  const {
+    filters,
+    rawQuery,
+    setRawQuery,
+    updateFilters,
+    setTimeRange,
+    selectedTraceId,
+    setSelectedTraceId,
+    setSelectedTraceSpans,
+    selectedTraceSpans,
+    selectedSpanId,
+    setSelectedSpanId,
+    drawerOpen,
+    setDrawerOpen,
+    viewMode,
+    setViewMode,
+    resetFilters,
+    searchResult,
+    setSearchResult,
+    searchSpans: searchTraceSpans,
+    setSearchSpans: setSearchTraceSpans,
+    timeseriesResult,
+    setTimeseriesResult,
+  } = useTracesStore(
+    useShallow((s) => ({
+      filters: s.filters,
+      rawQuery: s.rawQuery,
+      setRawQuery: s.setRawQuery,
+      updateFilters: s.updateFilters,
+      setTimeRange: s.setTimeRange,
+      selectedTraceId: s.selectedTraceId,
+      setSelectedTraceId: s.setSelectedTraceId,
+      setSelectedTraceSpans: s.setSelectedTraceSpans,
+      selectedTraceSpans: s.selectedTraceSpans,
+      selectedSpanId: s.selectedSpanId,
+      setSelectedSpanId: s.setSelectedSpanId,
+      drawerOpen: s.drawerOpen,
+      setDrawerOpen: s.setDrawerOpen,
+      viewMode: s.viewMode,
+      setViewMode: s.setViewMode,
+      resetFilters: s.resetFilters,
+      searchResult: s.searchResult,
+      setSearchResult: s.setSearchResult,
+      searchSpans: s.searchSpans,
+      setSearchSpans: s.setSearchSpans,
+      timeseriesResult: s.timeseriesResult,
+      setTimeseriesResult: s.setTimeseriesResult,
+    })),
+  );
 
   // Sync the global AppHeader time range into trace filters (without clearing rawQuery)
   const dashboardTimeRange = useDashboardEditorStore((s) => s.dashboard.timeRange);
@@ -80,14 +108,23 @@ export function useTracesOrchestrator() {
   const [driftRadarBaselineSpans, setDriftRadarBaselineSpans] = useState<Span[] | null>(null);
   const [driftRadarBaselineEnabled, setDriftRadarBaselineEnabled] = useState(false);
 
-  const traceSearchCollapsed = useSearchPanelUIStore((s) => s.traceSearchCollapsed);
-  const setTraceSearchCollapsed = useSearchPanelUIStore((s) => s.setTraceSearchCollapsed);
-  const traceMetricsChartsCollapsed = useSearchPanelUIStore((s) => s.traceMetricsChartsCollapsed);
-  const setTraceMetricsChartsCollapsed = useSearchPanelUIStore(
-    (s) => s.setTraceMetricsChartsCollapsed,
+  const {
+    traceSearchCollapsed,
+    setTraceSearchCollapsed,
+    traceMetricsChartsCollapsed,
+    setTraceMetricsChartsCollapsed,
+    traceEditorHeight,
+    setTraceEditorHeight,
+  } = useSearchPanelUIStore(
+    useShallow((s) => ({
+      traceSearchCollapsed: s.traceSearchCollapsed,
+      setTraceSearchCollapsed: s.setTraceSearchCollapsed,
+      traceMetricsChartsCollapsed: s.traceMetricsChartsCollapsed,
+      setTraceMetricsChartsCollapsed: s.setTraceMetricsChartsCollapsed,
+      traceEditorHeight: s.traceEditorHeight,
+      setTraceEditorHeight: s.setTraceEditorHeight,
+    })),
   );
-  const traceEditorHeight = useSearchPanelUIStore((s) => s.traceEditorHeight);
-  const setTraceEditorHeight = useSearchPanelUIStore((s) => s.setTraceEditorHeight);
 
   const generatedQuery = useMemo(
     () => buildTraceSearchQuery(filters, DEFAULT_FIELD_MAPPING, { limit: 500 }),
