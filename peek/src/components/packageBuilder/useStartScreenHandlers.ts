@@ -24,6 +24,7 @@ export function useStartScreenHandlers() {
   const reset = usePackageBuilderStore((s) => s.reset);
   const linkDir = usePackageBuilderStore((s) => s.linkDir);
   const loadPackage = usePackageBuilderStore((s) => s.loadPackage);
+  const setIsLoaded = usePackageBuilderStore((s) => s.setIsLoaded);
   const [error, setError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
 
@@ -34,6 +35,7 @@ export function useStartScreenHandlers() {
       const handle = await pickDirectory();
       reset();
       linkDir(handle);
+      setIsLoaded(true);
       const freshData = usePackageBuilderStore.getState();
       await exportPackageToDirectory(freshData, handle);
     } catch (err) {
@@ -69,6 +71,7 @@ export function useStartScreenHandlers() {
         linkDir(handle);
       } catch (err) {
         if (err instanceof DOMException && err.name === "AbortError") return;
+        setError(err instanceof Error ? err.message : String(err));
       }
     },
     [linkDir],
