@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor } from "@testing-library/react";
+import { renderWithQueryClient } from "../helpers/renderWithQueryClient";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 
@@ -106,7 +107,7 @@ describe("StorageExplorerPage", () => {
 
   it("renders node->signal->dataset hierarchy and shard rows", async () => {
     const user = userEvent.setup();
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <StorageExplorerPage />
       </MemoryRouter>,
@@ -125,7 +126,7 @@ describe("StorageExplorerPage", () => {
 
   it("hides replica shard rows when replica toggle is turned off", async () => {
     const user = userEvent.setup();
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <StorageExplorerPage />
       </MemoryRouter>,
@@ -144,7 +145,7 @@ describe("StorageExplorerPage", () => {
 
   it("hides system indices by default and shows them when toggled", async () => {
     const user = userEvent.setup();
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <StorageExplorerPage />
       </MemoryRouter>,
@@ -173,7 +174,7 @@ describe("StorageExplorerPage", () => {
       ],
     });
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <StorageExplorerPage />
       </MemoryRouter>,
@@ -186,7 +187,7 @@ describe("StorageExplorerPage", () => {
 
   it("opens and closes a details flyout when selecting a row", async () => {
     const user = userEvent.setup();
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <StorageExplorerPage />
       </MemoryRouter>,
@@ -208,7 +209,7 @@ describe("StorageExplorerPage", () => {
 
   it("supports switching root grouping mode", async () => {
     const user = userEvent.setup();
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <StorageExplorerPage />
       </MemoryRouter>,
@@ -226,7 +227,7 @@ describe("StorageExplorerPage", () => {
     getNodeStatsMock.mockResolvedValue({ nodes: {} });
     getDataStreamsMock.mockResolvedValue({ data_streams: [] });
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <StorageExplorerPage />
       </MemoryRouter>,
@@ -240,7 +241,7 @@ describe("StorageExplorerPage", () => {
 
   it("supports selecting rows from the keyboard", async () => {
     const user = userEvent.setup();
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <StorageExplorerPage />
       </MemoryRouter>,

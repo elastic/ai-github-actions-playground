@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, within } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
+import { renderWithQueryClient } from "../helpers/renderWithQueryClient";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 
@@ -36,7 +37,7 @@ describe("NodesHotThreadsPage", () => {
       ].join("\n"),
     );
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <NodesHotThreadsPage />
       </MemoryRouter>,
@@ -73,7 +74,7 @@ describe("NodesHotThreadsPage", () => {
       )
       .mockResolvedValue("updated");
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <NodesHotThreadsPage />
       </MemoryRouter>,
@@ -99,7 +100,7 @@ describe("NodesHotThreadsPage", () => {
       )
       .mockResolvedValue("updated");
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <NodesHotThreadsPage />
       </MemoryRouter>,
@@ -136,7 +137,7 @@ describe("NodesHotThreadsPage", () => {
       ].join("\n"),
     );
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <NodesHotThreadsPage />
       </MemoryRouter>,
@@ -167,7 +168,7 @@ describe("NodesHotThreadsPage", () => {
       ].join("\n"),
     );
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <NodesHotThreadsPage />
       </MemoryRouter>,
@@ -186,7 +187,7 @@ describe("NodesHotThreadsPage", () => {
       ].join("\n"),
     );
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <NodesHotThreadsPage />
       </MemoryRouter>,

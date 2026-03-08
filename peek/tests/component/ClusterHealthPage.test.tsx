@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
+import { renderWithQueryClient } from "../helpers/renderWithQueryClient";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 
@@ -47,7 +48,7 @@ vi.mock("../../src/services/es", () => ({
 }));
 
 function renderHealth(defaultTab?: string) {
-  return render(
+  return renderWithQueryClient(
     <MemoryRouter>
       <ClusterHealthPage defaultTab={defaultTab as never} />
     </MemoryRouter>,

@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 // happy-dom has a known issue with navigation/routing in this component's tests
 import { describe, it, expect, vi, beforeEach, beforeAll } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
+import { renderWithQueryClient } from "../helpers/renderWithQueryClient";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 
@@ -46,7 +47,7 @@ vi.mock("../../src/utils/addDataUtils", async (importOriginal) => {
 const fetchSpy = vi.spyOn(globalThis, "fetch");
 
 function renderPage() {
-  return render(
+  return renderWithQueryClient(
     <MemoryRouter initialEntries={["/add-data"]}>
       <Routes>
         <Route path="/add-data" element={<AddDataPage />} />
