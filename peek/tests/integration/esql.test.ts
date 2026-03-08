@@ -11,8 +11,6 @@ beforeAll(async () => {
   ctx = await startElasticsearch();
   connection = { url: ctx.baseUrl, apiKey: "" };
   client = new ElasticsearchClient(connection);
-
-  await seedWebLogs(ctx.esClient);
 });
 
 afterAll(async () => {
@@ -65,6 +63,10 @@ describe("executeEsql", () => {
 // ---------------------------------------------------------------------------
 
 describe("web_logs queries", () => {
+  beforeAll(async () => {
+    await seedWebLogs(ctx.esClient);
+  });
+
   it("FROM returns all 6 rows", async () => {
     const result = await client.query({ query: "FROM web_logs" });
     expect(result.values).toHaveLength(6);
@@ -166,6 +168,10 @@ describe("web_logs queries", () => {
 // ---------------------------------------------------------------------------
 
 describe("client.query time range filter", () => {
+  beforeAll(async () => {
+    await seedWebLogs(ctx.esClient);
+  });
+
   it("returns all rows when time range covers all data", async () => {
     const result = await client.query({
       query: "FROM web_logs",
@@ -192,6 +198,10 @@ describe("client.query time range filter", () => {
 // ---------------------------------------------------------------------------
 
 describe("response structure", () => {
+  beforeAll(async () => {
+    await seedWebLogs(ctx.esClient);
+  });
+
   it("columns include name and type", async () => {
     const result = await client.query({
       query: "FROM web_logs | KEEP method, status, bytes | LIMIT 1",
