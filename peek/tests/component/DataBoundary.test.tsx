@@ -38,6 +38,7 @@ describe("DataBoundary", () => {
       </DataBoundary>,
     );
     // ContentSkeleton renders Skeleton MUI components (with rounded variants)
+    // Note: MUI Skeleton has no accessible role; using class selector as fallback.
     const skeletons = container.querySelectorAll(".MuiSkeleton-root");
     expect(skeletons.length).toBeGreaterThan(0);
   });

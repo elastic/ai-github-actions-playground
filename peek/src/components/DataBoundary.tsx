@@ -1,12 +1,10 @@
 import type { ReactNode } from "react";
-import Alert from "@mui/material/Alert";
-import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
 import LinearProgress from "@mui/material/LinearProgress";
 
 import type { DataFetchResult } from "../types/query";
 
 import ContentSkeleton from "./ContentSkeleton";
+import DataFetchAlert from "./DataFetchAlert";
 
 type ContentSkeletonVariant = "table" | "cards" | "chart" | "chart-cell" | "list" | "detail-panel";
 
@@ -58,22 +56,7 @@ export default function DataBoundary<T>({
       return renderLoading(loading);
 
     case "error":
-      return (
-        <Box sx={{ p: 2 }}>
-          <Alert
-            severity="error"
-            action={
-              onRetry ? (
-                <Button color="inherit" size="small" onClick={onRetry}>
-                  Retry
-                </Button>
-              ) : undefined
-            }
-          >
-            {result.error}
-          </Alert>
-        </Box>
-      );
+      return <DataFetchAlert result={result} onRetry={onRetry} />;
 
     case "success":
       return children(result.data);

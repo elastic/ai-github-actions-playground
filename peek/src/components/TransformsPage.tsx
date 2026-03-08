@@ -152,9 +152,7 @@ export default function TransformsPage() {
         />
       </Stack>
 
-      {result.status === "error" && (
-        <DataFetchAlert result={result} onRetry={() => result.refresh()} />
-      )}
+      {result.status === "error" && <DataFetchAlert result={result} onRetry={result.refresh} />}
 
       {loading && <LinearProgress />}
 

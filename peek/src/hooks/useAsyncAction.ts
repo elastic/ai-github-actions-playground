@@ -52,10 +52,10 @@ export function useAsyncAction<TResult = void>(options: {
   mutationOptions?: Omit<UseMutationOptions<TResult, Error, void>, "mutationFn">;
 }): AsyncActionState {
   const mutation = useMutation<TResult, Error, void>({
+    ...options.mutationOptions,
     mutationFn: options.actionFn,
     onSuccess: options.onSuccess,
     onError: options.onError,
-    ...options.mutationOptions,
   });
 
   const execute = useCallback(() => {
