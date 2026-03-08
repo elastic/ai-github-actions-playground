@@ -1,4 +1,4 @@
-name: Run All Detectors
+name: Run Detectors – Code Quality
 on:
   workflow_dispatch:
 
@@ -11,25 +11,10 @@ jobs:
     strategy:
       matrix:
         workflow:
-          - agent-suggestions.yml
-          - autonomy-atomicity-analyzer.yml
           - breaking-change-detector.yml
-          - bug-hunter.yml
           - code-duplication-detector.yml
-          - docs-patrol.yml
-          - duplicate-issue-detector.yml
-          - flaky-test-investigator.yml
           - framework-best-practices.yml
-          - give-it-some-love.yml
-          - give-it-some-love-demo.yml
-          - information-architecture.yml
-          - iterative-ideas-man.yml
-          - medium-ideas-man.yml
-          - newbie-contributor-patrol.yml
-          - observability-ideas-man.yml
           - performance-profiler.yml
-          - product-manager-impersonator.yml
-          - project-summary.yml
           - react-accessibility.yml
           - react-component-best-practices.yml
           - react-performance.yml
@@ -37,12 +22,6 @@ jobs:
           - react-state-bug-hunter.yml
           - react-ui-boilerplate-sweeper.yml
           - refactor-opportunist.yml
-          - security-ideas-man.yml
-          - stale-issues.yml
-          - text-auditor.yml
-          - ui-designer-review.yml
-          - ux-design-patrol.yml
-          - vector-search-ideas-man.yml
       fail-fast: false
       max-parallel: 5
     steps:

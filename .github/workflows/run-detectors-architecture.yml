@@ -1,0 +1,22 @@
+name: Run Detectors – Architecture
+on:
+  workflow_dispatch:
+
+permissions:
+  actions: write
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        workflow:
+          - autonomy-atomicity-analyzer.yml
+          - project-summary.yml
+      fail-fast: false
+      max-parallel: 5
+    steps:
+      - name: Dispatch ${{ matrix.workflow }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run "${{ matrix.workflow }}" --repo "${{ github.repository }}"
