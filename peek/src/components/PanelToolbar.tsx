@@ -75,7 +75,7 @@ export default function PanelToolbar({
           "&:hover": { opacity: 1 },
         }}
       />
-      <Typography variant="body2" noWrap sx={{ flex: 1, fontWeight: 500 }}>
+      <Typography variant="body2" noWrap sx={{ flex: 1, minWidth: 0, fontWeight: 500 }}>
         {title}
       </Typography>
       {loading && <CircularProgress size={14} sx={{ mr: 0.5 }} />}
@@ -137,9 +137,11 @@ export default function PanelToolbar({
       )}
       {supportsQuery && (
         <Tooltip title="Refresh">
-          <IconButton size="small" onClick={onRefresh} disabled={loading} aria-label="Refresh">
-            <RefreshIcon sx={{ fontSize: 16 }} />
-          </IconButton>
+          <span>
+            <IconButton size="small" onClick={onRefresh} disabled={loading} aria-label="Refresh">
+              <RefreshIcon sx={{ fontSize: 16 }} />
+            </IconButton>
+          </span>
         </Tooltip>
       )}
       <Tooltip title="Duplicate panel">
