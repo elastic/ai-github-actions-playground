@@ -18,7 +18,7 @@ interface LoadAverageChartCardProps {
 export default function LoadAverageChartCard({ filters }: LoadAverageChartCardProps) {
   const theme = useEChartTheme();
   const query = useMemo(() => buildHostLoadAverageTimeSeriesQuery(filters), [filters]);
-  const { data, loading } = useSimpleEsqlQuery({ query });
+  const { data, loading, error } = useSimpleEsqlQuery({ query });
 
   const points = useMemo(() => parseLoadAverageSeries(data), [data]);
 
@@ -85,8 +85,8 @@ export default function LoadAverageChartCard({ filters }: LoadAverageChartCardPr
           <Box
             sx={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}
           >
-            <Typography variant="body2" color="text.secondary">
-              {loading ? "Loading..." : "No data"}
+            <Typography variant="body2" color={error ? "error" : "text.secondary"}>
+              {loading ? "Loading..." : (error ?? "No data")}
             </Typography>
           </Box>
         )}
