@@ -746,10 +746,16 @@ export async function loadElasticAgentLogs(
     const source = parseFleetSchema(agentLogSourceSchema, hit._source, "Elastic Agent logs");
     return {
       timestamp: source["@timestamp"] ?? "",
-      level: source.log?.level ?? "info",
+      level:
+        typeof source.log?.level === "string" && source.log.level.length > 0
+          ? source.log.level
+          : "info",
       message: source.message ?? "",
       component: source.component ?? "",
-      agentId: source.agent?.id ?? agentId,
+      agentId:
+        typeof source.agent?.id === "string" && source.agent.id.length > 0
+          ? source.agent.id
+          : agentId,
     };
   });
 }
