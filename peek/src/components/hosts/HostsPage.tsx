@@ -1,6 +1,8 @@
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
+import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -20,7 +22,7 @@ import HostInventoryTable from "./HostInventoryTable";
 import HostMetricsCharts from "./HostMetricsCharts";
 import HostOverviewCards from "./HostOverviewCards";
 import { useHostsInventorySearch } from "./useHostsInventorySearch";
-import type { HostOsType } from "./hostTypes";
+import type { HostOsType, HostRow } from "./hostTypes";
 import { osLabel } from "./hostTypes";
 import type { HostQueryFilters } from "./hostQueryBuilder";
 
@@ -30,6 +32,7 @@ interface HostsPageProps {
 }
 
 export default function HostsPage({ osType }: HostsPageProps) {
+  const navigate = useNavigate();
   const {
     filters,
     updateFilters,
@@ -47,6 +50,13 @@ export default function HostsPage({ osType }: HostsPageProps) {
     ? `Inventory and health snapshot of your ${osLabel(osType)} hosts.`
     : "Inventory and health snapshot of all monitored hosts.";
 
+  const handleRowClick = useCallback(
+    (row: HostRow) => {
+      navigate(`/hosts/${encodeURIComponent(row.hostId)}`);
+    },
+    [navigate],
+  );
+
   const metricsFilters = useMemo<HostQueryFilters>(
     () => ({
       timeFrom: filters.timeFrom,
@@ -61,7 +71,21 @@ export default function HostsPage({ osType }: HostsPageProps) {
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2, minHeight: "100%" }}>
-      <PageHeader title={title} description={description} />
+      <PageHeader
+        title={title}
+        description={description}
+        actions={
+          <Button
+            component={RouterLink}
+            to={PAGE_MANIFEST.addData.path}
+            startIcon={<AddCircleOutlineIcon />}
+            size="small"
+            variant="outlined"
+          >
+            Add hosts
+          </Button>
+        }
+      />
 
       {/* Toolbar */}
       <Paper variant="outlined" sx={{ p: 1.5 }}>
@@ -132,6 +156,7 @@ export default function HostsPage({ osType }: HostsPageProps) {
               sortField={sortField}
               sortDirection={sortDirection}
               handleSort={handleSort}
+              onRowClick={handleRowClick}
             />
           </Paper>
         </Stack>

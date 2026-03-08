@@ -14,6 +14,7 @@ import {
   type HostQueryFilters,
   type HostTimeSeriesMetric,
 } from "./hostQueryBuilder";
+import { fmtBytesRate } from "./hostFormatters";
 import { parseSimpleTimeSeries, parseLoadAverageSeries } from "./hostTimeSeriesParsers";
 
 // ---------------------------------------------------------------------------
@@ -26,6 +27,7 @@ interface HostDetailMetricChartProps {
   metricField: HostTimeSeriesMetric;
   filters: HostQueryFilters;
   asPercent?: boolean;
+  asBytes?: boolean;
   color?: string;
 }
 
@@ -35,6 +37,7 @@ export function HostDetailMetricChart({
   metricField,
   filters,
   asPercent,
+  asBytes,
   color,
 }: HostDetailMetricChartProps) {
   const theme = useEChartTheme();
@@ -45,6 +48,18 @@ export function HostDetailMetricChart({
   const { data, loading } = useSimpleEsqlQuery({ query });
   const points = useMemo(() => parseSimpleTimeSeries(data), [data]);
 
+  const fmtValue = useMemo(() => {
+    if (asPercent) return (v: number) => `${v.toFixed(1)}%`;
+    if (asBytes) return (v: number) => fmtBytesRate(v);
+    return (v: number) => v.toFixed(2);
+  }, [asPercent, asBytes]);
+
+  const fmtAxis = useMemo(() => {
+    if (asPercent) return (v: number) => `${v.toFixed(0)}%`;
+    if (asBytes) return (v: number) => fmtBytesRate(v);
+    return (v: number) => String(v);
+  }, [asPercent, asBytes]);
+
   const option = useMemo(() => {
     const seriesData = points.map((p) => [
       new Date(p.bucket).getTime(),
@@ -52,11 +67,11 @@ export function HostDetailMetricChart({
     ]);
     const seriesColor = color ?? (theme.color[0] as string | undefined) ?? "#4fc3f7";
     return {
-      grid: { left: 48, right: 16, top: 12, bottom: 28 },
+      grid: { left: 72, right: 16, top: 12, bottom: 28 },
       tooltip: {
         ...theme.tooltip,
         trigger: "axis",
-        valueFormatter: (v: number) => (asPercent ? `${v.toFixed(1)}%` : v.toFixed(2)),
+        valueFormatter: fmtValue,
       },
       xAxis: {
         ...theme.xAxis,
@@ -69,7 +84,7 @@ export function HostDetailMetricChart({
         axisLabel: {
           ...theme.yAxis?.axisLabel,
           fontSize: 10,
-          formatter: (v: number) => (asPercent ? `${v.toFixed(0)}%` : String(v)),
+          formatter: fmtAxis,
         },
         ...(asPercent ? { max: 100, min: 0 } : {}),
       },
@@ -85,7 +100,7 @@ export function HostDetailMetricChart({
         },
       ],
     };
-  }, [points, theme, asPercent, color]);
+  }, [points, theme, asPercent, fmtValue, fmtAxis, color]);
 
   return (
     <Paper variant="outlined" sx={{ overflow: "hidden" }}>
