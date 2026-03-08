@@ -136,6 +136,7 @@ const actionSourceSchema = z
     agents: z.array(z.string()).optional(),
     expiration: z.string().optional(),
     data: z.record(z.string(), z.unknown()).optional(),
+    "@timestamp": z.string().optional(),
   })
   .passthrough();
 
@@ -150,6 +151,9 @@ const actionResultSourceSchema = z
 
 const agentLogSourceSchema = z
   .object({
+    "@timestamp": z.string().optional(),
+    log: z.object({ level: z.string().optional() }).optional(),
+    agent: z.object({ id: z.string().optional() }).optional(),
     message: z.string().optional(),
     component: z.string().optional(),
   })
@@ -741,11 +745,11 @@ export async function loadElasticAgentLogs(
   return extractHits(data).map((hit) => {
     const source = parseFleetSchema(agentLogSourceSchema, hit._source, "Elastic Agent logs");
     return {
-      timestamp: readNestedString(hit._source, ["@timestamp"], ""),
-      level: readNestedString(hit._source, ["log", "level"], "info"),
+      timestamp: source["@timestamp"] ?? "",
+      level: source.log?.level ?? "info",
       message: source.message ?? "",
       component: source.component ?? "",
-      agentId: readNestedString(hit._source, ["agent", "id"], agentId),
+      agentId: source.agent?.id ?? agentId,
     };
   });
 }
@@ -809,7 +813,7 @@ export async function loadFleetActions(client: ElasticsearchClient): Promise<Fle
       id: source.action_id ?? hit._id ?? "",
       type: source.type ?? "UNKNOWN",
       agents: source.agents ?? [],
-      createdAt: readNestedString(hit._source, ["@timestamp"], ""),
+      createdAt: source["@timestamp"] ?? "",
       expiration: source.expiration ?? null,
       data: source.data ?? {},
     };
