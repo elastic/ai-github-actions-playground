@@ -6,7 +6,7 @@ import Button from "@mui/material/Button";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 
-import { PAGE_MANIFEST } from "../../routes/manifest";
+import { PAGE_PATHS } from "../../routes/paths";
 import { useConnectionStore } from "../../store/useConnectionStore";
 import EmptyState from "../EmptyState";
 import PageContainer from "../PageContainer";
@@ -80,11 +80,7 @@ export default function K8sPodDashboardPage() {
         title={podName}
         description="Pod-level dashboard showing containers, resource utilization, logs, and traces."
         actions={
-          <Button
-            size="small"
-            variant="text"
-            onClick={() => navigate(PAGE_MANIFEST.kubernetes.path)}
-          >
+          <Button size="small" variant="text" onClick={() => navigate(PAGE_PATHS.kubernetes.path)}>
             ← Kubernetes
           </Button>
         }
@@ -110,7 +106,7 @@ export default function K8sPodDashboardPage() {
           <EmptyState
             heading="No pod data loaded"
             description={`Click Search to load data for pod ${podName}.`}
-            addDataHref={PAGE_MANIFEST.addData.path}
+            addDataHref={PAGE_PATHS.addData.path}
           />
         </Paper>
       )}
@@ -152,7 +148,7 @@ export default function K8sPodDashboardPage() {
           <EmptyState
             heading="No data found"
             description={`No data found for pod ${podName} in the selected time range.`}
-            addDataHref={PAGE_MANIFEST.addData.path}
+            addDataHref={PAGE_PATHS.addData.path}
           />
         </Paper>
       )}
