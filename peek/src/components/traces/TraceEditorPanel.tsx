@@ -71,7 +71,7 @@ export default function TraceEditorPanel({
       }
       onClick={onRun}
       disabled={loading || !effectiveQuery.trim()}
-      sx={{ minHeight: COMPONENT_HEIGHTS.sidebarNavItem }}
+      sx={{ minHeight: COMPONENT_HEIGHTS.input }}
     >
       Search
     </Button>
