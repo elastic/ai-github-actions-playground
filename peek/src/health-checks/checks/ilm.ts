@@ -21,6 +21,8 @@ export const ilmChecks: HealthCheckDefinition[] = [
     severityOnFail: "high",
     surfaces: ["global", "local"],
     dependsOn: ["ilmCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/ilm-explain-lifecycle",
+    recommendation: "Retry the failed ILM step or fix the underlying issue.",
     evaluate: (snapshot) => {
       const ilmExplain = snapshot.data.ilmCore?.ilmExplain;
       if (!ilmExplain) return unknownIlmDataResult();
@@ -50,6 +52,8 @@ export const ilmChecks: HealthCheckDefinition[] = [
     severityOnFail: "medium",
     surfaces: ["global"],
     dependsOn: ["ilmCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/ilm-explain-lifecycle",
+    recommendation: "Create the missing ILM policies or update index settings.",
     evaluate: (snapshot) => {
       const ilmExplain = snapshot.data.ilmCore?.ilmExplain;
       if (!ilmExplain) return unknownIlmDataResult();
@@ -82,6 +86,8 @@ export const ilmChecks: HealthCheckDefinition[] = [
     severityOnFail: "medium",
     surfaces: ["global"],
     dependsOn: ["ilmCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/ilm-explain-lifecycle",
+    recommendation: "Review ILM step errors and retry or fix the underlying issue.",
     evaluate: (snapshot) => {
       const ilmExplain = snapshot.data.ilmCore?.ilmExplain;
       if (!ilmExplain) return unknownIlmDataResult();
@@ -109,6 +115,9 @@ export const ilmChecks: HealthCheckDefinition[] = [
     severityOnFail: "medium",
     surfaces: ["global"],
     dependsOn: ["ilmCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/ilm-explain-lifecycle",
+    recommendation:
+      "Large delete backlogs may indicate permission issues or slow snapshot cleanup.",
     evaluate: (snapshot) => {
       const ilmExplain = snapshot.data.ilmCore?.ilmExplain;
       if (!ilmExplain) return unknownIlmDataResult();
@@ -140,6 +149,8 @@ export const ilmChecks: HealthCheckDefinition[] = [
     severityOnFail: "low",
     surfaces: ["global"],
     dependsOn: ["ilmCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/ilm-explain-lifecycle",
+    recommendation: "Many indices lingering in hot phase may indicate misconfigured rollover.",
     evaluate: (snapshot) => {
       const ilmExplain = snapshot.data.ilmCore?.ilmExplain;
       if (!ilmExplain) return unknownIlmDataResult();
@@ -168,6 +179,8 @@ export const ilmChecks: HealthCheckDefinition[] = [
     severityOnFail: "medium",
     surfaces: ["global"],
     dependsOn: ["ilmCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/ilm-explain-lifecycle",
+    recommendation: "Review and correct the ILM policy action configuration.",
     evaluate: (snapshot) => {
       const ilmExplain = snapshot.data.ilmCore?.ilmExplain;
       if (!ilmExplain) return unknownIlmDataResult();

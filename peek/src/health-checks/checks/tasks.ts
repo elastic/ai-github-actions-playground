@@ -19,6 +19,8 @@ export const taskChecks: HealthCheckDefinition[] = [
     severityOnFail: "medium",
     surfaces: ["global"],
     dependsOn: ["tasksCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/list-tasks",
+    recommendation: "High task count may indicate queue saturation or runaway operations.",
     evaluate: (snapshot) => {
       const tasks = flattenTasks(snapshot.data.tasksCore?.tasks ?? null);
       if (tasks.length >= 100) {
@@ -42,6 +44,8 @@ export const taskChecks: HealthCheckDefinition[] = [
     severityOnFail: "high",
     surfaces: ["global"],
     dependsOn: ["tasksCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/list-tasks",
+    recommendation: "Investigate or cancel long-running tasks to free cluster resources.",
     evaluate: (snapshot) => {
       const tasks = flattenTasks(snapshot.data.tasksCore?.tasks ?? null);
       const longRunning = tasks.filter(
@@ -68,6 +72,8 @@ export const taskChecks: HealthCheckDefinition[] = [
     severityOnFail: "medium",
     surfaces: ["global"],
     dependsOn: ["tasksCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/list-tasks",
+    recommendation: "Review slow search queries. Consider cancelling or optimizing them.",
     evaluate: (snapshot) => {
       const tasks = flattenTasks(snapshot.data.tasksCore?.tasks ?? null);
       const longSearches = tasks.filter(
@@ -102,6 +108,8 @@ export const taskChecks: HealthCheckDefinition[] = [
     severityOnFail: "medium",
     surfaces: ["global"],
     dependsOn: ["tasksCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/list-tasks",
+    recommendation: "Monitor reindex progress; consider slicing for large reindex operations.",
     evaluate: (snapshot) => {
       const tasks = flattenTasks(snapshot.data.tasksCore?.tasks ?? null);
       const matched = tasks.filter(
@@ -131,6 +139,8 @@ export const taskChecks: HealthCheckDefinition[] = [
     severityOnFail: "medium",
     surfaces: ["global"],
     dependsOn: ["tasksCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/list-tasks",
+    recommendation: "Large update_by_query operations can consume significant resources.",
     evaluate: (snapshot) => {
       const tasks = flattenTasks(snapshot.data.tasksCore?.tasks ?? null);
       const matched = tasks.filter(
@@ -159,6 +169,8 @@ export const taskChecks: HealthCheckDefinition[] = [
     severityOnFail: "medium",
     surfaces: ["global"],
     dependsOn: ["tasksCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/list-tasks",
+    recommendation: "Large delete_by_query operations can cause significant merge overhead.",
     evaluate: (snapshot) => {
       const tasks = flattenTasks(snapshot.data.tasksCore?.tasks ?? null);
       const matched = tasks.filter(
@@ -187,6 +199,8 @@ export const taskChecks: HealthCheckDefinition[] = [
     severityOnFail: "low",
     surfaces: ["global"],
     dependsOn: ["tasksCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/list-tasks",
+    recommendation: "Long snapshot operations may impact cluster performance.",
     evaluate: (snapshot) => {
       const tasks = flattenTasks(snapshot.data.tasksCore?.tasks ?? null);
       const matched = tasks.filter(
@@ -215,6 +229,8 @@ export const taskChecks: HealthCheckDefinition[] = [
     severityOnFail: "low",
     surfaces: ["global"],
     dependsOn: ["tasksCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/list-tasks",
+    recommendation: "Consider cancelling stale tasks to free resources.",
     evaluate: (snapshot) => {
       const tasks = flattenTasks(snapshot.data.tasksCore?.tasks ?? null);
       const matched = tasks.filter(
@@ -241,6 +257,8 @@ export const taskChecks: HealthCheckDefinition[] = [
     severityOnFail: "medium",
     surfaces: ["global"],
     dependsOn: ["tasksCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/list-tasks",
+    recommendation: "Check for uneven query routing or a coordinator bottleneck.",
     evaluate: (snapshot) => {
       const nodeEntries = Object.entries(snapshot.data.tasksCore?.tasks?.nodes ?? {});
       if (nodeEntries.length < 2)
@@ -279,6 +297,8 @@ export const taskChecks: HealthCheckDefinition[] = [
     severityOnFail: "medium",
     surfaces: ["global"],
     dependsOn: ["tasksCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/list-tasks",
+    recommendation: "Multiple concurrent risky operations may destabilize the cluster.",
     evaluate: (snapshot) => {
       const tasks = flattenTasks(snapshot.data.tasksCore?.tasks ?? null);
       const riskyPatterns = ["delete_by_query", "reindex", "force_merge", "update_by_query"];
@@ -307,6 +327,8 @@ export const taskChecks: HealthCheckDefinition[] = [
     severityOnFail: "low",
     surfaces: ["global"],
     dependsOn: ["tasksCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/list-tasks",
+    recommendation: "Wildcard or many-index operations cause fan-out. Use targeted patterns.",
     evaluate: (snapshot) => {
       const tasks = flattenTasks(snapshot.data.tasksCore?.tasks ?? null);
       const fanout = tasks.filter((t) => {

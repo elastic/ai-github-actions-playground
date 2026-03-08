@@ -22,6 +22,7 @@ import { useSearchPanelUIStore } from "./useSearchPanelUIStore";
 import { useApiConsoleStore } from "./useApiConsoleStore";
 import { usePageContextStore } from "./usePageContextStore";
 import { useLogsStore } from "./useLogsStore";
+import { usePackageBuilderStore } from "./usePackageBuilderStore";
 
 const resetConnection = () => useConnectionStore.getState().resetConnectionState();
 const resetDashboard = () => useDashboardStore.getState().resetDashboardState();
@@ -41,6 +42,7 @@ const resetSearchPanelUi = () => useSearchPanelUIStore.getState().resetSearchPan
 const resetApiConsole = () => useApiConsoleStore.getState().resetApiConsoleState();
 const resetPageContext = () => usePageContextStore.getState().resetPageContext();
 const resetLogs = () => useLogsStore.getState().reset();
+const resetPackageBuilder = () => usePackageBuilderStore.getState().reset();
 
 export const storeResetters: ReadonlyArray<() => void> = [
   resetConnection,
@@ -61,6 +63,7 @@ export const storeResetters: ReadonlyArray<() => void> = [
   resetSearchPanelUi,
   resetApiConsole,
   resetPageContext,
+  resetPackageBuilder,
 ];
 
 export const RESET_SCOPE: ReadonlyArray<{ label: string; reset: () => void }> = [
@@ -77,7 +80,7 @@ export const RESET_SCOPE: ReadonlyArray<{ label: string; reset: () => void }> = 
     reset: resetQuery,
   },
   {
-    label: "Observability filters (traces, metrics, logs, fleet, profiling, services)",
+    label: "Observability filters (traces, metrics, logs, fleet, hosts, profiling, services)",
     reset: () => {
       resetTraces();
       resetExplorer();
@@ -105,5 +108,9 @@ export const RESET_SCOPE: ReadonlyArray<{ label: string; reset: () => void }> = 
   {
     label: "Console history and request state",
     reset: resetApiConsole,
+  },
+  {
+    label: "Package Builder wizard drafts",
+    reset: resetPackageBuilder,
   },
 ];
