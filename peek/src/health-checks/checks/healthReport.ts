@@ -174,7 +174,7 @@ export const healthReportChecks: HealthCheckDefinition[] = [
         const indicator = report.indicators?.[key];
         if (!indicator) {
           return {
-            status: "pass",
+            status: "unknown",
             summary: `Indicator "${key}" not present in Health Report.`,
           };
         }

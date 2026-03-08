@@ -82,7 +82,7 @@ export default function GlobalHealthPage() {
         <Chip
           size="small"
           color={failingCounts.high > 0 ? "error" : "default"}
-          variant="outlined"
+          variant={failingCounts.high > 0 ? "filled" : "outlined"}
           label={`High: ${failingCounts.high}`}
         />
         <Chip

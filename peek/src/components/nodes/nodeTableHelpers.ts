@@ -69,7 +69,7 @@ export interface NodeTableRow {
 }
 
 export function nodeHealth(row: NodeTableRow): HealthLevel {
-  // Critical: heap > 90%, disk > 95%, any breaker trips
+  // Critical: heap >= 90%, disk >= 95%, any breaker trips
   if (row.heapPercent !== null && row.heapPercent >= NODE_THRESHOLDS.heap.critical)
     return "critical";
   if (row.fsUsedPercent !== null && row.fsUsedPercent >= NODE_THRESHOLDS.disk.critical)
