@@ -43,12 +43,11 @@ const A11Y_BASELINE: Record<string, Record<string, Record<string, number>>> = {
     },
     Logs: {
       "color-contrast": 6,
-      "page-has-heading-one": 1,
     },
-    "logs-explorer": {
-      "aria-prohibited-attr": 1,
-      "color-contrast": 18,
-      "scrollable-region-focusable": 1,
+    "logs-dimension": {
+      "aria-progressbar-name": 2,
+      "color-contrast": 2,
+      list: 1,
     },
     Console: {
       "color-contrast": 17,
@@ -194,6 +193,28 @@ async function mockElasticsearch(page: Page) {
             ["2026-02-23T09:55:00.000Z", 4, 18.2, 41.3],
             ["2026-02-23T10:00:00.000Z", 5, 22.8, 48.6],
           ],
+        };
+      }
+
+      if (query.includes("STATS count = COUNT(*) BY ")) {
+        const dimMatch = query.match(/BY\s+([a-zA-Z0-9_.]+)/);
+        const dim = dimMatch ? dimMatch[1] : "service.name";
+        return {
+          columns: [
+            { name: dim, type: "keyword" },
+            { name: "count", type: "long" },
+          ],
+          values: [
+            ["checkout-service", 1234],
+            ["auth-service", 567],
+          ],
+        };
+      }
+
+      if (query.includes("STATS count = COUNT(*) | LIMIT 1")) {
+        return {
+          columns: [{ name: "count", type: "long" }],
+          values: [[42]],
         };
       }
 
@@ -437,51 +458,63 @@ test.describe("smoke – site navigation", () => {
   test("logs explorer route is available and runs a logs query", async ({ page }) => {
     await connectToMockCluster(page);
     await dismissMobileDrawerIfOpen(page);
-    // Logs Explorer is hidden from the sidebar; navigate directly via hash route
-    await page.evaluate(() => {
-      window.location.hash = "/logs-explorer";
-    });
-    await expect(page).toHaveURL(/\/logs-explorer$/);
-    // The ES|QL editor starts collapsed; expand it first
-    await page.getByRole("button", { name: "Expand ES|QL query section" }).click();
+    await navigateViaSidebar(page, "Logs");
+    await expect(page).toHaveURL(/\/logs$/);
+
+    // Verify we are on the landing page
+    await expect(
+      page.getByRole("heading", { name: "What logs are you looking for?" }),
+    ).toBeVisible();
+
+    // Click the All logs tile
+    await page
+      .getByRole("main")
+      .getByRole("button", { name: /^All logs/ })
+      .click();
+
+    // Assert that we navigated to Query Lab and the time filter is present
+    await expect(page).toHaveURL(/\/discover$/);
     const queryInput = page.getByRole("textbox", { name: "ES|QL query editor" });
     await expect(queryInput).toBeVisible();
-    await queryInput.click();
-    await page.keyboard.press("ControlOrMeta+A");
-    await page.keyboard.type("FROM logs-* | LIMIT 1");
-    await page.getByRole("button", { name: /^Search Logs\b/ }).click();
-    await expect(page.getByRole("columnheader", { name: "@timestamp" })).toBeVisible();
-    await expect(page.getByRole("columnheader", { name: "message" })).toBeVisible();
-  });
+    await expect(queryInput).toContainText("@timestamp >=");
 
-  test("logs explorer keeps search and click-to-filter in visible query", async ({ page }) => {
-    test.setTimeout(60_000);
-    await connectToMockCluster(page);
-    await dismissMobileDrawerIfOpen(page);
-    // Logs Explorer is hidden from the sidebar; navigate directly via hash route
-    await page.evaluate(() => {
-      window.location.hash = "/logs-explorer";
-    });
-    await expect(page).toHaveURL(/\/logs-explorer$/);
+    // Run the query to see results
+    await page.getByRole("button", { name: "Run query" }).click();
 
-    // Use the guided search input (stepper-based flow) to set search text
-    await page.getByPlaceholder('e.g. "timeout in checkout"').fill('"Hello World"');
-    await page.getByRole("button", { name: "Apply", exact: true }).click();
-
-    // Run the query and wait for results
-    await page.getByRole("button", { name: /^Search Logs\b/ }).click();
     await expect(page.getByRole("columnheader", { name: "@timestamp" })).toBeVisible({
       timeout: 15_000,
     });
+    await expect(page.getByRole("columnheader", { name: "message" })).toBeVisible();
+  });
 
-    // Click-to-filter: clicking a cell adds a filter chip and updates the query
-    await page.getByRole("cell", { name: "checkout-service" }).click();
-    await expect(page.getByText("service.name: checkout-service")).toBeVisible();
+  test("logs landing page dimension drill-down passes time filter to query lab", async ({
+    page,
+  }) => {
+    test.setTimeout(60_000);
+    await connectToMockCluster(page);
+    await dismissMobileDrawerIfOpen(page);
 
-    // Expand the collapsed ES|QL editor to verify the generated query text
-    await page.getByRole("button", { name: "Expand ES|QL query section" }).click();
+    // Navigate via sidebar to Logs
+    await navigateViaSidebar(page, "Logs");
+    await expect(page).toHaveURL(/\/logs$/);
+
+    // Click a dimension tile, e.g. Services
+    await page
+      .getByRole("main")
+      .getByRole("button", { name: /^Services/ })
+      .click();
+
+    // Verify dimension detail page
+    await expect(page.getByRole("heading", { name: "Services" })).toBeVisible({ timeout: 15_000 });
+
+    // Click the mock value to trigger drill-down
+    await page.getByText("checkout-service").click();
+
+    // Verify Query Lab opens with the correct ES|QL query
+    await expect(page).toHaveURL(/\/discover$/);
     const queryInput = page.getByRole("textbox", { name: "ES|QL query editor" });
-    await expect(queryInput).toContainText('MATCH_PHRASE(message, "Hello World")');
+    await expect(queryInput).toBeVisible();
+    await expect(queryInput).toContainText("@timestamp >=");
     await expect(queryInput).toContainText('service.name == "checkout-service"');
   });
 
@@ -526,8 +559,6 @@ test.describe("smoke – site navigation", () => {
         expect(page.getByRole("textbox", { name: "ES|QL query editor" })).toBeVisible(),
       Logs: () =>
         expect(page.getByRole("heading", { name: "What logs are you looking for?" })).toBeVisible(),
-      "logs-explorer": () =>
-        expect(page.getByRole("heading", { name: "Logs Explorer" })).toBeVisible(),
       Console: async () => {
         await expect(page).toHaveURL(/\/console$/);
         await expect(page.getByRole("heading", { name: "API Console" })).toBeVisible();
@@ -558,11 +589,12 @@ test.describe("smoke – site navigation", () => {
     }
 
     await dismissMobileDrawerIfOpen(page);
-    await page.evaluate(() => {
-      window.location.hash = "/logs-explorer";
-    });
-    await expect(page).toHaveURL(/\/logs-explorer$/);
-    await pageReadyLocators["logs-explorer"]!();
-    await checkA11y(page, "logs-explorer", testInfo);
+    await navigateViaSidebar(page, "Logs");
+    await page
+      .getByRole("main")
+      .getByRole("button", { name: /^Services/ })
+      .click();
+    await expect(page.getByRole("heading", { name: "Services" })).toBeVisible();
+    await checkA11y(page, "logs-dimension", testInfo);
   });
 });
