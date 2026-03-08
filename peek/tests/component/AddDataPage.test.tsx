@@ -78,6 +78,9 @@ const defaultCapabilities: UserCapabilities = {
   canReadSecurityRoles: false,
 };
 
+const SHORT_TEST_TIMEOUT = 15_000;
+const LONG_TEST_TIMEOUT = 30_000;
+
 describe("AddDataPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -104,7 +107,7 @@ describe("AddDataPage", () => {
     useConnectionStore.setState({ capabilities: defaultCapabilities });
   });
 
-  it("renders Step 1 with search and experience tiles", { timeout: 15_000 }, () => {
+  it("renders Step 1 with search and experience tiles", { timeout: SHORT_TEST_TIMEOUT }, () => {
     renderPage();
     expect(
       screen.getByRole("heading", { name: /What do you want to monitor\?/i }),
@@ -118,7 +121,7 @@ describe("AddDataPage", () => {
     expect(screen.getByText("Applications (APM Agents)")).toBeInTheDocument();
   });
 
-  it("shows third-party collectors under Advanced", { timeout: 15_000 }, async () => {
+  it("shows third-party collectors under Advanced", { timeout: SHORT_TEST_TIMEOUT }, async () => {
     const user = userEvent.setup();
     renderPage();
 
@@ -132,7 +135,7 @@ describe("AddDataPage", () => {
     expect(screen.queryByRole("button", { name: /^Java$/i })).not.toBeInTheDocument();
   });
 
-  it("filters technologies by search and experience selection", { timeout: 15_000 }, async () => {
+  it("filters technologies by search and experience selection", { timeout: SHORT_TEST_TIMEOUT }, async () => {
     const user = userEvent.setup();
     renderPage();
 
@@ -156,7 +159,7 @@ describe("AddDataPage", () => {
     expect(screen.queryByText(/^AWS$/i)).not.toBeInTheDocument();
   });
 
-  it("keeps next steps locked until verification", { timeout: 30_000 }, async () => {
+  it("keeps next steps locked until verification", { timeout: LONG_TEST_TIMEOUT }, async () => {
     const user = userEvent.setup();
     renderPage();
 
@@ -173,7 +176,7 @@ describe("AddDataPage", () => {
     expect(screen.queryByRole("heading", { name: /next steps/i })).not.toBeInTheDocument();
   });
 
-  it("allows skipping verification to proceed to Step 3", { timeout: 30_000 }, async () => {
+  it("allows skipping verification to proceed to Step 3", { timeout: LONG_TEST_TIMEOUT }, async () => {
     // Return empty data streams so verification never detects data
     mockGetDataStreams.mockResolvedValue({ data_streams: [] });
     mockRawRequest.mockResolvedValue({
@@ -211,7 +214,7 @@ describe("AddDataPage", () => {
 
   it(
     "shows configure and install sections with credentials in merged Step 2",
-    { timeout: 30_000 },
+    { timeout: LONG_TEST_TIMEOUT },
     async () => {
       const user = userEvent.setup();
       renderPage();
@@ -248,7 +251,7 @@ describe("AddDataPage", () => {
     },
   );
 
-  it("hides configure output for single-mode collectors", { timeout: 30_000 }, async () => {
+  it("hides configure output for single-mode collectors", { timeout: LONG_TEST_TIMEOUT }, async () => {
     const user = userEvent.setup();
     renderPage();
 
@@ -263,7 +266,7 @@ describe("AddDataPage", () => {
 
   it(
     "guides AWS setup step-by-step (configure -> credentials -> deploy)",
-    { timeout: 30_000 },
+    { timeout: LONG_TEST_TIMEOUT },
     async () => {
       const user = userEvent.setup();
       renderPage();
@@ -294,7 +297,7 @@ describe("AddDataPage", () => {
     },
   );
 
-  it("shows manual CLI tab for AWS deploy", { timeout: 30_000 }, async () => {
+  it("shows manual CLI tab for AWS deploy", { timeout: LONG_TEST_TIMEOUT }, async () => {
     const user = userEvent.setup();
     renderPage();
 
@@ -314,7 +317,7 @@ describe("AddDataPage", () => {
 
   it(
     "hides environment tabs when only one environment is supported",
-    { timeout: 30_000 },
+    { timeout: LONG_TEST_TIMEOUT },
     async () => {
       const user = userEvent.setup();
       renderPage();
@@ -327,7 +330,7 @@ describe("AddDataPage", () => {
     },
   );
 
-  it("does not show host runtime tabs in Prometheus setup", { timeout: 30_000 }, async () => {
+  it("does not show host runtime tabs in Prometheus setup", { timeout: LONG_TEST_TIMEOUT }, async () => {
     const user = userEvent.setup();
     renderPage();
 
@@ -342,7 +345,7 @@ describe("AddDataPage", () => {
     expect(screen.queryByRole("tab", { name: /^Windows$/i })).not.toBeInTheDocument();
   });
 
-  it("shows a separate Prometheus Remote Write tile", { timeout: 15_000 }, async () => {
+  it("shows a separate Prometheus Remote Write tile", { timeout: SHORT_TEST_TIMEOUT }, async () => {
     const user = userEvent.setup();
     renderPage();
     await user.click(screen.getByRole("button", { name: /^Advanced\b/i }));
@@ -352,7 +355,7 @@ describe("AddDataPage", () => {
     expect(screen.getByRole("button", { name: /Prometheus Remote Write/i })).toBeInTheDocument();
   });
 
-  it("auto-detects host architecture in generated commands", { timeout: 30_000 }, async () => {
+  it("auto-detects host architecture in generated commands", { timeout: LONG_TEST_TIMEOUT }, async () => {
     const user = userEvent.setup();
     renderPage();
 
@@ -391,7 +394,7 @@ describe("AddDataPage", () => {
     ).toBeGreaterThan(0);
   });
 
-  it("shows contextual verification expectations in Step 2", { timeout: 30_000 }, async () => {
+  it("shows contextual verification expectations in Step 2", { timeout: LONG_TEST_TIMEOUT }, async () => {
     const user = userEvent.setup();
     renderPage();
 
@@ -402,7 +405,7 @@ describe("AddDataPage", () => {
     ).toBeGreaterThan(0);
   });
 
-  it("uses managed OTLP endpoint for APM SDK snippets", { timeout: 30_000 }, async () => {
+  it("uses managed OTLP endpoint for APM SDK snippets", { timeout: LONG_TEST_TIMEOUT }, async () => {
     const user = userEvent.setup();
     renderPage();
 
@@ -423,7 +426,7 @@ describe("AddDataPage", () => {
 
   it(
     "shows Step 3 outcomes with dashboard/alerting/additional source CTAs",
-    { timeout: 30_000 },
+    { timeout: LONG_TEST_TIMEOUT },
     async () => {
       const user = userEvent.setup();
       // Baseline capture will see empty data streams; subsequent poll calls
@@ -471,7 +474,7 @@ describe("AddDataPage", () => {
     expect(missing).toEqual([]);
   });
 
-  it("resets state when clicking 'Add another source'", { timeout: 30_000 }, async () => {
+  it("resets state when clicking 'Add another source'", { timeout: LONG_TEST_TIMEOUT }, async () => {
     mockGetDataStreams.mockResolvedValueOnce({ data_streams: [] }).mockResolvedValue({
       data_streams: [{ name: "metrics-host.otel-default" }],
     });
@@ -505,7 +508,7 @@ describe("AddDataPage", () => {
 
   it(
     "shows collector output and API key section for collector setup",
-    { timeout: 30_000 },
+    { timeout: LONG_TEST_TIMEOUT },
     async () => {
       useConnectionStore.getState().setConnection({
         url: "http://localhost:9200",
@@ -529,7 +532,7 @@ describe("AddDataPage", () => {
     },
   );
 
-  it("clears technology selection when search input is cleared", { timeout: 15_000 }, async () => {
+  it("clears technology selection when search input is cleared", { timeout: SHORT_TEST_TIMEOUT }, async () => {
     const user = userEvent.setup();
     renderPage();
 
@@ -562,7 +565,7 @@ describe("AddDataPage", () => {
 
   it(
     "filters verified signals to only expected signals for APM technologies",
-    { timeout: 30_000 },
+    { timeout: LONG_TEST_TIMEOUT },
     async () => {
       const user = userEvent.setup();
       renderPage();
@@ -584,7 +587,7 @@ describe("AddDataPage", () => {
     },
   );
 
-  it("shows Open Services CTA for APM technologies in Step 3", { timeout: 30_000 }, async () => {
+  it("shows Open Services CTA for APM technologies in Step 3", { timeout: LONG_TEST_TIMEOUT }, async () => {
     // Baseline call sees no data streams; subsequent polls see APM traces stream.
     mockGetDataStreams.mockResolvedValueOnce({ data_streams: [] }).mockResolvedValue({
       data_streams: [{ name: "traces-apm-default" }],
@@ -618,7 +621,7 @@ describe("AddDataPage", () => {
     expect(screen.getByRole("button", { name: "Explore metrics" })).toBeInTheDocument();
   });
 
-  it("resets setup flow when clicking Start over", { timeout: 30_000 }, async () => {
+  it("resets setup flow when clicking Start over", { timeout: LONG_TEST_TIMEOUT }, async () => {
     const user = userEvent.setup();
     renderPage();
 
