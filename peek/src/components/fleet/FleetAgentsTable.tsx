@@ -19,7 +19,7 @@ import FilterListOffIcon from "@mui/icons-material/FilterListOff";
 import type { ElasticAgentInfo } from "../../services/fleet";
 import { computeCheckinStaleness, fleetStatusColor } from "../../services/fleet";
 import { useTableSort } from "../../hooks/useTableSort";
-import { usePageFiltersStore } from "../../store/usePageFiltersStore";
+import { useFleetFiltersStore } from "../../store/useFleetFiltersStore";
 import EmptyState from "../EmptyState";
 import { compareSemver } from "../../utils/compareSemver";
 
@@ -41,9 +41,9 @@ type SortField =
   | "errorCount";
 
 export default memo(function FleetAgentsTable({ agents, onAgentClick }: Props) {
-  const agentFilter = usePageFiltersStore((s) => s.agentFilter);
-  const updateAgentFilter = usePageFiltersStore((s) => s.updateAgentFilter);
-  const resetFilters = usePageFiltersStore((s) => s.resetFleetAgentFilter);
+  const agentFilter = useFleetFiltersStore((s) => s.agentFilter);
+  const updateAgentFilter = useFleetFiltersStore((s) => s.updateAgentFilter);
+  const resetFilters = useFleetFiltersStore((s) => s.resetFleetAgentFilter);
 
   const { sortField, sortDirection, getSortLabelProps } = useTableSort<SortField>("hostname");
 

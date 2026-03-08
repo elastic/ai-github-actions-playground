@@ -9,7 +9,7 @@ import { parseAsString, useQueryState } from "nuqs";
 
 import { PAGE_MANIFEST } from "../../routes/manifest";
 import { useConnectionStore } from "../../store/useConnectionStore";
-import { usePageFiltersStore } from "../../store/usePageFiltersStore";
+import { useProfilingFiltersStore } from "../../store/useProfilingFiltersStore";
 import { EMPTY_PROFILING_FILTERS } from "../../types/pageFilters";
 import EmptyState from "../EmptyState";
 import PageInsightBanner from "../PageInsightBanner";
@@ -31,7 +31,7 @@ function isProfilingFocusDimension(value: string | null): value is ProfilingFocu
 export default function ProfilingGuidedPage() {
   const navigate = useNavigate();
   const connection = useConnectionStore((state) => state.connection);
-  const { expandedStacktraceIds, toggleExpandedStacktraceId } = usePageFiltersStore(
+  const { expandedStacktraceIds, toggleExpandedStacktraceId } = useProfilingFiltersStore(
     useShallow((s) => ({
       expandedStacktraceIds: s.expandedStacktraceIds,
       toggleExpandedStacktraceId: s.toggleExpandedStacktraceId,
