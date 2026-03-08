@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
@@ -47,8 +47,23 @@ export default function ParameterControl({
 
   // Fetch options from ES|QL when source mode is esql
   const esqlQuery = param.source.mode === "esql" ? param.source.query : "";
+
+  // Only include parameters actually referenced by {{name}} tokens in the
+  // query key so that unrelated variable changes don't invalidate the cache.
+  const referencedParams = useMemo(() => {
+    if (!esqlQuery) return [];
+    const tokens = new Set<string>();
+    for (const m of esqlQuery.matchAll(/\{\{(\w+)\}\}/g)) {
+      if (m[1]) tokens.add(m[1]);
+    }
+    if (tokens.size === 0) return [];
+    return parameters
+      .filter((p) => tokens.has(p.name))
+      .map((p) => ({ name: p.name, type: p.type, value: p.value }));
+  }, [esqlQuery, parameters]);
+
   const { data: esqlOptions = [] } = useQuery<string[]>({
-    queryKey: ["parameter-options", activeProfileId, connection?.url, esqlQuery, parameters],
+    queryKey: ["parameter-options", activeProfileId, connection?.url, esqlQuery, referencedParams],
     queryFn: async ({ signal }) => {
       const datasource = createPersesEsqlDatasource(connection!);
       const request = buildPersesEsqlRequest(esqlQuery, { parameters });

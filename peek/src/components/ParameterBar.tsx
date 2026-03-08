@@ -105,7 +105,7 @@ export default function ParameterBar() {
 
         {parameters.map((param) => (
           <ParameterControl
-            key={`${param.name}:${param.type}:${String(param.value)}`}
+            key={`${param.name}:${param.type}`}
             param={param}
             activeProfileId={activeProfileId}
             connection={connection}
