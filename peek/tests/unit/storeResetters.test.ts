@@ -20,6 +20,7 @@ import { useSearchPanelUIStore } from "../../src/store/useSearchPanelUIStore";
 import { useApiConsoleStore } from "../../src/store/useApiConsoleStore";
 import { usePageContextStore } from "../../src/store/usePageContextStore";
 import { useLogsStore } from "../../src/store/useLogsStore";
+import { useInsightStatusStore } from "../../src/store/useInsightStatusStore";
 import { usePackageBuilderStore } from "../../src/store/usePackageBuilderStore";
 
 /**
@@ -70,6 +71,11 @@ const STORES_WITH_RESET_API = [
   { name: "useApiConsoleStore", store: useApiConsoleStore, method: "resetApiConsoleState" },
   { name: "usePageContextStore", store: usePageContextStore, method: "resetPageContext" },
   { name: "useLogsStore", store: useLogsStore, method: "reset" },
+  {
+    name: "useInsightStatusStore",
+    store: useInsightStatusStore,
+    method: "resetInsightStatus",
+  },
   { name: "usePackageBuilderStore", store: usePackageBuilderStore, method: "reset" },
 ] as const;
 

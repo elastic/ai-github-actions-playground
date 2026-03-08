@@ -12,6 +12,19 @@ function isAbortError(error: unknown): boolean {
   return false;
 }
 
+function getErrorStatusCode(error: unknown): number | undefined {
+  if (typeof error === "object" && error !== null && "status" in error) {
+    const status = Number((error as { status?: unknown }).status);
+    return Number.isFinite(status) ? status : undefined;
+  }
+  return undefined;
+}
+
+function isIgnorableSnapshotsCoreError(error: unknown): boolean {
+  const status = getErrorStatusCode(error);
+  return status === 400 || status === 403 || status === 404;
+}
+
 async function fetchGroup(
   client: ElasticsearchClient,
   group: HealthQueryGroup,
@@ -73,6 +86,27 @@ async function fetchGroup(
       case "securityCore": {
         const apiKeys = await client.getApiKeys(signal);
         return { group, data: { apiKeys } };
+      }
+      case "snapshotsCore": {
+        const [snapshotsRes, policiesRes, slmStatsRes] = await Promise.allSettled([
+          client.getSnapshots(signal),
+          client.getSlmPolicies(signal),
+          client.getSlmStats(signal),
+        ]);
+        for (const result of [snapshotsRes, policiesRes, slmStatsRes]) {
+          if (result.status === "rejected" && !isIgnorableSnapshotsCoreError(result.reason)) {
+            throw result.reason;
+          }
+        }
+        return {
+          group,
+          data: {
+            snapshots:
+              snapshotsRes.status === "fulfilled" ? (snapshotsRes.value.snapshots ?? []) : null,
+            policies: policiesRes.status === "fulfilled" ? policiesRes.value : null,
+            slmStats: slmStatsRes.status === "fulfilled" ? slmStatsRes.value : null,
+          },
+        };
       }
       case "healthReport": {
         try {
