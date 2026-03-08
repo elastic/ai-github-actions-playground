@@ -113,7 +113,7 @@ export default function LogsSearchPanel({
               border: 1,
               borderColor: "divider",
             },
-            "& .MuiStepButton-root:has(.MuiStepLabel-root.Mui-active)": {
+            "& .MuiStepButton-root:has(.Mui-active)": {
               borderColor: "primary.main",
               bgcolor: "action.selected",
             },
