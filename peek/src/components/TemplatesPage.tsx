@@ -29,6 +29,7 @@ import { COMPONENT_HEIGHTS } from "../types/tokens";
 import EmptyState from "./EmptyState";
 import PageContainer from "./PageContainer";
 import PageHeaderSection from "./PageHeaderSection";
+import DocLink from "./DocLink";
 import { OverviewInfoCard } from "./OverviewInfoCard";
 import {
   compareIndexTpls,
@@ -200,6 +201,7 @@ export default function TemplatesPage() {
     <PageContainer>
       <PageHeaderSection
         title={activeTab === "index" ? "Index Templates" : "Component Templates"}
+        titleAdornment={<DocLink section="templates" tooltip="Templates docs" />}
         actions={
           <Button
             size="small"

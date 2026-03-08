@@ -1,22 +1,64 @@
 # Visualization Types
 
-Time Series — line charts for data with a date column. Supports smoothing, area fill, and stacking.
+Peek supports a variety of chart types for dashboard panels. Each panel has its own ES|QL query and chart type — choose the one that best fits your data shape.
 
-Bar Chart — vertical or horizontal bars. Supports stacking.
+## Time Series
 
-Pie Chart — proportional slices from a categorical breakdown.
+Line charts for data with a date column. Best for showing trends, latency percentiles, and throughput over time.
 
-Heatmap — color-density matrix for comparing values across two dimensions.
+- **Smoothing** — reduce noise in volatile data by enabling line smoothing.
+- **Area fill** — fill the area under the line to emphasize volume.
+- **Stacking** — stack multiple series to show cumulative totals.
 
-Scatter — point plot for correlation and distribution across numeric axes.
+## Bar Chart
 
-Histogram — bucketed distribution chart for showing value frequency.
+Vertical or horizontal bars for comparing categorical values. Use stacking to show composition within each category.
 
-Stat — a single large number, ideal for KPIs and counters.
+## Pie Chart
 
-Gauge — a value shown on a radial gauge with configurable min/max range.
+Proportional slices from a categorical breakdown. Best for showing distribution of a single dimension (e.g., error types, service languages).
 
-Table — raw tabular output, useful for detailed inspection of query results. Table panels include an **Export CSV** button in the panel controls that downloads the currently loaded rows as a `.csv` file named `{panel-title}-{timestamp}.csv`. The export covers only the rows returned by the panel's last query execution.
+## Heatmap
+
+Color-density matrix for comparing values across two dimensions. Useful for time-of-day analysis, correlation matrices, and resource utilization patterns.
+
+## Scatter
+
+Point plot for correlation and distribution analysis across two numeric axes. Click a point to inspect the underlying data.
+
+## Histogram
+
+Bucketed distribution chart showing value frequency. Use for latency distributions, request size analysis, and statistical profiling.
+
+## Stat
+
+A single large number, ideal for KPIs, counters, and at-a-glance metrics. Pair with a `STATS` aggregation in your ES|QL query.
+
+## Gauge
+
+A value shown on a radial gauge with configurable min/max range. Use for utilization percentages, SLA scores, and capacity indicators.
+
+## Table
+
+Raw tabular output for detailed inspection of query results. Table panels include an **Export CSV** button in the panel controls that downloads the currently loaded rows as a `.csv` file named `{panel-title}-{timestamp}.csv`.
+
+## Markdown
+
+Rich text panels for adding context, notes, and instructions to dashboards. Supports full Markdown syntax including headings, lists, links, and code blocks. Use embedded ES|QL expressions (`${FROM index | STATS count=COUNT(*)}`) to display live query results inline.
+
+## Choosing the right type
+
+| Data shape | Recommended type |
+|---|---|
+| Time-series trend | Time Series |
+| Category comparison | Bar Chart |
+| Distribution breakdown | Pie Chart |
+| Two-dimensional density | Heatmap |
+| Correlation of two metrics | Scatter |
+| Value frequency | Histogram |
+| Single KPI value | Stat or Gauge |
+| Detailed rows | Table |
+| Annotations and notes | Markdown |
 
 Markdown — rich-text panel rendered from Markdown. Supports **parameterized tokens**: use `{{name}}` to insert the current value of a dashboard variable. For example, if you have a parameter called `service`, writing `Owner: {{service}}` will render the current value of that parameter. Unknown tokens are left as-is. This lets you build dynamic runbook notes, escalation links, and context panels that follow the current dashboard state.
 

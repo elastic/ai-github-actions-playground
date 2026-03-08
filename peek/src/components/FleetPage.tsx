@@ -26,6 +26,7 @@ import RefreshToolbar from "./RefreshToolbar";
 import ContentSkeleton from "./ContentSkeleton";
 import PageContainer from "./PageContainer";
 import PageHeaderSection from "./PageHeaderSection";
+import DocLink from "./DocLink";
 
 const TABS: { value: FleetViewTab; label: string }[] = [
   { value: "overview", label: "Overview" },
@@ -117,6 +118,7 @@ export default function FleetPage() {
     <PageContainer gap={1.5}>
       <PageHeaderSection
         title="Fleet"
+        titleAdornment={<DocLink section="fleet" tooltip="Fleet docs" />}
         actions={
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Button

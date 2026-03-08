@@ -34,6 +34,7 @@ import EmptyState from "./EmptyState";
 import { OverviewInfoCard } from "./OverviewInfoCard";
 import PageContainer from "./PageContainer";
 import PageHeaderSection from "./PageHeaderSection";
+import DocLink from "./DocLink";
 
 type TreeLevel = "node" | "signal" | "dataset" | "namespace" | "index" | "shard";
 type GroupBy = "instance" | "type" | "namespace";
@@ -366,6 +367,7 @@ export default function StorageExplorerPage() {
     <PageContainer>
       <PageHeaderSection
         title="Storage Explorer"
+        titleAdornment={<DocLink section="storage-explorer" tooltip="Storage Explorer docs" />}
         description="Explore shard-copy storage by node, signal, dataset, namespace, index, and shard."
         actions={
           <>

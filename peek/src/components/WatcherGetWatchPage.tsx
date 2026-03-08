@@ -26,6 +26,7 @@ import { useWatcherWatch } from "../hooks/useWatcherWatch";
 import EmptyState from "./EmptyState";
 import PageContainer from "./PageContainer";
 import PageHeaderSection from "./PageHeaderSection";
+import DocLink from "./DocLink";
 
 function formatTimestamp(value: string | number | undefined): string {
   if (typeof value === "string") return value;
@@ -191,6 +192,7 @@ export default function WatcherGetWatchPage() {
     <PageContainer>
       <PageHeaderSection
         title="Watchers"
+        titleAdornment={<DocLink section="watcher" tooltip="Watchers docs" />}
         actions={
           <Button
             size="small"
