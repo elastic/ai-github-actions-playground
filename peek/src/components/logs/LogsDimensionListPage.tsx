@@ -93,12 +93,11 @@ export default function LogsDimensionListPage({
   const handleOpenInQueryLab = useCallback(
     (value: string) => {
       const escaped = escapeEsqlString(value);
-      const timeFilter = timeRangeToEsqlFilter(timeRange);
       openInDiscover(
-        `FROM logs-* | WHERE ${timeFilter} | WHERE ${dimension} == "${escaped}" | SORT @timestamp DESC | LIMIT 500`,
+        `FROM logs-* | WHERE ${dimension} == "${escaped}" | SORT @timestamp DESC | LIMIT 500`,
       );
     },
-    [dimension, openInDiscover, timeRange],
+    [dimension, openInDiscover],
   );
 
   const maxCount = rows[0]?.count || 1;
