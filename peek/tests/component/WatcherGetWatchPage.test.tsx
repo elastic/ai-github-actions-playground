@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
+import { renderWithQueryClient } from "../helpers/renderWithQueryClient";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 
@@ -49,7 +50,7 @@ describe("WatcherGetWatchPage", () => {
       watch: { trigger: { schedule: { interval: "1m" } } },
     });
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <WatcherGetWatchPage />
       </MemoryRouter>,
@@ -71,7 +72,7 @@ describe("WatcherGetWatchPage", () => {
     });
     getWatcherWatchMock.mockRejectedValue({ status: 404, message: "not_found" });
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <WatcherGetWatchPage />
       </MemoryRouter>,
@@ -97,7 +98,7 @@ describe("WatcherGetWatchPage", () => {
       watch: { metadata: { owner: "ops" } },
     });
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <WatcherGetWatchPage />
       </MemoryRouter>,
@@ -137,7 +138,7 @@ describe("WatcherGetWatchPage", () => {
       ],
     });
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <WatcherGetWatchPage />
       </MemoryRouter>,

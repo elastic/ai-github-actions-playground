@@ -21,8 +21,7 @@ function makePipeline(name: string, processorsInput: ProcessorInput[]): Pipeline
 
 /**
  * Wrapper that manages pipeline state internally so React state in
- * PipelineDetailPanel is preserved across prop changes (avoids the
- * rerender-remount issue caused by the QueryClientProvider test mock).
+ * PipelineDetailPanel is preserved across prop changes.
  */
 function Harness({ initial, updated }: { initial: ProcessorInput[]; updated: ProcessorInput[] }) {
   const [types, setTypes] = useState(initial);

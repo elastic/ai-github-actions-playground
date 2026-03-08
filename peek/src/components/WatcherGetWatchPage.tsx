@@ -24,7 +24,9 @@ import { useWatcherQueryWatches } from "../hooks/useWatcherQueryWatches";
 import { useWatcherWatch } from "../hooks/useWatcherWatch";
 
 import EmptyState from "./EmptyState";
-import PageHeader from "./PageHeader";
+import PageContainer from "./PageContainer";
+import PageHeaderSection from "./PageHeaderSection";
+import DocLink from "./DocLink";
 
 function formatTimestamp(value: string | number | undefined): string {
   if (typeof value === "string") return value;
@@ -187,27 +189,26 @@ export default function WatcherGetWatchPage() {
   }, [search, sortDirection, sortField, tableRows]);
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1, height: "100%", minHeight: 0 }}>
-      <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <PageHeader
-          title="Watchers"
-          actions={
-            <Button
-              size="small"
-              variant="outlined"
-              onClick={listResult.refresh}
-              disabled={listResult.status === "loading"}
-              startIcon={
-                listResult.status === "loading" ? (
-                  <CircularProgress size={14} aria-hidden="true" />
-                ) : undefined
-              }
-            >
-              {listResult.status === "loading" ? "Refreshing..." : "Refresh list"}
-            </Button>
-          }
-        />
-      </Paper>
+    <PageContainer>
+      <PageHeaderSection
+        title="Watchers"
+        titleAdornment={<DocLink section="watcher" tooltip="Watchers docs" />}
+        actions={
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={listResult.refresh}
+            disabled={listResult.status === "loading"}
+            startIcon={
+              listResult.status === "loading" ? (
+                <CircularProgress size={14} aria-hidden="true" />
+              ) : undefined
+            }
+          >
+            {listResult.status === "loading" ? "Refreshing..." : "Refresh list"}
+          </Button>
+        }
+      />
 
       {watchResult.status === "error" && <Alert severity="error">{watchResult.error}</Alert>}
       {listResult.status === "error" && <Alert severity="warning">{listResult.error}</Alert>}
@@ -583,6 +584,6 @@ export default function WatcherGetWatchPage() {
           )}
         </Box>
       </Drawer>
-    </Box>
+    </PageContainer>
   );
 }

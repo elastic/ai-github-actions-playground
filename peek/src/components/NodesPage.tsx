@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
-import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import LoadingButton from "./LoadingButton";
 import Paper from "@mui/material/Paper";
@@ -24,7 +23,9 @@ import WarningIcon from "@mui/icons-material/Warning";
 import { useClusterOverview } from "../hooks/useClusterOverview";
 
 import EmptyState from "./EmptyState";
-import PageHeader from "./PageHeader";
+import PageContainer from "./PageContainer";
+import PageHeaderSection from "./PageHeaderSection";
+import DocLink from "./DocLink";
 
 // ── Role abbreviation map ─────────────────────────────────────────────────
 
@@ -205,18 +206,17 @@ export default function NodesPage() {
   }, [data?.nodesInfo?.nodes, data?.nodesStats?.nodes]);
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1, height: "100%", minHeight: 0 }}>
-      <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <PageHeader
-          title="Nodes"
-          description="Runtime health and capacity for all Elasticsearch nodes. Click a row to drill into thread pools, circuit breakers, and more."
-          actions={
-            <LoadingButton size="small" variant="outlined" onClick={refresh} loading={loading}>
-              {loading ? "Refreshing..." : "Refresh"}
-            </LoadingButton>
-          }
-        />
-      </Paper>
+    <PageContainer>
+      <PageHeaderSection
+        title="Nodes"
+        titleAdornment={<DocLink section="nodes" tooltip="Nodes docs" />}
+        description="Runtime health and capacity for all Elasticsearch nodes. Click a row to drill into thread pools, circuit breakers, and more."
+        actions={
+          <LoadingButton size="small" variant="outlined" onClick={refresh} loading={loading}>
+            {loading ? "Refreshing..." : "Refresh"}
+          </LoadingButton>
+        }
+      />
 
       {error && <Alert severity="error">{error}</Alert>}
       {!error && partialErrors.length > 0 && (
@@ -474,6 +474,6 @@ export default function NodesPage() {
           )}
         </Paper>
       )}
-    </Box>
+    </PageContainer>
   );
 }

@@ -26,12 +26,12 @@ Always run this first. Do not use `npm install` — use `npm ci` which is faster
 ## Common Commands
 
 ```bash
-make lint    # Prettier + ESLint on changed files + full TypeScript type check (override: make lint BASE=HEAD~3)
-make lint-full # Prettier + ESLint + TypeScript type check on all files
+make lint    # oxfmt + oxlint on changed files + tsgo type check (override: make lint BASE=HEAD~3)
+make lint-full # oxfmt + oxlint + tsgo + tsc type check on all files
 make build   # production build (runs vite build; use `npm run typecheck` in peek/ for separate type checking)
 make serve   # start dev server
-make format  # auto-format changed files with Prettier (override: make format BASE=HEAD~3)
-make format-full # auto-format all files with Prettier
+make format  # auto-format changed files with oxfmt (override: make format BASE=HEAD~3)
+make format-full # auto-format src/ with oxfmt
 make check   # lint + unit tests + build (equivalent to CI)
 ```
 
@@ -202,7 +202,7 @@ of CI must use the `gh` CLI to read the full raw comment body:
 
 ```bash
 gh api repos/elastic/ai-github-actions-playground/issues/<PR>/comments \
-  --jq '.[0].body'
+  --jq '.[] | select(.user.login == "github-actions[bot]" or (.body | contains("<!-- ui-smoke-test-pr-review -->"))) | .body'
 ```
 
 This returns the complete markdown including `<details>` blocks, so you can see

@@ -32,7 +32,9 @@ import { formatBytes } from "../utils/formatBytes";
 
 import EmptyState from "./EmptyState";
 import { OverviewInfoCard } from "./OverviewInfoCard";
-import PageHeader from "./PageHeader";
+import PageContainer from "./PageContainer";
+import PageHeaderSection from "./PageHeaderSection";
+import DocLink from "./DocLink";
 
 type TreeLevel = "node" | "signal" | "dataset" | "namespace" | "index" | "shard";
 type GroupBy = "instance" | "type" | "namespace";
@@ -362,33 +364,32 @@ export default function StorageExplorerPage() {
   }, []);
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1, height: "100%", minHeight: 0 }}>
-      <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <PageHeader
-          title="Storage Explorer"
-          description="Explore shard-copy storage by node, signal, dataset, namespace, index, and shard."
-          actions={
-            <>
-              {groupBy && (
-                <Button size="small" variant="outlined" onClick={handleChangeView}>
-                  Change View
-                </Button>
-              )}
-              <LoadingButton
-                size="small"
-                variant="outlined"
-                onClick={refresh}
-                loading={loading}
-                aria-label={
-                  loading ? "Refreshing storage explorer data" : "Refresh storage explorer data"
-                }
-              >
-                {loading ? "Refreshing..." : "Refresh"}
-              </LoadingButton>
-            </>
-          }
-        />
-      </Paper>
+    <PageContainer>
+      <PageHeaderSection
+        title="Storage Explorer"
+        titleAdornment={<DocLink section="storage-explorer" tooltip="Storage Explorer docs" />}
+        description="Explore shard-copy storage by node, signal, dataset, namespace, index, and shard."
+        actions={
+          <>
+            {groupBy && (
+              <Button size="small" variant="outlined" onClick={handleChangeView}>
+                Change View
+              </Button>
+            )}
+            <LoadingButton
+              size="small"
+              variant="outlined"
+              onClick={refresh}
+              loading={loading}
+              aria-label={
+                loading ? "Refreshing storage explorer data" : "Refresh storage explorer data"
+              }
+            >
+              {loading ? "Refreshing..." : "Refresh"}
+            </LoadingButton>
+          </>
+        }
+      />
 
       {partialErrors.length > 0 && (
         <Alert severity="warning">
@@ -942,6 +943,6 @@ export default function StorageExplorerPage() {
           )}
         </Box>
       </Drawer>
-    </Box>
+    </PageContainer>
   );
 }

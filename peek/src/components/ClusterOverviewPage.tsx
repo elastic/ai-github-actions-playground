@@ -5,7 +5,6 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import LoadingButton from "./LoadingButton";
-import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
@@ -18,7 +17,9 @@ import { INSIGHT_GUARDRAIL } from "../hooks/insightPromptUtils";
 
 import AskAiButton from "./AskAiButton";
 import ContentSkeleton from "./ContentSkeleton";
-import PageHeader from "./PageHeader";
+import PageContainer from "./PageContainer";
+import PageHeaderSection from "./PageHeaderSection";
+import DocLink from "./DocLink";
 import PageInsightBanner from "./PageInsightBanner";
 import { OverviewInfoCard } from "./OverviewInfoCard";
 import { OverviewNodesTable } from "./OverviewNodesTable";
@@ -132,33 +133,32 @@ export default function ClusterOverviewPage() {
   const insightCacheKey = `cluster-overview::${clusterHealth?.status ?? ""}::${clusterHealth?.number_of_nodes ?? ""}`;
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-      <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <PageHeader
-          title="Cluster Overview"
-          actions={
-            <>
-              <AskAiButton
-                prompt="Based on the current cluster state, what are the top 3 things I should investigate or optimize?"
-                label="What should I look at?"
-              />
-              <LoadingButton
-                size="small"
-                variant="outlined"
-                onClick={() => {
-                  setDismissedPartialErrorsKey(null);
-                  refresh();
-                  refreshLocalChecks();
-                }}
-                loading={loading}
-                aria-label={loading ? "Refreshing cluster overview" : "Refresh cluster overview"}
-              >
-                {loading ? "Refreshing..." : "Refresh"}
-              </LoadingButton>
-            </>
-          }
-        />
-      </Paper>
+    <PageContainer gap={2}>
+      <PageHeaderSection
+        title="Cluster Overview"
+        titleAdornment={<DocLink section="cluster-overview" tooltip="Cluster Overview docs" />}
+        actions={
+          <>
+            <AskAiButton
+              prompt="Based on the current cluster state, what are the top 3 things I should investigate or optimize?"
+              label="What should I look at?"
+            />
+            <LoadingButton
+              size="small"
+              variant="outlined"
+              onClick={() => {
+                setDismissedPartialErrorsKey(null);
+                refresh();
+                refreshLocalChecks();
+              }}
+              loading={loading}
+              aria-label={loading ? "Refreshing cluster overview" : "Refresh cluster overview"}
+            >
+              {loading ? "Refreshing..." : "Refresh"}
+            </LoadingButton>
+          </>
+        }
+      />
 
       {insightContext && (
         <PageInsightBanner
@@ -438,6 +438,6 @@ export default function ClusterOverviewPage() {
           </OverviewInfoCard>
         </Stack>
       )}
-    </Box>
+    </PageContainer>
   );
 }

@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import ServiceInventoryPage from "../../src/components/services/ServiceInventoryPage";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
-import { usePageFiltersStore } from "../../src/store/usePageFiltersStore";
+import { useServiceFiltersStore } from "../../src/store/useServiceFiltersStore";
 import { useTracesStore } from "../../src/store/useTracesStore";
 import { resetAllStores } from "../fixtures/test-utils";
 
@@ -129,7 +129,7 @@ describe("ServiceInventoryPage", () => {
     useConnectionStore
       .getState()
       .setConnection({ url: "https://example.es.local:9200", apiKey: "key" });
-    usePageFiltersStore.getState().resetServiceFilters();
+    useServiceFiltersStore.getState().resetServiceFilters();
   });
 
   it("renders page header and empty state initially", () => {

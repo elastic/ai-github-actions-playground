@@ -236,6 +236,35 @@ export async function importFromFolder(fileList: FileList): Promise<ImportResult
   return importFromFileMap(fileMap);
 }
 
+async function readDirRecursive(
+  dir: FileSystemDirectoryHandle,
+  prefix: string,
+  out: Map<string, Uint8Array>,
+): Promise<void> {
+  const iter = (dir as unknown as { values(): AsyncIterable<FileSystemHandle> }).values();
+  for await (const handle of iter) {
+    const path = prefix ? `${prefix}/${handle.name}` : handle.name;
+    if (handle.kind === "file") {
+      const file = await (handle as FileSystemFileHandle).getFile();
+      out.set(path, new Uint8Array(await file.arrayBuffer()));
+    } else {
+      await readDirRecursive(handle as FileSystemDirectoryHandle, path, out);
+    }
+  }
+}
+
+/**
+ * Imports a package from a FileSystemDirectoryHandle (File System Access API).
+ * Reads all files recursively and delegates to importFromFileMap.
+ */
+export async function importFromDirectoryHandle(
+  dirHandle: FileSystemDirectoryHandle,
+): Promise<ImportResult> {
+  const fileMap = new Map<string, Uint8Array>();
+  await readDirRecursive(dirHandle, "", fileMap);
+  return importFromFileMap(fileMap);
+}
+
 export async function importFromFileMap(fileMap: Map<string, Uint8Array>): Promise<ImportResult> {
   const warnings: string[] = [];
   const parsed = collectFiles(fileMap);

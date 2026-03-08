@@ -16,7 +16,7 @@ import {
   type FleetAction,
   type FleetActionResult,
 } from "../services/fleet";
-import { usePageFiltersStore } from "../store/usePageFiltersStore";
+import { useFleetFiltersStore } from "../store/useFleetFiltersStore";
 
 import { useEsQuery, useRefetchOnConnectionChange } from "./useEsQuery";
 
@@ -60,7 +60,7 @@ interface FleetQueryResult {
 
 export function useFleetData(): UseFleetDataResult {
   const { connection, createQueryFn } = useEsQuery();
-  const autoRefreshEnabled = usePageFiltersStore((s) => s.fleetAutoRefreshEnabled);
+  const autoRefreshEnabled = useFleetFiltersStore((s) => s.fleetAutoRefreshEnabled);
   const queryKey = ["fleet-data", connection?.url];
 
   const query = useQuery({

@@ -9,7 +9,9 @@ import Typography from "@mui/material/Typography";
 import { PAGE_MANIFEST } from "../../routes/manifest";
 import { useConnectionStore } from "../../store/useConnectionStore";
 import EmptyState from "../EmptyState";
-import PageHeader from "../PageHeader";
+import PageContainer from "../PageContainer";
+import PageHeaderSection from "../PageHeaderSection";
+import DocLink from "../DocLink";
 
 import K8sDashboardControls from "./K8sDashboardControls";
 import K8sDashboardSummaryCards, { type K8sDashboardSummary } from "./K8sDashboardSummaryCards";
@@ -72,22 +74,21 @@ export default function K8sClusterDashboardPage() {
   const hasTraces = Boolean(tracesResult?.values.length);
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 2, minHeight: "100%" }}>
-      <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <PageHeader
-          title={clusterName}
-          description="Cluster-level dashboard showing namespaces, resource utilization, logs, and traces."
-          actions={
-            <Button
-              size="small"
-              variant="text"
-              onClick={() => navigate(PAGE_MANIFEST.kubernetes.path)}
-            >
-              ← Kubernetes
-            </Button>
-          }
-        />
-      </Paper>
+    <PageContainer gap={2}>
+      <PageHeaderSection
+        title={clusterName}
+        titleAdornment={<DocLink section="kubernetes" tooltip="Kubernetes docs" />}
+        description="Cluster-level dashboard showing namespaces, resource utilization, logs, and traces."
+        actions={
+          <Button
+            size="small"
+            variant="text"
+            onClick={() => navigate(PAGE_MANIFEST.kubernetes.path)}
+          >
+            ← Kubernetes
+          </Button>
+        }
+      />
 
       <K8sDashboardControls
         loading={loading}
@@ -158,6 +159,6 @@ export default function K8sClusterDashboardPage() {
             />
           </Paper>
         )}
-    </Box>
+    </PageContainer>
   );
 }
