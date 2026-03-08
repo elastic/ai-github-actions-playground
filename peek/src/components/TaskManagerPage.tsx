@@ -1,5 +1,4 @@
 import { Fragment, useCallback, useDeferredValue, useMemo, useState } from "react";
-import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import FormControlLabel from "@mui/material/FormControlLabel";
@@ -20,6 +19,7 @@ import PendingActionsIcon from "@mui/icons-material/PendingActions";
 import type { TaskRow } from "../services/es";
 import { useTasks } from "../hooks/useTasks";
 
+import DataFetchAlert from "./DataFetchAlert";
 import EmptyState from "./EmptyState";
 import PageContainer from "./PageContainer";
 import PageHeaderSection from "./PageHeaderSection";
@@ -111,11 +111,7 @@ export default function TaskManagerPage() {
   }, [filteredTasks, groupByNode]);
 
   if (result.status === "error") {
-    return (
-      <Box sx={{ p: 2 }}>
-        <Alert severity="error">{result.error}</Alert>
-      </Box>
-    );
+    return <DataFetchAlert result={result} onRetry={result.refresh} />;
   }
 
   const sortLabel = (field: SortField, label: string) => (

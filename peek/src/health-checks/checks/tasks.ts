@@ -33,7 +33,7 @@ export const taskChecks: HealthCheckDefinition[] = [
     docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/list-tasks",
     recommendation: "High task count may indicate queue saturation or runaway operations.",
     evaluate: (snapshot) => {
-      const tasks = flattenTasks(snapshot.data.tasksCore?.tasks ?? null);
+      const tasks = flattenUserTasks(snapshot.data.tasksCore?.tasks ?? null);
       if (tasks.length >= 100) {
         return {
           status: "warn",
