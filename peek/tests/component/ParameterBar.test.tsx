@@ -294,5 +294,7 @@ describe("ParameterBar", () => {
     });
     await flushAsyncEffects();
     expect(queryMock).toHaveBeenCalledTimes(3);
+    const thirdCallQuery = queryMock.mock.calls[2]?.[0]?.query;
+    expect(thirdCallQuery).toContain("FROM metrics-*");
   });
 });
