@@ -21,7 +21,7 @@ import { parseAsString, parseAsStringEnum, useQueryState } from "nuqs";
 
 import { useApiConsoleStore } from "../store/useApiConsoleStore";
 import { usePageContextStore } from "../store/usePageContextStore";
-import { PAGE_MANIFEST } from "../routes/manifest";
+import { PAGE_PATHS } from "../routes/paths";
 import { useIndices, useIndexDetail } from "../hooks/useIndices";
 import { useOpenInDiscover } from "../hooks/useOpenInDiscover";
 import { useDiskUsage } from "../hooks/useDiskUsage";
@@ -187,7 +187,7 @@ export default function IndicesPage() {
   const handleInspectInConsole = useCallback(() => {
     if (!selectedIndex) return;
     setConsoleDraft({ method: "GET", path: `/${selectedIndex}/_mapping` });
-    navigate(PAGE_MANIFEST.console.path);
+    navigate(PAGE_PATHS.console.path);
   }, [selectedIndex, navigate, setConsoleDraft]);
 
   const indexMetrics = useMemo(() => {

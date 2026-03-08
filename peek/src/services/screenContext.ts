@@ -1,7 +1,7 @@
 import { matchPath } from "react-router-dom";
 import type { QueryClient } from "@tanstack/react-query";
 
-import { PAGE_MANIFEST } from "../routes/manifest";
+import { PAGE_PATHS } from "../routes/paths";
 import { useApiConsoleStore } from "../store/useApiConsoleStore";
 import { useDashboardStore } from "../store/useDashboardStore";
 import { usePageContextStore } from "../store/usePageContextStore";
@@ -106,7 +106,7 @@ export function buildDetailedScreenContext(
   includeData?: boolean,
   queryClient?: QueryClient,
 ): ScreenContextSnapshot {
-  const pageConfig = Object.values(PAGE_MANIFEST).find((p) => matchPath(p.path, pathname) !== null);
+  const pageConfig = Object.values(PAGE_PATHS).find((p) => matchPath(p.path, pathname) !== null);
   const pageLabel = pageConfig?.nav.label ?? pathname;
 
   const snapshot: ScreenContextSnapshot = {

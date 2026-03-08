@@ -20,12 +20,12 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useShallow } from "zustand/react/shallow";
 
 import {
-  PAGE_MANIFEST,
+  PAGE_PATHS,
   NAV_SECTION_ORDER,
   isHiddenByCapability,
   type PageId,
-  type PageConfig,
-} from "../routes/manifest";
+  type PagePathConfig,
+} from "../routes/paths";
 import type { UserCapabilities } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useThemeStore } from "../store/useThemeStore";
@@ -55,7 +55,7 @@ interface AppSidebarProps {
 function buildNavSections(): NavSection[] {
   const groups = new Map<string, NavItem[]>();
 
-  for (const [page, config] of Object.entries(PAGE_MANIFEST) as Array<[PageId, PageConfig]>) {
+  for (const [page, config] of Object.entries(PAGE_PATHS) as Array<[PageId, PagePathConfig]>) {
     if (!config.nav.showInSidebar) continue;
     const items = groups.get(config.nav.group) ?? [];
     items.push({
@@ -72,7 +72,7 @@ function buildNavSections(): NavSection[] {
     label: group,
     items: groups
       .get(group)!
-      .sort((a, b) => PAGE_MANIFEST[a.page].nav.order - PAGE_MANIFEST[b.page].nav.order),
+      .sort((a, b) => PAGE_PATHS[a.page].nav.order - PAGE_PATHS[b.page].nav.order),
   }));
 }
 
@@ -105,7 +105,7 @@ export default function AppSidebar({
   const navigate = useNavigate();
   const location = useLocation();
   const [settingsAnchor, setSettingsAnchor] = useState<null | HTMLElement>(null);
-  const isSettingsPath = location.pathname === PAGE_MANIFEST.settings.path;
+  const isSettingsPath = location.pathname === PAGE_PATHS.settings.path;
 
   const hiddenItems = useMemo(
     () =>
@@ -189,7 +189,7 @@ export default function AppSidebar({
               )}
               <List dense={!mobile} disablePadding>
                 {visibleItems.map((item) => {
-                  const itemPath = PAGE_MANIFEST[item.page].path;
+                  const itemPath = PAGE_PATHS[item.page].path;
                   const isActive =
                     location.pathname === itemPath || location.pathname.startsWith(`${itemPath}/`);
                   const isDisabled = item.requiresConnection && !connected;
@@ -198,7 +198,7 @@ export default function AppSidebar({
                       selected={isActive}
                       disabled={isDisabled}
                       onClick={() => {
-                        navigate(PAGE_MANIFEST[item.page].path);
+                        navigate(PAGE_PATHS[item.page].path);
                         onNavigate?.();
                       }}
                       aria-current={isActive ? "page" : undefined}
@@ -326,9 +326,9 @@ export default function AppSidebar({
           Dark/Light Mode
         </MenuItem>
         <MenuItem
-          selected={location.pathname === PAGE_MANIFEST.settings.path}
+          selected={location.pathname === PAGE_PATHS.settings.path}
           onClick={() => {
-            navigate(PAGE_MANIFEST.settings.path);
+            navigate(PAGE_PATHS.settings.path);
             onNavigate?.();
             setSettingsAnchor(null);
           }}

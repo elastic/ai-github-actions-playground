@@ -1,35 +1,5 @@
-import { type ComponentType, type ReactNode, createElement, lazy } from "react";
-import DashboardIcon from "@mui/icons-material/Dashboard";
-import SearchIcon from "@mui/icons-material/Search";
-import ExploreIcon from "@mui/icons-material/Explore";
-import TimelineIcon from "@mui/icons-material/Timeline";
-import TerminalIcon from "@mui/icons-material/Terminal";
-import ChatIcon from "@mui/icons-material/Chat";
-import InfoIcon from "@mui/icons-material/Info";
-import RocketLaunchIcon from "@mui/icons-material/RocketLaunch";
-import DatasetIcon from "@mui/icons-material/Dataset";
-import PeopleIcon from "@mui/icons-material/People";
-import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
-import MenuBookIcon from "@mui/icons-material/MenuBook";
-import SecurityIcon from "@mui/icons-material/Security";
-import SettingsIcon from "@mui/icons-material/Settings";
-import SpeedIcon from "@mui/icons-material/Speed";
-import AccountTreeIcon from "@mui/icons-material/AccountTree";
-import StorageIcon from "@mui/icons-material/Storage";
-import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
-import PendingActionsIcon from "@mui/icons-material/PendingActions";
-import MemoryIcon from "@mui/icons-material/Memory";
-import ViewModuleIcon from "@mui/icons-material/ViewModule";
-import ShieldIcon from "@mui/icons-material/Shield";
-import VpnKeyIcon from "@mui/icons-material/VpnKey";
-import PolicyIcon from "@mui/icons-material/Policy";
-import MiscellaneousServicesIcon from "@mui/icons-material/MiscellaneousServices";
-import SubjectIcon from "@mui/icons-material/Subject";
-import CloudIcon from "@mui/icons-material/Cloud";
-import DnsIcon from "@mui/icons-material/Dns";
-import DescriptionIcon from "@mui/icons-material/Description";
-
-import type { UserCapabilities } from "../services/es";
+import { type ComponentType, lazy } from "react";
+import { PAGE_PATHS, type PagePathConfig } from "./paths";
 
 const PackageBuilderPage = lazy(() => import("../components/PackageBuilderPage"));
 const ApiConsolePage = lazy(() => import("../components/ApiConsolePage"));
@@ -88,739 +58,211 @@ const TaskManagerPage = lazy(() => import("../components/TaskManagerPage"));
 const IlmPage = lazy(() => import("../components/IlmPage"));
 const TemplatesPage = lazy(() => import("../components/TemplatesPage"));
 
-export type NavGroup = "Data" | "Workspace" | "Security" | "System" | "Help" | "Settings";
-
-export interface PageConfig {
-  path: string;
+export interface PageConfig extends PagePathConfig {
   component: ComponentType;
-  requiresConnection: boolean;
-  showTimeControls: boolean;
-  /** Key of `UserCapabilities` that must be `true` for the page to appear in the sidebar. */
-  requiredCapability?: keyof UserCapabilities;
   /** ContentSkeleton variant shown while the lazy page chunk loads. */
   skeletonVariant?: "table" | "cards" | "chart" | "list" | "detail-panel";
-  nav: {
-    label: string;
-    group: NavGroup;
-    order: number;
-    showInSidebar: boolean;
-    icon?: ReactNode;
-  };
 }
 
-export const PAGE_MANIFEST = {
+export const PAGE_MANIFEST: Record<keyof typeof PAGE_PATHS, PageConfig> = {
   dashboards: {
-    path: "/dashboards",
+    ...PAGE_PATHS.dashboards,
     component: DashboardsLandingPage,
-    requiresConnection: true,
-    showTimeControls: false,
-    skeletonVariant: "cards",
-    nav: {
-      label: "Dashboards",
-      group: "Workspace",
-      order: 10,
-      showInSidebar: true,
-      icon: createElement(DashboardIcon, { fontSize: "small" }),
-    },
   },
   discover: {
-    path: "/discover",
+    ...PAGE_PATHS.discover,
     component: DiscoverPage,
-    requiresConnection: true,
-    showTimeControls: true,
-    skeletonVariant: "table",
-    nav: {
-      label: "Query Lab",
-      group: "Data",
-      order: 20,
-      showInSidebar: true,
-      icon: createElement(SearchIcon, { fontSize: "small" }),
-    },
   },
   logs: {
-    path: "/logs",
+    ...PAGE_PATHS.logs,
     component: LogsLandingPage,
-    requiresConnection: true,
-    showTimeControls: false,
-    skeletonVariant: "list",
-    nav: {
-      label: "Logs",
-      group: "Data",
-      order: 30,
-      showInSidebar: true,
-      icon: createElement(SubjectIcon, { fontSize: "small" }),
-    },
   },
   logsExplorer: {
-    path: "/logs-explorer",
+    ...PAGE_PATHS.logsExplorer,
     component: LogsPage,
-    requiresConnection: true,
-    showTimeControls: true,
-    skeletonVariant: "table",
-    nav: {
-      label: "Logs Explorer",
-      group: "Data",
-      order: 31,
-      showInSidebar: false,
-      icon: createElement(SubjectIcon, { fontSize: "small" }),
-    },
   },
   explore: {
-    path: "/explore",
+    ...PAGE_PATHS.explore,
     component: ExplorePage,
-    requiresConnection: true,
-    showTimeControls: true,
-    skeletonVariant: "chart",
-    nav: {
-      label: "Metrics",
-      group: "Data",
-      order: 40,
-      showInSidebar: true,
-      icon: createElement(ExploreIcon, { fontSize: "small" }),
-    },
   },
   traces: {
-    path: "/traces",
+    ...PAGE_PATHS.traces,
     component: TracesPage,
-    requiresConnection: true,
-    showTimeControls: true,
-    skeletonVariant: "table",
-    nav: {
-      label: "Traces",
-      group: "Data",
-      order: 50,
-      showInSidebar: true,
-      icon: createElement(TimelineIcon, { fontSize: "small" }),
-    },
   },
   profiling: {
-    path: "/profiling",
+    ...PAGE_PATHS.profiling,
     component: ProfilingGuidedPage,
-    requiresConnection: true,
-    showTimeControls: false,
-    skeletonVariant: "chart",
-    nav: {
-      label: "Profiling",
-      group: "Data",
-      order: 60,
-      showInSidebar: true,
-      icon: createElement(SpeedIcon, { fontSize: "small" }),
-    },
   },
   profilingAdvanced: {
-    path: "/profiling/advanced",
+    ...PAGE_PATHS.profilingAdvanced,
     component: ProfilingPage,
-    requiresConnection: true,
-    showTimeControls: false,
-    skeletonVariant: "chart",
-    nav: {
-      label: "Profiling (Advanced)",
-      group: "Data",
-      order: 61,
-      showInSidebar: false,
-      icon: createElement(SpeedIcon, { fontSize: "small" }),
-    },
   },
   services: {
-    path: "/services",
+    ...PAGE_PATHS.services,
     component: ServiceInventoryPage,
-    requiresConnection: true,
-    showTimeControls: false,
-    skeletonVariant: "table",
-    nav: {
-      label: "Services",
-      group: "Workspace",
-      order: 20,
-      showInSidebar: true,
-      icon: createElement(MiscellaneousServicesIcon, { fontSize: "small" }),
-    },
   },
   serviceDashboard: {
-    path: "/services/:serviceName",
+    ...PAGE_PATHS.serviceDashboard,
     component: ServiceDashboardPage,
-    requiresConnection: true,
-    showTimeControls: false,
-    skeletonVariant: "detail-panel",
-    nav: {
-      label: "Service Dashboard",
-      group: "Workspace",
-      order: 21,
-      showInSidebar: false,
-      icon: createElement(MiscellaneousServicesIcon, { fontSize: "small" }),
-    },
   },
   kubernetes: {
-    path: "/kubernetes",
+    ...PAGE_PATHS.kubernetes,
     component: KubernetesPage,
-    requiresConnection: true,
-    showTimeControls: false,
-    skeletonVariant: "table",
-    nav: {
-      label: "Kubernetes",
-      group: "Workspace",
-      order: 30,
-      showInSidebar: true,
-      icon: createElement(CloudIcon, { fontSize: "small" }),
-    },
   },
   kubernetesCluster: {
-    path: "/kubernetes/cluster/:clusterName",
+    ...PAGE_PATHS.kubernetesCluster,
     component: K8sClusterDashboardPage,
-    requiresConnection: true,
-    showTimeControls: false,
-    skeletonVariant: "detail-panel",
-    nav: {
-      label: "Kubernetes Cluster",
-      group: "Workspace",
-      order: 31,
-      showInSidebar: false,
-      icon: createElement(CloudIcon, { fontSize: "small" }),
-    },
   },
   kubernetesNamespace: {
-    path: "/kubernetes/namespace/:namespace",
+    ...PAGE_PATHS.kubernetesNamespace,
     component: K8sNamespaceDashboardPage,
-    requiresConnection: true,
-    showTimeControls: false,
-    skeletonVariant: "detail-panel",
-    nav: {
-      label: "Kubernetes Namespace",
-      group: "Workspace",
-      order: 32,
-      showInSidebar: false,
-      icon: createElement(CloudIcon, { fontSize: "small" }),
-    },
   },
   kubernetesWorkload: {
-    path: "/kubernetes/workload/:kind/:name",
+    ...PAGE_PATHS.kubernetesWorkload,
     component: K8sWorkloadDashboardPage,
-    requiresConnection: true,
-    showTimeControls: false,
-    skeletonVariant: "detail-panel",
-    nav: {
-      label: "Kubernetes Workload",
-      group: "Workspace",
-      order: 33,
-      showInSidebar: false,
-      icon: createElement(CloudIcon, { fontSize: "small" }),
-    },
   },
   kubernetesPod: {
-    path: "/kubernetes/pod/:podName",
+    ...PAGE_PATHS.kubernetesPod,
     component: K8sPodDashboardPage,
-    requiresConnection: true,
-    showTimeControls: false,
-    skeletonVariant: "detail-panel",
-    nav: {
-      label: "Kubernetes Pod",
-      group: "Workspace",
-      order: 34,
-      showInSidebar: false,
-      icon: createElement(CloudIcon, { fontSize: "small" }),
-    },
   },
   hosts: {
-    path: "/hosts",
+    ...PAGE_PATHS.hosts,
     component: HostsPage,
-    requiresConnection: true,
-    showTimeControls: false,
-    skeletonVariant: "table",
-    nav: {
-      label: "Hosts",
-      group: "Workspace",
-      order: 40,
-      showInSidebar: true,
-      icon: createElement(DnsIcon, { fontSize: "small" }),
-    },
   },
   hostsLinux: {
-    path: "/hosts/linux",
+    ...PAGE_PATHS.hostsLinux,
     component: HostsLinuxPage,
-    requiresConnection: true,
-    showTimeControls: false,
-    skeletonVariant: "table",
-    nav: {
-      label: "Linux Hosts",
-      group: "Workspace",
-      order: 41,
-      showInSidebar: false,
-      icon: createElement(DnsIcon, { fontSize: "small" }),
-    },
   },
   hostsWindows: {
-    path: "/hosts/windows",
+    ...PAGE_PATHS.hostsWindows,
     component: HostsWindowsPage,
-    requiresConnection: true,
-    showTimeControls: false,
-    skeletonVariant: "table",
-    nav: {
-      label: "Windows Hosts",
-      group: "Workspace",
-      order: 42,
-      showInSidebar: false,
-      icon: createElement(DnsIcon, { fontSize: "small" }),
-    },
   },
   hostsMacos: {
-    path: "/hosts/macos",
+    ...PAGE_PATHS.hostsMacos,
     component: HostsMacosPage,
-    requiresConnection: true,
-    showTimeControls: false,
-    skeletonVariant: "table",
-    nav: {
-      label: "macOS Hosts",
-      group: "Workspace",
-      order: 43,
-      showInSidebar: false,
-      icon: createElement(DnsIcon, { fontSize: "small" }),
-    },
   },
   hostDetail: {
-    path: "/hosts/:hostId",
+    ...PAGE_PATHS.hostDetail,
     component: HostDetailPage,
-    requiresConnection: true,
-    showTimeControls: false,
-    skeletonVariant: "detail-panel",
-    nav: {
-      label: "Host Detail",
-      group: "Workspace",
-      order: 44,
-      showInSidebar: false,
-      icon: createElement(DnsIcon, { fontSize: "small" }),
-    },
   },
   console: {
-    path: "/console",
+    ...PAGE_PATHS.console,
     component: ApiConsolePage,
-    requiresConnection: true,
-    showTimeControls: false,
-    nav: {
-      label: "Console",
-      group: "System",
-      order: 50,
-      showInSidebar: true,
-      icon: createElement(TerminalIcon, { fontSize: "small" }),
-    },
   },
   chat: {
-    path: "/chat",
+    ...PAGE_PATHS.chat,
     component: ChatPage,
-    requiresConnection: true,
-    showTimeControls: false,
-    nav: {
-      label: "Chat",
-      group: "Workspace",
-      order: 60,
-      showInSidebar: false,
-      icon: createElement(ChatIcon, { fontSize: "small" }),
-    },
   },
   clusterOverview: {
-    path: "/cluster-overview",
+    ...PAGE_PATHS.clusterOverview,
     component: ClusterOverviewPage,
-    requiresConnection: true,
-    showTimeControls: false,
-    skeletonVariant: "cards",
-    nav: {
-      label: "Overview",
-      group: "System",
-      order: 10,
-      showInSidebar: true,
-      icon: createElement(InfoIcon, { fontSize: "small" }),
-    },
   },
   clusterHealth: {
-    path: "/cluster-health",
+    ...PAGE_PATHS.clusterHealth,
     component: ClusterHealthPage,
-    requiresConnection: true,
-    showTimeControls: false,
-    skeletonVariant: "cards",
-    nav: {
-      label: "Health",
-      group: "System",
-      order: 11,
-      showInSidebar: true,
-      icon: createElement(HealthAndSafetyIcon, { fontSize: "small" }),
-    },
   },
   globalHealth: {
-    path: "/health",
+    ...PAGE_PATHS.globalHealth,
     component: ClusterHealthPage,
-    requiresConnection: true,
-    showTimeControls: false,
-    skeletonVariant: "table",
-    nav: {
-      label: "Health",
-      group: "System",
-      order: 11,
-      showInSidebar: false,
-      icon: createElement(HealthAndSafetyIcon, { fontSize: "small" }),
-    },
   },
   clusterTasks: {
-    path: "/cluster-tasks",
+    ...PAGE_PATHS.clusterTasks,
     component: TaskManagerPage,
-    requiresConnection: true,
-    showTimeControls: false,
-    skeletonVariant: "table",
-    nav: {
-      label: "Tasks",
-      group: "System",
-      order: 18,
-      showInSidebar: true,
-      icon: createElement(PendingActionsIcon, { fontSize: "small" }),
-    },
   },
   clusterCapacity: {
-    path: "/cluster-capacity",
+    ...PAGE_PATHS.clusterCapacity,
     component: ClusterCapacityPage,
-    requiresConnection: true,
-    showTimeControls: false,
-    skeletonVariant: "cards",
-    nav: {
-      label: "Capacity",
-      group: "System",
-      order: 13,
-      showInSidebar: false,
-      icon: createElement(MemoryIcon, { fontSize: "small" }),
-    },
   },
   clusterShards: {
-    path: "/cluster-shards",
+    ...PAGE_PATHS.clusterShards,
     component: ClusterShardsPage,
-    requiresConnection: true,
-    showTimeControls: false,
-    skeletonVariant: "table",
-    nav: {
-      label: "Shards",
-      group: "System",
-      order: 14,
-      showInSidebar: false,
-      icon: createElement(ViewModuleIcon, { fontSize: "small" }),
-    },
   },
   clusterResilience: {
-    path: "/cluster-resilience",
+    ...PAGE_PATHS.clusterResilience,
     component: ClusterResiliencePage,
-    requiresConnection: true,
-    showTimeControls: false,
-    skeletonVariant: "table",
-    nav: {
-      label: "Resilience",
-      group: "System",
-      order: 17,
-      showInSidebar: false,
-      icon: createElement(ShieldIcon, { fontSize: "small" }),
-    },
   },
   addData: {
-    path: "/add-data",
+    ...PAGE_PATHS.addData,
     component: AddDataPage,
-    requiresConnection: true,
-    showTimeControls: false,
-    skeletonVariant: "list",
-    nav: {
-      label: "Add Data",
-      group: "Data",
-      order: 10,
-      showInSidebar: true,
-      icon: createElement(RocketLaunchIcon, { fontSize: "small" }),
-    },
   },
   packageBuilder: {
-    path: "/package-builder",
+    ...PAGE_PATHS.packageBuilder,
     component: PackageBuilderPage,
-    requiresConnection: true,
-    showTimeControls: false,
-    skeletonVariant: "list",
-    nav: {
-      label: "Package Builder",
-      group: "System",
-      order: 17,
-      showInSidebar: false,
-    },
   },
   dataStreams: {
-    path: "/data-streams",
+    ...PAGE_PATHS.dataStreams,
     component: DataStreamsPage,
-    requiresConnection: true,
-    showTimeControls: false,
-    skeletonVariant: "table",
-    nav: {
-      label: "Data Streams",
-      group: "System",
-      order: 23,
-      showInSidebar: true,
-      icon: createElement(DatasetIcon, { fontSize: "small" }),
-    },
   },
   nodes: {
-    path: "/nodes",
+    ...PAGE_PATHS.nodes,
     component: NodesPage,
-    requiresConnection: true,
-    showTimeControls: false,
-    skeletonVariant: "table",
-    nav: {
-      label: "Nodes",
-      group: "System",
-      order: 20,
-      showInSidebar: true,
-      icon: createElement(MemoryIcon, { fontSize: "small" }),
-    },
   },
   nodeDetail: {
-    path: "/nodes/:nodeId",
+    ...PAGE_PATHS.nodeDetail,
     component: NodeDetailPage,
-    requiresConnection: true,
-    showTimeControls: false,
-    skeletonVariant: "detail-panel",
-    nav: {
-      label: "Node detail",
-      group: "System",
-      order: 24,
-      showInSidebar: false,
-      icon: createElement(MemoryIcon, { fontSize: "small" }),
-    },
   },
   indices: {
-    path: "/indices",
+    ...PAGE_PATHS.indices,
     component: IndicesPage,
-    requiresConnection: true,
-    showTimeControls: false,
-    skeletonVariant: "table",
-    nav: {
-      label: "Indices",
-      group: "System",
-      order: 25,
-      showInSidebar: true,
-      icon: createElement(StorageIcon, { fontSize: "small" }),
-    },
   },
   storageExplorer: {
-    path: "/storage-explorer",
+    ...PAGE_PATHS.storageExplorer,
     component: StorageExplorerPage,
-    requiresConnection: true,
-    showTimeControls: false,
-    skeletonVariant: "table",
-    nav: {
-      label: "Storage Explorer",
-      group: "System",
-      order: 27,
-      showInSidebar: true,
-      icon: createElement(StorageIcon, { fontSize: "small" }),
-    },
   },
   ingestPipelines: {
-    path: "/ingest-pipelines",
+    ...PAGE_PATHS.ingestPipelines,
     component: IngestPipelinesPage,
-    requiresConnection: true,
-    requiredCapability: "canReadIngestPipelines",
-    showTimeControls: false,
-    skeletonVariant: "table",
-    nav: {
-      label: "Ingest Pipelines",
-      group: "System",
-      order: 26,
-      showInSidebar: true,
-      icon: createElement(AccountTreeIcon, { fontSize: "small" }),
-    },
   },
   clusterSettings: {
-    path: "/cluster-settings",
+    ...PAGE_PATHS.clusterSettings,
     component: ClusterSettingsPage,
-    requiresConnection: true,
-    showTimeControls: false,
-    skeletonVariant: "table",
-    nav: {
-      label: "Cluster Settings",
-      group: "System",
-      order: 21,
-      showInSidebar: true,
-      icon: createElement(SettingsIcon, { fontSize: "small" }),
-    },
   },
   nodesHotThreads: {
-    path: "/nodes-hot-threads",
+    ...PAGE_PATHS.nodesHotThreads,
     component: NodesHotThreadsPage,
-    requiresConnection: true,
-    showTimeControls: false,
-    skeletonVariant: "table",
-    nav: {
-      label: "Hot Threads",
-      group: "System",
-      order: 28,
-      showInSidebar: true,
-      icon: createElement(SpeedIcon, { fontSize: "small" }),
-    },
   },
   watcherGetWatch: {
-    path: "/watcher-get-watch",
+    ...PAGE_PATHS.watcherGetWatch,
     component: WatcherGetWatchPage,
-    requiresConnection: true,
-    showTimeControls: false,
-    skeletonVariant: "detail-panel",
-    nav: {
-      label: "Watchers",
-      group: "System",
-      order: 29,
-      showInSidebar: true,
-      icon: createElement(PendingActionsIcon, { fontSize: "small" }),
-    },
   },
   ilm: {
-    path: "/ilm",
+    ...PAGE_PATHS.ilm,
     component: IlmPage,
-    requiresConnection: true,
-    showTimeControls: false,
-    skeletonVariant: "table",
-    nav: {
-      label: "Index Lifecycle Management",
-      group: "System",
-      order: 31,
-      showInSidebar: true,
-      icon: createElement(PolicyIcon, { fontSize: "small" }),
-    },
   },
   templates: {
-    path: "/templates",
+    ...PAGE_PATHS.templates,
     component: TemplatesPage,
-    requiresConnection: true,
-    showTimeControls: false,
-    skeletonVariant: "table",
-    nav: {
-      label: "Index Templates",
-      group: "System",
-      order: 22,
-      showInSidebar: true,
-      icon: createElement(DescriptionIcon, { fontSize: "small" }),
-    },
   },
   fleet: {
-    path: "/fleet",
+    ...PAGE_PATHS.fleet,
     component: FleetPage,
-    requiresConnection: true,
-    showTimeControls: false,
-    skeletonVariant: "cards",
-    nav: {
-      label: "Fleet",
-      group: "System",
-      order: 15,
-      showInSidebar: true,
-      icon: createElement(SecurityIcon, { fontSize: "small" }),
-    },
   },
   fleetAgentDetail: {
-    path: "/fleet/agents/:agentId",
+    ...PAGE_PATHS.fleetAgentDetail,
     component: FleetAgentPage,
-    requiresConnection: true,
-    showTimeControls: false,
-    skeletonVariant: "detail-panel",
-    nav: {
-      label: "Fleet Agent Detail",
-      group: "System",
-      order: 16,
-      showInSidebar: false,
-      icon: createElement(SecurityIcon, { fontSize: "small" }),
-    },
   },
   investigate: {
-    path: "/investigate",
+    ...PAGE_PATHS.investigate,
     component: InvestigatePage,
-    requiresConnection: true,
-    showTimeControls: false,
-    skeletonVariant: "table",
-    nav: {
-      label: "Investigate",
-      group: "Security",
-      order: 10,
-      showInSidebar: true,
-      icon: createElement(PolicyIcon, { fontSize: "small" }),
-    },
   },
   users: {
-    path: "/users",
+    ...PAGE_PATHS.users,
     component: UsersPage,
-    requiresConnection: true,
-    showTimeControls: false,
-    skeletonVariant: "table",
-    requiredCapability: "canReadSecurityUsers",
-    nav: {
-      label: "Users",
-      group: "System",
-      order: 30,
-      showInSidebar: true,
-      icon: createElement(PeopleIcon, { fontSize: "small" }),
-    },
   },
   apiKeys: {
-    path: "/api-keys",
+    ...PAGE_PATHS.apiKeys,
     component: ApiKeysPage,
-    requiresConnection: true,
-    showTimeControls: false,
-    skeletonVariant: "table",
-    requiredCapability: "canReadApiKeys",
-    nav: {
-      label: "API Keys",
-      group: "System",
-      order: 35,
-      showInSidebar: true,
-      icon: createElement(VpnKeyIcon, { fontSize: "small" }),
-    },
   },
   roles: {
-    path: "/roles",
+    ...PAGE_PATHS.roles,
     component: RolesPage,
-    requiresConnection: true,
-    showTimeControls: false,
-    skeletonVariant: "table",
-    requiredCapability: "canReadSecurityRoles",
-    nav: {
-      label: "Roles",
-      group: "System",
-      order: 40,
-      showInSidebar: true,
-      icon: createElement(AdminPanelSettingsIcon, { fontSize: "small" }),
-    },
   },
   docs: {
-    path: "/docs",
+    ...PAGE_PATHS.docs,
     component: DocsPage,
-    requiresConnection: false,
-    showTimeControls: false,
-    nav: {
-      label: "Docs",
-      group: "Help",
-      order: 10,
-      showInSidebar: true,
-      icon: createElement(MenuBookIcon, { fontSize: "small" }),
-    },
   },
   settings: {
-    path: "/settings",
+    ...PAGE_PATHS.settings,
     component: SettingsPage,
-    requiresConnection: true,
-    showTimeControls: false,
-    nav: {
-      label: "LLM Settings",
-      group: "Settings",
-      order: 10,
-      showInSidebar: false,
-      icon: createElement(SettingsIcon, { fontSize: "small" }),
-    },
   },
-} as const satisfies Record<string, PageConfig>;
-
-export type PageId = keyof typeof PAGE_MANIFEST;
-
-/** Returns true when we positively know the user lacks a required capability. */
-export function isHiddenByCapability(
-  requiredCapability: keyof UserCapabilities | undefined,
-  capabilities: UserCapabilities | null,
-): boolean {
-  if (!requiredCapability) return false;
-  if (!capabilities) return false; // not yet fetched — keep visible
-  return !capabilities[requiredCapability];
-}
-
-/** Sidebar section display order. Sections not listed here won't appear. */
-export const NAV_SECTION_ORDER: NavGroup[] = ["Data", "Workspace", "Security", "System", "Help"];
+};

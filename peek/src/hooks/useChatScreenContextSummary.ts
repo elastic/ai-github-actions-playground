@@ -1,6 +1,6 @@
 import { useShallow } from "zustand/react/shallow";
 
-import { PAGE_MANIFEST } from "../routes/manifest";
+import { PAGE_PATHS } from "../routes/paths";
 import { useDashboardCatalogStore } from "../store/useDashboardCatalogStore";
 import { useQueryStore } from "../store/useQueryStore";
 import { useTracesStore } from "../store/useTracesStore";
@@ -16,7 +16,7 @@ export function useChatScreenContextSummary(pathname: string): string {
   );
 
   const pageLabel =
-    Object.values(PAGE_MANIFEST).find((page) => page.path === pathname)?.nav.label ?? pathname;
+    Object.values(PAGE_PATHS).find((page) => page.path === pathname)?.nav.label ?? pathname;
   const activeDashboard = dashboards.find((dashboard) => dashboard.id === activeDashboardId);
 
   const lines = [

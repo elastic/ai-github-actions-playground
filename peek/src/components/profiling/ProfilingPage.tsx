@@ -16,7 +16,7 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { useShallow } from "zustand/react/shallow";
 
-import { PAGE_MANIFEST } from "../../routes/manifest";
+import { PAGE_PATHS } from "../../routes/paths";
 import { ElasticsearchClient, isElasticsearchError } from "../../services/es";
 import { escapeEsqlString } from "../../services/es/esqlUtils";
 import DateRangePicker from "../DateRangePicker";
@@ -345,7 +345,7 @@ export default function ProfilingPage() {
             <Button
               size="small"
               variant="text"
-              onClick={() => navigate(PAGE_MANIFEST.profiling.path)}
+              onClick={() => navigate(PAGE_PATHS.profiling.path)}
               sx={{ height: COMPONENT_HEIGHTS.input }}
             >
               ← Guided flow

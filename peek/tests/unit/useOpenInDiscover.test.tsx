@@ -5,7 +5,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 
 import { useQueryStore } from "../../src/store/useQueryStore";
 import { useOpenInDiscover, openInDiscover } from "../../src/hooks/useOpenInDiscover";
-import { PAGE_MANIFEST } from "../../src/routes/manifest";
+import { PAGE_PATHS } from "../../src/routes/paths";
 
 function Wrapper({ children }: { children: ReactNode }) {
   return <MemoryRouter>{children}</MemoryRouter>;
@@ -40,6 +40,6 @@ describe("openInDiscover (non-hook utility)", () => {
     openInDiscover(navigate, "FROM metrics-* | LIMIT 5");
 
     expect(useQueryStore.getState().discoverQueryDraft).toBe("FROM metrics-* | LIMIT 5");
-    expect(navigate).toHaveBeenCalledWith(PAGE_MANIFEST.discover.path);
+    expect(navigate).toHaveBeenCalledWith(PAGE_PATHS.discover.path);
   });
 });
