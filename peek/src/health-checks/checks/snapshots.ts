@@ -1,5 +1,22 @@
 import type { HealthCheckDefinition } from "../types";
 
+function snapshotsCoreUnavailable(snapshot: Parameters<HealthCheckDefinition["evaluate"]>[0]) {
+  if (snapshot.errors.snapshotsCore) {
+    return {
+      status: "unknown" as const,
+      summary: "Snapshot data could not be loaded.",
+      reason: snapshot.errors.snapshotsCore,
+    };
+  }
+  if (!snapshot.data.snapshotsCore) {
+    return {
+      status: "unknown" as const,
+      summary: "Snapshot data is unavailable.",
+    };
+  }
+  return null;
+}
+
 export const snapshotChecks: HealthCheckDefinition[] = [
   {
     id: "snapshots.failed.recent",
@@ -9,7 +26,11 @@ export const snapshotChecks: HealthCheckDefinition[] = [
     severityOnFail: "high",
     surfaces: ["global"],
     dependsOn: ["snapshotsCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/get-snapshot-api",
+    recommendation: "Investigate failed snapshots and check repository connectivity.",
     evaluate: (snapshot) => {
+      const unavailable = snapshotsCoreUnavailable(snapshot);
+      if (unavailable) return unavailable;
       const snapshots = snapshot.data.snapshotsCore?.snapshots ?? [];
       const failed = snapshots.filter((s) => s.state === "FAILED");
       if (failed.length > 0) {
@@ -32,7 +53,11 @@ export const snapshotChecks: HealthCheckDefinition[] = [
     severityOnFail: "medium",
     surfaces: ["global"],
     dependsOn: ["snapshotsCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/get-snapshot-api",
+    recommendation: "Partial snapshots indicate some shards failed to snapshot.",
     evaluate: (snapshot) => {
+      const unavailable = snapshotsCoreUnavailable(snapshot);
+      if (unavailable) return unavailable;
       const snapshots = snapshot.data.snapshotsCore?.snapshots ?? [];
       const partial = snapshots.filter((s) => s.state === "PARTIAL");
       if (partial.length > 0) {
@@ -55,7 +80,12 @@ export const snapshotChecks: HealthCheckDefinition[] = [
     severityOnFail: "high",
     surfaces: ["global"],
     dependsOn: ["snapshotsCore"],
+    docsUrl:
+      "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/get-snapshot-lifecycle-management-policy",
+    recommendation: "Check SLM policy configuration and repository health.",
     evaluate: (snapshot) => {
+      const unavailable = snapshotsCoreUnavailable(snapshot);
+      if (unavailable) return unavailable;
       const policies = snapshot.data.snapshotsCore?.policies ?? {};
       const failingPolicies = Object.entries(policies).filter(([, p]) => {
         const lastSuccess = p.last_success?.time ?? 0;
@@ -79,18 +109,28 @@ export const snapshotChecks: HealthCheckDefinition[] = [
     id: "slm.policy.no_recent_success",
     domain: "snapshots",
     title: "SLM policy no recent success",
-    description: "Warns if a policy hasn't succeeded recently.",
+    description: "Warns if a policy hasn't succeeded recently relative to its schedule.",
     severityOnFail: "medium",
     surfaces: ["global"],
     dependsOn: ["snapshotsCore"],
+    docsUrl:
+      "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/get-snapshot-lifecycle-management-policy",
+    recommendation: "Verify SLM schedule and repository availability.",
     evaluate: (snapshot) => {
+      const unavailable = snapshotsCoreUnavailable(snapshot);
+      if (unavailable) return unavailable;
       const policies = snapshot.data.snapshotsCore?.policies ?? {};
       const now = Date.now();
       const stale = Object.entries(policies).filter(([, p]) => {
         const lastSuccess = p.last_success?.time ?? 0;
+        const nextExecution = p.next_execution_millis ?? 0;
+        // Don't flag policies that haven't run yet but have a future scheduled run
+        if (!lastSuccess && nextExecution > now) return false;
         if (!lastSuccess) return true;
-        // Flag if no success in last 48 hours
-        return now - lastSuccess > 48 * 60 * 60 * 1000;
+        // Use 2x the interval between now and next execution as grace window, or 48h default
+        const interval = nextExecution > now ? nextExecution - now : 0;
+        const grace = interval > 0 ? interval * 2 : 48 * 60 * 60 * 1000;
+        return now - lastSuccess > grace;
       });
       if (stale.length > 0) {
         const names = stale.map(([name]) => name);
@@ -113,7 +153,12 @@ export const snapshotChecks: HealthCheckDefinition[] = [
     severityOnFail: "medium",
     surfaces: ["global"],
     dependsOn: ["snapshotsCore"],
+    docsUrl:
+      "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/get-snapshot-lifecycle-management-stats",
+    recommendation: "Check repository permissions and disk space for retention cleanups.",
     evaluate: (snapshot) => {
+      const unavailable = snapshotsCoreUnavailable(snapshot);
+      if (unavailable) return unavailable;
       const slmStats = snapshot.data.snapshotsCore?.slmStats;
       const failures = slmStats?.total_snapshot_deletion_failures ?? 0;
       if (failures > 0) {

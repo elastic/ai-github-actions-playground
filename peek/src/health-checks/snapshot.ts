@@ -75,18 +75,42 @@ async function fetchGroup(
         return { group, data: { apiKeys } };
       }
       case "snapshotsCore": {
-        const [snapshotsRes, policies, slmStats] = await Promise.allSettled([
+        const [snapshotsRes, policiesRes, slmStatsRes] = await Promise.allSettled([
           client.getSnapshots(signal),
           client.getSlmPolicies(signal),
           client.getSlmStats(signal),
         ]);
+        // Collect errors from rejected requests (exclude expected 400/403/404)
+        const partialErrors: string[] = [];
+        for (const r of [snapshotsRes, policiesRes, slmStatsRes]) {
+          if (r.status === "rejected") {
+            const status =
+              typeof r.reason === "object" && r.reason !== null && "status" in r.reason
+                ? Number((r.reason as { status?: unknown }).status)
+                : undefined;
+            // 400/403/404 are expected when feature is unavailable
+            if (status && (status === 400 || status === 403 || status === 404)) continue;
+            partialErrors.push(
+              r.reason instanceof Error ? r.reason.message : "Failed to load snapshot data",
+            );
+          }
+        }
+        // If all three failed with unexpected errors, propagate as group error
+        if (
+          snapshotsRes.status === "rejected" &&
+          policiesRes.status === "rejected" &&
+          slmStatsRes.status === "rejected" &&
+          partialErrors.length > 0
+        ) {
+          return { group, error: partialErrors[0] };
+        }
         return {
           group,
           data: {
             snapshots:
               snapshotsRes.status === "fulfilled" ? (snapshotsRes.value.snapshots ?? []) : null,
-            policies: policies.status === "fulfilled" ? policies.value : null,
-            slmStats: slmStats.status === "fulfilled" ? slmStats.value : null,
+            policies: policiesRes.status === "fulfilled" ? policiesRes.value : null,
+            slmStats: slmStatsRes.status === "fulfilled" ? slmStatsRes.value : null,
           },
         };
       }
