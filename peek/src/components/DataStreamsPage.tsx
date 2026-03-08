@@ -26,7 +26,7 @@ import { useSearchParam } from "../hooks/useSearchParam";
 import type { DataStreamInfo } from "../services/es";
 import { useApiConsoleStore } from "../store/useApiConsoleStore";
 import { usePageContextStore } from "../store/usePageContextStore";
-import { PAGE_MANIFEST } from "../routes/manifest";
+import { PAGE_PATHS } from "../routes/paths";
 import { useDataStreams } from "../hooks/useDataStreams";
 import { useFieldCaps } from "../hooks/useFieldCaps";
 import { useIndices } from "../hooks/useIndices";
@@ -326,7 +326,7 @@ export default function DataStreamsPage() {
   const handleInspectInConsole = useCallback(() => {
     if (!selectedName) return;
     setConsoleDraft({ method: "GET", path: `/_data_stream/${selectedName}` });
-    navigate(PAGE_MANIFEST.console.path);
+    navigate(PAGE_PATHS.console.path);
   }, [selectedName, navigate, setConsoleDraft]);
 
   const insightContext = useMemo(

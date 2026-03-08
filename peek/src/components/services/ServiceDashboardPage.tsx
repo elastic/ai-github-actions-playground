@@ -10,7 +10,7 @@ import { useShallow } from "zustand/react/shallow";
 import { INSIGHT_GUARDRAIL, INSIGHT_SPECIFICITY_POLICY } from "../../hooks/insightPromptUtils";
 import { usePageSlotInsights } from "../../hooks/usePageSlotInsights";
 import { useTableSort } from "../../hooks/useTableSort";
-import { PAGE_MANIFEST } from "../../routes/manifest";
+import { PAGE_PATHS } from "../../routes/paths";
 import { useConnectionStore } from "../../store/useConnectionStore";
 import { useServiceFiltersStore } from "../../store/useServiceFiltersStore";
 import { useTracesStore } from "../../store/useTracesStore";
@@ -107,7 +107,7 @@ export default function ServiceDashboardPage() {
         services: [serviceName],
       });
       useTracesStore.getState().setSelectedTraceId(traceId);
-      navigate(PAGE_MANIFEST.traces.path);
+      navigate(PAGE_PATHS.traces.path);
     },
     [navigate, serviceName, timeFrom, timeTo],
   );
@@ -121,7 +121,7 @@ export default function ServiceDashboardPage() {
     });
     useTracesStore.getState().setSelectedTraceId(null);
     useTracesStore.getState().setPendingSearch(true);
-    navigate(PAGE_MANIFEST.traces.path);
+    navigate(PAGE_PATHS.traces.path);
   }, [navigate, serviceName, timeFrom, timeTo]);
   const handleDependencyNodeClick = useCallback(
     (peerServiceName: string) => {
@@ -133,7 +133,7 @@ export default function ServiceDashboardPage() {
       });
       useTracesStore.getState().setSelectedTraceId(null);
       useTracesStore.getState().setPendingSearch(true);
-      navigate(PAGE_MANIFEST.traces.path);
+      navigate(PAGE_PATHS.traces.path);
     },
     [navigate, serviceName, timeFrom, timeTo],
   );
@@ -322,11 +322,7 @@ export default function ServiceDashboardPage() {
           title={serviceName}
           description="Routes, traces, and deployments for this service."
           actions={
-            <Button
-              size="small"
-              variant="text"
-              onClick={() => navigate(PAGE_MANIFEST.services.path)}
-            >
+            <Button size="small" variant="text" onClick={() => navigate(PAGE_PATHS.services.path)}>
               ← Services
             </Button>
           }
@@ -355,7 +351,7 @@ export default function ServiceDashboardPage() {
               heading="No service data loaded"
               description={`No trace data was loaded for ${serviceName} in the selected time range.`}
               verticalAlign="center"
-              addDataHref={PAGE_MANIFEST.addData.path}
+              addDataHref={PAGE_PATHS.addData.path}
             />
           </Paper>
         )}
@@ -454,7 +450,7 @@ export default function ServiceDashboardPage() {
                 heading="No data found"
                 description={`No routes or traces found for ${serviceName} in the selected time range.`}
                 verticalAlign="center"
-                addDataHref={PAGE_MANIFEST.addData.path}
+                addDataHref={PAGE_PATHS.addData.path}
               />
             </Paper>
           )}

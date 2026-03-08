@@ -173,7 +173,8 @@ describe("App shell visibility", () => {
   });
 
   it("navigates to settings when Configure key is clicked", async () => {
-    const user = userEvent.setup();
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     useConnectionStore.getState().setConnected(true);
     useLLMStore.getState().setApiKey("");
 
@@ -184,9 +185,11 @@ describe("App shell visibility", () => {
       </MemoryRouter>,
     );
 
-    await user.click(screen.getByRole("button", { name: /configure key/i }));
+    const btn = await screen.findByRole("button", { name: /configure key/i });
+    await user.click(btn);
 
     expect(screen.getByTestId("location")).toHaveTextContent("/settings");
+    vi.useRealTimers();
   });
 
   it("keeps the LLM key banner hidden when already dismissed in session", () => {
@@ -300,7 +303,8 @@ describe("App shell visibility", () => {
     expect(screen.getByTestId("location")).toHaveTextContent("/dashboards/stale-dashboard-id");
 
     // Open Settings menu and click "Reset All State…"
-    await user.click(screen.getByRole("button", { name: "Settings" }));
+    const settingsBtn = await screen.findByRole("button", { name: "Settings" });
+    await user.click(settingsBtn);
     await user.click(await screen.findByRole("menuitem", { name: /reset all state/i }));
 
     // Click the "Reset" button to confirm
