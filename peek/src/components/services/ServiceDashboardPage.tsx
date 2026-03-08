@@ -12,7 +12,7 @@ import { usePageSlotInsights } from "../../hooks/usePageSlotInsights";
 import { useTableSort } from "../../hooks/useTableSort";
 import { PAGE_PATHS } from "../../routes/paths";
 import { useConnectionStore } from "../../store/useConnectionStore";
-import { usePageFiltersStore } from "../../store/usePageFiltersStore";
+import { useServiceFiltersStore } from "../../store/useServiceFiltersStore";
 import { useTracesStore } from "../../store/useTracesStore";
 import EmptyState from "../EmptyState";
 import InsightSlot from "../InsightSlot";
@@ -60,7 +60,7 @@ export default function ServiceDashboardPage() {
   const { serviceName: rawServiceName = "" } = useParams<{ serviceName: string }>();
   const serviceName = decodeServiceName(rawServiceName);
   const connection = useConnectionStore((s) => s.connection);
-  const { serviceFilters, updateServiceFilters } = usePageFiltersStore(
+  const { serviceFilters, updateServiceFilters } = useServiceFiltersStore(
     useShallow((s) => ({
       serviceFilters: s.serviceFilters,
       updateServiceFilters: s.updateServiceFilters,

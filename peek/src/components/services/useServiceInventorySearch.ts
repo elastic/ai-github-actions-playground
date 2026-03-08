@@ -5,7 +5,7 @@ import { useQueryClient, useQuery } from "@tanstack/react-query";
 
 import { useEsqlQuery } from "../../hooks/useEsqlQuery";
 import { useConnectionStore } from "../../store/useConnectionStore";
-import { usePageFiltersStore } from "../../store/usePageFiltersStore";
+import { useServiceFiltersStore } from "../../store/useServiceFiltersStore";
 import { useTracesStore } from "../../store/useTracesStore";
 import { useTableSort } from "../../hooks/useTableSort";
 import { EMPTY_FILTERS } from "../traces/traceQueryBuilder";
@@ -28,7 +28,7 @@ export function useServiceInventorySearch() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const connection = useConnectionStore((s) => s.connection);
-  const { filters, serviceSearchSession, updateFilters, resetFilters } = usePageFiltersStore(
+  const { filters, serviceSearchSession, updateFilters, resetFilters } = useServiceFiltersStore(
     useShallow((s) => ({
       filters: s.serviceFilters,
       serviceSearchSession: s.serviceSearchSession,

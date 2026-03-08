@@ -13,7 +13,7 @@ import SearchOffIcon from "@mui/icons-material/SearchOff";
 
 import { PAGE_PATHS } from "../../routes/paths";
 import { useSimpleEsqlQuery } from "../../hooks/useSimpleEsqlQuery";
-import { usePageFiltersStore } from "../../store/usePageFiltersStore";
+import { useHostsFiltersStore } from "../../store/useHostsFiltersStore";
 import DateRangePicker from "../DateRangePicker";
 import EmptyState from "../EmptyState";
 import PageHeader from "../PageHeader";
@@ -36,7 +36,7 @@ export default function HostDetailPage() {
     }
   }, [hostId]);
 
-  const { filters, updateFilters } = usePageFiltersStore(
+  const { filters, updateFilters } = useHostsFiltersStore(
     useShallow((s) => ({ filters: s.hostsFilters, updateFilters: s.updateHostsFilters })),
   );
 

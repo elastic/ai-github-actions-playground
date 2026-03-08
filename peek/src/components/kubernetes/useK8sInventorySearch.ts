@@ -4,7 +4,7 @@ import { useQueryClient, useQuery } from "@tanstack/react-query";
 
 import { useEsqlQuery } from "../../hooks/useEsqlQuery";
 import { useConnectionStore } from "../../store/useConnectionStore";
-import { usePageFiltersStore } from "../../store/usePageFiltersStore";
+import { useKubernetesFiltersStore } from "../../store/useKubernetesFiltersStore";
 import { useTableSort } from "../../hooks/useTableSort";
 import type { KubernetesActiveTab } from "../../types/pageFilters";
 import type { EsqlResponse } from "../../types";
@@ -51,7 +51,7 @@ function buildQueryForTab(tab: KubernetesActiveTab, filters: K8sQueryFilters): s
 export function useK8sInventorySearch() {
   const queryClient = useQueryClient();
   const connection = useConnectionStore((s) => s.connection);
-  const { filters, updateFilters, resetFilters } = usePageFiltersStore(
+  const { filters, updateFilters, resetFilters } = useKubernetesFiltersStore(
     useShallow((s) => ({
       filters: s.kubernetesFilters,
       updateFilters: s.updateKubernetesFilters,
