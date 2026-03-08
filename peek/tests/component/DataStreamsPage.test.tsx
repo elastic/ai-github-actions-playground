@@ -450,7 +450,8 @@ describe("DataStreamsPage", () => {
   });
 
   it("clears the Field Stats panel when a different stream is selected", async () => {
-    const user = userEvent.setup();
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
 
     getDataStreamsMock.mockResolvedValue({
       data_streams: [
@@ -486,6 +487,7 @@ describe("DataStreamsPage", () => {
         "false",
       );
     });
+    vi.useRealTimers();
   });
 
   it("navigates to Console with a data stream draft when Inspect in Console is clicked", async () => {
