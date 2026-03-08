@@ -801,6 +801,17 @@ describe("task checks", () => {
     expect(findCheck(taskChecks, "tasks.running.count.high").evaluate(snap).status).toBe("warn");
   });
 
+  it("#59 tasks.running.count.high — passes when only internal monitor tasks are present", () => {
+    const tasks: Record<string, unknown> = {};
+    for (let i = 0; i < 120; i++)
+      tasks[`task-${i}`] = {
+        action: "cluster:monitor/tasks/lists[n]",
+        running_time_in_nanos: 1000,
+      };
+    const snap = makeSnapshot({ tasksCore: { tasks: { nodes: { n1: { name: "n1", tasks } } } } });
+    expect(findCheck(taskChecks, "tasks.running.count.high").evaluate(snap).status).toBe("pass");
+  });
+
   it("#60 tasks.long_running.absolute — warns on long tasks", () => {
     const snap = makeSnapshot({
       tasksCore: {
