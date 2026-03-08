@@ -37,6 +37,8 @@ export interface ProfilingRunResult {
   stacktraces: SymbolizedStacktrace[];
 }
 
+const toNullableNumber = (value: unknown): number | null => (value != null ? Number(value) : null);
+
 // ---------------------------------------------------------------------------
 // Individual runners
 // ---------------------------------------------------------------------------
@@ -102,14 +104,8 @@ export async function fetchStacktraces(
       id: String(getFrame(row, "_id") ?? ""),
       functionName: String(getFrame(row, "Stackframe.function.name") ?? "(unknown)"),
       fileName: String(getFrame(row, "Stackframe.file.name") ?? ""),
-      lineNumber: (() => {
-        const v = getFrame(row, "Stackframe.line.number");
-        return v != null ? Number(v) : null;
-      })(),
-      functionOffset: (() => {
-        const v = getFrame(row, "Stackframe.function.offset");
-        return v != null ? Number(v) : null;
-      })(),
+      lineNumber: toNullableNumber(getFrame(row, "Stackframe.line.number")),
+      functionOffset: toNullableNumber(getFrame(row, "Stackframe.function.offset")),
     }))
     .filter((frame) => frame.id.length > 0);
 
