@@ -9,9 +9,6 @@ import Typography from "@mui/material/Typography";
 import Alert from "@mui/material/Alert";
 import Stack from "@mui/material/Stack";
 import LinearProgress from "@mui/material/LinearProgress";
-import Autocomplete from "@mui/material/Autocomplete";
-import TextField from "@mui/material/TextField";
-import GitHubIcon from "@mui/icons-material/GitHub";
 
 import { usePackageBuilderStore } from "../../store/usePackageBuilderStore";
 import type { PackageBuilderData } from "../../types/packageBuilder";
@@ -20,11 +17,8 @@ import {
   importFromFolder,
   importFromFileMap,
 } from "../../services/packageBuilder/importPackage";
-import {
-  listInputPackages,
-  fetchPackageFiles,
-  type CatalogEntry,
-} from "../../services/packageBuilder/githubCatalog";
+import { fetchPackageFiles, type CatalogEntry } from "../../services/packageBuilder/githubCatalog";
+import GitHubCatalogSection from "./GitHubCatalogSection";
 import ImportUploadSection from "./ImportUploadSection";
 
 interface Props {
@@ -38,34 +32,7 @@ export default function ImportPackageDialog({ open, onClose, onImportComplete }:
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
-
-  const [catalog, setCatalog] = useState<CatalogEntry[]>([]);
-  const [catalogLoading, setCatalogLoading] = useState(false);
-  const [catalogError, setCatalogError] = useState<string | null>(null);
   const importAbortRef = useRef<AbortController | null>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    let cancelled = false;
-    const controller = new AbortController();
-    setCatalogLoading(true);
-    setCatalogError(null);
-    listInputPackages(controller.signal)
-      .then((entries) => {
-        if (!cancelled) setCatalog(entries);
-      })
-      .catch((err) => {
-        if (cancelled || controller.signal.aborted) return;
-        setCatalogError(err instanceof Error ? err.message : "Failed to load catalog");
-      })
-      .finally(() => {
-        if (!cancelled && !controller.signal.aborted) setCatalogLoading(false);
-      });
-    return () => {
-      cancelled = true;
-      controller.abort();
-    };
-  }, [open]);
 
   useEffect(() => () => importAbortRef.current?.abort(), []);
 
@@ -118,8 +85,7 @@ export default function ImportPackageDialog({ open, onClose, onImportComplete }:
   );
 
   const handleCatalogSelect = useCallback(
-    (_: unknown, entry: CatalogEntry | null) => {
-      if (!entry) return;
+    (entry: CatalogEntry) => {
       handleResult(async (signal) => {
         const fileMap = await fetchPackageFiles(entry.dirName, signal);
         return importFromFileMap(fileMap);
@@ -151,45 +117,7 @@ export default function ImportPackageDialog({ open, onClose, onImportComplete }:
           </Box>
         ) : (
           <Stack spacing={2}>
-            <Box sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2, p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
-                <GitHubIcon sx={{ fontSize: 20, color: "text.secondary" }} />
-                <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                  Load from elastic/integrations
-                </Typography>
-              </Box>
-              {catalogError ? (
-                <Alert severity="warning" sx={{ py: 0.5 }}>
-                  {catalogError}
-                </Alert>
-              ) : (
-                <Autocomplete
-                  options={catalog}
-                  getOptionLabel={(o) => o.label}
-                  loading={catalogLoading}
-                  onChange={handleCatalogSelect}
-                  renderInput={(params) => (
-                    <TextField {...params} placeholder="Search input packages..." size="small" />
-                  )}
-                  renderOption={(props, option) => {
-                    const { key, ...rest } = props;
-                    return (
-                      <li key={key} {...rest}>
-                        <Box>
-                          <Typography variant="body2">{option.label}</Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {option.dirName}
-                          </Typography>
-                        </Box>
-                      </li>
-                    );
-                  }}
-                  size="small"
-                  fullWidth
-                />
-              )}
-            </Box>
-
+            <GitHubCatalogSection open={open} onSelect={handleCatalogSelect} />
             <ImportUploadSection
               onZipUpload={handleZipUpload}
               onFolderUpload={handleFolderUpload}

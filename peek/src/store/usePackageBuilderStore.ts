@@ -23,7 +23,11 @@ interface PackageBuilderState extends PackageBuilderData {
   currentStep: WizardStep;
   mockValues: Record<string, string>;
   readmeGenerated: boolean;
+  isLoaded: boolean;
   linkedDir: FileSystemDirectoryHandle | null;
+
+  // Navigation
+  setIsLoaded: (isLoaded: boolean) => void;
 
   // Navigation
   setStep: (step: WizardStep) => void;
@@ -71,7 +75,7 @@ interface PackageBuilderState extends PackageBuilderData {
 }
 
 const DEFAULT_IDENTITY = {
-  name: "",
+  name: "my_package",
   title: "",
   description: "",
   version: "0.1.0",
@@ -102,6 +106,7 @@ const DEFAULT_STATE: Pick<
   | "readmeContent"
   | "mockValues"
   | "readmeGenerated"
+  | "isLoaded"
   | "linkedDir"
 > = {
   currentStep: 1,
@@ -112,6 +117,7 @@ const DEFAULT_STATE: Pick<
   readmeContent: "",
   mockValues: {},
   readmeGenerated: false,
+  isLoaded: false,
   linkedDir: null,
 };
 
@@ -257,13 +263,16 @@ export const usePackageBuilderStore = create<PackageBuilderState>()(
             currentStep: 1,
             mockValues: {},
             readmeGenerated: Boolean(data.readmeContent),
+            isLoaded: true,
           }),
 
         // Linked directory
         linkDir: (handle) => set({ linkedDir: handle }),
         unlinkDir: () => set({ linkedDir: null }),
 
-        // Reset
+        setIsLoaded: (isLoaded) => set({ isLoaded }),
+
+        // Identity
         reset: () => set({ ...DEFAULT_STATE, readmeGenerated: false, linkedDir: null }),
       }),
       {
