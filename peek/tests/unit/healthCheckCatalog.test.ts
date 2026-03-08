@@ -1458,6 +1458,25 @@ describe("health report checks", () => {
       findCheck(healthReportChecks, "cluster.health_report.yellow").evaluate(snap).status,
     ).toBe("pass");
   });
+
+  it("per-indicator check — returns unknown for unknown indicator status", () => {
+    const snap = makeSnapshot({
+      healthReport: {
+        healthReport: {
+          status: "yellow",
+          indicators: {
+            disk: { status: "unknown", symptom: "Disk status unavailable" },
+          },
+        },
+      },
+    });
+    const result = findCheck(healthReportChecks, "cluster.health_report.indicator.disk").evaluate(
+      snap,
+    );
+    expect(result.status).toBe("unknown");
+    expect(result.summary).toBe("Disk status unavailable");
+    expect(result.observed).toEqual({ status: "unknown" });
+  });
 });
 
 // ---------------------------------------------------------------------------
