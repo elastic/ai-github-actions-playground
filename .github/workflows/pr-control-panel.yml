@@ -1,0 +1,184 @@
+name: PR Control Panel
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize, ready_for_review]
+  issue_comment:
+    types: [created, edited]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  sync-control-panel:
+    if: >-
+      github.event_name == 'pull_request_target' ||
+      (github.event_name == 'issue_comment' &&
+       github.event.issue.pull_request != null &&
+       github.event.comment.user.login != 'github-actions[bot]')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const MARKER = "<!-- pr-control-panel -->";
+            const LABEL_SKIP_PR_BODY = "skip-pr-body-update";
+            const LABEL_SKIP_PR_FEEDBACK = "skip-auto-pr-address";
+            const LABEL_AUTO_MERGE_CONFLICTS = "auto-merge-conflicts";
+
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            function readCheckbox(body, label) {
+              const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+              const checked = new RegExp(`- \\[[xX]\\] ${escaped}`).test(body);
+              const unchecked = new RegExp(`- \\[ \\] ${escaped}`).test(body);
+              if (checked) return true;
+              if (unchecked) return false;
+              return null;
+            }
+
+            function buildControlPanelBody(state) {
+              return [
+                MARKER,
+                "## PR Control Panel",
+                "",
+                "Toggle automation for this PR by checking boxes below.",
+                "",
+                `- [${state.updatePrBody ? "x" : " "}] Update PR Body`,
+                `- [${state.addressPrFeedback ? "x" : " "}] Address PR Feedback`,
+                `- [${state.addressMergeConflicts ? "x" : " "}] Address Merge Conflicts`,
+                "",
+                "---",
+                `Labels synced from this panel: \`${LABEL_SKIP_PR_BODY}\`, \`${LABEL_SKIP_PR_FEEDBACK}\`, \`${LABEL_AUTO_MERGE_CONFLICTS}\``,
+              ].join("\n");
+            }
+
+            async function listComments(issueNumber) {
+              return github.paginate(github.rest.issues.listComments, {
+                owner,
+                repo,
+                issue_number: issueNumber,
+                per_page: 100,
+              });
+            }
+
+            async function findControlPanelComment(issueNumber) {
+              const comments = await listComments(issueNumber);
+              return comments.find((comment) => comment.body?.includes(MARKER)) ?? null;
+            }
+
+            async function upsertControlPanel(issueNumber, state) {
+              const body = buildControlPanelBody(state);
+              const existing = await findControlPanelComment(issueNumber);
+              if (existing) {
+                await github.rest.issues.updateComment({
+                  owner,
+                  repo,
+                  comment_id: existing.id,
+                  body,
+                });
+                core.info(`Updated control panel comment ${existing.id}`);
+                return existing.id;
+              }
+              const created = await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: issueNumber,
+                body,
+              });
+              core.info(`Created control panel comment ${created.data.id}`);
+              return created.data.id;
+            }
+
+            async function getPullRequest(prNumber) {
+              const response = await github.rest.pulls.get({
+                owner,
+                repo,
+                pull_number: prNumber,
+              });
+              return response.data;
+            }
+
+            async function syncLabelsFromState(issueNumber, labelSet, state) {
+              async function addLabel(name) {
+                if (labelSet.has(name)) return;
+                await github.rest.issues.addLabels({
+                  owner,
+                  repo,
+                  issue_number: issueNumber,
+                  labels: [name],
+                });
+                labelSet.add(name);
+                core.info(`Added label: ${name}`);
+              }
+
+              async function removeLabel(name) {
+                if (!labelSet.has(name)) return;
+                try {
+                  await github.rest.issues.removeLabel({
+                    owner,
+                    repo,
+                    issue_number: issueNumber,
+                    name,
+                  });
+                } catch (error) {
+                  if (error?.status !== 404) throw error;
+                }
+                labelSet.delete(name);
+                core.info(`Removed label: ${name}`);
+              }
+
+              // Checked => enabled => remove skip labels
+              if (state.updatePrBody) await removeLabel(LABEL_SKIP_PR_BODY);
+              else await addLabel(LABEL_SKIP_PR_BODY);
+
+              if (state.addressPrFeedback) await removeLabel(LABEL_SKIP_PR_FEEDBACK);
+              else await addLabel(LABEL_SKIP_PR_FEEDBACK);
+
+              // Checked => add enable label
+              if (state.addressMergeConflicts) await addLabel(LABEL_AUTO_MERGE_CONFLICTS);
+              else await removeLabel(LABEL_AUTO_MERGE_CONFLICTS);
+            }
+
+            if (context.eventName === "pull_request_target") {
+              const prNumber = context.payload.pull_request.number;
+              const labels = new Set((context.payload.pull_request.labels || []).map((l) => l.name));
+              const state = {
+                updatePrBody: !labels.has(LABEL_SKIP_PR_BODY),
+                addressPrFeedback: !labels.has(LABEL_SKIP_PR_FEEDBACK),
+                addressMergeConflicts: labels.has(LABEL_AUTO_MERGE_CONFLICTS),
+              };
+              await upsertControlPanel(prNumber, state);
+              return;
+            }
+
+            // issue_comment path (PR-only due job if guard)
+            const issueNumber = context.payload.issue.number;
+            const commentBody = context.payload.comment.body || "";
+            if (!commentBody.includes(MARKER)) {
+              core.info("Edited comment is not the control panel comment; skipping.");
+              return;
+            }
+
+            const pr = await getPullRequest(issueNumber);
+            const labels = new Set((pr.labels || []).map((l) => l.name));
+            const currentState = {
+              updatePrBody: !labels.has(LABEL_SKIP_PR_BODY),
+              addressPrFeedback: !labels.has(LABEL_SKIP_PR_FEEDBACK),
+              addressMergeConflicts: labels.has(LABEL_AUTO_MERGE_CONFLICTS),
+            };
+            const desiredState = {
+              updatePrBody:
+                readCheckbox(commentBody, "Update PR Body") ?? currentState.updatePrBody,
+              addressPrFeedback:
+                readCheckbox(commentBody, "Address PR Feedback") ?? currentState.addressPrFeedback,
+              addressMergeConflicts:
+                readCheckbox(commentBody, "Address Merge Conflicts") ??
+                currentState.addressMergeConflicts,
+            };
+
+            await syncLabelsFromState(issueNumber, labels, desiredState);
+            await upsertControlPanel(issueNumber, desiredState);
