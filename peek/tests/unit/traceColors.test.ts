@@ -56,15 +56,31 @@ describe("getServiceTextColor", () => {
   });
 
   it("preserves already-accessible colors unchanged", () => {
-    const base = getServiceColor("frontend");
-    const text = getServiceTextColor("frontend");
-    const baseContrast = contrastOnWhite(base);
+    let accessibleService: string | null = null;
+    let inaccessibleService: string | null = null;
 
-    if (baseContrast >= 4.5) {
-      expect(text).toBe(base);
-    } else {
-      expect(relativeLuminance(text)).toBeLessThanOrEqual(relativeLuminance(base));
+    for (let i = 0; i < 500 && (!accessibleService || !inaccessibleService); i++) {
+      const name = `service-${i}`;
+      const baseContrast = contrastOnWhite(getServiceColor(name));
+      if (baseContrast >= 4.5) {
+        accessibleService = name;
+      } else {
+        inaccessibleService = name;
+      }
     }
+
+    expect(accessibleService).not.toBeNull();
+    expect(inaccessibleService).not.toBeNull();
+
+    const accessibleBase = getServiceColor(accessibleService!);
+    const accessibleText = getServiceTextColor(accessibleService!);
+    expect(accessibleText).toBe(accessibleBase);
+
+    const inaccessibleBase = getServiceColor(inaccessibleService!);
+    const inaccessibleText = getServiceTextColor(inaccessibleService!);
+    expect(relativeLuminance(inaccessibleText)).toBeLessThanOrEqual(
+      relativeLuminance(inaccessibleBase),
+    );
   });
 
   it("returns the same color for repeated calls (caching)", () => {
