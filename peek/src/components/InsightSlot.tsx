@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import Box from "@mui/material/Box";
 import ButtonBase from "@mui/material/ButtonBase";
 import IconButton from "@mui/material/IconButton";
@@ -52,6 +52,14 @@ export default function InsightSlot({ slotId, children, renderActions }: Insight
   const open = Boolean(anchorEl);
   const dismissedInSession =
     typeof window !== "undefined" && window.sessionStorage.getItem(dismissKey) === "1";
+
+  // Rehydrate persisted dismissals into the global store so the footer
+  // badge and jump control stay in sync after a page remount.
+  useEffect(() => {
+    if (dismissedInSession) {
+      dismissSlot(slotId);
+    }
+  }, [dismissedInSession, slotId, dismissSlot]);
 
   const handleOpen = useCallback(
     (event: React.SyntheticEvent<HTMLElement>) => {

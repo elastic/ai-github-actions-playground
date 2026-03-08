@@ -5,7 +5,7 @@ const ANNOTATION_LAYER_SIGNALS =
   "hidden risks, subtle anomalies, non-obvious correlations, and emerging regression signals";
 
 const ANNOTATION_LAYER_GUARDRAIL_SIGNALS =
-  "a hidden risk, a subtle anomaly, an emerging regression, or a non-obvious correlation";
+  "a hidden risk, a subtle anomaly, a non-obvious correlation, or an emerging regression";
 
 /** Shared suffix for all page insight system prompts to prevent hallucination. */
 export const INSIGHT_GUARDRAIL =
