@@ -288,7 +288,6 @@ describe("App shell visibility", () => {
     // Unknown routes redirect to /dashboards, so title reflects Dashboards
     expect(document.title).toBe("Dashboards — Elastic Peek");
   });
-
   it("navigates to /dashboards after resetting all state from a dashboard view", async () => {
     const user = userEvent.setup();
     useConnectionStore.getState().setConnected(true);
