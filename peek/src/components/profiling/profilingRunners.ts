@@ -37,7 +37,11 @@ export interface ProfilingRunResult {
   stacktraces: SymbolizedStacktrace[];
 }
 
-const toNullableNumber = (value: unknown): number | null => (value != null ? Number(value) : null);
+const toNullableNumber = (value: unknown): number | null => {
+  if (value == null) return null;
+  const num = Number(value);
+  return Number.isNaN(num) ? null : num;
+};
 
 // ---------------------------------------------------------------------------
 // Individual runners
