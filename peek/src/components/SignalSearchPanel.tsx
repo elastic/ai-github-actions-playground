@@ -198,7 +198,12 @@ export default function SignalSearchPanel({
 
         {!collapsed && (
           <Box sx={{ display: "flex", flex: 1, justifyContent: "flex-end" }}>
-            <Button size="small" variant="text" onClick={onResetFilters}>
+            <Button
+              size="small"
+              variant="text"
+              onClick={onResetFilters}
+              sx={{ minHeight: TOOLBAR_CONTROL_HEIGHT }}
+            >
               Reset Filters
             </Button>
           </Box>
