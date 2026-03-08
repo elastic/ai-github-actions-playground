@@ -14,6 +14,7 @@ const columns = [
   { name: "kind", type: "keyword" },
   { name: "status", type: "keyword" },
   { name: "@timestamp", type: "date" },
+  { name: "timestamp_us", type: "long" },
   { name: "duration", type: "long" },
   { name: "events", type: "keyword" },
 ];
@@ -50,6 +51,7 @@ function generateRows(rowCount: number): unknown[][] {
       "INTERNAL",
       "OK",
       "2025-01-01T00:00:00.000Z",
+      1_735_689_600_000_000 + i,
       1000,
       eventsValue,
     ]);
