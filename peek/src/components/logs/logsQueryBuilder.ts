@@ -116,7 +116,8 @@ export function timeRangeToEsqlFilter(timeRange: TimeRange): string {
   const now = new Date();
   const resolve = (expr: string) => {
     const d = resolveDateTime(expr, now);
-    return d ? d.toISOString() : expr;
+    if (d) return d.toISOString();
+    return expr.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
   };
   return `@timestamp >= "${resolve(timeRange.from)}" AND @timestamp <= "${resolve(timeRange.to)}"`;
 }

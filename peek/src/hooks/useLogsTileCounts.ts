@@ -7,7 +7,7 @@ import { timeRangeToEsqlFilter } from "../components/logs/logsQueryBuilder";
 import type { LogsFocusDimension } from "../components/logs/logsDimensions";
 import { LOGS_DIMENSION_LABELS } from "../components/logs/logsDimensions";
 
-export type TileCountState = "loading" | "visible" | "hidden";
+export type TileCountState = "loading" | "visible" | "hidden" | "error";
 
 export type TileCounts = Record<LogsFocusDimension, TileCountState>;
 
@@ -25,18 +25,24 @@ function makeInitialCounts(): TileCounts {
 export function useLogsTileCounts(
   connection: ElasticsearchConnection | null,
   timeRange: TimeRange,
+  enabled: boolean = true,
 ): { counts: TileCounts; subtexts: Record<LogsFocusDimension, string | null> } {
   const [counts, setCounts] = useState<TileCounts>(makeInitialCounts);
   const [subtexts, setSubtexts] = useState<Record<LogsFocusDimension, string | null>>(
-    () => Object.fromEntries(DIMENSIONS.map((d) => [d, null])) as Record<LogsFocusDimension, string | null>,
+    () =>
+      Object.fromEntries(DIMENSIONS.map((d) => [d, null])) as Record<
+        LogsFocusDimension,
+        string | null
+      >,
   );
   const abortRef = useRef<AbortController | null>(null);
   const timeRangeRef = useRef(timeRange);
   timeRangeRef.current = timeRange;
 
   const fetchCounts = useCallback(async () => {
-    if (!connection) {
-      setCounts(makeInitialCounts());
+    if (!connection || !enabled) {
+      if (!enabled) setCounts(makeInitialCounts());
+      else setCounts(makeInitialCounts());
       return;
     }
     abortRef.current?.abort();
@@ -50,7 +56,7 @@ export function useLogsTileCounts(
     await Promise.all(
       DIMENSIONS.map(async (dimension) => {
         try {
-          const query = `FROM logs-* | WHERE ${timeFilter} | WHERE ${dimension} IS NOT NULL | STATS count = COUNT(*) | LIMIT 1`;
+          const query = `FROM logs-* | WHERE ${timeFilter} | WHERE ${dimension} IS NOT NULL AND ${dimension} != "" | STATS count = COUNT(*) | LIMIT 1`;
           const result = await client.query({ query }, controller.signal);
           if (controller.signal.aborted) return;
           const countCol = result.columns.findIndex((c) => c.name === "count");
@@ -61,11 +67,11 @@ export function useLogsTileCounts(
           setSubtexts((prev) => ({ ...prev, [dimension]: subtext }));
         } catch {
           if (controller.signal.aborted) return;
-          setCounts((prev) => ({ ...prev, [dimension]: "hidden" }));
+          setCounts((prev) => ({ ...prev, [dimension]: "error" }));
         }
       }),
     );
-  }, [connection]);
+  }, [connection, enabled]);
 
   useEffect(() => {
     void fetchCounts();

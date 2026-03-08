@@ -57,7 +57,13 @@ export default function LogsDimensionListPage({
     try {
       const client = new ElasticsearchClient(connection);
       const timeFilter = timeRangeToEsqlFilter(timeRange);
-      const query = `FROM logs-* | WHERE ${timeFilter} | WHERE ${dimension} IS NOT NULL | STATS count = COUNT(*) BY ${dimension} | SORT count DESC | LIMIT 200`;
+      let query = `FROM logs-* | WHERE ${timeFilter} | WHERE ${dimension} IS NOT NULL`;
+      const trimmedSearch = search.trim();
+      if (trimmedSearch) {
+        const escaped = trimmedSearch.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+        query += ` | WHERE ${dimension} LIKE "*${escaped}*"`;
+      }
+      query += ` | STATS count = COUNT(*) BY ${dimension} | SORT count DESC | LIMIT 200`;
       const result = await client.query({ query }, controller.signal);
       const dimCol = result.columns.findIndex((c) => c.name === dimension);
       const countCol = result.columns.findIndex((c) => c.name === "count");
@@ -77,7 +83,7 @@ export default function LogsDimensionListPage({
     } finally {
       if (!controller.signal.aborted && abortRef.current === controller) setLoading(false);
     }
-  }, [connection, dimension, timeRange]);
+  }, [connection, dimension, timeRange, search]);
 
   useEffect(() => {
     void fetchValues();
@@ -96,9 +102,7 @@ export default function LogsDimensionListPage({
   );
 
   const maxCount = rows[0]?.count || 1;
-  const filtered = search.trim()
-    ? rows.filter((r) => r.value.toLowerCase().includes(search.trim().toLowerCase()))
-    : rows;
+  const filtered = rows;
 
   const { singular: dimensionLabel, plural: dimensionPluralLabel } =
     LOGS_DIMENSION_LABELS[dimension];

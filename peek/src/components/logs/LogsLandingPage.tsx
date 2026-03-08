@@ -75,10 +75,10 @@ export default function LogsLandingPage() {
   const connection = useConnectionStore((s) => s.connection);
   const timeRange = useDashboardEditorStore((s) => s.dashboard.timeRange);
   const openInDiscover = useOpenInDiscover();
-  const { counts, subtexts } = useLogsTileCounts(connection, timeRange);
-
   const [urlDimension, setUrlDimension] = useQueryState("focus", parseAsString);
   const dimension = isLogsFocusDimension(urlDimension) ? urlDimension : null;
+
+  const { counts, subtexts } = useLogsTileCounts(connection, timeRange, !dimension);
 
   const handleSelect = useCallback(
     async (dim: LogsFocusDimension | null) => {

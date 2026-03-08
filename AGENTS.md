@@ -201,7 +201,7 @@ of CI must use the `gh` CLI to read the full raw comment body:
 
 ```bash
 gh api repos/elastic/ai-github-actions-playground/issues/<PR>/comments \
-  --jq '.[0].body'
+  --jq '.[] | select(.user.login == "github-actions[bot]" or (.body | contains("<!-- ui-smoke-test-pr-review -->"))) | .body'
 ```
 
 This returns the complete markdown including `<details>` blocks, so you can see
