@@ -5,11 +5,14 @@ import type {
   ClusterHealthResponse,
   ClusterPendingTasksResponse,
   GetApiKeysResponse,
+  GetSlmPoliciesResponse,
   HealthReportResponse,
   IlmExplainResponse,
   IlmPolicyResponse,
   NodesStatsResponse,
   RecoveryResponse,
+  SlmStatsResponse,
+  SnapshotRecord,
   TasksListResponse,
 } from "../services/es";
 
@@ -29,6 +32,7 @@ export type HealthQueryGroup =
   | "templatesCore"
   | "recoveryCore"
   | "securityCore"
+  | "snapshotsCore"
   | "healthReport";
 
 export interface HealthSnapshot {
@@ -64,6 +68,11 @@ export interface HealthSnapshot {
     };
     securityCore: {
       apiKeys: GetApiKeysResponse | null;
+    };
+    snapshotsCore: {
+      snapshots: SnapshotRecord[] | null;
+      policies: GetSlmPoliciesResponse | null;
+      slmStats: SlmStatsResponse | null;
     };
     healthReport: {
       healthReport: HealthReportResponse | null;

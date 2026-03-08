@@ -13,6 +13,12 @@ export default defineConfig({
     environmentMatchGlobs: [["tests/unit/**/*.test.ts", "node"]],
     setupFiles: ["./vitest.setup.ts"],
     css: false,
+    pool: "forks",
+    poolOptions: {
+      forks: {
+        maxForks: 4,
+      },
+    },
     coverage: {
       provider: "v8",
       reporter: ["text", "lcov"],

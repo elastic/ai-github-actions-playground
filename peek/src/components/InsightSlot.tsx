@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import Box from "@mui/material/Box";
 import ButtonBase from "@mui/material/ButtonBase";
 import IconButton from "@mui/material/IconButton";
@@ -10,6 +10,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 import type { SlotInsight } from "../types/insightSlots";
+import { useInsightStatusStore } from "../store/useInsightStatusStore";
 
 import { useSlotInsight, useInsightSlotContext } from "./InsightSlotHooks";
 import { severityGlow, severityColor, pulseSx, popoverMarkdownSx } from "./insightSlotSx";
@@ -34,10 +35,14 @@ export interface InsightSlotProps {
  *
  * When no insight is present, or the slot has been dismissed, children are
  * rendered unchanged.
+ *
+ * Each active insight wrapper is tagged with `data-insight-slot-id` so the
+ * footer navigation can scroll to the next undismissed insight.
  */
 export default function InsightSlot({ slotId, children, renderActions }: InsightSlotProps) {
   const insight = useSlotInsight(slotId);
   const { loading, refresh } = useInsightSlotContext();
+  const dismissSlot = useInsightStatusStore((s) => s.dismissSlot);
 
   const dismissKey = `insight-slot-dismissed:${slotId}`;
   const [dismissedSlotId, setDismissedSlotId] = useState<string | null>(null);
@@ -47,6 +52,14 @@ export default function InsightSlot({ slotId, children, renderActions }: Insight
   const open = Boolean(anchorEl);
   const dismissedInSession =
     typeof window !== "undefined" && window.sessionStorage.getItem(dismissKey) === "1";
+
+  // Rehydrate persisted dismissals into the global store so the footer
+  // badge and jump control stay in sync after a page remount.
+  useEffect(() => {
+    if (dismissedInSession && insight) {
+      dismissSlot(slotId);
+    }
+  }, [dismissedInSession, insight, slotId, dismissSlot]);
 
   const handleOpen = useCallback(
     (event: React.SyntheticEvent<HTMLElement>) => {
@@ -62,10 +75,11 @@ export default function InsightSlot({ slotId, children, renderActions }: Insight
   const handleDismiss = useCallback(() => {
     setAnchor(null);
     setDismissedSlotId(slotId);
+    dismissSlot(slotId);
     if (typeof window !== "undefined") {
       window.sessionStorage.setItem(dismissKey, "1");
     }
-  }, [dismissKey, slotId]);
+  }, [dismissKey, slotId, dismissSlot]);
 
   const handleRefresh = useCallback(() => {
     setAnchor(null);
@@ -87,6 +101,7 @@ export default function InsightSlot({ slotId, children, renderActions }: Insight
 
   return (
     <Box
+      data-insight-slot-id={slotId}
       sx={{
         position: "relative",
         display: "block",

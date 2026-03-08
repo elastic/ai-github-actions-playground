@@ -566,6 +566,19 @@ export const PAGE_PATHS = {
       iconKey: "PolicyIcon",
     },
   },
+  snapshots: {
+    path: "/snapshots",
+    requiresConnection: true,
+    showTimeControls: false,
+    skeletonVariant: "table",
+    nav: {
+      label: "Snapshots",
+      group: "System",
+      order: 32,
+      showInSidebar: true,
+      iconKey: "BackupIcon",
+    },
+  },
   templates: {
     path: "/templates",
     requiresConnection: true,
