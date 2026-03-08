@@ -114,7 +114,7 @@ export default function NodesPage() {
 
       {!error && rows.length > 0 && (
         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 0.5 }}>
-          <MetricChip label="Nodes" value={String(summary.count)} />
+          <MetricChip label="Nodes" value={summary.count.toLocaleString()} />
           <MetricChip
             label="CPU max"
             value={summary.maxCpu !== null ? `${summary.maxCpu.toFixed(0)}%` : "n/a"}

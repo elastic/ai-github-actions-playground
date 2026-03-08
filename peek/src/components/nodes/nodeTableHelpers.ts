@@ -69,15 +69,15 @@ export interface NodeTableRow {
 }
 
 export function nodeHealth(row: NodeTableRow): HealthLevel {
-  if (row.heapPercent === null && row.fsUsedPercent === null) {
-    return "unknown";
-  }
   // Critical: heap > 90%, disk > 95%, any breaker trips
   if (row.heapPercent !== null && row.heapPercent >= NODE_THRESHOLDS.heap.critical)
     return "critical";
   if (row.fsUsedPercent !== null && row.fsUsedPercent >= NODE_THRESHOLDS.disk.critical)
     return "critical";
   if (row.totalBreakerTrips !== null && row.totalBreakerTrips > 0) return "critical";
+  if (row.heapPercent === null && row.fsUsedPercent === null) {
+    return "unknown";
+  }
   // Warning: heap >= 75%, disk >= 85%
   if (row.heapPercent !== null && row.heapPercent >= NODE_THRESHOLDS.heap.warning) return "warning";
   if (row.fsUsedPercent !== null && row.fsUsedPercent >= NODE_THRESHOLDS.disk.warning)
@@ -124,11 +124,11 @@ export function computeSummary(rows: NodeTableRow[]): NodeSummary {
   const heaps = rows.map((r) => r.heapPercent).filter((v): v is number => v !== null);
   const disks = rows.map((r) => r.fsUsedPercent).filter((v): v is number => v !== null);
   const totalDocs =
-    rows.length > 0 && rows.some((r) => r.docCount === null)
+    rows.length === 0 || rows.some((r) => r.docCount === null)
       ? null
       : rows.reduce((sum, r) => sum + (r.docCount ?? 0), 0);
   const totalShards =
-    rows.length > 0 && rows.some((r) => r.shardCount === null)
+    rows.length === 0 || rows.some((r) => r.shardCount === null)
       ? null
       : rows.reduce((sum, r) => sum + (r.shardCount ?? 0), 0);
 

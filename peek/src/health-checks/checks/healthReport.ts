@@ -159,7 +159,7 @@ export const healthReportChecks: HealthCheckDefinition[] = [
       surfaces: ["global"],
       dependsOn: ["healthReport"],
       docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/health-api",
-      recommendation: `Review the ${title.toLowerCase()} indicator in the Elasticsearch Health Report API for details.`,
+      recommendation: `Review the "${key}" indicator in the Elasticsearch Health Report API for details.`,
       evaluate: (snapshot) => {
         if (snapshot.errors.healthReport) {
           return {
@@ -178,7 +178,7 @@ export const healthReportChecks: HealthCheckDefinition[] = [
         const indicator = report.indicators?.[key];
         if (!indicator) {
           return {
-            status: "pass",
+            status: "unknown",
             summary: `Indicator "${key}" not present in Health Report.`,
           };
         }

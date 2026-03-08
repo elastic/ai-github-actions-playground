@@ -24,24 +24,24 @@ function HealthIcon({ level }: { level: HealthLevel }) {
   if (level === "critical")
     return (
       <Tooltip title="Critical: high resource pressure or errors">
-        <ErrorIcon fontSize="small" color="error" aria-label="Critical" />
+        <ErrorIcon fontSize="small" color="error" titleAccess="Critical" />
       </Tooltip>
     );
   if (level === "warning")
     return (
       <Tooltip title="Warning: elevated resource usage">
-        <WarningIcon fontSize="small" color="warning" aria-label="Warning" />
+        <WarningIcon fontSize="small" color="warning" titleAccess="Warning" />
       </Tooltip>
     );
   if (level === "unknown")
     return (
       <Tooltip title="Unknown: no metrics available">
-        <HelpOutlineIcon fontSize="small" color="disabled" aria-label="Unknown" />
+        <HelpOutlineIcon fontSize="small" color="disabled" titleAccess="Unknown" />
       </Tooltip>
     );
   return (
     <Tooltip title="OK">
-      <CheckCircleIcon fontSize="small" color="success" aria-label="OK" />
+      <CheckCircleIcon fontSize="small" color="success" titleAccess="OK" />
     </Tooltip>
   );
 }
