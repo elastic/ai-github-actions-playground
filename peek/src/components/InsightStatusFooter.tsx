@@ -7,6 +7,7 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import { useShallow } from "zustand/react/shallow";
 
 import { useInsightStatusStore } from "../store/useInsightStatusStore";
 
@@ -31,11 +32,15 @@ const POPOVER_OPEN_DELAY_MS = 400;
  * Renders nothing when there are no insights and nothing is loading.
  */
 export default function InsightStatusFooter() {
-  const loading = useInsightStatusStore((s) => s.loading);
-  const totalInsights = useInsightStatusStore((s) => s.totalInsights);
-  const dismissedSlotIds = useInsightStatusStore((s) => s.dismissedSlotIds);
-  const error = useInsightStatusStore((s) => s.error);
-  const statusMessage = useInsightStatusStore((s) => s.statusMessage);
+  const { loading, totalInsights, dismissedSlotIds, error, statusMessage } = useInsightStatusStore(
+    useShallow((s) => ({
+      loading: s.loading,
+      totalInsights: s.totalInsights,
+      dismissedSlotIds: s.dismissedSlotIds,
+      error: s.error,
+      statusMessage: s.statusMessage,
+    })),
+  );
 
   const lastScrolledIndex = useRef(-1);
 

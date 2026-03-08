@@ -56,10 +56,10 @@ export default function InsightSlot({ slotId, children, renderActions }: Insight
   // Rehydrate persisted dismissals into the global store so the footer
   // badge and jump control stay in sync after a page remount.
   useEffect(() => {
-    if (dismissedInSession) {
+    if (dismissedInSession && insight) {
       dismissSlot(slotId);
     }
-  }, [dismissedInSession, slotId, dismissSlot]);
+  }, [dismissedInSession, insight, slotId, dismissSlot]);
 
   const handleOpen = useCallback(
     (event: React.SyntheticEvent<HTMLElement>) => {
