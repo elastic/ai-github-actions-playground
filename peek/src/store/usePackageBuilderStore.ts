@@ -71,7 +71,7 @@ interface PackageBuilderState extends PackageBuilderData {
 }
 
 const DEFAULT_IDENTITY = {
-  name: "",
+  name: "my_package",
   title: "",
   description: "",
   version: "0.1.0",

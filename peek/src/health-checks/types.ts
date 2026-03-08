@@ -5,6 +5,7 @@ import type {
   ClusterHealthResponse,
   ClusterPendingTasksResponse,
   GetApiKeysResponse,
+  HealthReportResponse,
   IlmExplainResponse,
   IlmPolicyResponse,
   NodesStatsResponse,
@@ -27,7 +28,8 @@ export type HealthQueryGroup =
   | "ilmCore"
   | "templatesCore"
   | "recoveryCore"
-  | "securityCore";
+  | "securityCore"
+  | "healthReport";
 
 export interface HealthSnapshot {
   fetchedAt: string;
@@ -63,6 +65,9 @@ export interface HealthSnapshot {
     securityCore: {
       apiKeys: GetApiKeysResponse | null;
     };
+    healthReport: {
+      healthReport: HealthReportResponse | null;
+    };
   }>;
   errors: Partial<Record<HealthQueryGroup, string>>;
 }
@@ -90,6 +95,8 @@ export interface HealthCheckDefinition {
   surfaces: HealthSurface[];
   requiredPrivileges?: string[];
   dependsOn: HealthQueryGroup[];
+  docsUrl?: string;
+  recommendation?: string;
   evaluate: (snapshot: HealthSnapshot) => HealthCheckResult;
 }
 
@@ -99,4 +106,6 @@ export interface EvaluatedHealthCheck extends HealthCheckResult {
   title: string;
   description: string;
   severity: HealthSeverity | null;
+  docsUrl?: string;
+  definitionRecommendation?: string;
 }

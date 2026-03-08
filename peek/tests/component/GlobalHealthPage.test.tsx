@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
+import { renderWithQueryClient } from "../helpers/renderWithQueryClient";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 
@@ -41,28 +42,25 @@ describe("GlobalHealthPage", () => {
     getIlmPoliciesMock.mockResolvedValue({});
   });
 
-  it("renders summary cards and check table", async () => {
-    render(
+  it("renders check table with rules", async () => {
+    renderWithQueryClient(
       <MemoryRouter>
         <GlobalHealthPage />
       </MemoryRouter>,
     );
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: "Global Health" })).toBeInTheDocument();
+      expect(screen.getByRole("table", { name: "Health check rules" })).toBeInTheDocument();
     });
-
-    expect(screen.getByText(/Critical:/)).toBeInTheDocument();
-    expect(screen.getByRole("table", { name: "Global health checks" })).toBeInTheDocument();
     await waitFor(() => {
       expect(screen.getByText("Cluster status red")).toBeInTheDocument();
     });
   });
 
-  it("opens flyover with check details", async () => {
+  it("opens flyover with check details and docs link", async () => {
     const user = userEvent.setup();
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <GlobalHealthPage />
       </MemoryRouter>,
@@ -72,10 +70,15 @@ describe("GlobalHealthPage", () => {
       expect(screen.getByText("Cluster status red")).toBeInTheDocument();
     });
 
-    await user.click(screen.getByRole("button", { name: "Cluster status red" }));
+    await user.click(screen.getByText("Cluster status red"));
 
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: "Cluster status red" })).toBeInTheDocument();
     });
+    expect(screen.getByRole("link", { name: "Elastic Docs" })).toHaveAttribute(
+      "href",
+      expect.stringContaining("elastic.co/docs"),
+    );
+    expect(screen.getByText(/Recommendation/)).toBeInTheDocument();
   });
 });

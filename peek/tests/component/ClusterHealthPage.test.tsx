@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
+import { renderWithQueryClient } from "../helpers/renderWithQueryClient";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 
@@ -47,7 +48,7 @@ vi.mock("../../src/services/es", () => ({
 }));
 
 function renderHealth(defaultTab?: string) {
-  return render(
+  return renderWithQueryClient(
     <MemoryRouter>
       <ClusterHealthPage defaultTab={defaultTab as never} />
     </MemoryRouter>,
@@ -110,7 +111,7 @@ describe("ClusterHealthPage", () => {
   });
 
   it("renders overview with cluster status and key metrics", async () => {
-    renderHealth();
+    renderHealth("overview");
 
     await waitFor(() => {
       expect(screen.getByText("YELLOW")).toBeInTheDocument();
@@ -145,7 +146,7 @@ describe("ClusterHealthPage", () => {
       defaults: {},
     });
 
-    renderHealth();
+    renderHealth("overview");
 
     await waitFor(() => {
       expect(screen.getByText("YELLOW")).toBeInTheDocument();
@@ -168,7 +169,7 @@ describe("ClusterHealthPage", () => {
       allocate_explanation: "cannot allocate because all nodes are full",
     });
 
-    renderHealth();
+    renderHealth("overview");
 
     await waitFor(() => {
       expect(getAllocationExplainMock).toHaveBeenCalled();
@@ -181,7 +182,7 @@ describe("ClusterHealthPage", () => {
   });
 
   it("does not call allocation explain when 0 unassigned shards", async () => {
-    renderHealth();
+    renderHealth("overview");
 
     await waitFor(() => {
       expect(screen.getByText("YELLOW")).toBeInTheDocument();
@@ -192,7 +193,7 @@ describe("ClusterHealthPage", () => {
 
   it("switches to Nodes tab and shows per-node table", async () => {
     const user = userEvent.setup();
-    renderHealth();
+    renderHealth("overview");
 
     await waitFor(() => {
       expect(screen.getByText("YELLOW")).toBeInTheDocument();
@@ -208,7 +209,7 @@ describe("ClusterHealthPage", () => {
 
   it("refreshes when Refresh is clicked", async () => {
     const user = userEvent.setup();
-    renderHealth();
+    renderHealth("overview");
 
     let initialCalls = 0;
     await waitFor(() => {
@@ -226,7 +227,7 @@ describe("ClusterHealthPage", () => {
   it("shows empty state on Tasks tab when there are no pending tasks", async () => {
     getPendingTasksMock.mockResolvedValue({ tasks: [] });
     const user = userEvent.setup();
-    renderHealth();
+    renderHealth("overview");
 
     await waitFor(() => {
       expect(screen.getByText("YELLOW")).toBeInTheDocument();
@@ -243,7 +244,7 @@ describe("ClusterHealthPage", () => {
     getNodeStatsMock.mockRejectedValue(new Error("timeout"));
     getSlmStatsMock.mockRejectedValue(new Error("forbidden"));
 
-    renderHealth();
+    renderHealth("overview");
 
     await waitFor(() => {
       expect(screen.getByText("YELLOW")).toBeInTheDocument();

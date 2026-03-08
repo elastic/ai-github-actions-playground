@@ -2,11 +2,11 @@
 import { describe, it, expect } from "vitest";
 
 import { resetAllStores } from "../fixtures/test-utils";
-import { usePageFiltersStore } from "../../src/store/usePageFiltersStore";
+import { useProfilingFiltersStore } from "../../src/store/useProfilingFiltersStore";
 
 describe("profiling store reset reproduction", () => {
   it("global reset should reset profiling filters", () => {
-    usePageFiltersStore.setState({
+    useProfilingFiltersStore.setState({
       profilingFilters: {
         serviceName: "svc-a",
         environment: "prod",
@@ -21,7 +21,7 @@ describe("profiling store reset reproduction", () => {
 
     resetAllStores();
 
-    const state = usePageFiltersStore.getState();
+    const state = useProfilingFiltersStore.getState();
     expect(state.profilingFilters.serviceName).toBeNull();
     expect(state.profilingRawQuery).toBeNull();
     expect(state.expandedStacktraceIds.size).toBe(0);

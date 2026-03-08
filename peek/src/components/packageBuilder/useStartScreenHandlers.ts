@@ -69,6 +69,7 @@ export function useStartScreenHandlers() {
         linkDir(handle);
       } catch (err) {
         if (err instanceof DOMException && err.name === "AbortError") return;
+        setError(err instanceof Error ? err.message : String(err));
       }
     },
     [linkDir],

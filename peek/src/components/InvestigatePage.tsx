@@ -14,7 +14,8 @@ import type { EsqlResponse } from "../types";
 import { COMPONENT_HEIGHTS } from "../types/tokens";
 
 import EmptyState from "./EmptyState";
-import PageHeader from "./PageHeader";
+import PageContainer from "./PageContainer";
+import PageHeaderSection from "./PageHeaderSection";
 import InvestigateEventTimeline from "./investigate/InvestigateEventTimeline";
 import InvestigateQueryBar from "./investigate/InvestigateQueryBar";
 import InvestigateSummaryPanel from "./investigate/InvestigateSummaryPanel";
@@ -108,13 +109,11 @@ export default function InvestigatePage() {
   const tabConfig = TAB_LABELS[activeTab];
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, height: "100%", minHeight: 0 }}>
-      <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <PageHeader
-          title="Investigate"
-          description="Search for a user, host, IP address, domain, or file to view their recent security event timeline."
-        />
-      </Paper>
+    <PageContainer gap={1.5}>
+      <PageHeaderSection
+        title="Investigate"
+        description="Search for a user, host, IP address, domain, or file to view their recent security event timeline."
+      />
       <Tabs
         value={activeTab}
         onChange={handleTabChange}
@@ -203,6 +202,6 @@ export default function InvestigatePage() {
           </Box>
         ) : null}
       </Box>
-    </Box>
+    </PageContainer>
   );
 }

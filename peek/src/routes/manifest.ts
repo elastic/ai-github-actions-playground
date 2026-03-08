@@ -28,6 +28,7 @@ import SubjectIcon from "@mui/icons-material/Subject";
 import CloudIcon from "@mui/icons-material/Cloud";
 import DnsIcon from "@mui/icons-material/Dns";
 import DescriptionIcon from "@mui/icons-material/Description";
+import BugReportIcon from "@mui/icons-material/BugReport";
 
 import type { UserCapabilities } from "../services/es";
 
@@ -53,7 +54,7 @@ const DocsPage = lazy(() => import("../components/DocsPage"));
 const ExplorePage = lazy(() => import("../components/ExplorePage"));
 const FleetAgentPage = lazy(() => import("../components/FleetAgentPage"));
 const FleetPage = lazy(() => import("../components/FleetPage"));
-const GlobalHealthPage = lazy(() => import("../components/GlobalHealthPage"));
+const ClusterDiagnosticsPage = lazy(() => import("../components/ClusterDiagnosticsPage"));
 const IngestPipelinesPage = lazy(() => import("../components/IngestPipelinesPage"));
 const IndicesPage = lazy(() => import("../components/IndicesPage"));
 const StorageExplorerPage = lazy(() => import("../components/StorageExplorerPage"));
@@ -142,7 +143,7 @@ export const PAGE_MANIFEST = {
     path: "/logs",
     component: LogsLandingPage,
     requiresConnection: true,
-    showTimeControls: false,
+    showTimeControls: true,
     skeletonVariant: "list",
     nav: {
       label: "Logs",
@@ -439,23 +440,37 @@ export const PAGE_MANIFEST = {
     nav: {
       label: "Health",
       group: "System",
-      order: 12,
+      order: 11,
       showInSidebar: true,
       icon: createElement(HealthAndSafetyIcon, { fontSize: "small" }),
     },
   },
   globalHealth: {
     path: "/health",
-    component: GlobalHealthPage,
+    component: ClusterHealthPage,
     requiresConnection: true,
     showTimeControls: false,
     skeletonVariant: "table",
     nav: {
-      label: "Global Health",
+      label: "Health",
       group: "System",
       order: 11,
-      showInSidebar: true,
+      showInSidebar: false,
       icon: createElement(HealthAndSafetyIcon, { fontSize: "small" }),
+    },
+  },
+  clusterDiagnostics: {
+    path: "/cluster-diagnostics",
+    component: ClusterDiagnosticsPage,
+    requiresConnection: true,
+    showTimeControls: false,
+    skeletonVariant: "table",
+    nav: {
+      label: "Cluster Diagnostics",
+      group: "System",
+      order: 19,
+      showInSidebar: true,
+      icon: createElement(BugReportIcon, { fontSize: "small" }),
     },
   },
   clusterTasks: {
@@ -576,7 +591,7 @@ export const PAGE_MANIFEST = {
     showTimeControls: false,
     skeletonVariant: "detail-panel",
     nav: {
-      label: "Node detail",
+      label: "Node Detail",
       group: "System",
       order: 24,
       showInSidebar: false,

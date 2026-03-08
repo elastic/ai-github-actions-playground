@@ -136,11 +136,11 @@ export default function PackageBuilderStartScreen() {
         onImportComplete={h.handleGitHubImportComplete}
       />
       <input ref={zipInputRef} type="file" accept=".zip" hidden onChange={h.handleZipUpload} />
+      {/* eslint-disable-next-line react/no-unknown-property -- webkitdirectory is a non-standard but widely supported attribute */}
       <input
         ref={folderInputRef}
         type="file"
-        // @ts-expect-error -- webkitdirectory is non-standard but widely supported
-        webkitdirectory=""
+        {...{ webkitdirectory: "" }}
         hidden
         onChange={h.handleFolderUpload}
       />

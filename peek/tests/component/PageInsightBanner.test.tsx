@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
+import { renderWithQueryClient } from "../helpers/renderWithQueryClient";
 import userEvent from "@testing-library/user-event";
 import { generateText } from "ai";
 
@@ -27,7 +28,7 @@ describe("PageInsightBanner", () => {
   });
 
   it("renders nothing when no API key is configured", () => {
-    render(
+    renderWithQueryClient(
       <PageInsightBanner context="test context" systemPrompt="test prompt" cacheKey="test-key" />,
     );
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
@@ -36,7 +37,7 @@ describe("PageInsightBanner", () => {
   it("shows loading state then insight when API key is set", async () => {
     useLLMStore.getState().setApiKey("sk-test-key");
 
-    render(
+    renderWithQueryClient(
       <PageInsightBanner context="test context" systemPrompt="test prompt" cacheKey="test-key" />,
     );
 
@@ -49,7 +50,7 @@ describe("PageInsightBanner", () => {
     useLLMStore.getState().setApiKey("sk-test-key");
     const user = userEvent.setup();
 
-    render(
+    renderWithQueryClient(
       <PageInsightBanner
         context="test context"
         systemPrompt="test prompt"
@@ -82,7 +83,7 @@ describe("PageInsightBanner", () => {
       text: "**Bold text** and a [link](https://example.com)",
     });
 
-    render(
+    renderWithQueryClient(
       <PageInsightBanner context="test context" systemPrompt="test prompt" cacheKey="md-key" />,
     );
 
@@ -104,7 +105,7 @@ describe("PageInsightBanner", () => {
       .mockResolvedValueOnce({ text: "Initial insight." })
       .mockResolvedValueOnce({ text: "Refreshed insight." });
 
-    render(
+    renderWithQueryClient(
       <PageInsightBanner
         context="test context"
         systemPrompt="test prompt"

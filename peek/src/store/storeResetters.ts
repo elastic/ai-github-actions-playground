@@ -5,13 +5,14 @@
  * both `useResetAllStores` (runtime) and `resetAllStores` (tests) call a single
  * authoritative list instead of maintaining separate hard-coded copies.
  *
- * When adding a new store with a reset method, add its resetter to this array.
+ * Domain-specific page-filter stores (Fleet, Profiling, Services, Kubernetes,
+ * Hosts) self-register through `resetRegistry.ts` at import time.  The imports
+ * below ensure the side-effects run before `storeResetters` is consumed.
  */
 
 import { useConnectionStore } from "./useConnectionStore";
 import { useDashboardStore } from "./useDashboardStore";
 import { useExplorerStore } from "./useExplorerStore";
-import { usePageFiltersStore } from "./usePageFiltersStore";
 import { useLLMStore } from "./useLLMStore";
 import { useQueryStore } from "./useQueryStore";
 import { useTracesStore } from "./useTracesStore";
@@ -24,16 +25,21 @@ import { usePageContextStore } from "./usePageContextStore";
 import { useLogsStore } from "./useLogsStore";
 import { usePackageBuilderStore } from "./usePackageBuilderStore";
 
+// Side-effect imports: each domain store registers its resetter via the
+// resetRegistry when first imported.
+import "./useFleetFiltersStore";
+import "./useProfilingFiltersStore";
+import "./useServiceFiltersStore";
+import "./useKubernetesFiltersStore";
+import "./useHostsFiltersStore";
+
+import { getRegisteredResetters } from "./resetRegistry";
+
 const resetConnection = () => useConnectionStore.getState().resetConnectionState();
 const resetDashboard = () => useDashboardStore.getState().resetDashboardState();
 const resetExplorer = () => useExplorerStore.getState().reset();
-const resetFleet = () => usePageFiltersStore.getState().resetFleetFilters();
 const resetLlm = () => useLLMStore.getState().resetLLMState();
-const resetProfiling = () => usePageFiltersStore.getState().resetProfilingFilters();
 const resetQuery = () => useQueryStore.getState().resetQueryState();
-const resetServices = () => usePageFiltersStore.getState().resetServiceFilters();
-const resetKubernetes = () => usePageFiltersStore.getState().resetKubernetesFilters();
-const resetHosts = () => usePageFiltersStore.getState().resetHostsFilters();
 const resetTraces = () => useTracesStore.getState().resetFilters();
 const resetUi = () => useUIStore.getState().resetUIState();
 const resetTheme = () => useThemeStore.getState().resetThemeState();
@@ -48,13 +54,11 @@ export const storeResetters: ReadonlyArray<() => void> = [
   resetConnection,
   resetDashboard,
   resetExplorer,
-  resetFleet,
-  resetHosts,
-  resetKubernetes,
+  // Domain-scoped page-filter resetters are pulled from the registry so that
+  // adding a new domain store never requires editing this file.
+  ...getRegisteredResetters(),
   resetLlm,
-  resetProfiling,
   resetQuery,
-  resetServices,
   resetTraces,
   resetLogs,
   resetUi,
@@ -80,16 +84,13 @@ export const RESET_SCOPE: ReadonlyArray<{ label: string; reset: () => void }> = 
     reset: resetQuery,
   },
   {
-    label: "Observability filters (traces, metrics, logs, fleet, profiling, services)",
+    label: "Observability filters (traces, metrics, logs, fleet, hosts, profiling, services)",
     reset: () => {
       resetTraces();
       resetExplorer();
       resetLogs();
-      resetFleet();
-      resetHosts();
-      resetProfiling();
-      resetServices();
-      resetKubernetes();
+      // Reset all domain-scoped page-filter stores via the registry.
+      getRegisteredResetters().forEach((fn) => fn());
     },
   },
   {

@@ -91,6 +91,7 @@ export interface NodesInfoResponse {
 
 export interface NodeStatsNode {
   name?: string;
+  roles?: string[];
   os?: {
     cpu?: {
       percent?: number;
@@ -138,6 +139,19 @@ export interface NodeStatsNode {
     docs?: { count?: number; deleted?: number };
     shard_stats?: { total_count?: number };
     store?: { size_in_bytes?: number };
+    fielddata?: {
+      memory_size_in_bytes?: number;
+      evictions?: number;
+    };
+    query_cache?: {
+      memory_size_in_bytes?: number;
+      evictions?: number;
+      hit_count?: number;
+      miss_count?: number;
+      cache_count?: number;
+      cache_size?: number;
+      total_count?: number;
+    };
     indexing?: {
       index_total?: number;
       index_time_in_millis?: number;
@@ -148,16 +162,28 @@ export interface NodeStatsNode {
       query_time_in_millis?: number;
       fetch_total?: number;
       fetch_time_in_millis?: number;
+      open_contexts?: number;
     };
     merges?: {
       total?: number;
       total_time_in_millis?: number;
       total_size_in_bytes?: number;
+      total_throttled_time_in_millis?: number;
     };
     get?: { total?: number; time_in_millis?: number; missing_total?: number };
     refresh?: { total?: number; total_time_in_millis?: number };
     flush?: { total?: number; total_time_in_millis?: number };
-    segments?: { count?: number; memory_in_bytes?: number };
+    translog?: {
+      operations?: number;
+      size_in_bytes?: number;
+      uncommitted_operations?: number;
+      uncommitted_size_in_bytes?: number;
+    };
+    segments?: {
+      count?: number;
+      memory_in_bytes?: number;
+      version_map_memory_in_bytes?: number;
+    };
   };
   thread_pool?: Record<
     string,
@@ -315,4 +341,37 @@ export interface ClusterAllocationExplainResponse {
     node_decision?: string;
     deciders?: Array<{ decider?: string; decision?: string; explanation?: string }>;
   }>;
+}
+
+// ---------------------------------------------------------------------------
+// Health Report API (GET /_health_report) — available in ES 8.7+
+// ---------------------------------------------------------------------------
+
+export interface HealthReportImpact {
+  id?: string;
+  severity?: number;
+  description?: string;
+  impact_areas?: string[];
+}
+
+export interface HealthReportDiagnosis {
+  id?: string;
+  cause?: string;
+  action?: string;
+  help_url?: string;
+  affected_resources?: Record<string, unknown>;
+}
+
+export interface HealthReportIndicator {
+  status?: "green" | "yellow" | "red" | "unknown";
+  symptom?: string;
+  details?: Record<string, unknown>;
+  impacts?: HealthReportImpact[];
+  diagnosis?: HealthReportDiagnosis[];
+}
+
+export interface HealthReportResponse {
+  cluster_name?: string;
+  status?: "green" | "yellow" | "red" | "unknown";
+  indicators?: Record<string, HealthReportIndicator>;
 }
