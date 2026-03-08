@@ -19,6 +19,7 @@ const FRAME_PALETTE_COLORS = [
     STATUS_COLORS.warning,
     STATUS_COLORS.success,
     STATUS_COLORS.info,
+    STATUS_COLORS.unknown,
     STATUS_COLORS.inProgress,
     ...CHART_COLORS,
   ]),
