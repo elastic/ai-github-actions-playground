@@ -61,6 +61,16 @@ describe("serviceDashboardQueryBuilder", () => {
       expect(query).toContain('@timestamp <= "2026-01-01T01:00:00.000Z"');
     });
 
+    it("supports TO_DATETIME wrapped custom date ranges", () => {
+      const query = buildServiceRoutesQuery({
+        serviceName: "test-svc",
+        timeFrom: 'TO_DATETIME("2025-03-06T15:18:00.000Z")',
+        timeTo: 'TO_DATETIME("2025-03-06T16:18:00.000Z")',
+      });
+      expect(query).toContain('@timestamp >= "2025-03-06T15:18:00.000Z"');
+      expect(query).toContain('@timestamp <= "2025-03-06T16:18:00.000Z"');
+    });
+
     it("throws for unsupported time expressions", () => {
       expect(() =>
         buildServiceRoutesQuery({
@@ -106,6 +116,16 @@ describe("serviceDashboardQueryBuilder", () => {
       });
       expect(query).toContain('@timestamp >= "2026-01-01T00:00:00.000Z"');
       expect(query).toContain('@timestamp <= "2026-01-01T01:00:00.000Z"');
+    });
+
+    it("supports TO_DATETIME wrapped custom date ranges", () => {
+      const query = buildServiceRecentTracesQuery({
+        serviceName: "test-svc",
+        timeFrom: 'TO_DATETIME("2025-03-06T15:18:00.000Z")',
+        timeTo: 'TO_DATETIME("2025-03-06T16:18:00.000Z")',
+      });
+      expect(query).toContain('@timestamp >= "2025-03-06T15:18:00.000Z"');
+      expect(query).toContain('@timestamp <= "2025-03-06T16:18:00.000Z"');
     });
 
     it("throws for unsupported time expressions", () => {
@@ -154,6 +174,16 @@ describe("serviceDashboardQueryBuilder", () => {
       });
       expect(query).toContain('@timestamp >= "2026-01-01T00:00:00.000Z"');
       expect(query).toContain('@timestamp <= "2026-01-01T01:00:00.000Z"');
+    });
+
+    it("supports TO_DATETIME wrapped custom date ranges", () => {
+      const query = buildServiceDeploymentsQuery({
+        serviceName: "test-svc",
+        timeFrom: 'TO_DATETIME("2025-03-06T15:18:00.000Z")',
+        timeTo: 'TO_DATETIME("2025-03-06T16:18:00.000Z")',
+      });
+      expect(query).toContain('@timestamp >= "2025-03-06T15:18:00.000Z"');
+      expect(query).toContain('@timestamp <= "2025-03-06T16:18:00.000Z"');
     });
 
     it("throws for unsupported time expressions", () => {
