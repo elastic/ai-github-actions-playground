@@ -49,7 +49,10 @@ export function useAsyncAction<TResult = void>(options: {
   /** Called after an error. */
   onError?: (error: Error) => void;
   /** Additional React-Query mutation options. */
-  mutationOptions?: Omit<UseMutationOptions<TResult, Error, void>, "mutationFn">;
+  mutationOptions?: Omit<
+    UseMutationOptions<TResult, Error, void>,
+    "mutationFn" | "onSuccess" | "onError"
+  >;
 }): AsyncActionState {
   const mutation = useMutation<TResult, Error, void>({
     ...options.mutationOptions,
