@@ -30,6 +30,11 @@ describe("ProfilingFlamegraph label contrast", () => {
     expect(relativeLuminance("#000")).toBe(0);
   });
 
+  it("rejects malformed hex colors", () => {
+    expect(() => hexToRgb("#abcd")).toThrow("Unsupported hex color");
+    expect(() => hexToRgb("#fff0")).toThrow("Unsupported hex color");
+  });
+
   it.each(FRAME_PALETTE_COLORS)("adaptive label on %s meets WCAG AA 4.5:1", (bg) => {
     const label = getLabelColor(bg);
     const ratio = contrastRatio(label, bg);

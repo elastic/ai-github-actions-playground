@@ -1,4 +1,8 @@
 export function hexToRgb(hex: string): [number, number, number] {
+  if (!/^#?(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(hex)) {
+    throw new Error(`Unsupported hex color: ${hex}`);
+  }
+
   const h = hex.replace("#", "");
   const norm =
     h.length === 3
