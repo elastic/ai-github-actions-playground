@@ -8,8 +8,6 @@ const THREAD_POOL_QUEUE_THRESHOLD = 200;
 const HEAP_PERCENT_HIGH_THRESHOLD = 85;
 const HEAP_PERCENT_WARNING_THRESHOLD = 75;
 const CPU_PERCENT_HIGH_THRESHOLD = 90;
-const OLD_GC_TIME_HIGH_MS = 5_000;
-const YOUNG_GC_TIME_HIGH_MS = 10_000;
 const LOAD_1M_HIGH = 10;
 const FD_RATIO_HIGH = 0.85;
 const FS_USED_HIGH = 0.9;
@@ -285,72 +283,6 @@ export const nodeChecks: HealthCheckDefinition[] = [
         };
       }
       return { status: "pass", summary: "No circuit breaker trips reported." };
-    },
-  },
-  // #32
-  {
-    id: "nodes.jvm.old_gc.time.high",
-    domain: "nodes",
-    title: "Old GC time high",
-    description: `Warns when any node old GC collection time > ${OLD_GC_TIME_HIGH_MS}ms.`,
-    severityOnFail: "high",
-    surfaces: ["global"],
-    dependsOn: ["nodesCore"],
-    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/jvm-settings",
-    recommendation:
-      "High old GC time causes latency spikes. Reduce heap pressure by lowering fielddata or increasing heap size.",
-    evaluate: (snapshot) => {
-      const nodes = getNodes(snapshot);
-      const hotNodes = nodes
-        .map((n) => ({
-          name: n.name ?? "unknown",
-          oldGcMs: n.jvm?.gc?.collectors?.old?.collection_time_in_millis ?? 0,
-        }))
-        .filter((n) => n.oldGcMs > OLD_GC_TIME_HIGH_MS);
-      if (hotNodes.length > 0) {
-        const worst = hotNodes.sort((a, b) => b.oldGcMs - a.oldGcMs)[0]!;
-        return {
-          status: "warn",
-          summary: `High old GC time on ${worst.name} (${worst.oldGcMs}ms).`,
-          observed: { worstNode: worst.name, oldGcMs: worst.oldGcMs },
-          recommendation:
-            "Investigate heap pressure; consider increasing heap or reducing memory-intensive operations.",
-        };
-      }
-      return { status: "pass", summary: "Old GC collection times within threshold." };
-    },
-  },
-  // #33
-  {
-    id: "nodes.jvm.young_gc.time.high",
-    domain: "nodes",
-    title: "Young GC time high",
-    description: `Warns when any node young GC collection time > ${YOUNG_GC_TIME_HIGH_MS}ms.`,
-    severityOnFail: "medium",
-    surfaces: ["global"],
-    dependsOn: ["nodesCore"],
-    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/jvm-settings",
-    recommendation:
-      "High young GC time may indicate high allocation rate or undersized young generation.",
-    evaluate: (snapshot) => {
-      const nodes = getNodes(snapshot);
-      const hotNodes = nodes
-        .map((n) => ({
-          name: n.name ?? "unknown",
-          youngGcMs: n.jvm?.gc?.collectors?.young?.collection_time_in_millis ?? 0,
-        }))
-        .filter((n) => n.youngGcMs > YOUNG_GC_TIME_HIGH_MS);
-      if (hotNodes.length > 0) {
-        const worst = hotNodes.sort((a, b) => b.youngGcMs - a.youngGcMs)[0]!;
-        return {
-          status: "warn",
-          summary: `High young GC time on ${worst.name} (${worst.youngGcMs}ms).`,
-          observed: { worstNode: worst.name, youngGcMs: worst.youngGcMs },
-          recommendation:
-            "High young GC time may indicate high allocation rate or undersized young generation.",
-        };
-      }
-      return { status: "pass", summary: "Young GC collection times within threshold." };
     },
   },
   // #35
