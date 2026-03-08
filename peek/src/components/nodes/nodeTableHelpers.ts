@@ -115,32 +115,27 @@ export interface NodeSummary {
   avgHeap: number | null;
   maxDisk: number | null;
   avgDisk: number | null;
-  totalDocs: number | null;
-  totalShards: number | null;
+  totalDocs: number;
+  totalShards: number;
 }
 
 export function computeSummary(rows: NodeTableRow[]): NodeSummary {
   const cpus = rows.map((r) => r.cpuPercent).filter((v): v is number => v !== null);
   const heaps = rows.map((r) => r.heapPercent).filter((v): v is number => v !== null);
   const disks = rows.map((r) => r.fsUsedPercent).filter((v): v is number => v !== null);
-  const totalDocs =
-    rows.length === 0 || rows.some((r) => r.docCount === null)
-      ? null
-      : rows.reduce((sum, r) => sum + (r.docCount ?? 0), 0);
-  const totalShards =
-    rows.length === 0 || rows.some((r) => r.shardCount === null)
-      ? null
-      : rows.reduce((sum, r) => sum + (r.shardCount ?? 0), 0);
+  const hasCpuGaps = rows.length === 0 || cpus.length !== rows.length;
+  const hasHeapGaps = rows.length === 0 || heaps.length !== rows.length;
+  const hasDiskGaps = rows.length === 0 || disks.length !== rows.length;
 
   return {
     count: rows.length,
-    maxCpu: cpus.length > 0 ? Math.max(...cpus) : null,
-    avgCpu: cpus.length > 0 ? cpus.reduce((a, b) => a + b, 0) / cpus.length : null,
-    maxHeap: heaps.length > 0 ? Math.max(...heaps) : null,
-    avgHeap: heaps.length > 0 ? heaps.reduce((a, b) => a + b, 0) / heaps.length : null,
-    maxDisk: disks.length > 0 ? Math.max(...disks) : null,
-    avgDisk: disks.length > 0 ? disks.reduce((a, b) => a + b, 0) / disks.length : null,
-    totalDocs,
-    totalShards,
+    maxCpu: hasCpuGaps ? null : Math.max(...cpus),
+    avgCpu: hasCpuGaps ? null : cpus.reduce((a, b) => a + b, 0) / cpus.length,
+    maxHeap: hasHeapGaps ? null : Math.max(...heaps),
+    avgHeap: hasHeapGaps ? null : heaps.reduce((a, b) => a + b, 0) / heaps.length,
+    maxDisk: hasDiskGaps ? null : Math.max(...disks),
+    avgDisk: hasDiskGaps ? null : disks.reduce((a, b) => a + b, 0) / disks.length,
+    totalDocs: rows.reduce((sum, r) => sum + (r.docCount ?? 0), 0),
+    totalShards: rows.reduce((sum, r) => sum + (r.shardCount ?? 0), 0),
   };
 }
