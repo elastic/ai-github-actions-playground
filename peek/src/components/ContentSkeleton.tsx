@@ -2,13 +2,19 @@ import Box from "@mui/material/Box";
 import Skeleton from "@mui/material/Skeleton";
 import Stack from "@mui/material/Stack";
 
-type ContentSkeletonVariant = "table" | "cards" | "chart" | "list" | "detail-panel";
+type ContentSkeletonVariant = "table" | "cards" | "chart" | "chart-cell" | "list" | "detail-panel";
 
 interface ContentSkeletonProps {
   variant: ContentSkeletonVariant;
+  /** Optional height override, used primarily with the `chart-cell` variant. */
+  height?: number;
 }
 
-export default function ContentSkeleton({ variant }: ContentSkeletonProps) {
+export default function ContentSkeleton({ variant, height }: ContentSkeletonProps) {
+  if (variant === "chart-cell") {
+    return <Skeleton variant="rounded" height={height ?? 170} sx={{ borderRadius: 1 }} />;
+  }
+
   if (variant === "cards") {
     return (
       <Stack spacing={1.5}>

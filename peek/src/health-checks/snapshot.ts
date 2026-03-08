@@ -41,6 +41,39 @@ async function fetchGroup(
         ]);
         return { group, data: { ilmExplain, ilmPolicies } };
       }
+      case "shards": {
+        const catShards = await client.getCatShards(signal);
+        return { group, data: { catShards } };
+      }
+      case "allocationSample": {
+        try {
+          const allocationExplain = await client.getAllocationExplain(signal);
+          return { group, data: { allocationExplain } };
+        } catch (innerError) {
+          if (isAbortError(innerError) || signal?.aborted) throw innerError;
+          const status =
+            typeof innerError === "object" && innerError !== null && "status" in innerError
+              ? Number((innerError as { status?: unknown }).status)
+              : undefined;
+          if (status === 400) {
+            // 400 when no unassigned shards exist — treat as empty
+            return { group, data: { allocationExplain: null } };
+          }
+          throw innerError;
+        }
+      }
+      case "indicesCore": {
+        const catIndices = await client.getCatIndices(signal);
+        return { group, data: { catIndices } };
+      }
+      case "recoveryCore": {
+        const recovery = await client.getRecoveryStatus(signal);
+        return { group, data: { recovery } };
+      }
+      case "securityCore": {
+        const apiKeys = await client.getApiKeys(signal);
+        return { group, data: { apiKeys } };
+      }
       default:
         return { group, data: null };
     }
@@ -74,17 +107,9 @@ export async function buildHealthSnapshot(
       continue;
     }
 
-    if (result.group === "clusterCore" && result.data) {
-      data.clusterCore = result.data as HealthSnapshot["data"]["clusterCore"];
-    }
-    if (result.group === "nodesCore" && result.data) {
-      data.nodesCore = result.data as HealthSnapshot["data"]["nodesCore"];
-    }
-    if (result.group === "tasksCore" && result.data) {
-      data.tasksCore = result.data as HealthSnapshot["data"]["tasksCore"];
-    }
-    if (result.group === "ilmCore" && result.data) {
-      data.ilmCore = result.data as HealthSnapshot["data"]["ilmCore"];
+    if (result.data != null) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- dynamic group assignment
+      (data as any)[result.group] = result.data;
     }
   }
 
