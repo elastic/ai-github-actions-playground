@@ -17,7 +17,7 @@ export function OverviewInfoCard({
   title,
   children,
   onClick,
-  surfaceTier = "secondary",
+  surfaceTier = "primary",
 }: OverviewInfoCardProps) {
   const isPrimary = surfaceTier === "primary";
   const paper = (
