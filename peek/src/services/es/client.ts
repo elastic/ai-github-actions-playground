@@ -209,6 +209,7 @@ interface CreateApiKeyResponse {
 export class ElasticsearchClient {
   private readonly baseUrl: string;
   private readonly headers: Record<string, string>;
+  private static readonly TRANSFORMS_PAGE_SIZE = 100;
 
   constructor(connection: ElasticsearchConnection) {
     this.baseUrl = (connection.proxyUrl || connection.url).replace(/\/+$/, "");
@@ -416,6 +417,44 @@ export class ElasticsearchClient {
   ): Promise<T> {
     const raw = await this._fetch<unknown>(path, options);
     return validateResponse(schema, raw, label) as T;
+  }
+
+  private async _fetchAllTransformsPages<T>(
+    path: "/_transform" | "/_transform/_stats",
+    signal?: AbortSignal,
+  ): Promise<{ count: number; transforms: T[] }> {
+    const pageSize = ElasticsearchClient.TRANSFORMS_PAGE_SIZE;
+    const transforms: T[] = [];
+    let from = 0;
+    let totalCount: number | undefined;
+
+    /* eslint-disable no-await-in-loop -- sequential pagination */
+    while (true) {
+      const params = new URLSearchParams({
+        from: String(from),
+        size: String(pageSize),
+      });
+      const page = await this._fetch<{ count?: number; transforms?: T[] }>(
+        `${path}?${params.toString()}`,
+        { signal },
+      );
+      const pageTransforms = Array.isArray(page.transforms) ? page.transforms : [];
+      if (
+        typeof page.count === "number" &&
+        Number.isFinite(page.count) &&
+        totalCount === undefined
+      ) {
+        totalCount = page.count;
+      }
+      transforms.push(...pageTransforms);
+
+      if (pageTransforms.length < pageSize) break;
+      if (totalCount !== undefined && transforms.length >= totalCount) break;
+      from += pageTransforms.length;
+    }
+    /* eslint-enable no-await-in-loop */
+
+    return { count: totalCount ?? transforms.length, transforms };
   }
 
   // -------------------------------------------------------------------------
@@ -771,11 +810,17 @@ export class ElasticsearchClient {
   // -------------------------------------------------------------------------
 
   async getTransforms(signal?: AbortSignal): Promise<GetTransformsResponse> {
-    return this._fetch<GetTransformsResponse>("/_transform", { signal });
+    return this._fetchAllTransformsPages<GetTransformsResponse["transforms"][number]>(
+      "/_transform",
+      signal,
+    );
   }
 
   async getTransformStats(signal?: AbortSignal): Promise<GetTransformStatsResponse> {
-    return this._fetch<GetTransformStatsResponse>("/_transform/_stats", { signal });
+    return this._fetchAllTransformsPages<GetTransformStatsResponse["transforms"][number]>(
+      "/_transform/_stats",
+      signal,
+    );
   }
 
   // -------------------------------------------------------------------------
