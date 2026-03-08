@@ -126,8 +126,8 @@ export function computeSummary(rows: NodeTableRow[]): NodeSummary {
   const hasCpuGaps = rows.length === 0 || cpus.length !== rows.length;
   const hasHeapGaps = rows.length === 0 || heaps.length !== rows.length;
   const hasDiskGaps = rows.length === 0 || disks.length !== rows.length;
-  const hasDocGaps = rows.some((r) => r.docCount === null);
-  const hasShardGaps = rows.some((r) => r.shardCount === null);
+  const hasDocGaps = rows.length === 0 || rows.some((r) => r.docCount === null);
+  const hasShardGaps = rows.length === 0 || rows.some((r) => r.shardCount === null);
 
   return {
     count: rows.length,
