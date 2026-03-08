@@ -123,7 +123,14 @@ export default function PoliciesTable({
               </TableCell>
               <TableCell>
                 <Typography variant="body2" color="text.secondary" noWrap>
-                  {row.expireAfter ? `${row.expireAfter} (${row.minCount}–${row.maxCount})` : "—"}
+                  {(() => {
+                    const parts = [
+                      row.expireAfter || null,
+                      row.minCount != null ? `min ${row.minCount}` : null,
+                      row.maxCount != null ? `max ${row.maxCount}` : null,
+                    ].filter(Boolean);
+                    return parts.length > 0 ? parts.join(", ") : "—";
+                  })()}
                 </Typography>
               </TableCell>
             </TableRow>

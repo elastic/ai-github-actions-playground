@@ -4,12 +4,12 @@ const STALE_SUCCESS_FALLBACK_MS = 48 * 60 * 60 * 1000;
 const POLICY_STALENESS_GRACE_MS = 60 * 60 * 1000;
 const RECENT_SNAPSHOT_LOOKBACK_MS = 7 * 24 * 60 * 60 * 1000;
 
-function unknownSnapshotsDataResult(summary: string, to: string) {
+function unknownSnapshotsDataResult(summary: string, to: string, label = "Snapshots") {
   return {
     status: "unknown" as const,
     summary,
     recommendation: "Ensure snapshot and SLM data is collected and retry the health snapshot.",
-    links: [{ label: "Snapshots", to }],
+    links: [{ label, to }],
   };
 }
 
@@ -18,7 +18,7 @@ function withinRecentLookback(
   now: number,
 ): boolean {
   const timestamp = snapshot.end_time_in_millis ?? snapshot.start_time_in_millis;
-  if (!timestamp) return true;
+  if (timestamp == null || timestamp > now) return false;
   return now - timestamp <= RECENT_SNAPSHOT_LOOKBACK_MS;
 }
 
@@ -100,6 +100,7 @@ export const snapshotChecks: HealthCheckDefinition[] = [
         return unknownSnapshotsDataResult(
           "SLM policy data unavailable.",
           "/snapshots?tab=policies",
+          "SLM Policies",
         );
       }
       const failingPolicies = Object.entries(policies).filter(([, p]) => {
@@ -137,6 +138,7 @@ export const snapshotChecks: HealthCheckDefinition[] = [
         return unknownSnapshotsDataResult(
           "SLM policy data unavailable.",
           "/snapshots?tab=policies",
+          "SLM Policies",
         );
       }
       const now = Date.now();

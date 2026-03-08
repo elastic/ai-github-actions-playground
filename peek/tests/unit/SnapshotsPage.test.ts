@@ -230,15 +230,17 @@ describe("snapshot health checks", () => {
   }
 
   it("snapshots.failed.recent — warns on FAILED snapshots", () => {
+    const nowSpy = vi.spyOn(Date, "now").mockReturnValue(10_000);
     const snapshot = makeHealthSnapshot({
       snapshots: [
-        { snapshot: "snap-1", state: "FAILED" },
+        { snapshot: "snap-1", state: "FAILED", end_time_in_millis: 9_000 },
         { snapshot: "snap-2", state: "SUCCESS" },
       ],
     });
     const results = evaluateHealthChecks(snapshotChecks, snapshot);
     const check = results.find((r) => r.id === "snapshots.failed.recent");
     expect(check?.status).toBe("warn");
+    nowSpy.mockRestore();
   });
 
   it("snapshots.failed.recent — passes with no failures", () => {
@@ -251,12 +253,14 @@ describe("snapshot health checks", () => {
   });
 
   it("snapshots.partial.recent — warns on PARTIAL snapshots", () => {
+    const nowSpy = vi.spyOn(Date, "now").mockReturnValue(10_000);
     const snapshot = makeHealthSnapshot({
-      snapshots: [{ snapshot: "snap-1", state: "PARTIAL" }],
+      snapshots: [{ snapshot: "snap-1", state: "PARTIAL", end_time_in_millis: 9_000 }],
     });
     const results = evaluateHealthChecks(snapshotChecks, snapshot);
     const check = results.find((r) => r.id === "snapshots.partial.recent");
     expect(check?.status).toBe("warn");
+    nowSpy.mockRestore();
   });
 
   it("snapshots.failed.recent — ignores stale FAILED snapshots outside lookback", () => {
@@ -367,5 +371,8 @@ describe("snapshot health checks", () => {
     const results = evaluateHealthChecks(snapshotChecks, snapshot);
     expect(results.find((r) => r.id === "snapshots.failed.recent")?.status).toBe("unknown");
     expect(results.find((r) => r.id === "slm.retention.failures")?.status).toBe("unknown");
+    expect(results.find((r) => r.id === "slm.policy.failing")?.links?.[0]?.label).toBe(
+      "SLM Policies",
+    );
   });
 });

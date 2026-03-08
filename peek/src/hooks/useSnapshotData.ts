@@ -201,8 +201,8 @@ export function useSnapshotData(): DataFetchResult<SnapshotData> & { refresh: ()
   };
 
   if (!connection) return { status: "idle", refresh };
-  if (query.isFetching) return { status: "loading", refresh };
-  if (query.isError) return { status: "error", error: query.error.message, refresh };
   if (query.data) return { status: "success", data: query.data, refresh };
+  if (query.isPending) return { status: "loading", refresh };
+  if (query.isError) return { status: "error", error: query.error.message, refresh };
   return { status: "idle", refresh };
 }
