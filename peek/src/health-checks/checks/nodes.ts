@@ -1,3 +1,4 @@
+import { totalCircuitBreakerTrips } from "../../components/cluster-health/clusterHealthUtils";
 import type { NodeStatsNode } from "../../services/es";
 
 import type { HealthCheckDefinition, HealthSnapshot } from "../types";
@@ -39,6 +40,12 @@ function unknownNodeStatsResult() {
     summary: "Node stats unavailable.",
     recommendation: "Ensure node stats are collected and verify cluster monitor permissions.",
   };
+}
+
+function allBreakerNames(nodes: Record<string, NodeStatsNode>): string[] {
+  return Array.from(
+    new Set(Object.values(nodes).flatMap((node) => Object.keys(node.breakers ?? {}))),
+  );
 }
 
 export const nodeChecks: HealthCheckDefinition[] = [
@@ -254,6 +261,34 @@ export const nodeChecks: HealthCheckDefinition[] = [
         }
       }
       return { status: "pass", summary: "Bulk thread pool queues are within threshold." };
+    },
+  },
+  // existing — circuit breaker trips (covers #53–56)
+  {
+    id: "nodes.breakers.tripped",
+    domain: "nodes",
+    title: "Circuit breaker trips",
+    description: "Warns when breaker trip counters are non-zero.",
+    severityOnFail: "medium",
+    surfaces: ["global", "local"],
+    dependsOn: ["nodesCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/circuit-breaker-settings",
+    recommendation:
+      "Investigate memory-intensive operations causing breaker trips. Review fielddata, in-flight requests, and aggregations.",
+    evaluate: (snapshot) => {
+      const nodes = snapshot.data.nodesCore?.nodeStats?.nodes;
+      if (!nodes) return unknownNodeStatsResult();
+      const totalTrips = totalCircuitBreakerTrips(nodes, allBreakerNames(nodes));
+      if (totalTrips > 0) {
+        return {
+          status: "warn",
+          summary: `${totalTrips} circuit breaker trip${totalTrips === 1 ? "" : "s"} reported.`,
+          observed: { total_trips: totalTrips },
+          recommendation: "Investigate memory-intensive operations causing breaker trips.",
+          links: [{ label: "Cluster Health", to: "/cluster-health" }],
+        };
+      }
+      return { status: "pass", summary: "No circuit breaker trips reported." };
     },
   },
   // #35

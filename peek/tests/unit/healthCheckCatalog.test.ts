@@ -777,6 +777,25 @@ describe("node checks", () => {
     ).toBe("warn");
   });
 
+  it("nodes.breakers.tripped — includes non-monitored breakers", () => {
+    const check = findCheck(nodeChecks, "nodes.breakers.tripped");
+    const snap = makeSnapshot({
+      nodesCore: {
+        nodeStats: {
+          nodes: {
+            n1: {
+              name: "n1",
+              breakers: {
+                script: { tripped: 2 },
+              },
+            },
+          },
+        },
+      },
+    });
+    expect(check.evaluate(snap).status).toBe("warn");
+  });
+
   it("nodes.os.mem.used_percent.high — warns on high memory", () => {
     const snap = makeSnapshot({
       nodesCore: {

@@ -30,17 +30,15 @@ export function NodesTable({
 }) {
   return (
     <Paper variant="outlined" sx={{ display: "flex", flex: 1, minHeight: 0, overflow: "hidden" }}>
-      {rows.length === 0 && !loading && !nodeDataUnavailable ? (
+      {rows.length === 0 && !loading ? (
         <EmptyState
           icon={<MemoryIcon sx={{ fontSize: 28 }} />}
-          heading="No nodes found"
-          description="No node metadata is currently available."
-        />
-      ) : rows.length === 0 && !loading && nodeDataUnavailable ? (
-        <EmptyState
-          icon={<MemoryIcon sx={{ fontSize: 28 }} />}
-          heading={NODE_PERMISSION_HEADING}
-          description={NODE_PERMISSION_DESCRIPTION}
+          heading={nodeDataUnavailable ? NODE_PERMISSION_HEADING : "No nodes found"}
+          description={
+            nodeDataUnavailable
+              ? NODE_PERMISSION_DESCRIPTION
+              : "No node metadata is currently available."
+          }
         />
       ) : (
         <TableContainer sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>

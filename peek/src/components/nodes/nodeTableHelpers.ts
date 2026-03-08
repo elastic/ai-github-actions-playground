@@ -42,7 +42,7 @@ export function roleLabel(role: string): string {
 
 // ── Health classification ─────────────────────────────────────────────────
 
-export type HealthLevel = "critical" | "warning" | "ok";
+export type HealthLevel = "critical" | "warning" | "ok" | "unknown";
 
 export const NODE_THRESHOLDS = {
   cpu: { warning: 70, critical: 90 },
@@ -69,11 +69,15 @@ export interface NodeTableRow {
 }
 
 export function nodeHealth(row: NodeTableRow): HealthLevel {
-  // Critical: heap >= 90%, disk >= 95%
+  // Critical: heap >= 90%, disk >= 95%, any breaker trips
   if (row.heapPercent !== null && row.heapPercent >= NODE_THRESHOLDS.heap.critical)
     return "critical";
   if (row.fsUsedPercent !== null && row.fsUsedPercent >= NODE_THRESHOLDS.disk.critical)
     return "critical";
+  if (row.totalBreakerTrips !== null && row.totalBreakerTrips > 0) return "critical";
+  if (row.heapPercent === null && row.fsUsedPercent === null) {
+    return "unknown";
+  }
   // Warning: heap >= 75%, disk >= 85%
   if (row.heapPercent !== null && row.heapPercent >= NODE_THRESHOLDS.heap.warning) return "warning";
   if (row.fsUsedPercent !== null && row.fsUsedPercent >= NODE_THRESHOLDS.disk.warning)
@@ -111,24 +115,29 @@ export interface NodeSummary {
   avgHeap: number | null;
   maxDisk: number | null;
   avgDisk: number | null;
-  totalDocs: number;
-  totalShards: number;
+  totalDocs: number | null;
+  totalShards: number | null;
 }
 
 export function computeSummary(rows: NodeTableRow[]): NodeSummary {
   const cpus = rows.map((r) => r.cpuPercent).filter((v): v is number => v !== null);
   const heaps = rows.map((r) => r.heapPercent).filter((v): v is number => v !== null);
   const disks = rows.map((r) => r.fsUsedPercent).filter((v): v is number => v !== null);
+  const hasCpuGaps = rows.length === 0 || cpus.length !== rows.length;
+  const hasHeapGaps = rows.length === 0 || heaps.length !== rows.length;
+  const hasDiskGaps = rows.length === 0 || disks.length !== rows.length;
+  const hasDocGaps = rows.length === 0 || rows.some((r) => r.docCount === null);
+  const hasShardGaps = rows.length === 0 || rows.some((r) => r.shardCount === null);
 
   return {
     count: rows.length,
-    maxCpu: cpus.length > 0 ? Math.max(...cpus) : null,
-    avgCpu: cpus.length > 0 ? cpus.reduce((a, b) => a + b, 0) / cpus.length : null,
-    maxHeap: heaps.length > 0 ? Math.max(...heaps) : null,
-    avgHeap: heaps.length > 0 ? heaps.reduce((a, b) => a + b, 0) / heaps.length : null,
-    maxDisk: disks.length > 0 ? Math.max(...disks) : null,
-    avgDisk: disks.length > 0 ? disks.reduce((a, b) => a + b, 0) / disks.length : null,
-    totalDocs: rows.reduce((sum, r) => sum + (r.docCount ?? 0), 0),
-    totalShards: rows.reduce((sum, r) => sum + (r.shardCount ?? 0), 0),
+    maxCpu: hasCpuGaps ? null : Math.max(...cpus),
+    avgCpu: hasCpuGaps ? null : cpus.reduce((a, b) => a + b, 0) / cpus.length,
+    maxHeap: hasHeapGaps ? null : Math.max(...heaps),
+    avgHeap: hasHeapGaps ? null : heaps.reduce((a, b) => a + b, 0) / heaps.length,
+    maxDisk: hasDiskGaps ? null : Math.max(...disks),
+    avgDisk: hasDiskGaps ? null : disks.reduce((a, b) => a + b, 0) / disks.length,
+    totalDocs: hasDocGaps ? null : rows.reduce((sum, r) => sum + (r.docCount ?? 0), 0),
+    totalShards: hasShardGaps ? null : rows.reduce((sum, r) => sum + (r.shardCount ?? 0), 0),
   };
 }

@@ -6,6 +6,7 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ErrorIcon from "@mui/icons-material/Error";
+import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import WarningIcon from "@mui/icons-material/Warning";
 
 import {
@@ -23,18 +24,24 @@ function HealthIcon({ level }: { level: HealthLevel }) {
   if (level === "critical")
     return (
       <Tooltip title="Critical: high resource pressure or errors">
-        <ErrorIcon fontSize="small" color="error" aria-label="Critical" />
+        <ErrorIcon fontSize="small" color="error" titleAccess="Critical" />
       </Tooltip>
     );
   if (level === "warning")
     return (
       <Tooltip title="Warning: elevated resource usage">
-        <WarningIcon fontSize="small" color="warning" aria-label="Warning" />
+        <WarningIcon fontSize="small" color="warning" titleAccess="Warning" />
+      </Tooltip>
+    );
+  if (level === "unknown")
+    return (
+      <Tooltip title="Unknown: no metrics available">
+        <HelpOutlineIcon fontSize="small" color="disabled" titleAccess="Unknown" />
       </Tooltip>
     );
   return (
     <Tooltip title="OK">
-      <CheckCircleIcon fontSize="small" color="success" aria-label="OK" />
+      <CheckCircleIcon fontSize="small" color="success" titleAccess="OK" />
     </Tooltip>
   );
 }
@@ -120,11 +127,11 @@ export function NodeRow({ row, onClick }: { row: NodeTableRow; onClick: () => vo
           "n/a"
         ) : (
           <Tooltip
-            title={
-              row.gcOldMs === null
-                ? `${row.gcOldCount.toLocaleString()} collections, GC time unavailable`
-                : `${row.gcOldCount.toLocaleString()} collections, ${row.gcOldMs.toLocaleString()} ms total`
-            }
+            title={`${row.gcOldCount.toLocaleString()} collections, ${
+              row.gcOldMs !== null
+                ? `${row.gcOldMs.toLocaleString()} ms total`
+                : "unknown total time"
+            }`}
           >
             <span>
               {row.gcOldCount.toLocaleString()} /{" "}
