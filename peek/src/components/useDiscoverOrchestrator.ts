@@ -263,13 +263,16 @@ export function useDiscoverOrchestrator(mode: "query-lab" | "logs") {
   useEffect(() => {
     handleRunQueryRef.current = handleRunQuery;
   }, [handleRunQuery]);
-  // Auto-run the query when arriving via a draft (e.g. "Open in Query Lab")
-  const autoRanDraft = useRef(false);
+  // Auto-run each distinct draft query when arriving via "Open in Query Lab".
+  const lastAutoRunDraft = useRef<string | null>(null);
   useEffect(() => {
-    if (discoverQueryDraft && connection && !autoRanDraft.current) {
-      autoRanDraft.current = true;
-      handleRunQueryRef.current();
+    if (!discoverQueryDraft) {
+      lastAutoRunDraft.current = null;
+      return;
     }
+    if (!connection || lastAutoRunDraft.current === discoverQueryDraft) return;
+    lastAutoRunDraft.current = discoverQueryDraft;
+    handleRunQueryRef.current();
   }, [discoverQueryDraft, connection]);
   const stableRunQuery = useCallback(() => {
     handleRunQueryRef.current();
