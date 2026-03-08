@@ -538,7 +538,7 @@ export default function DataStreamsPage() {
                 onToggleChange={setShowSystemStreams}
               />
               <TableContainer
-                aria-busy={isListFilterPending}
+                aria-busy={isListFilterPending || undefined}
                 sx={{
                   flex: 1,
                   minHeight: 0,
@@ -792,7 +792,7 @@ export default function DataStreamsPage() {
                   <ContentSkeleton variant="table" />
                 ) : (
                   <Box
-                    aria-busy={isFieldFilterPending}
+                    aria-busy={isFieldFilterPending || undefined}
                     sx={{
                       flex: 1,
                       minHeight: 0,
