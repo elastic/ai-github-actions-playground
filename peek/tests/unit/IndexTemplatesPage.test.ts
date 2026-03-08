@@ -28,7 +28,7 @@ const makeComponentTemplate = (
   ...overrides,
 });
 
-describe("TemplatesPage index template sorting", () => {
+describe("IndexTemplatesPage index template sorting", () => {
   const templates: IndexTemplateRow[] = [
     makeIndexTemplate({ name: "logs-nginx", priority: 200, composedOfCount: 3 }),
     makeIndexTemplate({ name: "metrics-system", priority: 100, composedOfCount: 1 }),
@@ -61,7 +61,7 @@ describe("TemplatesPage index template sorting", () => {
   });
 });
 
-describe("TemplatesPage component template sorting", () => {
+describe("IndexTemplatesPage component template sorting", () => {
   const components: ComponentTemplateRow[] = [
     makeComponentTemplate({ name: "z-comp", usedByCount: 1 }),
     makeComponentTemplate({ name: "a-comp", usedByCount: 5 }),
@@ -109,7 +109,7 @@ describe("TemplatesPage component template sorting", () => {
   });
 });
 
-describe("TemplatesPage filtering", () => {
+describe("IndexTemplatesPage filtering", () => {
   const templates: IndexTemplateRow[] = [
     makeIndexTemplate({
       name: "logs-nginx",
@@ -154,7 +154,7 @@ describe("TemplatesPage filtering", () => {
   });
 });
 
-describe("TemplatesPage metrics", () => {
+describe("IndexTemplatesPage metrics", () => {
   it("counts data-stream enabled templates", () => {
     const templates = [
       makeIndexTemplate({ name: "a", dataStreamEnabled: true }),
