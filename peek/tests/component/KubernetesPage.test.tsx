@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import KubernetesPage from "../../src/components/kubernetes/KubernetesPage";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
-import { usePageFiltersStore } from "../../src/store/usePageFiltersStore";
+import { useKubernetesFiltersStore } from "../../src/store/useKubernetesFiltersStore";
 import { resetAllStores } from "../fixtures/test-utils";
 
 const mockRunQuery = vi.fn();
@@ -116,7 +116,7 @@ describe("KubernetesPage", () => {
     useConnectionStore
       .getState()
       .setConnection({ url: "https://example.es.local:9200", apiKey: "key" });
-    usePageFiltersStore.getState().resetKubernetesFilters();
+    useKubernetesFiltersStore.getState().resetKubernetesFilters();
   });
 
   it("renders page header and empty state initially", () => {
@@ -185,10 +185,10 @@ describe("KubernetesPage", () => {
     renderPage();
 
     await user.click(screen.getByRole("tab", { name: "Pods" }));
-    expect(usePageFiltersStore.getState().kubernetesFilters.activeTab).toBe("pods");
+    expect(useKubernetesFiltersStore.getState().kubernetesFilters.activeTab).toBe("pods");
 
     await user.click(screen.getByRole("tab", { name: "Workloads" }));
-    expect(usePageFiltersStore.getState().kubernetesFilters.activeTab).toBe("workloads");
+    expect(useKubernetesFiltersStore.getState().kubernetesFilters.activeTab).toBe("workloads");
   });
 
   it("shows result count after search", async () => {

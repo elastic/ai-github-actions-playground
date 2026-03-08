@@ -8,10 +8,10 @@ import Tabs from "@mui/material/Tabs";
 import ExtensionIcon from "@mui/icons-material/Extension";
 
 import {
-  usePageFiltersStore,
+  useFleetFiltersStore,
   type FleetViewTab,
   type AgentFilter,
-} from "../store/usePageFiltersStore";
+} from "../store/useFleetFiltersStore";
 import { usePageContextStore } from "../store/usePageContextStore";
 import { useFleetData } from "../hooks/useFleetData";
 import { INSIGHT_GUARDRAIL } from "../hooks/insightPromptUtils";
@@ -44,12 +44,12 @@ type AgentFilterUpdates = Partial<AgentFilter>;
 export default function FleetPage() {
   const navigate = useNavigate();
 
-  const activeTab = usePageFiltersStore((s) => s.fleetActiveTab);
-  const autoRefreshEnabled = usePageFiltersStore((s) => s.fleetAutoRefreshEnabled);
-  const setActiveTab = usePageFiltersStore((s) => s.setFleetActiveTab);
-  const setAutoRefreshEnabled = usePageFiltersStore((s) => s.setFleetAutoRefreshEnabled);
-  const updateAgentFilter = usePageFiltersStore((s) => s.updateAgentFilter);
-  const resetFilters = usePageFiltersStore((s) => s.resetFleetAgentFilter);
+  const activeTab = useFleetFiltersStore((s) => s.fleetActiveTab);
+  const autoRefreshEnabled = useFleetFiltersStore((s) => s.fleetAutoRefreshEnabled);
+  const setActiveTab = useFleetFiltersStore((s) => s.setFleetActiveTab);
+  const setAutoRefreshEnabled = useFleetFiltersStore((s) => s.setFleetAutoRefreshEnabled);
+  const updateAgentFilter = useFleetFiltersStore((s) => s.updateAgentFilter);
+  const resetFilters = useFleetFiltersStore((s) => s.resetFleetAgentFilter);
 
   const {
     data: {

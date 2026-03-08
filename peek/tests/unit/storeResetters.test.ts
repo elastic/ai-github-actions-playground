@@ -5,7 +5,11 @@ import { storeResetters } from "../../src/store/storeResetters";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
 import { useExplorerStore } from "../../src/store/useExplorerStore";
-import { usePageFiltersStore } from "../../src/store/usePageFiltersStore";
+import { useFleetFiltersStore } from "../../src/store/useFleetFiltersStore";
+import { useKubernetesFiltersStore } from "../../src/store/useKubernetesFiltersStore";
+import { useHostsFiltersStore } from "../../src/store/useHostsFiltersStore";
+import { useProfilingFiltersStore } from "../../src/store/useProfilingFiltersStore";
+import { useServiceFiltersStore } from "../../src/store/useServiceFiltersStore";
 import { useLLMStore } from "../../src/store/useLLMStore";
 import { useQueryStore } from "../../src/store/useQueryStore";
 import { useTracesStore } from "../../src/store/useTracesStore";
@@ -27,27 +31,27 @@ const STORES_WITH_RESET_API = [
   { name: "useConnectionStore", store: useConnectionStore, method: "resetConnectionState" },
   { name: "useDashboardStore", store: useDashboardStore, method: "resetDashboardState" },
   { name: "useExplorerStore", store: useExplorerStore, method: "reset" },
-  { name: "usePageFiltersStore (fleet)", store: usePageFiltersStore, method: "resetFleetFilters" },
+  { name: "useFleetFiltersStore", store: useFleetFiltersStore, method: "resetFleetFilters" },
   {
-    name: "usePageFiltersStore (kubernetes)",
-    store: usePageFiltersStore,
+    name: "useKubernetesFiltersStore",
+    store: useKubernetesFiltersStore,
     method: "resetKubernetesFilters",
   },
   {
-    name: "usePageFiltersStore (hosts)",
-    store: usePageFiltersStore,
+    name: "useHostsFiltersStore",
+    store: useHostsFiltersStore,
     method: "resetHostsFilters",
   },
   { name: "useLLMStore", store: useLLMStore, method: "resetLLMState" },
   {
-    name: "usePageFiltersStore (profiling)",
-    store: usePageFiltersStore,
+    name: "useProfilingFiltersStore",
+    store: useProfilingFiltersStore,
     method: "resetProfilingFilters",
   },
   { name: "useQueryStore", store: useQueryStore, method: "resetQueryState" },
   {
-    name: "usePageFiltersStore (services)",
-    store: usePageFiltersStore,
+    name: "useServiceFiltersStore",
+    store: useServiceFiltersStore,
     method: "resetServiceFilters",
   },
   { name: "useTracesStore", store: useTracesStore, method: "resetFilters" },
