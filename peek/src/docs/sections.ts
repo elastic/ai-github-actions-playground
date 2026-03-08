@@ -33,6 +33,8 @@ import tasksRaw from "./tasks.md?raw";
 import watcherRaw from "./watcher.md?raw";
 import hostsRaw from "./hosts.md?raw";
 import storageExplorerRaw from "./storage-explorer.md?raw";
+import transformsRaw from "./transforms.md?raw";
+import snapshotsRaw from "./snapshots.md?raw";
 
 export interface DocSection {
   id: string;
@@ -100,6 +102,8 @@ const sections: DocSection[] = [
   parseDocSection("watcher", watcherRaw),
   parseDocSection("tasks", tasksRaw),
   parseDocSection("investigate", investigateRaw),
+  parseDocSection("transforms", transformsRaw),
+  parseDocSection("snapshots", snapshotsRaw),
 ];
 
 export default sections;

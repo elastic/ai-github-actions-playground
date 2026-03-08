@@ -17,7 +17,7 @@ jobs:
       title-prefix: "[performance-sweeper]"
       additional-instructions: |
         Focus your investigation on a single, pervasive React rendering performance anti-pattern across the entire codebase (Elastic Peek).
-        You are a "Sweeper". Do not stop at finding 2-3 isolated bugs. Your job is to identify one specific type of performance leak and refactor EVERY instance of it across the repository in a single, comprehensive Pull Request.
+        You are a "Sweeper". Do not stop at finding 2-3 isolated bugs. Your job is to identify one specific type of performance leak and file a comprehensive report detailing EVERY instance of it across the repository so that an engineer can execute the fix.
 
         ## How to sweep:
         1. Audit the codebase for systemic performance issues. Examples include:
@@ -25,11 +25,11 @@ jobs:
            - Synchronous filtering of large tables blocking user inputs (missing `useTransition` or `useDeferredValue`).
            - Derived state anti-patterns (using `useEffect` to watch State A and `setState(B)` instead of deriving during render).
         2. Identify the single anti-pattern that occurs most frequently.
-        3. Execute a sweeping pass to fix every instance of that specific anti-pattern.
-        4. Run `npm run typecheck` and `vitest` to ensure no regressions.
+        3. Execute a sweeping pass to find EVERY instance of that specific anti-pattern in the codebase.
+           4. File an issue that explains the anti-pattern, the correct fix, and an exhaustive checklist of all file paths and line numbers that need to be updated.
 
         ## Output rules
-        - Open a PR fixing the pervasive pattern. If you cannot open a PR, file an issue detailing the extent of the performance anti-pattern and the necessary fixes.
+        - File a single issue containing the explanation of the fix and an exhaustive checklist of every file/location that needs to be updated.
       setup-commands: "cd peek && PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 ELECTRON_SKIP_BINARY_DOWNLOAD=1 npm ci"
     secrets:
       COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
