@@ -219,4 +219,36 @@ describe("ParameterBar", () => {
       expect(param?.value).toBe(-7);
     });
   });
+
+  it("does not refetch unrelated ES|QL parameter options when another variable changes", async () => {
+    queryMock.mockResolvedValue({ values: [["value"]], executionTimeMs: 1 });
+    useDashboardStore.getState().addParameter({
+      name: "service",
+      label: "Service",
+      type: "keyword",
+      source: { mode: "esql", query: "FROM logs-* | LIMIT 1" },
+      value: "",
+    });
+    useDashboardStore.getState().addParameter({
+      name: "env",
+      label: "Environment",
+      type: "keyword",
+      source: { mode: "esql", query: "FROM metrics-* | LIMIT 1" },
+      value: "",
+    });
+
+    renderWithQueryClient(<ParameterBar />);
+
+    await waitFor(() => {
+      expect(queryMock).toHaveBeenCalledTimes(2);
+    });
+
+    act(() => {
+      useDashboardStore.getState().setParameterValue("service", "checkout");
+    });
+
+    await waitFor(() => {
+      expect(queryMock).toHaveBeenCalledTimes(2);
+    });
+  });
 });
