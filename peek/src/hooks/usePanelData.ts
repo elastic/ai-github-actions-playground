@@ -11,6 +11,17 @@ import {
 import type { PanelDefinition, EsqlResponse } from "../types";
 import { toCsv } from "../components/discoverUtils";
 
+const buildExportFilename = (title: string, extension: "png" | "csv"): string => {
+  const safeTitle =
+    title
+      .trim()
+      .replace(/[^a-zA-Z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .toLowerCase() || "panel";
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+  return `${safeTitle}-${timestamp}.${extension}`;
+};
+
 export function usePanelData(
   panel: PanelDefinition,
   supportsQuery: boolean,
@@ -45,16 +56,9 @@ export function usePanelData(
     if (!exportImage) return;
     const dataUrl = exportImage();
     if (!dataUrl) return;
-    const safeTitle =
-      panel.title
-        .trim()
-        .replace(/[^a-zA-Z0-9]+/g, "-")
-        .replace(/^-+|-+$/g, "")
-        .toLowerCase() || "panel";
-    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
     const a = document.createElement("a");
     a.href = dataUrl;
-    a.download = `${safeTitle}-${timestamp}.png`;
+    a.download = buildExportFilename(panel.title, "png");
     a.click();
   }, [exportImage, panel.title]);
 
@@ -67,18 +71,11 @@ export function usePanelData(
     const csv = toCsv(data);
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
-    const safeTitle =
-      panel.title
-        .trim()
-        .replace(/[^a-zA-Z0-9]+/g, "-")
-        .replace(/^-+|-+$/g, "")
-        .toLowerCase() || "panel";
-    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${safeTitle}-${timestamp}.csv`;
+    a.download = buildExportFilename(panel.title, "csv");
     a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 0);
+    setTimeout(() => URL.revokeObjectURL(url), 500);
   }, [data, panel.title]);
 
   const resetResultState = useCallback(() => {

@@ -5,10 +5,11 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Tooltip from "@mui/material/Tooltip";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import EditIcon from "@mui/icons-material/Edit";
-import DownloadIcon from "@mui/icons-material/Download";
+import ImageIcon from "@mui/icons-material/Image";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+import TableChartIcon from "@mui/icons-material/TableChart";
 
 import type { EsqlResponse } from "../types";
 import { COMPONENT_HEIGHTS } from "../types/tokens";
@@ -64,6 +65,7 @@ export default function PanelToolbar({
     >
       <DragIndicatorIcon
         className="panel-drag-handle"
+        aria-label="Drag to reorder panel"
         sx={{
           mr: 0.5,
           color: "text.secondary",
@@ -114,7 +116,7 @@ export default function PanelToolbar({
               disabled={loading || !exportImage}
               aria-label="Download PNG"
             >
-              <DownloadIcon sx={{ fontSize: 16 }} />
+              <ImageIcon sx={{ fontSize: 16 }} />
             </IconButton>
           </span>
         </Tooltip>
@@ -128,7 +130,7 @@ export default function PanelToolbar({
               disabled={loading || !data}
               aria-label="Export CSV"
             >
-              <DownloadIcon sx={{ fontSize: 16 }} />
+              <TableChartIcon sx={{ fontSize: 16 }} />
             </IconButton>
           </span>
         </Tooltip>
