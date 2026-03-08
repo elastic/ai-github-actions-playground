@@ -8,6 +8,7 @@ import {
   findStringColumnIndices,
   findNumericColumnIndices,
   getColumnIndex,
+  getRowValue,
 } from "../../src/services/es/columnUtils";
 import type { EsqlResponse } from "../../src/types";
 
@@ -150,5 +151,21 @@ describe("findColumnIndex", () => {
     expect(findColumnIndex(dualAliasColumns, "canonical", "legacy")).toBe(
       getColumnIndex(lookup, "canonical", "legacy"),
     );
+  });
+});
+
+describe("getRowValue", () => {
+  const row = ["service-a", 42];
+
+  it("returns value for a valid index", () => {
+    expect(getRowValue(row, 1)).toBe(42);
+  });
+
+  it("returns null for a negative index", () => {
+    expect(getRowValue(row, -1)).toBeNull();
+  });
+
+  it("returns null for an out-of-bounds index", () => {
+    expect(getRowValue(row, row.length)).toBeNull();
   });
 });
