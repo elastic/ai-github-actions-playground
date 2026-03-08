@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { PAGE_PATHS } from "../../src/routes/paths";
 import { PAGE_NAV_BUTTONS } from "../../scripts/page-nav-buttons.mjs";
 
+// Keep this in sync with PAGE_NAV_BUTTONS and PAGE_PATHS; update all three when routes change.
 const PAGE_TO_ROUTE_ID = {
   "add-data": "addData",
   "cluster-overview": "clusterOverview",
