@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
+import { renderWithQueryClient } from "../helpers/renderWithQueryClient";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 
@@ -91,7 +92,7 @@ describe("FieldStatsPanel", () => {
   it("shows a loading skeleton while fetching stats", () => {
     fetchFieldStatsMock.mockReturnValue(new Promise(() => {}));
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <FieldStatsPanel
           connection={connection}
@@ -110,7 +111,7 @@ describe("FieldStatsPanel", () => {
   it("displays counts and top values for a keyword field", async () => {
     fetchFieldStatsMock.mockResolvedValue(keywordStats());
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <FieldStatsPanel
           connection={connection}
@@ -139,7 +140,7 @@ describe("FieldStatsPanel", () => {
   it("displays min/max for a numeric field without top values", async () => {
     fetchFieldStatsMock.mockResolvedValue(numericStats());
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <FieldStatsPanel
           connection={connection}
@@ -163,7 +164,7 @@ describe("FieldStatsPanel", () => {
   it("displays min/max with em-dash when values are null", async () => {
     fetchFieldStatsMock.mockResolvedValue(numericStats({ min: null, max: null }));
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <FieldStatsPanel
           connection={connection}
@@ -184,7 +185,7 @@ describe("FieldStatsPanel", () => {
   it("shows an error alert when the stats request fails", async () => {
     fetchFieldStatsMock.mockRejectedValue({ status: 403, message: "Forbidden" });
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <FieldStatsPanel
           connection={connection}
@@ -206,7 +207,7 @@ describe("FieldStatsPanel", () => {
     const handleClose = vi.fn();
     fetchFieldStatsMock.mockReturnValue(new Promise(() => {}));
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <FieldStatsPanel
           connection={connection}
@@ -228,7 +229,7 @@ describe("FieldStatsPanel", () => {
     const handleOpen = vi.fn();
     fetchFieldStatsMock.mockReturnValue(new Promise(() => {}));
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <FieldStatsPanel
           connection={connection}
@@ -253,7 +254,7 @@ describe("FieldStatsPanel", () => {
     const handleOpen = vi.fn();
     fetchFieldStatsMock.mockReturnValue(new Promise(() => {}));
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <FieldStatsPanel
           connection={connection}
@@ -276,7 +277,7 @@ describe("FieldStatsPanel", () => {
   it("shows empty-state message when keyword field has no top values", async () => {
     fetchFieldStatsMock.mockResolvedValue(keywordStats({ topValues: [] }));
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <FieldStatsPanel
           connection={connection}
@@ -295,7 +296,7 @@ describe("FieldStatsPanel", () => {
   it("shows field name and type chip in the header", async () => {
     fetchFieldStatsMock.mockReturnValue(new Promise(() => {}));
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <FieldStatsPanel
           connection={connection}
@@ -317,7 +318,7 @@ describe("FieldStatsPanel", () => {
       keywordStats({ totalCount: 1000, sampleCoverage: 0.02, confidence: "high" }),
     );
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <FieldStatsPanel
           connection={connection}
@@ -339,7 +340,7 @@ describe("FieldStatsPanel", () => {
       keywordStats({ totalCount: 40000, sampleCoverage: 0.8, confidence: "medium" }),
     );
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <FieldStatsPanel
           connection={connection}
@@ -363,7 +364,7 @@ describe("FieldStatsPanel", () => {
       keywordStats({ totalCount: 50000, sampleCoverage: 1.0, confidence: "low" }),
     );
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <FieldStatsPanel
           connection={connection}

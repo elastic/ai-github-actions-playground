@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
+import { renderWithQueryClient } from "../helpers/renderWithQueryClient";
 import { MemoryRouter } from "react-router-dom";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 
@@ -59,7 +60,7 @@ describe("ExplorePage", () => {
   });
 
   it("restores explorer state from URL parameters on first render", async () => {
-    render(
+    renderWithQueryClient(
       <MemoryRouter initialEntries={[RESTORE_URL]}>
         <NuqsTestingAdapter searchParams={RESTORE_QS} hasMemory>
           <ExplorePage />
@@ -83,7 +84,7 @@ describe("ExplorePage", () => {
     listFieldsMock.mockResolvedValue([
       { name: "system.network.in.bytes", type: "long", metricType: "counter" },
     ]);
-    render(
+    renderWithQueryClient(
       <MemoryRouter initialEntries={[COUNTER_URL]}>
         <NuqsTestingAdapter searchParams={COUNTER_QS} hasMemory>
           <ExplorePage />
@@ -100,7 +101,7 @@ describe("ExplorePage", () => {
   });
 
   it("shows metric-not-found empty state for a non-existent metric URL", async () => {
-    render(
+    renderWithQueryClient(
       <MemoryRouter initialEntries={[NOT_FOUND_URL]}>
         <NuqsTestingAdapter searchParams={NOT_FOUND_QS} hasMemory>
           <ExplorePage />
@@ -118,7 +119,7 @@ describe("ExplorePage", () => {
 
   it("does not query when metric is invalid and field loading fails", async () => {
     listFieldsMock.mockRejectedValueOnce(new Error("boom"));
-    render(
+    renderWithQueryClient(
       <MemoryRouter initialEntries={[NOT_FOUND_URL]}>
         <NuqsTestingAdapter searchParams={NOT_FOUND_QS} hasMemory>
           <ExplorePage />

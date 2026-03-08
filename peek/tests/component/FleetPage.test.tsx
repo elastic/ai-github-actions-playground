@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
+import { renderWithQueryClient } from "../helpers/renderWithQueryClient";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
@@ -204,7 +205,7 @@ describe("Fleet pages", () => {
 
   it("renders overview tab with stat cards when server status is available", async () => {
     mockFleetResponses();
-    render(
+    renderWithQueryClient(
       <MemoryRouter initialEntries={["/fleet"]}>
         <Routes>
           <Route path="/fleet" element={<FleetPage />} />
@@ -220,7 +221,7 @@ describe("Fleet pages", () => {
 
   it("shows tabs for Overview, Agents, Outputs, Activity", async () => {
     mockFleetResponses();
-    render(
+    renderWithQueryClient(
       <MemoryRouter initialEntries={["/fleet"]}>
         <Routes>
           <Route path="/fleet" element={<FleetPage />} />
@@ -239,7 +240,7 @@ describe("Fleet pages", () => {
   it("switches to agents tab and shows agent inventory table", async () => {
     mockFleetResponses();
     const user = userEvent.setup();
-    render(
+    renderWithQueryClient(
       <MemoryRouter initialEntries={["/fleet"]}>
         <Routes>
           <Route path="/fleet" element={<FleetPage />} />
@@ -272,7 +273,7 @@ describe("Fleet pages", () => {
     });
 
     const user = userEvent.setup();
-    render(
+    renderWithQueryClient(
       <MemoryRouter initialEntries={["/fleet"]}>
         <Routes>
           <Route path="/fleet" element={<FleetPage />} />
@@ -296,7 +297,7 @@ describe("Fleet pages", () => {
   it("navigates to agent detail when clicking agent row", async () => {
     mockFleetResponses();
     const user = userEvent.setup();
-    render(
+    renderWithQueryClient(
       <MemoryRouter initialEntries={["/fleet"]}>
         <NuqsTestingAdapter hasMemory>
           <Routes>
@@ -327,7 +328,7 @@ describe("Fleet pages", () => {
   it("navigates to agent detail when pressing Enter on a focused agent row", async () => {
     mockFleetResponses();
     const user = userEvent.setup();
-    render(
+    renderWithQueryClient(
       <MemoryRouter initialEntries={["/fleet"]}>
         <NuqsTestingAdapter hasMemory>
           <Routes>
@@ -390,7 +391,7 @@ describe("Fleet pages", () => {
       });
     });
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter initialEntries={["/fleet/agents/agent-750"]}>
         <NuqsTestingAdapter hasMemory>
           <Routes>
@@ -420,7 +421,7 @@ describe("Fleet pages", () => {
       return Promise.resolve({ status: 200, body: { hits: { hits: [] } } });
     });
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter initialEntries={["/fleet"]}>
         <Routes>
           <Route path="/fleet" element={<FleetPage />} />
@@ -474,7 +475,7 @@ describe("Fleet pages", () => {
       return Promise.resolve({ status: 200, body: { hits: { hits: [] } } });
     });
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter initialEntries={["/fleet"]}>
         <Routes>
           <Route path="/fleet" element={<FleetPage />} />
@@ -497,7 +498,7 @@ describe("Fleet pages", () => {
       body: { error: { reason: "forbidden by role" } },
     });
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter initialEntries={["/fleet"]}>
         <Routes>
           <Route path="/fleet" element={<FleetPage />} />
@@ -526,7 +527,7 @@ describe("Fleet pages", () => {
       return Promise.resolve({ status: 200, body: { hits: { hits: [] }, aggregations: {} } });
     });
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter initialEntries={["/fleet"]}>
         <Routes>
           <Route path="/fleet" element={<FleetPage />} />
@@ -543,7 +544,7 @@ describe("Fleet pages", () => {
   it("clicking Unhealthy stat card switches to agents tab with hasErrors filter", async () => {
     mockFleetResponses();
     const user = userEvent.setup();
-    render(
+    renderWithQueryClient(
       <MemoryRouter initialEntries={["/fleet"]}>
         <Routes>
           <Route path="/fleet" element={<FleetPage />} />
@@ -574,7 +575,7 @@ describe("Fleet pages", () => {
   it("unhealthy reason chips are informational and do not trigger drill-in", async () => {
     mockFleetResponses();
     const user = userEvent.setup();
-    render(
+    renderWithQueryClient(
       <MemoryRouter initialEntries={["/fleet"]}>
         <Routes>
           <Route path="/fleet" element={<FleetPage />} />
@@ -597,7 +598,7 @@ describe("Fleet pages", () => {
   it("clicking Offline stat card switches to agents tab with offline (critical) filter", async () => {
     mockFleetResponses();
     const user = userEvent.setup();
-    render(
+    renderWithQueryClient(
       <MemoryRouter initialEntries={["/fleet"]}>
         <Routes>
           <Route path="/fleet" element={<FleetPage />} />
@@ -623,7 +624,7 @@ describe("Fleet pages", () => {
 
   it("staleness filter chip for stale uses warning color", async () => {
     mockFleetResponses();
-    render(
+    renderWithQueryClient(
       <MemoryRouter initialEntries={["/fleet"]}>
         <Routes>
           <Route path="/fleet" element={<FleetPage />} />
@@ -650,7 +651,7 @@ describe("Fleet pages", () => {
   it("active filter chip can be cleared in agents table", async () => {
     mockFleetResponses();
     const user = userEvent.setup();
-    render(
+    renderWithQueryClient(
       <MemoryRouter initialEntries={["/fleet"]}>
         <Routes>
           <Route path="/fleet" element={<FleetPage />} />
@@ -681,7 +682,7 @@ describe("Fleet pages", () => {
   it("shows filter-empty state with clear action when agents exist but filters exclude all", async () => {
     mockFleetResponses();
     const user = userEvent.setup();
-    render(
+    renderWithQueryClient(
       <MemoryRouter initialEntries={["/fleet"]}>
         <Routes>
           <Route path="/fleet" element={<FleetPage />} />
