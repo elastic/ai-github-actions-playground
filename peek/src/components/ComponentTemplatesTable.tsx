@@ -88,7 +88,16 @@ export default function ComponentTemplatesTable({
               <TableRow
                 key={template.name}
                 hover
+                tabIndex={0}
+                role="button"
+                aria-label={`View component template ${template.name}`}
                 onClick={() => onSelectTemplate(template.name)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " " || event.key === "Spacebar") {
+                    event.preventDefault();
+                    onSelectTemplate(template.name);
+                  }
+                }}
                 sx={{ cursor: "pointer" }}
               >
                 <TableCell>

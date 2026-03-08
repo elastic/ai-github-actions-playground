@@ -107,7 +107,16 @@ export default function IndexTemplatesTable({
                 key={template.name}
                 hover
                 selected={template.name === selectedTemplateName}
+                tabIndex={0}
+                role="button"
+                aria-label={`Open template details for ${template.name}`}
                 onClick={() => onSelectTemplate(template.name)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " " || event.key === "Spacebar") {
+                    event.preventDefault();
+                    onSelectTemplate(template.name);
+                  }
+                }}
                 sx={{ cursor: "pointer" }}
               >
                 <TableCell>
