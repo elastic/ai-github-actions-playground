@@ -10,8 +10,36 @@ import IconButton from "@mui/material/IconButton";
 import Divider from "@mui/material/Divider";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
+import AccountTreeIcon from "@mui/icons-material/AccountTree";
+import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
+import BugReportIcon from "@mui/icons-material/BugReport";
 import SettingsIcon from "@mui/icons-material/Settings";
 import ChatIcon from "@mui/icons-material/Chat";
+import CloudIcon from "@mui/icons-material/Cloud";
+import DashboardIcon from "@mui/icons-material/Dashboard";
+import DatasetIcon from "@mui/icons-material/Dataset";
+import DescriptionIcon from "@mui/icons-material/Description";
+import DnsIcon from "@mui/icons-material/Dns";
+import ExploreIcon from "@mui/icons-material/Explore";
+import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
+import InfoIcon from "@mui/icons-material/Info";
+import MemoryIcon from "@mui/icons-material/Memory";
+import MenuBookIcon from "@mui/icons-material/MenuBook";
+import MiscellaneousServicesIcon from "@mui/icons-material/MiscellaneousServices";
+import PendingActionsIcon from "@mui/icons-material/PendingActions";
+import PeopleIcon from "@mui/icons-material/People";
+import PolicyIcon from "@mui/icons-material/Policy";
+import RocketLaunchIcon from "@mui/icons-material/RocketLaunch";
+import SearchIcon from "@mui/icons-material/Search";
+import SecurityIcon from "@mui/icons-material/Security";
+import ShieldIcon from "@mui/icons-material/Shield";
+import SpeedIcon from "@mui/icons-material/Speed";
+import StorageIcon from "@mui/icons-material/Storage";
+import SubjectIcon from "@mui/icons-material/Subject";
+import TerminalIcon from "@mui/icons-material/Terminal";
+import TimelineIcon from "@mui/icons-material/Timeline";
+import ViewModuleIcon from "@mui/icons-material/ViewModule";
+import VpnKeyIcon from "@mui/icons-material/VpnKey";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
@@ -20,12 +48,12 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useShallow } from "zustand/react/shallow";
 
 import {
-  PAGE_MANIFEST,
+  PAGE_PATHS,
   NAV_SECTION_ORDER,
   isHiddenByCapability,
   type PageId,
-  type PageConfig,
-} from "../routes/manifest";
+  type PagePathConfig,
+} from "../routes/paths";
 import type { UserCapabilities } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useThemeStore } from "../store/useThemeStore";
@@ -52,16 +80,55 @@ interface AppSidebarProps {
   onRequestReset?: () => void;
 }
 
+const NAV_ICON_COMPONENTS = {
+  AccountTreeIcon,
+  AdminPanelSettingsIcon,
+  BugReportIcon,
+  ChatIcon,
+  CloudIcon,
+  DashboardIcon,
+  DatasetIcon,
+  DescriptionIcon,
+  DnsIcon,
+  ExploreIcon,
+  HealthAndSafetyIcon,
+  InfoIcon,
+  MemoryIcon,
+  MenuBookIcon,
+  MiscellaneousServicesIcon,
+  PendingActionsIcon,
+  PeopleIcon,
+  PolicyIcon,
+  RocketLaunchIcon,
+  SearchIcon,
+  SecurityIcon,
+  SettingsIcon,
+  ShieldIcon,
+  SpeedIcon,
+  StorageIcon,
+  SubjectIcon,
+  TerminalIcon,
+  TimelineIcon,
+  ViewModuleIcon,
+  VpnKeyIcon,
+} as const;
+
+function renderNavIcon(iconKey: string | undefined): React.ReactNode {
+  if (!iconKey) return null;
+  const Icon = NAV_ICON_COMPONENTS[iconKey as keyof typeof NAV_ICON_COMPONENTS];
+  return Icon ? <Icon fontSize="small" /> : null;
+}
+
 function buildNavSections(): NavSection[] {
   const groups = new Map<string, NavItem[]>();
 
-  for (const [page, config] of Object.entries(PAGE_MANIFEST) as Array<[PageId, PageConfig]>) {
+  for (const [page, config] of Object.entries(PAGE_PATHS) as Array<[PageId, PagePathConfig]>) {
     if (!config.nav.showInSidebar) continue;
     const items = groups.get(config.nav.group) ?? [];
     items.push({
       label: config.nav.label,
       page,
-      icon: config.nav.icon,
+      icon: renderNavIcon(config.nav.iconKey),
       requiresConnection: config.requiresConnection,
       requiredCapability: config.requiredCapability,
     });
@@ -72,7 +139,7 @@ function buildNavSections(): NavSection[] {
     label: group,
     items: groups
       .get(group)!
-      .sort((a, b) => PAGE_MANIFEST[a.page].nav.order - PAGE_MANIFEST[b.page].nav.order),
+      .sort((a, b) => PAGE_PATHS[a.page].nav.order - PAGE_PATHS[b.page].nav.order),
   }));
 }
 
@@ -105,7 +172,7 @@ export default function AppSidebar({
   const navigate = useNavigate();
   const location = useLocation();
   const [settingsAnchor, setSettingsAnchor] = useState<null | HTMLElement>(null);
-  const isSettingsPath = location.pathname === PAGE_MANIFEST.settings.path;
+  const isSettingsPath = location.pathname === PAGE_PATHS.settings.path;
 
   const hiddenItems = useMemo(
     () =>
@@ -189,7 +256,7 @@ export default function AppSidebar({
               )}
               <List dense={!mobile} disablePadding>
                 {visibleItems.map((item) => {
-                  const itemPath = PAGE_MANIFEST[item.page].path;
+                  const itemPath = PAGE_PATHS[item.page].path;
                   const isActive =
                     location.pathname === itemPath || location.pathname.startsWith(`${itemPath}/`);
                   const isDisabled = item.requiresConnection && !connected;
@@ -198,7 +265,7 @@ export default function AppSidebar({
                       selected={isActive}
                       disabled={isDisabled}
                       onClick={() => {
-                        navigate(PAGE_MANIFEST[item.page].path);
+                        navigate(PAGE_PATHS[item.page].path);
                         onNavigate?.();
                       }}
                       aria-current={isActive ? "page" : undefined}
@@ -326,9 +393,9 @@ export default function AppSidebar({
           Dark/Light Mode
         </MenuItem>
         <MenuItem
-          selected={location.pathname === PAGE_MANIFEST.settings.path}
+          selected={location.pathname === PAGE_PATHS.settings.path}
           onClick={() => {
-            navigate(PAGE_MANIFEST.settings.path);
+            navigate(PAGE_PATHS.settings.path);
             onNavigate?.();
             setSettingsAnchor(null);
           }}
