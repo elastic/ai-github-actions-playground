@@ -96,7 +96,7 @@ describe("traces stale spans race reproduction", () => {
   beforeEach(() => {
     guardedCallbacks = [];
     hookCallCount = 0;
-    abortedFlags.length = 0;
+    abortedFlags.fill(false);
     runQueryMock.mockClear();
     useTracesStore.setState({
       filters: { ...EMPTY_FILTERS },
