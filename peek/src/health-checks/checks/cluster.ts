@@ -29,6 +29,9 @@ export const clusterChecks: HealthCheckDefinition[] = [
     severityOnFail: "critical",
     surfaces: ["global", "local"],
     dependsOn: ["clusterCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/cluster-health",
+    recommendation:
+      "Check for unassigned primary shards and resolve the root cause (disk space, node failures, or allocation settings).",
     evaluate: (snapshot) => {
       const status = snapshot.data.clusterCore?.clusterHealth?.status;
       if (!status) {
@@ -58,6 +61,8 @@ export const clusterChecks: HealthCheckDefinition[] = [
     severityOnFail: "high",
     surfaces: ["global", "local"],
     dependsOn: ["clusterCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/cluster-health",
+    recommendation: "Check for unassigned replica shards. Add nodes or adjust allocation settings.",
     evaluate: (snapshot) => {
       const status = snapshot.data.clusterCore?.clusterHealth?.status;
       if (!status) {
@@ -87,6 +92,8 @@ export const clusterChecks: HealthCheckDefinition[] = [
     severityOnFail: "high",
     surfaces: ["global", "local"],
     dependsOn: ["clusterCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/cluster-health",
+    recommendation: "Run allocation explain to diagnose why shards are unassigned.",
     evaluate: (snapshot) => {
       const clusterHealth = snapshot.data.clusterCore?.clusterHealth;
       if (!clusterHealth) return unknownClusterDataResult();
@@ -112,6 +119,8 @@ export const clusterChecks: HealthCheckDefinition[] = [
     severityOnFail: "critical",
     surfaces: ["global", "local"],
     dependsOn: ["shards"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/cluster-health",
+    recommendation: "Unassigned primaries cause data unavailability. Investigate immediately.",
     evaluate: (snapshot) => {
       const shards = snapshot.data.shards?.catShards ?? [];
       const unassignedPrimaries = shards.filter(
@@ -139,6 +148,8 @@ export const clusterChecks: HealthCheckDefinition[] = [
     severityOnFail: "medium",
     surfaces: ["global", "local"],
     dependsOn: ["clusterCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/cluster-health",
+    recommendation: "Many initializing shards may indicate ongoing recovery or allocation issues.",
     evaluate: (snapshot) => {
       const clusterHealth = snapshot.data.clusterCore?.clusterHealth;
       if (!clusterHealth) return unknownClusterDataResult();
@@ -165,6 +176,8 @@ export const clusterChecks: HealthCheckDefinition[] = [
     severityOnFail: "medium",
     surfaces: ["global", "local"],
     dependsOn: ["clusterCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/cluster-health",
+    recommendation: "High shard relocation may impact cluster performance.",
     evaluate: (snapshot) => {
       const clusterHealth = snapshot.data.clusterCore?.clusterHealth;
       if (!clusterHealth) return unknownClusterDataResult();
@@ -190,6 +203,8 @@ export const clusterChecks: HealthCheckDefinition[] = [
     severityOnFail: "high",
     surfaces: ["global", "local"],
     dependsOn: ["clusterCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/cluster-health",
+    recommendation: "Some shards are not active. Check for unassigned or initializing shards.",
     evaluate: (snapshot) => {
       const percent = snapshot.data.clusterCore?.clusterHealth?.active_shards_percent_as_number;
       if (percent != null && percent < ACTIVE_SHARDS_PERCENT_THRESHOLD) {
@@ -217,6 +232,8 @@ export const clusterChecks: HealthCheckDefinition[] = [
     severityOnFail: "medium",
     surfaces: ["global", "local"],
     dependsOn: ["clusterCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/cluster-pending-tasks",
+    recommendation: "Pending tasks may indicate master node pressure.",
     evaluate: (snapshot) => {
       const taskCount = snapshot.data.clusterCore?.pendingTasks?.tasks?.length ?? 0;
       if (taskCount > 0) {
@@ -240,6 +257,8 @@ export const clusterChecks: HealthCheckDefinition[] = [
     severityOnFail: "high",
     surfaces: ["global"],
     dependsOn: ["clusterCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/cluster-pending-tasks",
+    recommendation: "Investigate cluster master stability and task throughput.",
     evaluate: (snapshot) => {
       const tasks = snapshot.data.clusterCore?.pendingTasks?.tasks ?? [];
       if (tasks.length >= PENDING_TASKS_HIGH) {
@@ -263,6 +282,8 @@ export const clusterChecks: HealthCheckDefinition[] = [
     severityOnFail: "high",
     surfaces: ["global"],
     dependsOn: ["clusterCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/cluster-pending-tasks",
+    recommendation: "Check for master node overload or long-running cluster state updates.",
     evaluate: (snapshot) => {
       const tasks = snapshot.data.clusterCore?.pendingTasks?.tasks ?? [];
       const maxWait = Math.max(0, ...tasks.map((t) => t.time_in_queue_millis ?? 0));
@@ -289,6 +310,8 @@ export const clusterChecks: HealthCheckDefinition[] = [
     severityOnFail: "critical",
     surfaces: ["global"],
     dependsOn: ["clusterCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/cluster-pending-tasks",
+    recommendation: "Urgent tasks indicate critical cluster operations are queued.",
     evaluate: (snapshot) => {
       const tasks = snapshot.data.clusterCore?.pendingTasks?.tasks ?? [];
       const urgent = tasks.filter((t) => {
@@ -315,6 +338,8 @@ export const clusterChecks: HealthCheckDefinition[] = [
     severityOnFail: "medium",
     surfaces: ["global"],
     dependsOn: ["clusterCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/cluster-pending-tasks",
+    recommendation: "ILM operations may be overwhelming the master node.",
     evaluate: (snapshot) => {
       const tasks = snapshot.data.clusterCore?.pendingTasks?.tasks ?? [];
       const ilmTasks = tasks.filter((t) => (t.source ?? "").toLowerCase().includes("ilm"));
@@ -341,6 +366,8 @@ export const clusterChecks: HealthCheckDefinition[] = [
     severityOnFail: "medium",
     surfaces: ["global"],
     dependsOn: ["clusterCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/cluster-pending-tasks",
+    recommendation: "Frequent mapping updates can cause master instability.",
     evaluate: (snapshot) => {
       const tasks = snapshot.data.clusterCore?.pendingTasks?.tasks ?? [];
       const mappingTasks = tasks.filter((t) =>
@@ -369,6 +396,8 @@ export const clusterChecks: HealthCheckDefinition[] = [
     severityOnFail: "high",
     surfaces: ["global"],
     dependsOn: ["clusterCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/cluster-pending-tasks",
+    recommendation: "Large shard-started backlogs suggest recovery or allocation pressure.",
     evaluate: (snapshot) => {
       const tasks = snapshot.data.clusterCore?.pendingTasks?.tasks ?? [];
       const shardStarted = tasks.filter((t) =>
@@ -397,6 +426,9 @@ export const clusterChecks: HealthCheckDefinition[] = [
     severityOnFail: "medium",
     surfaces: ["global"],
     dependsOn: ["clusterCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/cluster-health",
+    recommendation:
+      "Delayed unassigned shards wait for a node to rejoin. Check for departed nodes.",
     evaluate: (snapshot) => {
       const count = snapshot.data.clusterCore?.clusterHealth?.delayed_unassigned_shards ?? 0;
       if (count > 0) {
@@ -420,6 +452,8 @@ export const clusterChecks: HealthCheckDefinition[] = [
     severityOnFail: "medium",
     surfaces: ["global"],
     dependsOn: ["clusterCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/cluster-health",
+    recommendation: "High in-flight fetches indicate ongoing shard recovery or store operations.",
     evaluate: (snapshot) => {
       const count = snapshot.data.clusterCore?.clusterHealth?.number_of_in_flight_fetch ?? 0;
       if (count >= IN_FLIGHT_FETCH_HIGH) {
