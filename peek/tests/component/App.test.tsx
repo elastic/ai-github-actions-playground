@@ -290,8 +290,7 @@ describe("App shell visibility", () => {
   });
 
   it("navigates to /dashboards after resetting all state from a dashboard view", async () => {
-    vi.useFakeTimers({ shouldAdvanceTime: true });
-    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    const user = userEvent.setup();
     useConnectionStore.getState().setConnected(true);
 
     render(
@@ -313,6 +312,5 @@ describe("App shell visibility", () => {
 
     // After reset, the URL should be /dashboards (not the stale dashboard ID)
     await waitFor(() => expect(screen.getByTestId("location")).toHaveTextContent(/^\/dashboards$/));
-    vi.useRealTimers();
   });
 });
