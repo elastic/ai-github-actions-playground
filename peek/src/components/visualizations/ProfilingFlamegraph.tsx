@@ -20,6 +20,7 @@ import type { FlamegraphNode, FrameType } from "../profiling/profilingUtils";
 import { findSubtreeByPath } from "../profiling/profilingUtils";
 import { CHART_COLORS } from "../../theme";
 import { STATUS_COLORS } from "../../types/tokens";
+import { getLabelColor } from "../../utils/colorContrast";
 
 import { useEChartTheme } from "./useEChartTheme";
 import { escapeHtml } from "./htmlUtils";
@@ -118,34 +119,6 @@ function getFlameColor(name: string, frameType: FrameType): string {
     hash = (hash * 31 + name.charCodeAt(i)) | 0;
   }
   return palette[Math.abs(hash) % palette.length]!;
-}
-
-/** Parse a hex color (#RGB or #RRGGBB) into [R, G, B] in 0–255. */
-function hexToRgb(hex: string): [number, number, number] {
-  const h = hex.replace("#", "");
-  const norm =
-    h.length === 3
-      ? h
-          .split("")
-          .map((c) => c + c)
-          .join("")
-      : h;
-  const int = Number.parseInt(norm, 16);
-  return [(int >> 16) & 255, (int >> 8) & 255, int & 255];
-}
-
-/** Relative luminance per WCAG 2.1 (0 = black, 1 = white). */
-function relativeLuminance(hex: string): number {
-  const [r, g, b] = hexToRgb(hex).map((v) => {
-    const s = v / 255;
-    return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
-  });
-  return 0.2126 * r! + 0.7152 * g! + 0.0722 * b!;
-}
-
-/** Return "#fff" or "#000" to ensure readable contrast against the given background. */
-function getLabelColor(bgHex: string): string {
-  return relativeLuminance(bgHex) > 0.179 ? "#000" : "#fff";
 }
 
 const MIN_LABEL_WIDTH = 30;
