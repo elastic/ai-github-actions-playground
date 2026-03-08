@@ -63,7 +63,7 @@ jobs:
               if (lines.length === 0) return [];
               return lines.map((line) => {
                 const parts = line.split(CONFIG_DELIMITER).map((part) => part.trim());
-                if (parts.length < 5) {
+                if (parts.length !== 5) {
                   throw new Error(
                     `Invalid ${configName} line (expected 5 fields): ${line}`,
                   );
@@ -157,9 +157,9 @@ jobs:
             }
 
             async function ensureControlLabels() {
-              for (const item of ITEMS) {
-                await ensureLabel(item.label, item.color, item.description);
-              }
+              await Promise.all(
+                ITEMS.map((item) => ensureLabel(item.label, item.color, item.description)),
+              );
             }
 
             async function listComments(issueNumber) {
