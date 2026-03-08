@@ -8,6 +8,39 @@ export function isDateColumn(column: EsqlColumn): boolean {
   return DATE_TYPES.has(column.type) || column.name === TIMESTAMP_FIELD;
 }
 
+export function buildColumnLookup(columns: ReadonlyArray<{ name: string }>): Map<string, number> {
+  const lookup = new Map<string, number>();
+  for (let i = 0; i < columns.length; i++) {
+    const name = columns[i]!.name;
+    if (!lookup.has(name)) lookup.set(name, i);
+  }
+  return lookup;
+}
+
+export function getColumnIndex(lookup: Map<string, number>, ...aliases: string[]): number {
+  for (const alias of aliases) {
+    const index = lookup.get(alias);
+    if (index != null) return index;
+  }
+  return -1;
+}
+
+export function findColumnIndex(
+  columns: ReadonlyArray<{ name: string }>,
+  ...aliases: string[]
+): number {
+  for (const alias of aliases) {
+    for (let i = 0; i < columns.length; i++) {
+      if (columns[i]!.name === alias) return i;
+    }
+  }
+  return -1;
+}
+
+export function getRowValue(row: unknown[], index: number): unknown {
+  return index >= 0 && index < row.length ? row[index] : null;
+}
+
 /**
  * Builds a column-name → row-value accessor for an ES|QL response.
  * Creates the index once and returns a fast lookup function.
@@ -17,10 +50,7 @@ export function isDateColumn(column: EsqlColumn): boolean {
  * const serviceName = get(row, "service.name");
  */
 export function buildColumnAccessor(columns: EsqlResponse["columns"]) {
-  const colIndex = new Map<string, number>();
-  for (let i = 0; i < columns.length; i++) {
-    colIndex.set(columns[i]!.name, i);
-  }
+  const colIndex = buildColumnLookup(columns);
   return (row: unknown[], field: string): unknown => {
     const idx = colIndex.get(field);
     return idx !== undefined ? row[idx] : null;

@@ -4,6 +4,12 @@ import { EditorView } from "@codemirror/view";
 import { useQueries } from "@tanstack/react-query";
 
 import { ElasticsearchClient, getFieldValues } from "../../services/es";
+import {
+  buildColumnLookup,
+  findColumnIndex,
+  getColumnIndex,
+  getRowValue,
+} from "../../services/es/columnUtils";
 import { useConnectionStore } from "../../store/useConnectionStore";
 import { useThemeStore } from "../../store/useThemeStore";
 import { useSearchPanelUIStore } from "../../store/useSearchPanelUIStore";
@@ -109,13 +115,14 @@ export function useLogsPageState() {
     Record<string, Array<{ value: string; count: number }>>
   >(() => {
     if (!result || extractedSidebarFields.length === 0) return {};
+    const lookup = buildColumnLookup(result.columns);
     const out: Record<string, Array<{ value: string; count: number }>> = {};
     for (const field of extractedSidebarFields) {
-      const colIdx = result.columns.findIndex((c) => c.name === field);
+      const colIdx = getColumnIndex(lookup, field);
       if (colIdx < 0) continue;
       const counts = new Map<string, number>();
       for (const row of result.values) {
-        const raw = row[colIdx];
+        const raw = getRowValue(row, colIdx);
         if (raw == null) continue;
         const val = String(raw);
         counts.set(val, (counts.get(val) ?? 0) + 1);
@@ -130,11 +137,11 @@ export function useLogsPageState() {
 
   const histogramBuckets = useMemo<HistogramBucket[]>(() => {
     if (!result) return [];
-    const timestampIndex = result.columns.findIndex((column) => column.name === TIMESTAMP_FIELD);
+    const timestampIndex = findColumnIndex(result.columns, TIMESTAMP_FIELD);
     if (timestampIndex < 0) return [];
     const bucketCounts = new Map<number, number>();
     for (const row of result.values) {
-      const rawValue = row[timestampIndex];
+      const rawValue = getRowValue(row, timestampIndex);
       if (rawValue == null) continue;
       const parsed = Date.parse(String(rawValue));
       if (Number.isNaN(parsed)) continue;
@@ -159,25 +166,26 @@ export function useLogsPageState() {
 
   const patternGroups = useMemo(() => {
     if (!result) return [];
+    const lookup = buildColumnLookup(result.columns);
     // CATEGORIZE query result shape: has "pattern" and "pattern_count" columns
-    const patternColIndex = result.columns.findIndex((c) => c.name === "pattern");
-    const countColIndex = result.columns.findIndex((c) => c.name === "pattern_count");
+    const patternColIndex = getColumnIndex(lookup, "pattern");
+    const countColIndex = getColumnIndex(lookup, "pattern_count");
     if (patternColIndex >= 0 && countColIndex >= 0) {
       return result.values
         .map((row) => ({
-          pattern: String(row[patternColIndex] ?? ""),
-          sample: String(row[patternColIndex] ?? ""),
-          count: Number(row[countColIndex] ?? 0),
+          pattern: String(getRowValue(row, patternColIndex) ?? ""),
+          sample: String(getRowValue(row, patternColIndex) ?? ""),
+          count: Number(getRowValue(row, countColIndex) ?? 0),
         }))
         .filter((row) => row.pattern.length > 0)
         .sort((a, b) => b.count - a.count);
     }
     // Client-side grouping from raw message rows
-    const messageIndex = result.columns.findIndex((column) => column.name === MESSAGE_FIELD);
+    const messageIndex = getColumnIndex(lookup, MESSAGE_FIELD);
     if (messageIndex < 0) return [];
     const groups = new Map<string, { pattern: string; sample: string; count: number }>();
     for (const row of result.values) {
-      const raw = row[messageIndex];
+      const raw = getRowValue(row, messageIndex);
       if (raw == null) continue;
       const sample = String(raw);
       const pattern = normalizePattern(sample);

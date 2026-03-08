@@ -1,4 +1,5 @@
 import type { ElasticsearchClient, EsqlColumn } from "./client";
+import { buildColumnLookup, getColumnIndex, getRowValue } from "./columnUtils";
 import { escapeEsqlIdentifier, validateEsqlIndexPattern } from "./esqlUtils";
 
 // ---------------------------------------------------------------------------
@@ -123,18 +124,19 @@ export async function getFieldValues(
     `FROM ${safeIndexPattern} | STATS count = COUNT(*) BY ${escapedField} | ` +
     `SORT count DESC | LIMIT ${safeLimit}`;
   const response = await client.query({ query }, signal);
+  const lookup = buildColumnLookup(response.columns);
 
   // Expect two columns: count and the field
-  const countIdx = response.columns.findIndex((c) => c.name === "count");
-  const fieldIdx = response.columns.findIndex((c) => c.name === field || c.name === escapedField);
+  const countIdx = getColumnIndex(lookup, "count");
+  const fieldIdx = getColumnIndex(lookup, field, escapedField);
 
   if (countIdx < 0 || fieldIdx < 0) return [];
 
   return response.values
-    .filter((row) => row[fieldIdx] != null)
+    .filter((row) => getRowValue(row, fieldIdx) != null)
     .map((row) => ({
-      value: String(row[fieldIdx]),
-      count: Number(row[countIdx]),
+      value: String(getRowValue(row, fieldIdx)),
+      count: Number(getRowValue(row, countIdx)),
     }));
 }
 
@@ -156,12 +158,13 @@ export async function getFieldCardinality(
     .join(", ");
   const query = `FROM ${safeIndexPattern} | STATS ${statsExprs}`;
   const response = await client.query({ query }, signal);
+  const lookup = buildColumnLookup(response.columns);
 
   const result: Record<string, number> = {};
   for (const field of fields) {
-    const colIdx = response.columns.findIndex((c) => c.name === `${field}_card`);
+    const colIdx = getColumnIndex(lookup, `${field}_card`);
     if (colIdx >= 0 && response.values.length > 0) {
-      result[field] = Number(response.values[0]?.[colIdx]);
+      result[field] = Number(getRowValue(response.values[0] ?? [], colIdx));
     }
   }
   return result;

@@ -9,7 +9,7 @@ import {
   fetchFieldStats,
   computeConfidenceLevel,
 } from "../../src/services/es/fieldStats";
-import type { ElasticsearchClient } from "../../src/services/es/client";
+import type { ElasticsearchClient } from "../../src/services/es";
 
 function makeMockClient(queryFn: ElasticsearchClient["query"]): ElasticsearchClient {
   return { query: queryFn } as unknown as ElasticsearchClient;
@@ -121,8 +121,8 @@ describe("buildTopValuesQuery", () => {
     const q = buildTopValuesQuery("logs-*", "host.name");
     expect(q).toContain("FROM logs-*");
     expect(q).toContain("LIMIT 50000");
-    expect(q).toContain("COUNT(*) BY `host.name`");
-    expect(q).toContain("SORT count DESC");
+    expect(q).toContain("agg_count = COUNT(*) BY group_value = `host.name`");
+    expect(q).toContain("SORT agg_count DESC");
     expect(q).toContain("LIMIT 10");
   });
 
@@ -162,8 +162,8 @@ describe("fetchFieldStats — keyword field", () => {
       .mockResolvedValueOnce({ columns: statsColumns, values: [statsRow] })
       .mockResolvedValueOnce({
         columns: [
-          { name: "count", type: "long" },
-          { name: "host.name", type: "keyword" },
+          { name: "agg_count", type: "long" },
+          { name: "group_value", type: "keyword" },
         ],
         values: [
           [500, "web-01"],
@@ -194,8 +194,8 @@ describe("fetchFieldStats — keyword field", () => {
       .mockResolvedValueOnce({ columns: statsColumns, values: [statsRow] })
       .mockResolvedValueOnce({
         columns: [
-          { name: "count", type: "long" },
-          { name: "host.name", type: "keyword" },
+          { name: "agg_count", type: "long" },
+          { name: "group_value", type: "keyword" },
         ],
         values: [],
       });
@@ -227,8 +227,8 @@ describe("fetchFieldStats — keyword field", () => {
       .mockResolvedValueOnce({ columns: statsColumns, values: [statsRow] })
       .mockResolvedValueOnce({
         columns: [
-          { name: "count", type: "long" },
-          { name: "host.name", type: "keyword" },
+          { name: "agg_count", type: "long" },
+          { name: "group_value", type: "keyword" },
         ],
         values: [
           [500, "web-01"],
@@ -360,8 +360,8 @@ describe("fetchFieldStats — signal propagation", () => {
       .mockResolvedValueOnce({ columns: statsColumns, values: [statsRow] })
       .mockResolvedValueOnce({
         columns: [
-          { name: "count", type: "long" },
-          { name: "host.name", type: "keyword" },
+          { name: "agg_count", type: "long" },
+          { name: "group_value", type: "keyword" },
         ],
         values: [],
       });
