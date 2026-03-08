@@ -1,4 +1,4 @@
-import { useDeferredValue, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -12,6 +12,7 @@ import TextField from "@mui/material/TextField";
 import TransformIcon from "@mui/icons-material/Transform";
 
 import { useTransforms } from "../hooks/useTransforms";
+import type { TransformRow } from "../services/es";
 
 import PageHeader from "./PageHeader";
 import EmptyState from "./EmptyState";
@@ -29,7 +30,16 @@ const ALL_STATES = "all";
 export default function TransformsPage() {
   const result = useTransforms();
   const loading = result.status === "loading";
-  const transforms = useMemo(() => (result.status === "success" ? result.data : []), [result]);
+  const [lastSuccessfulTransforms, setLastSuccessfulTransforms] = useState<TransformRow[]>([]);
+  useEffect(() => {
+    if (result.status === "success") {
+      setLastSuccessfulTransforms(result.data);
+    }
+  }, [result]);
+  const transforms = useMemo(
+    () => (result.status === "success" ? result.data : lastSuccessfulTransforms),
+    [result, lastSuccessfulTransforms],
+  );
 
   const [search, setSearch] = useState("");
   const deferredSearch = useDeferredValue(search);
@@ -49,7 +59,9 @@ export default function TransformsPage() {
   };
 
   const kpi = useMemo(() => {
-    const running = transforms.filter((t) => t.state === "started").length;
+    const running = transforms.filter(
+      (t) => t.state === "started" || t.state === "indexing",
+    ).length;
     const failed = transforms.filter((t) => t.state === "failed").length;
     const stopped = transforms.filter((t) => t.state === "stopped").length;
     const healthIssues = transforms.filter((t) => t.healthStatus !== "green").length;
@@ -122,6 +134,7 @@ export default function TransformsPage() {
         >
           <MenuItem value={ALL_STATES}>All states</MenuItem>
           <MenuItem value="started">Started</MenuItem>
+          <MenuItem value="indexing">Indexing</MenuItem>
           <MenuItem value="stopped">Stopped</MenuItem>
           <MenuItem value="failed">Failed</MenuItem>
           <MenuItem value="aborting">Aborting</MenuItem>
@@ -147,7 +160,7 @@ export default function TransformsPage() {
         <EmptyState
           icon={<TransformIcon sx={{ fontSize: 40 }} />}
           heading="No transforms found"
-          description="This cluster has no transforms configured. Transforms let you pivot and aggregate data from source indices into destination indices."
+          description="This cluster does not have any transforms yet."
         />
       )}
 

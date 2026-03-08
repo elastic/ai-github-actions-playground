@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 import TransformsPage from "../../src/components/TransformsPage";
@@ -122,8 +122,15 @@ describe("TransformsPage", () => {
 
     await screen.findByText("ecommerce-summary");
 
-    // Total transforms should be 2
     expect(screen.getByText("Total Transforms")).toBeInTheDocument();
+    expect(screen.getByText("Running")).toBeInTheDocument();
+    expect(screen.getByText("Failed")).toBeInTheDocument();
+    expect(screen.getByText("Stopped")).toBeInTheDocument();
+    expect(screen.getByText("Health Issues")).toBeInTheDocument();
+    const headings = screen.getAllByRole("heading", { level: 6 });
+    expect(headings.map((h) => h.textContent?.trim())).toEqual(
+      expect.arrayContaining(["2", "1", "1", "0"]),
+    );
   });
 
   it("distinguishes continuous and batch transforms", async () => {
@@ -153,9 +160,10 @@ describe("TransformsPage", () => {
 
     await screen.findByText("ecommerce-summary");
 
-    // The batch-job has search_failures: 3 and index_failures: 1
-    // Verify the failure text is present
-    expect(screen.getByText("3")).toBeInTheDocument();
+    const batchRow = screen.getByText("batch-job").closest("tr");
+    expect(batchRow).not.toBeNull();
+    const searchFailures = within(batchRow!).getByText("3");
+    expect(window.getComputedStyle(searchFailures).fontWeight).toBe("700");
   });
 
   it("shows empty state when no transforms exist", async () => {
@@ -186,9 +194,10 @@ describe("TransformsPage", () => {
     const searchInput = screen.getByLabelText("Search by transform ID");
     fireEvent.change(searchInput, { target: { value: "batch" } });
 
-    // batch-job should still be visible, ecommerce-summary should be gone
-    expect(screen.getByText("batch-job")).toBeInTheDocument();
-    expect(screen.queryByText("ecommerce-summary")).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText("batch-job")).toBeInTheDocument();
+      expect(screen.queryByText("ecommerce-summary")).not.toBeInTheDocument();
+    });
   });
 
   it("shows error alert on fetch failure", async () => {

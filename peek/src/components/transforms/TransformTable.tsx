@@ -89,6 +89,15 @@ export function TransformTable({
           </TableRow>
         </TableHead>
         <TableBody>
+          {rows.length === 0 && (
+            <TableRow>
+              <TableCell colSpan={12} align="center" sx={{ py: 3 }}>
+                <Typography variant="body2" color="text.secondary">
+                  No transforms found
+                </Typography>
+              </TableCell>
+            </TableRow>
+          )}
           {rows.map((row) => (
             <TableRow
               key={row.id}

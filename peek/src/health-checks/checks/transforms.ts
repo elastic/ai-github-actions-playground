@@ -1,7 +1,10 @@
 import type { HealthCheckDefinition, HealthSnapshot } from "../types";
 
 function getTransformStats(snapshot: HealthSnapshot) {
-  return snapshot.data.transformsCore?.transformStats?.transforms ?? [];
+  if (snapshot.errors.transformsCore || snapshot.data.transformsCore?.transformStats == null) {
+    return null;
+  }
+  return snapshot.data.transformsCore.transformStats.transforms;
 }
 
 export const transformChecks: HealthCheckDefinition[] = [
@@ -10,11 +13,18 @@ export const transformChecks: HealthCheckDefinition[] = [
     domain: "transforms",
     title: "Failed transforms",
     description: "Critical when any transform has state === failed.",
+    docsUrl:
+      "https://www.elastic.co/guide/en/elasticsearch/reference/current/transform-overview.html",
+    recommendation:
+      "Open the Transforms page and investigate failed transforms to identify root causes.",
     severityOnFail: "critical",
     surfaces: ["global"],
     dependsOn: ["transformsCore"],
     evaluate: (snapshot) => {
       const transforms = getTransformStats(snapshot);
+      if (transforms == null) {
+        return { status: "unknown", summary: "Transform stats unavailable." };
+      }
       const failed = transforms.filter((t) => t.state === "failed");
       if (failed.length > 0) {
         return {
@@ -34,11 +44,18 @@ export const transformChecks: HealthCheckDefinition[] = [
     domain: "transforms",
     title: "Transform health degraded",
     description: 'High when any transform has health.status === "red".',
+    docsUrl:
+      "https://www.elastic.co/guide/en/elasticsearch/reference/current/transform-overview.html",
+    recommendation:
+      "Investigate transforms with degraded health and address the underlying indexing or search failures.",
     severityOnFail: "high",
     surfaces: ["global"],
     dependsOn: ["transformsCore"],
     evaluate: (snapshot) => {
       const transforms = getTransformStats(snapshot);
+      if (transforms == null) {
+        return { status: "unknown", summary: "Transform stats unavailable." };
+      }
       const degraded = transforms.filter((t) => t.health?.status === "red");
       if (degraded.length > 0) {
         return {
@@ -58,11 +75,18 @@ export const transformChecks: HealthCheckDefinition[] = [
     domain: "transforms",
     title: "Transforms with non-zero failures",
     description: "Medium when any transform has search_failures + index_failures > 0.",
+    docsUrl:
+      "https://www.elastic.co/guide/en/elasticsearch/reference/current/transform-overview.html",
+    recommendation:
+      "Review transforms with non-zero failures and resolve mapping, source-query, or cluster health issues.",
     severityOnFail: "medium",
     surfaces: ["global"],
     dependsOn: ["transformsCore"],
     evaluate: (snapshot) => {
       const transforms = getTransformStats(snapshot);
+      if (transforms == null) {
+        return { status: "unknown", summary: "Transform stats unavailable." };
+      }
       const withFailures = transforms.filter(
         (t) => (t.stats?.search_failures ?? 0) + (t.stats?.index_failures ?? 0) > 0,
       );

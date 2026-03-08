@@ -9,7 +9,7 @@ export interface TransformDefinition {
   create_time?: number;
   version?: string;
   source: {
-    index: string[];
+    index: string | string[];
     query?: Record<string, unknown>;
   };
   dest: {

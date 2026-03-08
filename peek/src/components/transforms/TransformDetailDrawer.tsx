@@ -86,7 +86,7 @@ export function TransformDetailDrawer({ row, onClose }: TransformDetailDrawerPro
 
             <DetailSection title="Checkpoint">
               <DetailField label="Last Checkpoint">{formatNum(row.checkpoint)}</DetailField>
-              {row.lastCheckpointTimeMs != null && (
+              {row.lastCheckpointTimeMs != null && row.lastCheckpointTimeMs > 0 && (
                 <DetailField label="Last Checkpoint Time">
                   {new Date(row.lastCheckpointTimeMs).toLocaleString()}
                 </DetailField>

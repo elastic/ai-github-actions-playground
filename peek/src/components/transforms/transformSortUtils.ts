@@ -25,8 +25,9 @@ const STATE_ORDER: Record<string, number> = {
   aborting: 1,
   stopping: 2,
   stopped: 3,
-  started: 4,
-  unknown: 5,
+  indexing: 4,
+  started: 5,
+  unknown: 6,
 };
 
 export function compareTransformRows(a: TransformRow, b: TransformRow, field: SortField): number {
@@ -36,7 +37,7 @@ export function compareTransformRows(a: TransformRow, b: TransformRow, field: So
     case "state":
       return (STATE_ORDER[a.state] ?? 99) - (STATE_ORDER[b.state] ?? 99);
     case "id":
-      return a.id.localeCompare(b.id);
+      return a.id.localeCompare(b.id, undefined, { numeric: true, sensitivity: "base" });
     case "type":
       return a.type.localeCompare(b.type);
     case "nodeName":
@@ -84,6 +85,7 @@ export function stateColor(
   state: string,
 ): "success" | "error" | "warning" | "default" | "info" | "secondary" {
   if (state === "started") return "success";
+  if (state === "indexing") return "info";
   if (state === "failed") return "error";
   if (state === "stopping" || state === "aborting") return "warning";
   if (state === "stopped") return "default";

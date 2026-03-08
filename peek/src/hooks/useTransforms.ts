@@ -3,6 +3,7 @@ import type {
   GetTransformStatsResponse,
   TransformRow,
 } from "../services/es";
+import { isElasticsearchError } from "../services/es";
 import type { DataFetchResult } from "../types/query";
 
 import { useFetchResource } from "./useFetchResource";
@@ -21,7 +22,11 @@ function joinTransformData(
       state: st?.state ?? "unknown",
       healthStatus: st?.health?.status ?? "unknown",
       type: def.sync ? "continuous" : "batch",
-      sourceIndices: def.source?.index ?? [],
+      sourceIndices: Array.isArray(def.source?.index)
+        ? def.source.index
+        : def.source?.index
+          ? [def.source.index]
+          : [],
       destIndex: def.dest?.index ?? "",
       destPipeline: def.dest?.pipeline ?? "",
       frequency: def.frequency ?? "",
@@ -61,7 +66,16 @@ function joinTransformData(
 export function useTransforms(): DataFetchResult<TransformRow[]> & { refresh: () => void } {
   return useFetchResource<[GetTransformsResponse, GetTransformStatsResponse], TransformRow[]>({
     queryKey: (url) => ["transforms", url],
-    queryFn: (client) => Promise.all([client.getTransforms(), client.getTransformStats()]),
+    queryFn: async (client) => {
+      const transformsPromise = client.getTransforms();
+      const statsPromise = client.getTransformStats().catch((error: unknown) => {
+        if (isElasticsearchError(error) && (error.status === 400 || error.status === 404)) {
+          return { count: 0, transforms: [] } satisfies GetTransformStatsResponse;
+        }
+        throw error;
+      });
+      return Promise.all([transformsPromise, statsPromise]);
+    },
     select: ([definitions, stats]) => joinTransformData(definitions, stats),
   });
 }

@@ -30,8 +30,7 @@ export function TransformKpiCards({
       <Box sx={{ minWidth: 150 }}>
         <OverviewInfoCard title="Running">
           <Typography variant="h6">
-            {running}
-            {running > 0 && <Chip label={running} color="success" size="small" sx={{ ml: 1 }} />}
+            {running > 0 ? <Chip label={running} color="success" size="small" /> : running}
           </Typography>
         </OverviewInfoCard>
       </Box>

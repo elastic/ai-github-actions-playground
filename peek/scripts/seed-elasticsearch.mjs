@@ -213,42 +213,52 @@ async function seedTransforms(client, count = 250) {
   }
 
   const hosts = ["web-1", "web-2", "web-3"];
-  for (let i = 0; i < count; i += 1) {
-    const id = `web-logs-summary-${String(i + 1).padStart(3, "0")}`;
-    const host = hosts[i % hosts.length];
-    await client.transform.putTransform({
-      transform_id: id,
-      description: `Synthetic transform ${i + 1} for UI pagination coverage`,
-      source: {
-        index: ["web_logs"],
-        query: { term: { host } },
-      },
-      dest: {
-        index: `web_logs_summary_${String(i + 1).padStart(3, "0")}`,
-      },
-      frequency: "5m",
-      sync: {
-        time: {
-          field: "@timestamp",
-          delay: "60s",
-        },
-      },
-      pivot: {
-        group_by: {
-          hour: {
-            date_histogram: {
+  const CHUNK_SIZE = 25;
+  for (let i = 0; i < count; i += CHUNK_SIZE) {
+    const chunkEnd = Math.min(i + CHUNK_SIZE, count);
+    const chunk = [];
+    for (let j = i; j < chunkEnd; j += 1) {
+      const id = `web-logs-summary-${String(j + 1).padStart(3, "0")}`;
+      const host = hosts[j % hosts.length];
+      chunk.push(
+        client.transform.putTransform({
+          transform_id: id,
+          description: `Synthetic transform ${j + 1} for UI pagination coverage`,
+          source: {
+            index: ["web_logs"],
+            query: { term: { host } },
+          },
+          dest: {
+            index: `web_logs_summary_${String(j + 1).padStart(3, "0")}`,
+          },
+          frequency: "5m",
+          sync: {
+            time: {
               field: "@timestamp",
-              calendar_interval: "1h",
+              delay: "60s",
             },
           },
-          status: { terms: { field: "status" } },
-        },
-        aggregations: {
-          total_bytes: { sum: { field: "bytes" } },
-          request_count: { value_count: { field: "path" } },
-        },
-      },
-    });
+          pivot: {
+            group_by: {
+              hour: {
+                date_histogram: {
+                  field: "@timestamp",
+                  calendar_interval: "1h",
+                },
+              },
+              status: { terms: { field: "status" } },
+            },
+            aggregations: {
+              total_bytes: { sum: { field: "bytes" } },
+              request_count: { value_count: { field: "path" } },
+            },
+          },
+        }).catch((error) => {
+          console.warn(`  Warning: could not create transform ${id}: ${error.message}`);
+        }),
+      );
+    }
+    await Promise.all(chunk);
   }
 
   console.log(`  transforms: ${count} transform definitions`);

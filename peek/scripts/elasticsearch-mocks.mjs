@@ -384,7 +384,8 @@ export async function registerElasticsearchMocks(
   await page.route(`${esUrl}/**`, async (route) => {
     const req = route.request();
     const method = req.method();
-    const path = new URL(req.url()).pathname;
+    const requestUrl = new URL(req.url());
+    const path = requestUrl.pathname;
 
     if (method === "OPTIONS") {
       await route.fulfill({ status: 204, headers: corsHeaders, body: "" });
@@ -437,8 +438,26 @@ export async function registerElasticsearchMocks(
     if (path.match(/^\/[^_][^/]*\/_stats$/) && method === "GET") return json(resolved.indexStats);
 
     if (path === "/_ingest/pipeline" && method === "GET") return json(resolved.ingestPipelines);
-    if (path === "/_transform" && method === "GET") return json(resolved.transforms);
-    if (path === "/_transform/_stats" && method === "GET") return json(resolved.transformStats);
+    if (path === "/_transform" && method === "GET") {
+      const from = Number.parseInt(requestUrl.searchParams.get("from") ?? "0", 10);
+      const size = Number.parseInt(requestUrl.searchParams.get("size") ?? "100", 10);
+      const start = Number.isNaN(from) ? 0 : Math.max(from, 0);
+      const end = start + (Number.isNaN(size) ? 100 : Math.max(size, 0));
+      return json({
+        ...resolved.transforms,
+        transforms: (resolved.transforms?.transforms ?? []).slice(start, end),
+      });
+    }
+    if (path === "/_transform/_stats" && method === "GET") {
+      const from = Number.parseInt(requestUrl.searchParams.get("from") ?? "0", 10);
+      const size = Number.parseInt(requestUrl.searchParams.get("size") ?? "100", 10);
+      const start = Number.isNaN(from) ? 0 : Math.max(from, 0);
+      const end = start + (Number.isNaN(size) ? 100 : Math.max(size, 0));
+      return json({
+        ...resolved.transformStats,
+        transforms: (resolved.transformStats?.transforms ?? []).slice(start, end),
+      });
+    }
     if (path.startsWith("/_fleet/")) return json({});
 
     if (path === "/_query" && method === "POST") {
