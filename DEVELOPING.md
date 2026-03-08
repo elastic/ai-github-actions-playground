@@ -31,12 +31,12 @@ make setup        # install Node.js dependencies (recommended first)
 make serve        # install deps + start Vite dev server with hot reload
 make serve-proxy  # install deps + start dev server with Elasticsearch proxy (set ES_URL)
 make build        # production build to peek/dist/
-make lint         # Prettier + ESLint on changed files + full TypeScript type check (override: make lint BASE=HEAD~3)
-make lint-full    # Prettier + ESLint + TypeScript type check on all files
+make lint         # oxfmt + oxlint on changed files + tsgo type check (override: make lint BASE=HEAD~3)
+make lint-full    # oxfmt + oxlint + tsgo + tsc type check on all files
 make test-unit    # run unit tests for changed files only (override: make test-unit BASE=HEAD~3)
 make test-unit-full # run all unit tests
-make format       # auto-format changed files with Prettier (override: make format BASE=HEAD~3)
-make format-full  # auto-format all files with Prettier
+make format       # auto-format changed files with oxfmt (override: make format BASE=HEAD~3)
+make format-full  # auto-format src/ with oxfmt
 make check        # run all checks then build (equivalent to CI)
 make docker-build # build the Docker image (proxy + dashboard)
 make docker-run   # run the Docker container (set ES_URL)
@@ -49,7 +49,7 @@ make otel-down         # stop and remove local OTel stack
 make otel-cloud-up     # send OTel data to a remote cluster (set ES_URL, ES_API_KEY)
 ```
 
-`make setup` is recommended first. `make serve` and `make serve-proxy` auto-install dependencies. A husky pre-commit hook runs Prettier + ESLint on staged files.
+`make setup` is recommended first. `make serve` and `make serve-proxy` auto-install dependencies. A husky pre-commit hook runs oxfmt + oxlint on staged files.
 
 ## Running with a Proxy
 
