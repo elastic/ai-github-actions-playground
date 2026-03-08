@@ -17,6 +17,7 @@ export function getMobileDrawerPaperSx({
   backgroundColor,
 }: MobileDrawerPaperSxOptions): SystemStyleObject<Theme> {
   return {
+    boxSizing: "border-box",
     width: { xs: "calc(100vw - 16px)", [desktopBreakpoint]: desktopWidth },
     maxWidth: "100vw",
     display: "flex",

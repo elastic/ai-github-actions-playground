@@ -111,7 +111,7 @@ export default function AiAssistantDrawer({ isMobile = false }: AiAssistantDrawe
           data-testid="ai-drawer-mobile-offset"
           sx={(theme) => ({
             ...theme.mixins.toolbar,
-            display: { xs: "block", md: "none" },
+            display: isMobile ? { xs: "block", md: "none" } : "block",
             flexShrink: 0,
           })}
         />
