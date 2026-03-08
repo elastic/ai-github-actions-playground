@@ -4,7 +4,6 @@ import type { RefreshIntervalOption } from "../RefreshIntervalPicker";
 export type ClusterHealthView =
   | "rules"
   | "overview"
-  | "nodes"
   | "taskBacklog"
   | "capacityPressure"
   | "shardDistribution"
@@ -21,7 +20,6 @@ export const CLUSTER_HEALTH_REFRESH_OPTIONS: RefreshIntervalOption[] = [
 export const TABS: { value: ClusterHealthView; label: string }[] = [
   { value: "rules", label: "Rules" },
   { value: "overview", label: "Overview" },
-  { value: "nodes", label: "Nodes" },
   { value: "taskBacklog", label: "Tasks" },
   { value: "capacityPressure", label: "Capacity" },
   { value: "shardDistribution", label: "Shards" },
@@ -34,9 +32,6 @@ export const TAB_SYSTEM_PROMPTS: Record<ClusterHealthView, string> = {
     INSIGHT_GUARDRAIL,
   overview:
     "You are an Elasticsearch cluster health advisor. Summarize the cluster health overview in one concise sentence. Mention health status, node count, and any unassigned shards or pending tasks." +
-    INSIGHT_GUARDRAIL,
-  nodes:
-    "You are an Elasticsearch node analyst. Summarize node distribution and health. Flag unusual node roles only when present in context." +
     INSIGHT_GUARDRAIL,
   taskBacklog:
     "You are an Elasticsearch task analyst. Summarize pending tasks and any backlog concerns." +

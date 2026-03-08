@@ -28,7 +28,6 @@ import SubjectIcon from "@mui/icons-material/Subject";
 import CloudIcon from "@mui/icons-material/Cloud";
 import DnsIcon from "@mui/icons-material/Dns";
 import DescriptionIcon from "@mui/icons-material/Description";
-import BugReportIcon from "@mui/icons-material/BugReport";
 
 import type { UserCapabilities } from "../services/es";
 
@@ -54,7 +53,6 @@ const DocsPage = lazy(() => import("../components/DocsPage"));
 const ExplorePage = lazy(() => import("../components/ExplorePage"));
 const FleetAgentPage = lazy(() => import("../components/FleetAgentPage"));
 const FleetPage = lazy(() => import("../components/FleetPage"));
-const ClusterDiagnosticsPage = lazy(() => import("../components/ClusterDiagnosticsPage"));
 const IngestPipelinesPage = lazy(() => import("../components/IngestPipelinesPage"));
 const IndicesPage = lazy(() => import("../components/IndicesPage"));
 const StorageExplorerPage = lazy(() => import("../components/StorageExplorerPage"));
@@ -457,20 +455,6 @@ export const PAGE_MANIFEST = {
       order: 11,
       showInSidebar: false,
       icon: createElement(HealthAndSafetyIcon, { fontSize: "small" }),
-    },
-  },
-  clusterDiagnostics: {
-    path: "/cluster-diagnostics",
-    component: ClusterDiagnosticsPage,
-    requiresConnection: true,
-    showTimeControls: false,
-    skeletonVariant: "table",
-    nav: {
-      label: "Cluster Diagnostics",
-      group: "System",
-      order: 19,
-      showInSidebar: true,
-      icon: createElement(BugReportIcon, { fontSize: "small" }),
     },
   },
   clusterTasks: {

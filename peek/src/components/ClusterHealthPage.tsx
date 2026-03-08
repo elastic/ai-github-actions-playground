@@ -16,7 +16,6 @@ import {
   type ClusterHealthView,
 } from "./cluster-health/clusterHealthConstants";
 import GlobalHealthPage from "./GlobalHealthPage";
-import NodeDetailTable from "./cluster-health/NodeDetailTable";
 import OverviewView from "./cluster-health/OverviewView";
 import PageInsightBanner from "./PageInsightBanner";
 import RefreshToolbar from "./RefreshToolbar";
@@ -52,11 +51,7 @@ export default function ClusterHealthPage({ defaultTab = "rules" }: ClusterHealt
     refresh: refreshLocalChecks,
   } = useHealthChecks({
     surface: "local",
-    checkIds: [
-      "cluster.pending_tasks.nonzero",
-      "nodes.thread_pool.rejected.nonzero",
-      "ilm.indices.error.present",
-    ],
+    checkIds: ["cluster.pending_tasks.nonzero", "ilm.indices.error.present"],
   });
   const refresh = useCallback(() => {
     setPartialDismissed(false);
@@ -163,7 +158,6 @@ export default function ClusterHealthPage({ defaultTab = "rules" }: ClusterHealt
       ) : (
         <Paper role="tabpanel" variant="outlined" sx={{ flex: 1, overflow: "auto", p: 2 }}>
           {activeTab === "overview" && <OverviewView data={data} />}
-          {activeTab === "nodes" && <NodeDetailTable data={data} />}
           {activeTab === "taskBacklog" && <TaskBacklogView data={data} />}
           {activeTab === "capacityPressure" && <CapacityPressureView data={data} />}
           {activeTab === "shardDistribution" && <ShardDistributionView data={data} />}

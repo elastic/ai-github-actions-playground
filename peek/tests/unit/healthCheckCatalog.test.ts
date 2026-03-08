@@ -785,17 +785,6 @@ describe("node checks", () => {
     );
   });
 
-  it("#46 nodes.thread_pool.search.rejected.nonzero — warns", () => {
-    const snap = makeSnapshot({
-      nodesCore: {
-        nodeStats: { nodes: { n1: { name: "n1", thread_pool: { search: { rejected: 5 } } } } },
-      },
-    });
-    expect(
-      findCheck(nodeChecks, "nodes.thread_pool.search.rejected.nonzero").evaluate(snap).status,
-    ).toBe("warn");
-  });
-
   it("#47 nodes.thread_pool.write.queue.high — warns", () => {
     const snap = makeSnapshot({
       nodesCore: {
@@ -805,17 +794,6 @@ describe("node checks", () => {
     expect(findCheck(nodeChecks, "nodes.thread_pool.write.queue.high").evaluate(snap).status).toBe(
       "warn",
     );
-  });
-
-  it("#48 nodes.thread_pool.write.rejected.nonzero — warns", () => {
-    const snap = makeSnapshot({
-      nodesCore: {
-        nodeStats: { nodes: { n1: { name: "n1", thread_pool: { write: { rejected: 2 } } } } },
-      },
-    });
-    expect(
-      findCheck(nodeChecks, "nodes.thread_pool.write.rejected.nonzero").evaluate(snap).status,
-    ).toBe("warn");
   });
 
   it("#51 nodes.thread_pool.management.queue.high — warns", () => {
@@ -1546,7 +1524,6 @@ describe("health report checks", () => {
     const result = findCheck(healthReportChecks, "cluster.health_report.red").evaluate(snap);
     expect(result.status).toBe("fail");
     expect(result.observed).toBeTruthy();
-    expect(result.links?.[0]?.to).toBe("/cluster-diagnostics");
   });
 
   it("cluster.health_report.red — passes on green", () => {
@@ -1581,7 +1558,6 @@ describe("health report checks", () => {
     const result = findCheck(healthReportChecks, "cluster.health_report.yellow").evaluate(snap);
     expect(result.status).toBe("warn");
     expect(result.observed).toBeTruthy();
-    expect(result.links?.[0]?.to).toBe("/cluster-diagnostics");
   });
 
   it("cluster.health_report.yellow — passes on green", () => {

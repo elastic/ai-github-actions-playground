@@ -13,24 +13,11 @@ import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
 
 import { useHealthChecks } from "../hooks/useHealthChecks";
-import type { EvaluatedHealthCheck, HealthSeverity, HealthStatus } from "../health-checks";
+import type { EvaluatedHealthCheck, HealthSeverity } from "../health-checks";
 
 import EmptyState from "./EmptyState";
 import HealthCheckDrawer from "./HealthCheckDrawer";
-
-const SEVERITY_ORDER: Record<HealthSeverity, number> = {
-  critical: 0,
-  high: 1,
-  medium: 2,
-  low: 3,
-};
-
-function statusColor(status: HealthStatus): "success" | "warning" | "error" | "default" {
-  if (status === "pass") return "success";
-  if (status === "warn") return "warning";
-  if (status === "fail") return "error";
-  return "default";
-}
+import { STATUS_ORDER, SEVERITY_ORDER, statusColor } from "./cluster-health/healthCheckHelpers";
 
 export default function GlobalHealthPage() {
   const { checks, loading, error, refresh, lastUpdatedAt } = useHealthChecks({
@@ -46,13 +33,16 @@ export default function GlobalHealthPage() {
   const orderedChecks = useMemo(
     () =>
       [...checks].sort((a, b) => {
-        const aPass = a.status === "pass" ? 1 : 0;
-        const bPass = b.status === "pass" ? 1 : 0;
-        if (aPass !== bPass) return aPass - bPass;
-        if (a.domain !== b.domain) return a.domain.localeCompare(b.domain);
+        // Sort by status (fail > warn > unknown > pass)
+        const aStatus = STATUS_ORDER[a.status] ?? 4;
+        const bStatus = STATUS_ORDER[b.status] ?? 4;
+        if (aStatus !== bStatus) return aStatus - bStatus;
+        // Then by severity (critical > high > medium > low)
         const aSeverity = a.severity ? SEVERITY_ORDER[a.severity] : Number.MAX_SAFE_INTEGER;
         const bSeverity = b.severity ? SEVERITY_ORDER[b.severity] : Number.MAX_SAFE_INTEGER;
         if (aSeverity !== bSeverity) return aSeverity - bSeverity;
+        // Then by domain, then title
+        if (a.domain !== b.domain) return a.domain.localeCompare(b.domain);
         return a.title.localeCompare(b.title);
       }),
     [checks],
@@ -83,19 +73,29 @@ export default function GlobalHealthPage() {
       {error ? <Alert severity="error">{error}</Alert> : null}
 
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ mb: 1 }}>
-        {failingCounts.critical > 0 && (
-          <Chip size="small" color="error" label={`Critical: ${failingCounts.critical}`} />
+        <Chip
+          size="small"
+          color={failingCounts.critical > 0 ? "error" : "default"}
+          variant={failingCounts.critical > 0 ? "filled" : "outlined"}
+          label={`Critical: ${failingCounts.critical}`}
+        />
+        <Chip
+          size="small"
+          color={failingCounts.high > 0 ? "error" : "default"}
+          variant="outlined"
+          label={`High: ${failingCounts.high}`}
+        />
+        <Chip
+          size="small"
+          color={failingCounts.medium > 0 ? "warning" : "default"}
+          variant={failingCounts.medium > 0 ? "filled" : "outlined"}
+          label={`Medium: ${failingCounts.medium}`}
+        />
+        {failingCounts.low > 0 && (
+          <Chip size="small" variant="outlined" label={`Low: ${failingCounts.low}`} />
         )}
-        {failingCounts.high > 0 && (
-          <Chip
-            size="small"
-            color="error"
-            variant="outlined"
-            label={`High: ${failingCounts.high}`}
-          />
-        )}
-        {failingCounts.medium > 0 && (
-          <Chip size="small" color="warning" label={`Medium: ${failingCounts.medium}`} />
+        {failingCounts.unknown > 0 && (
+          <Chip size="small" variant="outlined" label={`Unknown: ${failingCounts.unknown}`} />
         )}
         <Chip size="small" label={`Last updated: ${formattedLastUpdated}`} variant="outlined" />
         <Button size="small" variant="outlined" onClick={refresh} disabled={loading}>
@@ -110,13 +110,14 @@ export default function GlobalHealthPage() {
               <TableCell>Check</TableCell>
               <TableCell>Domain</TableCell>
               <TableCell>Status</TableCell>
+              <TableCell>Severity</TableCell>
               <TableCell>Summary</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={4}>
+                <TableCell colSpan={5}>
                   <Stack
                     direction="row"
                     spacing={1}
@@ -133,7 +134,7 @@ export default function GlobalHealthPage() {
               </TableRow>
             ) : orderedChecks.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4}>
+                <TableCell colSpan={5}>
                   <EmptyState
                     size="small"
                     heading="No health checks available"
@@ -174,6 +175,11 @@ export default function GlobalHealthPage() {
                       color={statusColor(check.status)}
                       label={check.status.toUpperCase()}
                     />
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2" color="text.secondary">
+                      {check.severity ?? "—"}
+                    </Typography>
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2" color="text.secondary">

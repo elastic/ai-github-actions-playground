@@ -19,7 +19,6 @@ export const PAGE_NAV_BUTTONS = {
   dashboards: "Dashboards",
   fleet: "Fleet",
   health: "Health",
-  "cluster-diagnostics": "Cluster Diagnostics",
   docs: "Docs",
   tasks: "Tasks",
   ilm: "ILM",

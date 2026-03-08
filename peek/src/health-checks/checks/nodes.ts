@@ -1,7 +1,4 @@
-import {
-  totalCircuitBreakerTrips,
-  totalThreadPoolRejections,
-} from "../../components/cluster-health/clusterHealthUtils";
+import { totalCircuitBreakerTrips } from "../../components/cluster-health/clusterHealthUtils";
 import type { NodeStatsNode } from "../../services/es";
 
 import type { HealthCheckDefinition, HealthSnapshot } from "../types";
@@ -211,36 +208,6 @@ export const nodeChecks: HealthCheckDefinition[] = [
       return { status: "pass", summary: "Search thread pool queues are within threshold." };
     },
   },
-  // #46
-  {
-    id: "nodes.thread_pool.search.rejected.nonzero",
-    domain: "nodes",
-    title: "Search thread pool rejections",
-    description: "Warns when search thread pool rejections are non-zero.",
-    severityOnFail: "medium",
-    surfaces: ["global", "local"],
-    dependsOn: ["nodesCore"],
-    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/thread-pool-settings",
-    recommendation: "Searches are being rejected. Consider reducing query load or scaling.",
-    evaluate: (snapshot) => {
-      const nodes = snapshot.data.nodesCore?.nodeStats?.nodes;
-      if (!nodes) return unknownNodeStatsResult();
-      let totalRejected = 0;
-      for (const node of Object.values(nodes)) {
-        totalRejected += node.thread_pool?.search?.rejected ?? 0;
-      }
-      if (totalRejected > 0) {
-        return {
-          status: "warn",
-          summary: `${totalRejected} search rejection${totalRejected === 1 ? "" : "s"} reported.`,
-          observed: { search_rejected: totalRejected },
-          recommendation: "Searches are being rejected. Consider reducing query load or scaling.",
-          links: [{ label: "Cluster Health", to: "/cluster-health" }],
-        };
-      }
-      return { status: "pass", summary: "No search thread pool rejections." };
-    },
-  },
   // #47
   {
     id: "nodes.thread_pool.write.queue.high",
@@ -273,36 +240,6 @@ export const nodeChecks: HealthCheckDefinition[] = [
         }
       }
       return { status: "pass", summary: "Write thread pool queues are within threshold." };
-    },
-  },
-  // #48
-  {
-    id: "nodes.thread_pool.write.rejected.nonzero",
-    domain: "nodes",
-    title: "Write thread pool rejections",
-    description: "Warns when write thread pool rejections are non-zero.",
-    severityOnFail: "medium",
-    surfaces: ["global", "local"],
-    dependsOn: ["nodesCore"],
-    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/thread-pool-settings",
-    recommendation: "Writes are being rejected. Reduce indexing throughput or add capacity.",
-    evaluate: (snapshot) => {
-      const nodes = snapshot.data.nodesCore?.nodeStats?.nodes;
-      if (!nodes) return unknownNodeStatsResult();
-      let totalRejected = 0;
-      for (const node of Object.values(nodes)) {
-        totalRejected += node.thread_pool?.write?.rejected ?? 0;
-      }
-      if (totalRejected > 0) {
-        return {
-          status: "warn",
-          summary: `${totalRejected} write rejection${totalRejected === 1 ? "" : "s"} reported.`,
-          observed: { write_rejected: totalRejected },
-          recommendation: "Writes are being rejected. Reduce indexing throughput or add capacity.",
-          links: [{ label: "Cluster Health", to: "/cluster-health" }],
-        };
-      }
-      return { status: "pass", summary: "No write thread pool rejections." };
     },
   },
   // #49
@@ -339,36 +276,6 @@ export const nodeChecks: HealthCheckDefinition[] = [
       return { status: "pass", summary: "Bulk thread pool queues are within threshold." };
     },
   },
-  // #50
-  {
-    id: "nodes.thread_pool.bulk.rejected.nonzero",
-    domain: "nodes",
-    title: "Bulk thread pool rejections",
-    description: "Warns when bulk thread pool rejections are non-zero.",
-    severityOnFail: "medium",
-    surfaces: ["global", "local"],
-    dependsOn: ["nodesCore"],
-    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/thread-pool-settings",
-    recommendation: "Bulk operations are being rejected. Reduce bulk size or scale capacity.",
-    evaluate: (snapshot) => {
-      const nodes = snapshot.data.nodesCore?.nodeStats?.nodes;
-      if (!nodes) return unknownNodeStatsResult();
-      let totalRejected = 0;
-      for (const node of Object.values(nodes)) {
-        totalRejected += node.thread_pool?.bulk?.rejected ?? 0;
-      }
-      if (totalRejected > 0) {
-        return {
-          status: "warn",
-          summary: `${totalRejected} bulk rejection${totalRejected === 1 ? "" : "s"} reported.`,
-          observed: { bulk_rejected: totalRejected },
-          recommendation: "Bulk operations are being rejected. Reduce bulk size or scale capacity.",
-          links: [{ label: "Cluster Health", to: "/cluster-health" }],
-        };
-      }
-      return { status: "pass", summary: "No bulk thread pool rejections." };
-    },
-  },
   // existing — circuit breaker trips (covers #53–56)
   {
     id: "nodes.breakers.tripped",
@@ -395,33 +302,6 @@ export const nodeChecks: HealthCheckDefinition[] = [
         };
       }
       return { status: "pass", summary: "No circuit breaker trips reported." };
-    },
-  },
-  // existing — thread pool rejections aggregate
-  {
-    id: "nodes.thread_pool.rejected.nonzero",
-    domain: "nodes",
-    title: "Thread pool rejections",
-    description: "Warns when thread pool rejections are non-zero.",
-    severityOnFail: "medium",
-    surfaces: ["global", "local"],
-    dependsOn: ["nodesCore"],
-    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/thread-pool-settings",
-    recommendation: "Thread pool rejections indicate saturation. Reduce load or scale.",
-    evaluate: (snapshot) => {
-      const nodes = snapshot.data.nodesCore?.nodeStats?.nodes;
-      if (!nodes) return unknownNodeStatsResult();
-      const totalRejected = totalThreadPoolRejections(nodes);
-      if (totalRejected > 0) {
-        return {
-          status: "warn",
-          summary: `${totalRejected} thread pool rejection${totalRejected === 1 ? "" : "s"} reported.`,
-          observed: { total_rejected: totalRejected },
-          recommendation: "Thread pool rejections indicate saturation. Reduce load or scale.",
-          links: [{ label: "Cluster Health", to: "/cluster-health" }],
-        };
-      }
-      return { status: "pass", summary: "No thread pool rejections reported." };
     },
   },
   // #32
