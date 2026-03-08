@@ -1,21 +1,16 @@
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { useShallow } from "zustand/react/shallow";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
 import Typography from "@mui/material/Typography";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
-import FolderOpenIcon from "@mui/icons-material/FolderOpen";
 
 import { usePackageBuilderStore } from "../store/usePackageBuilderStore";
 import type { WizardStep } from "../types/packageBuilder";
-import {
-  exportPackageToDirectory,
-  supportsDirectoryExport,
-} from "../services/packageBuilder/exportPackage";
+import { exportPackageToDirectory } from "../services/packageBuilder/exportPackage";
 import PackageBuilderStepper from "./packageBuilder/PackageBuilderStepper";
-import ImportPackageDialog from "./packageBuilder/ImportPackageDialog";
+import PackageBuilderStartScreen from "./packageBuilder/PackageBuilderStartScreen";
 import StepIdentity from "./packageBuilder/StepIdentity";
 import StepSignals from "./packageBuilder/StepSignals";
 import StepVariables from "./packageBuilder/StepVariables";
@@ -31,9 +26,7 @@ export default function PackageBuilderPage() {
   const setStep = usePackageBuilderStore((s) => s.setStep);
   const reset = usePackageBuilderStore((s) => s.reset);
   const linkedDir = usePackageBuilderStore((s) => s.linkedDir);
-  const linkDir = usePackageBuilderStore((s) => s.linkDir);
-  const unlinkDir = usePackageBuilderStore((s) => s.unlinkDir);
-  const [importOpen, setImportOpen] = useState(false);
+  const isLoaded = usePackageBuilderStore((s) => s.isLoaded);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
 
   const packageData = usePackageBuilderStore(
@@ -66,53 +59,49 @@ export default function PackageBuilderPage() {
     [linkedDir, packageData],
   );
 
+  // Auto-save on any change to packageData when linkedDir is present
+  useEffect(() => {
+    if (!linkedDir) return;
+    const timeoutId = setTimeout(() => {
+      void autoSave();
+    }, 500);
+    return () => clearTimeout(timeoutId);
+  }, [linkedDir, packageData, autoSave]);
+
   const handleStepChange = useCallback(
     (step: WizardStep) => {
-      void autoSave();
       setStep(step);
     },
-    [autoSave, setStep],
+    [setStep],
   );
 
-  const handleLinkFolder = async () => {
-    try {
-      const handle = await (
-        window as unknown as {
-          showDirectoryPicker: (opts: { mode: string }) => Promise<FileSystemDirectoryHandle>;
-        }
-      ).showDirectoryPicker({ mode: "readwrite" });
-      linkDir(handle);
-      // Do an initial save immediately
-      await autoSave(handle);
-    } catch (err) {
-      if (err instanceof DOMException && err.name === "AbortError") return;
-      console.error("Failed to link folder:", err);
-    }
-  };
-
   const handleReset = () => {
-    if (!window.confirm("Reset all package builder fields? This cannot be undone.")) return;
+    if (
+      !window.confirm(
+        "Close current package and return to start screen? Unsaved changes will be lost.",
+      )
+    )
+      return;
     reset();
   };
+
+  if (!isLoaded) {
+    return <PackageBuilderStartScreen />;
+  }
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
       {/* Header */}
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
-        <Typography variant="h5" fontWeight={600}>
-          OTel Input Package Builder
-        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Typography variant="h5" fontWeight={600}>
+            {packageData.identity.name || "Unnamed Package"}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            in {linkedDir?.name || "Local Memory"}
+          </Typography>
+        </Box>
         <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-          {linkedDir && (
-            <Chip
-              icon={<FolderOpenIcon />}
-              label={linkedDir.name}
-              onDelete={unlinkDir}
-              color="primary"
-              variant="outlined"
-              size="small"
-            />
-          )}
           {saveStatus === "saving" && <CircularProgress size={14} />}
           {saveStatus === "saved" && (
             <Typography variant="caption" color="success.main">
@@ -124,21 +113,11 @@ export default function PackageBuilderPage() {
               Save failed
             </Typography>
           )}
-          {supportsDirectoryExport() && !linkedDir && (
-            <Button size="small" startIcon={<FolderOpenIcon />} onClick={handleLinkFolder}>
-              Link Folder
-            </Button>
-          )}
-          <Button size="small" startIcon={<FolderOpenIcon />} onClick={() => setImportOpen(true)}>
-            Open Package
-          </Button>
           <Button size="small" startIcon={<RestartAltIcon />} onClick={handleReset} color="warning">
-            Reset
+            Close Package
           </Button>
         </Box>
       </Box>
-
-      <ImportPackageDialog open={importOpen} onClose={() => setImportOpen(false)} />
 
       {/* Stepper */}
       <PackageBuilderStepper
