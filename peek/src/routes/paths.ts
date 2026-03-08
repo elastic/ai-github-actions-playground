@@ -28,6 +28,7 @@ import SubjectIcon from "@mui/icons-material/Subject";
 import CloudIcon from "@mui/icons-material/Cloud";
 import DnsIcon from "@mui/icons-material/Dns";
 import DescriptionIcon from "@mui/icons-material/Description";
+import BugReportIcon from "@mui/icons-material/BugReport";
 
 import type { UserCapabilities } from "../services/es";
 
@@ -424,6 +425,19 @@ export const PAGE_PATHS = {
       order: 17,
       showInSidebar: false,
       icon: createElement(ShieldIcon, { fontSize: "small" }),
+    },
+  },
+  clusterDiagnostics: {
+    path: "/cluster-diagnostics",
+    requiresConnection: true,
+    showTimeControls: false,
+    skeletonVariant: "table",
+    nav: {
+      label: "Cluster Diagnostics",
+      group: "System",
+      order: 19,
+      showInSidebar: true,
+      icon: createElement(BugReportIcon, { fontSize: "small" }),
     },
   },
   addData: {
