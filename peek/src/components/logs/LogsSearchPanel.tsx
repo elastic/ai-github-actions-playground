@@ -99,7 +99,26 @@ export default function LogsSearchPanel({
   const renderFilterControls = useCallback(
     () => (
       <>
-        <Stepper nonLinear activeStep={activeStep} sx={{ mb: 1 }}>
+        <Stepper
+          nonLinear
+          activeStep={activeStep}
+          sx={{
+            mb: 1,
+            "& .MuiStep-root": { p: 0 },
+            "& .MuiStepButton-root": {
+              minHeight: COMPONENT_HEIGHTS.input,
+              px: 1,
+              py: 0.5,
+              borderRadius: 1,
+              border: 1,
+              borderColor: "divider",
+            },
+            "& .MuiStepButton-root:has(.Mui-active)": {
+              borderColor: "primary.main",
+              bgcolor: "action.selected",
+            },
+          }}
+        >
           {["Intent", "Refine", "Review & run"].map((label, index) => (
             <Step key={label}>
               <StepButton color="inherit" onClick={() => setActiveStep(index)}>
