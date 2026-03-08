@@ -62,7 +62,15 @@ export default function GitHubCatalogSection({ open, onSelect }: Props) {
             if (entry) onSelect(entry);
           }}
           renderInput={(params) => (
-            <TextField {...params} placeholder="Search input packages..." size="small" />
+            <TextField
+              {...params}
+              placeholder="Search input packages..."
+              size="small"
+              inputProps={{
+                ...params.inputProps,
+                "aria-label": "Search input packages",
+              }}
+            />
           )}
           renderOption={(props, option) => {
             const { key, ...rest } = props;
