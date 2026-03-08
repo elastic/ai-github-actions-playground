@@ -19,6 +19,7 @@ import AskAiButton from "./AskAiButton";
 import ContentSkeleton from "./ContentSkeleton";
 import PageContainer from "./PageContainer";
 import PageHeaderSection from "./PageHeaderSection";
+import DocLink from "./DocLink";
 import PageInsightBanner from "./PageInsightBanner";
 import { OverviewInfoCard } from "./OverviewInfoCard";
 import { OverviewNodesTable } from "./OverviewNodesTable";
@@ -135,6 +136,7 @@ export default function ClusterOverviewPage() {
     <PageContainer gap={2}>
       <PageHeaderSection
         title="Cluster Overview"
+        titleAdornment={<DocLink section="cluster-overview" tooltip="Cluster Overview docs" />}
         actions={
           <>
             <AskAiButton

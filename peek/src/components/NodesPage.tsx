@@ -25,6 +25,7 @@ import { useClusterOverview } from "../hooks/useClusterOverview";
 import EmptyState from "./EmptyState";
 import PageContainer from "./PageContainer";
 import PageHeaderSection from "./PageHeaderSection";
+import DocLink from "./DocLink";
 
 // ── Role abbreviation map ─────────────────────────────────────────────────
 
@@ -208,6 +209,7 @@ export default function NodesPage() {
     <PageContainer>
       <PageHeaderSection
         title="Nodes"
+        titleAdornment={<DocLink section="nodes" tooltip="Nodes docs" />}
         description="Runtime health and capacity for all Elasticsearch nodes. Click a row to drill into thread pools, circuit breakers, and more."
         actions={
           <LoadingButton size="small" variant="outlined" onClick={refresh} loading={loading}>

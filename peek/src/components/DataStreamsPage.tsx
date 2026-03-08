@@ -43,6 +43,7 @@ import DetailDrawer from "./DetailDrawer";
 import PageContainer from "./PageContainer";
 import PageHeaderSection from "./PageHeaderSection";
 import AskAiButton from "./AskAiButton";
+import DocLink from "./DocLink";
 import PageInsightBanner from "./PageInsightBanner";
 import InsightSlot from "./InsightSlot";
 import { InsightSlotProvider } from "./InsightSlotContext";
@@ -369,6 +370,7 @@ export default function DataStreamsPage() {
       <PageContainer>
         <PageHeaderSection
           title="Data Streams"
+          titleAdornment={<DocLink section="data-streams" tooltip="Data Streams docs" />}
           actions={
             <>
               <LoadingButton

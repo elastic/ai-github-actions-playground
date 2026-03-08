@@ -25,6 +25,7 @@ import ShardDistributionView from "./cluster-health/ShardDistributionView";
 import TaskBacklogView from "./cluster-health/TaskBacklogView";
 import PageContainer from "./PageContainer";
 import PageHeaderSection from "./PageHeaderSection";
+import DocLink from "./DocLink";
 
 interface ClusterHealthPageProps {
   defaultTab?: ClusterHealthView;
@@ -103,6 +104,7 @@ export default function ClusterHealthPage({ defaultTab = "rules" }: ClusterHealt
     <PageContainer gap={1.5}>
       <PageHeaderSection
         title="Health"
+        titleAdornment={<DocLink section="cluster-health" tooltip="Cluster Health docs" />}
         actions={
           <RefreshToolbar
             lastUpdatedAt={lastUpdatedAt}
