@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { clusterChecks } from "../../src/health-checks/checks/cluster";
+import { healthReportChecks } from "../../src/health-checks/checks/healthReport";
 import { ilmChecks } from "../../src/health-checks/checks/ilm";
 import { indicesChecks } from "../../src/health-checks/checks/indices";
 import { ingestChecks } from "../../src/health-checks/checks/ingest";
@@ -37,6 +38,7 @@ function makeSnapshot(overrides: Partial<HealthSnapshot["data"]> = {}): HealthSn
       ilmCore: { ilmExplain: { indices: {} }, ilmPolicies: {} },
       recoveryCore: { recovery: {} },
       securityCore: { apiKeys: { api_keys: [] } },
+      healthReport: { healthReport: { status: "green", indicators: {} } },
       ...overrides,
     },
     errors: {},
@@ -62,6 +64,7 @@ describe("INITIAL_HEALTH_CHECKS aggregation", () => {
   it("includes all domain checks", () => {
     const total =
       clusterChecks.length +
+      healthReportChecks.length +
       shardChecks.length +
       nodeChecks.length +
       taskChecks.length +
@@ -1526,6 +1529,72 @@ describe("security checks", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Health report checks
+// ---------------------------------------------------------------------------
+describe("health report checks", () => {
+  it("cluster.health_report.red — fails on red", () => {
+    const snap = makeSnapshot({
+      healthReport: {
+        healthReport: {
+          status: "red",
+          indicators: {
+            shards_availability: { status: "red", symptom: "3 primaries unassigned" },
+          },
+        },
+      },
+    });
+    const result = findCheck(healthReportChecks, "cluster.health_report.red").evaluate(snap);
+    expect(result.status).toBe("fail");
+    expect(result.observed).toBeTruthy();
+    expect(result.links?.[0]?.to).toBe("/cluster-diagnostics");
+  });
+
+  it("cluster.health_report.red — passes on green", () => {
+    const snap = makeSnapshot({
+      healthReport: { healthReport: { status: "green", indicators: {} } },
+    });
+    expect(findCheck(healthReportChecks, "cluster.health_report.red").evaluate(snap).status).toBe(
+      "pass",
+    );
+  });
+
+  it("cluster.health_report.red — unknown when report is null", () => {
+    const snap = makeSnapshot({
+      healthReport: { healthReport: null },
+    });
+    expect(findCheck(healthReportChecks, "cluster.health_report.red").evaluate(snap).status).toBe(
+      "unknown",
+    );
+  });
+
+  it("cluster.health_report.yellow — warns on yellow", () => {
+    const snap = makeSnapshot({
+      healthReport: {
+        healthReport: {
+          status: "yellow",
+          indicators: {
+            disk: { status: "yellow", symptom: "Disk usage high" },
+          },
+        },
+      },
+    });
+    const result = findCheck(healthReportChecks, "cluster.health_report.yellow").evaluate(snap);
+    expect(result.status).toBe("warn");
+    expect(result.observed).toBeTruthy();
+    expect(result.links?.[0]?.to).toBe("/cluster-diagnostics");
+  });
+
+  it("cluster.health_report.yellow — passes on green", () => {
+    const snap = makeSnapshot({
+      healthReport: { healthReport: { status: "green", indicators: {} } },
+    });
+    expect(
+      findCheck(healthReportChecks, "cluster.health_report.yellow").evaluate(snap).status,
+    ).toBe("pass");
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Check metadata
 // ---------------------------------------------------------------------------
 describe("check metadata", () => {
@@ -1591,7 +1660,7 @@ describe("check metadata", () => {
                 name: "voting-tiebreaker",
                 roles: ["master", "voting_only"],
                 jvm: { mem: { heap_used_percent: 95, heap_max_in_bytes: 1e9 } },
-              } as any,
+              } as unknown,
             },
           },
           nodeInfo: { nodes: {} },
@@ -1610,7 +1679,7 @@ describe("check metadata", () => {
                 name: "data-node",
                 roles: ["data"],
                 jvm: { mem: { heap_used_percent: 90, heap_max_in_bytes: 1e9 } },
-              } as any,
+              } as unknown,
             },
           },
           nodeInfo: { nodes: {} },

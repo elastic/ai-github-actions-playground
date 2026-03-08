@@ -23,6 +23,7 @@ const DocsPage = lazy(() => import("../components/DocsPage"));
 const ExplorePage = lazy(() => import("../components/ExplorePage"));
 const FleetAgentPage = lazy(() => import("../components/FleetAgentPage"));
 const FleetPage = lazy(() => import("../components/FleetPage"));
+const ClusterDiagnosticsPage = lazy(() => import("../components/ClusterDiagnosticsPage"));
 const IngestPipelinesPage = lazy(() => import("../components/IngestPipelinesPage"));
 const IndicesPage = lazy(() => import("../components/IndicesPage"));
 const StorageExplorerPage = lazy(() => import("../components/StorageExplorerPage"));
@@ -162,6 +163,10 @@ export const PAGE_MANIFEST: Record<keyof typeof PAGE_PATHS, PageConfig> = {
   globalHealth: {
     ...PAGE_PATHS.globalHealth,
     component: ClusterHealthPage,
+  },
+  clusterDiagnostics: {
+    ...PAGE_PATHS.clusterDiagnostics,
+    component: ClusterDiagnosticsPage,
   },
   clusterTasks: {
     ...PAGE_PATHS.clusterTasks,
