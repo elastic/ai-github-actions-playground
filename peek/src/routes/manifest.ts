@@ -59,6 +59,7 @@ const TaskManagerPage = lazy(() => import("../components/TaskManagerPage"));
 const IlmPage = lazy(() => import("../components/IlmPage"));
 const TemplatesPage = lazy(() => import("../components/TemplatesPage"));
 const TransformsPage = lazy(() => import("../components/TransformsPage"));
+const SnapshotsPage = lazy(() => import("../components/SnapshotsPage"));
 
 export const PAGE_MANIFEST: Record<PageId, ComponentType> = {
   dashboards: DashboardsLandingPage,
@@ -104,6 +105,7 @@ export const PAGE_MANIFEST: Record<PageId, ComponentType> = {
   watcherGetWatch: WatcherGetWatchPage,
   ilm: IlmPage,
   transforms: TransformsPage,
+  snapshots: SnapshotsPage,
   templates: TemplatesPage,
   fleet: FleetPage,
   fleetAgentDetail: FleetAgentPage,

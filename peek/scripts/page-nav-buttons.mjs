@@ -25,4 +25,5 @@ export const PAGE_NAV_BUTTONS = {
   ilm: "ILM",
   templates: "Templates",
   transforms: "Transforms",
+  snapshots: "Snapshots",
 };

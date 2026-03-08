@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
 
 import TransformsPage from "../../src/components/TransformsPage";
@@ -88,9 +89,12 @@ const STATS_RESPONSE = {
 };
 
 describe("TransformsPage", () => {
+  let queryClient: QueryClient;
+
   beforeEach(() => {
     vi.clearAllMocks();
     resetAllStores();
+    queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     useConnectionStore
       .getState()
       .setConnection({ url: "https://example.es.local:9200", apiKey: "key" });
@@ -101,9 +105,11 @@ describe("TransformsPage", () => {
     getTransformStatsMock.mockResolvedValue(STATS_RESPONSE);
 
     render(
-      <MemoryRouter>
-        <TransformsPage />
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <TransformsPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     await screen.findByText("ecommerce-summary");
@@ -115,9 +121,11 @@ describe("TransformsPage", () => {
     getTransformStatsMock.mockResolvedValue(STATS_RESPONSE);
 
     render(
-      <MemoryRouter>
-        <TransformsPage />
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <TransformsPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     await screen.findByText("ecommerce-summary");
@@ -138,9 +146,11 @@ describe("TransformsPage", () => {
     getTransformStatsMock.mockResolvedValue(STATS_RESPONSE);
 
     render(
-      <MemoryRouter>
-        <TransformsPage />
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <TransformsPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     await screen.findByText("ecommerce-summary");
@@ -153,9 +163,11 @@ describe("TransformsPage", () => {
     getTransformStatsMock.mockResolvedValue(STATS_RESPONSE);
 
     render(
-      <MemoryRouter>
-        <TransformsPage />
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <TransformsPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     await screen.findByText("ecommerce-summary");
@@ -171,9 +183,11 @@ describe("TransformsPage", () => {
     getTransformStatsMock.mockResolvedValue({ count: 0, transforms: [] });
 
     render(
-      <MemoryRouter>
-        <TransformsPage />
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <TransformsPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     await screen.findByText("No transforms found");
@@ -184,9 +198,11 @@ describe("TransformsPage", () => {
     getTransformStatsMock.mockResolvedValue(STATS_RESPONSE);
 
     render(
-      <MemoryRouter>
-        <TransformsPage />
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <TransformsPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     await screen.findByText("ecommerce-summary");
@@ -205,9 +221,11 @@ describe("TransformsPage", () => {
     getTransformStatsMock.mockRejectedValue({ status: 500, message: "Internal error" });
 
     render(
-      <MemoryRouter>
-        <TransformsPage />
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <TransformsPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     await screen.findByText("Internal error");
@@ -218,9 +236,11 @@ describe("TransformsPage", () => {
     getTransformStatsMock.mockResolvedValue(STATS_RESPONSE);
 
     render(
-      <MemoryRouter>
-        <TransformsPage />
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <TransformsPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     await screen.findByText("ecommerce-summary");

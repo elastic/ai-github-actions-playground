@@ -28,6 +28,7 @@ export type * from "./taskTypes";
 export type * from "./ilmTypes";
 export type * from "./templateTypes";
 export type * from "./transformTypes";
+export type * from "./snapshotTypes";
 
 export {
   buildExplorerQuery,

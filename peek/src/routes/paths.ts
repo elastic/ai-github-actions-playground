@@ -579,6 +579,19 @@ export const PAGE_PATHS = {
       iconKey: "TransformIcon",
     },
   },
+  snapshots: {
+    path: "/snapshots",
+    requiresConnection: true,
+    showTimeControls: false,
+    skeletonVariant: "table",
+    nav: {
+      label: "Snapshots",
+      group: "System",
+      order: 33,
+      showInSidebar: true,
+      iconKey: "BackupIcon",
+    },
+  },
   templates: {
     path: "/templates",
     requiresConnection: true,
