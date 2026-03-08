@@ -70,21 +70,21 @@ export async function executeRawRequest(
   const normalizedBaseUrl = baseUrl.replace(/\/+$/, "");
   const trimmedPath = path.trim();
   const url = `${normalizedBaseUrl}${trimmedPath.startsWith("/") ? trimmedPath : `/${trimmedPath}`}`;
-  const signals: AbortSignal[] = [AbortSignal.timeout(timeoutMs ?? RAW_REQUEST_TIMEOUT_MS)];
-  if (signal) {
-    try {
-      // Validate signal is acceptable to AbortSignal.any (can reject cross-realm/proxy values)
-      AbortSignal.any([signal]);
-      signals.push(signal);
-    } catch {
-      // Ignore invalid signal; use timeout only
-    }
-  }
-  const combinedSignal = AbortSignal.any(signals);
   const rawBody = body && body.trim() ? body : undefined;
   const normalizedMethod = method.toUpperCase();
   const shouldRetryMethod = RETRYABLE_METHODS.has(normalizedMethod);
   try {
+    const signals: AbortSignal[] = [AbortSignal.timeout(timeoutMs ?? RAW_REQUEST_TIMEOUT_MS)];
+    if (signal) {
+      try {
+        // Validate signal is acceptable to AbortSignal.any (can reject cross-realm/proxy values)
+        AbortSignal.any([signal]);
+        signals.push(signal);
+      } catch {
+        // Ignore invalid signal; use timeout only
+      }
+    }
+    const combinedSignal = AbortSignal.any(signals);
     let response: Response | undefined;
     /* eslint-disable no-await-in-loop -- sequential retry with backoff */
     for (let attempt = 0; ; attempt++) {

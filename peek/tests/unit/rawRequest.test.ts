@@ -238,6 +238,15 @@ describe("executeRawRequest", () => {
     }
   });
 
+  it("normalizes invalid timeout values as RawRequestError", async () => {
+    const doFetch: DoFetch = vi.fn();
+
+    await expect(
+      executeRawRequest(doFetch, BASE_URL, HEADERS, "GET", "/", undefined, undefined, -1),
+    ).rejects.toEqual(expect.objectContaining({ status: 0, message: expect.any(String) }));
+    expect(doFetch).not.toHaveBeenCalled();
+  });
+
   it("exports the timeout constant", () => {
     expect(RAW_REQUEST_TIMEOUT_MS).toBe(30_000);
   });
