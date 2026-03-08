@@ -21,6 +21,8 @@ export const snapshotChecks: HealthCheckDefinition[] = [
     severityOnFail: "high",
     surfaces: ["global"],
     dependsOn: ["snapshotsCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/get-snapshot-api",
+    recommendation: "Investigate failed snapshots and check repository connectivity.",
     evaluate: (snapshot) => {
       const snapshots = snapshot.data.snapshotsCore?.snapshots;
       if (!snapshots) {
@@ -47,6 +49,8 @@ export const snapshotChecks: HealthCheckDefinition[] = [
     severityOnFail: "medium",
     surfaces: ["global"],
     dependsOn: ["snapshotsCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/get-snapshot-api",
+    recommendation: "Partial snapshots indicate some shards failed to snapshot.",
     evaluate: (snapshot) => {
       const snapshots = snapshot.data.snapshotsCore?.snapshots;
       if (!snapshots) {
@@ -73,6 +77,9 @@ export const snapshotChecks: HealthCheckDefinition[] = [
     severityOnFail: "high",
     surfaces: ["global"],
     dependsOn: ["snapshotsCore"],
+    docsUrl:
+      "https://www.elastic.co/docs/deploy-manage/tools/snapshot-and-restore/create-snapshots",
+    recommendation: "Check SLM policy configuration and repository health.",
     evaluate: (snapshot) => {
       const policies = snapshot.data.snapshotsCore?.policies;
       if (!policies) {
@@ -107,6 +114,9 @@ export const snapshotChecks: HealthCheckDefinition[] = [
     severityOnFail: "medium",
     surfaces: ["global"],
     dependsOn: ["snapshotsCore"],
+    docsUrl:
+      "https://www.elastic.co/docs/deploy-manage/tools/snapshot-and-restore/create-snapshots",
+    recommendation: "Verify SLM schedule and repository availability.",
     evaluate: (snapshot) => {
       const policies = snapshot.data.snapshotsCore?.policies;
       if (!policies) {
@@ -117,9 +127,11 @@ export const snapshotChecks: HealthCheckDefinition[] = [
       }
       const now = Date.now();
       const stale = Object.entries(policies).filter(([, p]) => {
-        const lastSuccess = p.last_success?.time ?? 0;
-        if (!lastSuccess) return true;
         const nextExecution = p.next_execution_millis ?? 0;
+        const lastSuccess = p.last_success?.time ?? 0;
+        if (!lastSuccess) {
+          return nextExecution > 0 ? now > nextExecution + POLICY_STALENESS_GRACE_MS : true;
+        }
         if (nextExecution > 0) {
           return now > nextExecution + POLICY_STALENESS_GRACE_MS && lastSuccess < nextExecution;
         }
@@ -146,6 +158,9 @@ export const snapshotChecks: HealthCheckDefinition[] = [
     severityOnFail: "medium",
     surfaces: ["global"],
     dependsOn: ["snapshotsCore"],
+    docsUrl:
+      "https://www.elastic.co/docs/deploy-manage/tools/snapshot-and-restore/create-snapshots",
+    recommendation: "Check repository permissions and disk space for retention cleanups.",
     evaluate: (snapshot) => {
       const slmStats = snapshot.data.snapshotsCore?.slmStats;
       if (!slmStats) {

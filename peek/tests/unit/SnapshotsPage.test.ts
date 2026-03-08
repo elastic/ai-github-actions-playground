@@ -25,6 +25,7 @@ const makeSnapshot = (overrides: Partial<SnapshotRow> & { name: string }): Snaps
   duration: 930000,
   indices: [],
   dataStreams: [],
+  raw: { snapshot: "snap-default" },
   ...overrides,
 });
 
@@ -299,6 +300,21 @@ describe("snapshot health checks", () => {
     const results = evaluateHealthChecks(snapshotChecks, snapshot);
     const check = results.find((r) => r.id === "slm.policy.no_recent_success");
     expect(check?.status).toBe("warn");
+    nowSpy.mockRestore();
+  });
+
+  it("slm.policy.no_recent_success — passes before first scheduled run when never run", () => {
+    const nowSpy = vi.spyOn(Date, "now").mockReturnValue(4_000_000);
+    const snapshot = makeHealthSnapshot({
+      policies: {
+        "daily-snapshots": {
+          next_execution_millis: 5_000_000,
+        },
+      },
+    });
+    const results = evaluateHealthChecks(snapshotChecks, snapshot);
+    const check = results.find((r) => r.id === "slm.policy.no_recent_success");
+    expect(check?.status).toBe("pass");
     nowSpy.mockRestore();
   });
 

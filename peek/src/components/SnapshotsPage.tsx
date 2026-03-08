@@ -170,6 +170,12 @@ export default function SnapshotsPage() {
     repoDir,
   } = urlState;
   const deferredSearch = useDeferredValue(search);
+  const filterAriaLabel =
+    activeTab === "policies"
+      ? "Filter SLM policies"
+      : activeTab === "repositories"
+        ? "Filter repositories"
+        : "Filter snapshots";
 
   // Sorting handlers
   const handleSnapSort = useCallback(
@@ -241,14 +247,6 @@ export default function SnapshotsPage() {
     [snapshots],
   );
 
-  if (result.status === "error") {
-    return (
-      <Box sx={{ p: 2 }}>
-        <Alert severity="error">{result.error}</Alert>
-      </Box>
-    );
-  }
-
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, height: "100%", minHeight: 0 }}>
       {/* Header */}
@@ -267,6 +265,19 @@ export default function SnapshotsPage() {
           }
         />
       </Paper>
+
+      {result.status === "error" && (
+        <Alert
+          severity="error"
+          action={
+            <Button color="inherit" size="small" onClick={result.refresh}>
+              Retry
+            </Button>
+          }
+        >
+          {result.error}
+        </Alert>
+      )}
 
       {/* KPI Cards */}
       {activeTab === "snapshots" && (
@@ -364,9 +375,10 @@ export default function SnapshotsPage() {
       <Box sx={{ display: "flex", gap: 1, alignItems: "center", flexWrap: "wrap" }}>
         <Tabs
           value={activeTab}
-          onChange={(_, v) =>
-            void setUrlState({ tab: v as "snapshots" | "policies" | "repositories" })
-          }
+          onChange={(_, v) => {
+            setSelectedSnapshot(null);
+            void setUrlState({ tab: v as "snapshots" | "policies" | "repositories" });
+          }}
           sx={{ minHeight: COMPONENT_HEIGHTS.tab }}
         >
           <Tab
@@ -391,7 +403,7 @@ export default function SnapshotsPage() {
           value={search}
           onChange={(e) => void setUrlState({ q: e.target.value })}
           sx={{ minWidth: 260 }}
-          aria-label="Filter snapshots"
+          aria-label={filterAriaLabel}
         />
       </Box>
 
@@ -865,7 +877,7 @@ function SnapshotDetailDrawer({ snapshot, onClose }: SnapshotDetailDrawerProps) 
               </Typography>
               <Paper variant="outlined" sx={{ p: 1, maxHeight: 300, overflow: "auto" }}>
                 <pre style={{ margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-                  {JSON.stringify(snapshot, null, 2)}
+                  {JSON.stringify(snapshot.raw, null, 2)}
                 </pre>
               </Paper>
             </Box>
