@@ -1,35 +1,3 @@
-import { type ReactNode, createElement } from "react";
-import DashboardIcon from "@mui/icons-material/Dashboard";
-import SearchIcon from "@mui/icons-material/Search";
-import ExploreIcon from "@mui/icons-material/Explore";
-import TimelineIcon from "@mui/icons-material/Timeline";
-import TerminalIcon from "@mui/icons-material/Terminal";
-import ChatIcon from "@mui/icons-material/Chat";
-import InfoIcon from "@mui/icons-material/Info";
-import RocketLaunchIcon from "@mui/icons-material/RocketLaunch";
-import DatasetIcon from "@mui/icons-material/Dataset";
-import PeopleIcon from "@mui/icons-material/People";
-import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
-import MenuBookIcon from "@mui/icons-material/MenuBook";
-import SecurityIcon from "@mui/icons-material/Security";
-import SettingsIcon from "@mui/icons-material/Settings";
-import SpeedIcon from "@mui/icons-material/Speed";
-import AccountTreeIcon from "@mui/icons-material/AccountTree";
-import StorageIcon from "@mui/icons-material/Storage";
-import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
-import PendingActionsIcon from "@mui/icons-material/PendingActions";
-import MemoryIcon from "@mui/icons-material/Memory";
-import ViewModuleIcon from "@mui/icons-material/ViewModule";
-import ShieldIcon from "@mui/icons-material/Shield";
-import VpnKeyIcon from "@mui/icons-material/VpnKey";
-import PolicyIcon from "@mui/icons-material/Policy";
-import MiscellaneousServicesIcon from "@mui/icons-material/MiscellaneousServices";
-import SubjectIcon from "@mui/icons-material/Subject";
-import CloudIcon from "@mui/icons-material/Cloud";
-import DnsIcon from "@mui/icons-material/Dns";
-import DescriptionIcon from "@mui/icons-material/Description";
-import BugReportIcon from "@mui/icons-material/BugReport";
-
 import type { UserCapabilities } from "../services/es";
 
 export type NavGroup = "Data" | "Workspace" | "Security" | "System" | "Help" | "Settings";
@@ -47,7 +15,7 @@ export interface PagePathConfig {
     group: NavGroup;
     order: number;
     showInSidebar: boolean;
-    icon?: ReactNode;
+    iconKey?: string;
   };
 }
 
@@ -62,7 +30,7 @@ export const PAGE_PATHS = {
       group: "Workspace",
       order: 10,
       showInSidebar: true,
-      icon: createElement(DashboardIcon, { fontSize: "small" }),
+      iconKey: "DashboardIcon",
     },
   },
   discover: {
@@ -75,7 +43,7 @@ export const PAGE_PATHS = {
       group: "Data",
       order: 20,
       showInSidebar: true,
-      icon: createElement(SearchIcon, { fontSize: "small" }),
+      iconKey: "SearchIcon",
     },
   },
   logs: {
@@ -88,7 +56,7 @@ export const PAGE_PATHS = {
       group: "Data",
       order: 30,
       showInSidebar: true,
-      icon: createElement(SubjectIcon, { fontSize: "small" }),
+      iconKey: "SubjectIcon",
     },
   },
   logsExplorer: {
@@ -101,7 +69,7 @@ export const PAGE_PATHS = {
       group: "Data",
       order: 31,
       showInSidebar: false,
-      icon: createElement(SubjectIcon, { fontSize: "small" }),
+      iconKey: "SubjectIcon",
     },
   },
   explore: {
@@ -114,7 +82,7 @@ export const PAGE_PATHS = {
       group: "Data",
       order: 40,
       showInSidebar: true,
-      icon: createElement(ExploreIcon, { fontSize: "small" }),
+      iconKey: "ExploreIcon",
     },
   },
   traces: {
@@ -127,7 +95,7 @@ export const PAGE_PATHS = {
       group: "Data",
       order: 50,
       showInSidebar: true,
-      icon: createElement(TimelineIcon, { fontSize: "small" }),
+      iconKey: "TimelineIcon",
     },
   },
   profiling: {
@@ -140,7 +108,7 @@ export const PAGE_PATHS = {
       group: "Data",
       order: 60,
       showInSidebar: true,
-      icon: createElement(SpeedIcon, { fontSize: "small" }),
+      iconKey: "SpeedIcon",
     },
   },
   profilingAdvanced: {
@@ -153,7 +121,7 @@ export const PAGE_PATHS = {
       group: "Data",
       order: 61,
       showInSidebar: false,
-      icon: createElement(SpeedIcon, { fontSize: "small" }),
+      iconKey: "SpeedIcon",
     },
   },
   services: {
@@ -166,7 +134,7 @@ export const PAGE_PATHS = {
       group: "Workspace",
       order: 20,
       showInSidebar: true,
-      icon: createElement(MiscellaneousServicesIcon, { fontSize: "small" }),
+      iconKey: "MiscellaneousServicesIcon",
     },
   },
   serviceDashboard: {
@@ -179,7 +147,7 @@ export const PAGE_PATHS = {
       group: "Workspace",
       order: 21,
       showInSidebar: false,
-      icon: createElement(MiscellaneousServicesIcon, { fontSize: "small" }),
+      iconKey: "MiscellaneousServicesIcon",
     },
   },
   kubernetes: {
@@ -192,7 +160,7 @@ export const PAGE_PATHS = {
       group: "Workspace",
       order: 30,
       showInSidebar: true,
-      icon: createElement(CloudIcon, { fontSize: "small" }),
+      iconKey: "CloudIcon",
     },
   },
   kubernetesCluster: {
@@ -205,7 +173,7 @@ export const PAGE_PATHS = {
       group: "Workspace",
       order: 31,
       showInSidebar: false,
-      icon: createElement(CloudIcon, { fontSize: "small" }),
+      iconKey: "CloudIcon",
     },
   },
   kubernetesNamespace: {
@@ -218,7 +186,7 @@ export const PAGE_PATHS = {
       group: "Workspace",
       order: 32,
       showInSidebar: false,
-      icon: createElement(CloudIcon, { fontSize: "small" }),
+      iconKey: "CloudIcon",
     },
   },
   kubernetesWorkload: {
@@ -231,7 +199,7 @@ export const PAGE_PATHS = {
       group: "Workspace",
       order: 33,
       showInSidebar: false,
-      icon: createElement(CloudIcon, { fontSize: "small" }),
+      iconKey: "CloudIcon",
     },
   },
   kubernetesPod: {
@@ -244,7 +212,7 @@ export const PAGE_PATHS = {
       group: "Workspace",
       order: 34,
       showInSidebar: false,
-      icon: createElement(CloudIcon, { fontSize: "small" }),
+      iconKey: "CloudIcon",
     },
   },
   hosts: {
@@ -257,7 +225,7 @@ export const PAGE_PATHS = {
       group: "Workspace",
       order: 40,
       showInSidebar: true,
-      icon: createElement(DnsIcon, { fontSize: "small" }),
+      iconKey: "DnsIcon",
     },
   },
   hostsLinux: {
@@ -270,7 +238,7 @@ export const PAGE_PATHS = {
       group: "Workspace",
       order: 41,
       showInSidebar: false,
-      icon: createElement(DnsIcon, { fontSize: "small" }),
+      iconKey: "DnsIcon",
     },
   },
   hostsWindows: {
@@ -283,7 +251,7 @@ export const PAGE_PATHS = {
       group: "Workspace",
       order: 42,
       showInSidebar: false,
-      icon: createElement(DnsIcon, { fontSize: "small" }),
+      iconKey: "DnsIcon",
     },
   },
   hostsMacos: {
@@ -296,7 +264,7 @@ export const PAGE_PATHS = {
       group: "Workspace",
       order: 43,
       showInSidebar: false,
-      icon: createElement(DnsIcon, { fontSize: "small" }),
+      iconKey: "DnsIcon",
     },
   },
   hostDetail: {
@@ -309,7 +277,7 @@ export const PAGE_PATHS = {
       group: "Workspace",
       order: 44,
       showInSidebar: false,
-      icon: createElement(DnsIcon, { fontSize: "small" }),
+      iconKey: "DnsIcon",
     },
   },
   console: {
@@ -321,7 +289,7 @@ export const PAGE_PATHS = {
       group: "System",
       order: 50,
       showInSidebar: true,
-      icon: createElement(TerminalIcon, { fontSize: "small" }),
+      iconKey: "TerminalIcon",
     },
   },
   chat: {
@@ -333,7 +301,7 @@ export const PAGE_PATHS = {
       group: "Workspace",
       order: 60,
       showInSidebar: false,
-      icon: createElement(ChatIcon, { fontSize: "small" }),
+      iconKey: "ChatIcon",
     },
   },
   clusterOverview: {
@@ -346,7 +314,7 @@ export const PAGE_PATHS = {
       group: "System",
       order: 10,
       showInSidebar: true,
-      icon: createElement(InfoIcon, { fontSize: "small" }),
+      iconKey: "InfoIcon",
     },
   },
   clusterHealth: {
@@ -359,7 +327,7 @@ export const PAGE_PATHS = {
       group: "System",
       order: 11,
       showInSidebar: true,
-      icon: createElement(HealthAndSafetyIcon, { fontSize: "small" }),
+      iconKey: "HealthAndSafetyIcon",
     },
   },
   globalHealth: {
@@ -372,7 +340,7 @@ export const PAGE_PATHS = {
       group: "System",
       order: 11,
       showInSidebar: false,
-      icon: createElement(HealthAndSafetyIcon, { fontSize: "small" }),
+      iconKey: "HealthAndSafetyIcon",
     },
   },
   clusterTasks: {
@@ -385,7 +353,7 @@ export const PAGE_PATHS = {
       group: "System",
       order: 18,
       showInSidebar: true,
-      icon: createElement(PendingActionsIcon, { fontSize: "small" }),
+      iconKey: "PendingActionsIcon",
     },
   },
   clusterCapacity: {
@@ -398,7 +366,7 @@ export const PAGE_PATHS = {
       group: "System",
       order: 13,
       showInSidebar: false,
-      icon: createElement(MemoryIcon, { fontSize: "small" }),
+      iconKey: "MemoryIcon",
     },
   },
   clusterShards: {
@@ -411,7 +379,7 @@ export const PAGE_PATHS = {
       group: "System",
       order: 14,
       showInSidebar: false,
-      icon: createElement(ViewModuleIcon, { fontSize: "small" }),
+      iconKey: "ViewModuleIcon",
     },
   },
   clusterResilience: {
@@ -424,7 +392,7 @@ export const PAGE_PATHS = {
       group: "System",
       order: 17,
       showInSidebar: false,
-      icon: createElement(ShieldIcon, { fontSize: "small" }),
+      iconKey: "ShieldIcon",
     },
   },
   clusterDiagnostics: {
@@ -437,7 +405,7 @@ export const PAGE_PATHS = {
       group: "System",
       order: 19,
       showInSidebar: true,
-      icon: createElement(BugReportIcon, { fontSize: "small" }),
+      iconKey: "BugReportIcon",
     },
   },
   addData: {
@@ -450,7 +418,7 @@ export const PAGE_PATHS = {
       group: "Data",
       order: 10,
       showInSidebar: true,
-      icon: createElement(RocketLaunchIcon, { fontSize: "small" }),
+      iconKey: "RocketLaunchIcon",
     },
   },
   packageBuilder: {
@@ -475,7 +443,7 @@ export const PAGE_PATHS = {
       group: "System",
       order: 23,
       showInSidebar: true,
-      icon: createElement(DatasetIcon, { fontSize: "small" }),
+      iconKey: "DatasetIcon",
     },
   },
   nodes: {
@@ -488,7 +456,7 @@ export const PAGE_PATHS = {
       group: "System",
       order: 20,
       showInSidebar: true,
-      icon: createElement(MemoryIcon, { fontSize: "small" }),
+      iconKey: "MemoryIcon",
     },
   },
   nodeDetail: {
@@ -501,7 +469,7 @@ export const PAGE_PATHS = {
       group: "System",
       order: 24,
       showInSidebar: false,
-      icon: createElement(MemoryIcon, { fontSize: "small" }),
+      iconKey: "MemoryIcon",
     },
   },
   indices: {
@@ -514,7 +482,7 @@ export const PAGE_PATHS = {
       group: "System",
       order: 25,
       showInSidebar: true,
-      icon: createElement(StorageIcon, { fontSize: "small" }),
+      iconKey: "StorageIcon",
     },
   },
   storageExplorer: {
@@ -527,7 +495,7 @@ export const PAGE_PATHS = {
       group: "System",
       order: 27,
       showInSidebar: true,
-      icon: createElement(StorageIcon, { fontSize: "small" }),
+      iconKey: "StorageIcon",
     },
   },
   ingestPipelines: {
@@ -541,7 +509,7 @@ export const PAGE_PATHS = {
       group: "System",
       order: 26,
       showInSidebar: true,
-      icon: createElement(AccountTreeIcon, { fontSize: "small" }),
+      iconKey: "AccountTreeIcon",
     },
   },
   clusterSettings: {
@@ -554,7 +522,7 @@ export const PAGE_PATHS = {
       group: "System",
       order: 21,
       showInSidebar: true,
-      icon: createElement(SettingsIcon, { fontSize: "small" }),
+      iconKey: "SettingsIcon",
     },
   },
   nodesHotThreads: {
@@ -567,7 +535,7 @@ export const PAGE_PATHS = {
       group: "System",
       order: 28,
       showInSidebar: true,
-      icon: createElement(SpeedIcon, { fontSize: "small" }),
+      iconKey: "SpeedIcon",
     },
   },
   watcherGetWatch: {
@@ -580,7 +548,7 @@ export const PAGE_PATHS = {
       group: "System",
       order: 29,
       showInSidebar: true,
-      icon: createElement(PendingActionsIcon, { fontSize: "small" }),
+      iconKey: "PendingActionsIcon",
     },
   },
   ilm: {
@@ -593,7 +561,7 @@ export const PAGE_PATHS = {
       group: "System",
       order: 31,
       showInSidebar: true,
-      icon: createElement(PolicyIcon, { fontSize: "small" }),
+      iconKey: "PolicyIcon",
     },
   },
   templates: {
@@ -606,7 +574,7 @@ export const PAGE_PATHS = {
       group: "System",
       order: 22,
       showInSidebar: true,
-      icon: createElement(DescriptionIcon, { fontSize: "small" }),
+      iconKey: "DescriptionIcon",
     },
   },
   fleet: {
@@ -619,7 +587,7 @@ export const PAGE_PATHS = {
       group: "System",
       order: 15,
       showInSidebar: true,
-      icon: createElement(SecurityIcon, { fontSize: "small" }),
+      iconKey: "SecurityIcon",
     },
   },
   fleetAgentDetail: {
@@ -632,7 +600,7 @@ export const PAGE_PATHS = {
       group: "System",
       order: 16,
       showInSidebar: false,
-      icon: createElement(SecurityIcon, { fontSize: "small" }),
+      iconKey: "SecurityIcon",
     },
   },
   investigate: {
@@ -645,7 +613,7 @@ export const PAGE_PATHS = {
       group: "Security",
       order: 10,
       showInSidebar: true,
-      icon: createElement(PolicyIcon, { fontSize: "small" }),
+      iconKey: "PolicyIcon",
     },
   },
   users: {
@@ -659,7 +627,7 @@ export const PAGE_PATHS = {
       group: "System",
       order: 30,
       showInSidebar: true,
-      icon: createElement(PeopleIcon, { fontSize: "small" }),
+      iconKey: "PeopleIcon",
     },
   },
   apiKeys: {
@@ -673,7 +641,7 @@ export const PAGE_PATHS = {
       group: "System",
       order: 35,
       showInSidebar: true,
-      icon: createElement(VpnKeyIcon, { fontSize: "small" }),
+      iconKey: "VpnKeyIcon",
     },
   },
   roles: {
@@ -687,7 +655,7 @@ export const PAGE_PATHS = {
       group: "System",
       order: 40,
       showInSidebar: true,
-      icon: createElement(AdminPanelSettingsIcon, { fontSize: "small" }),
+      iconKey: "AdminPanelSettingsIcon",
     },
   },
   docs: {
@@ -699,7 +667,7 @@ export const PAGE_PATHS = {
       group: "Help",
       order: 10,
       showInSidebar: true,
-      icon: createElement(MenuBookIcon, { fontSize: "small" }),
+      iconKey: "MenuBookIcon",
     },
   },
   settings: {
@@ -711,7 +679,7 @@ export const PAGE_PATHS = {
       group: "Settings",
       order: 10,
       showInSidebar: false,
-      icon: createElement(SettingsIcon, { fontSize: "small" }),
+      iconKey: "SettingsIcon",
     },
   },
 } as const satisfies Record<string, PagePathConfig>;
@@ -729,4 +697,11 @@ export function isHiddenByCapability(
 }
 
 /** Sidebar section display order. Sections not listed here won't appear. */
-export const NAV_SECTION_ORDER: NavGroup[] = ["Data", "Workspace", "Security", "System", "Help"];
+export const NAV_SECTION_ORDER: NavGroup[] = [
+  "Data",
+  "Workspace",
+  "Security",
+  "System",
+  "Help",
+  "Settings",
+];

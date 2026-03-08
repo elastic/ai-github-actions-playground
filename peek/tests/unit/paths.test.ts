@@ -56,7 +56,7 @@ describe("PAGE_PATHS", () => {
   it("every sidebar-visible manifest entry has a non-null icon", () => {
     for (const [page, config] of entries) {
       if (config.nav.showInSidebar) {
-        expect(config.nav.icon, `${page} is sidebar-visible but has no icon`).toBeTruthy();
+        expect(config.nav.iconKey, `${page} is sidebar-visible but has no icon`).toBeTruthy();
       }
     }
   });

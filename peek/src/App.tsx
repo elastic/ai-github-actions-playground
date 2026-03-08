@@ -41,7 +41,8 @@ import ContentSkeleton from "./components/ContentSkeleton";
 import ErrorBoundary from "./components/ErrorBoundary";
 import PersesProviders from "./components/perses/PersesProviders";
 import LLMKeyNudgeBanner from "./components/LLMKeyNudgeBanner";
-import { PAGE_MANIFEST, type PageConfig } from "./routes/manifest";
+import { PAGE_MANIFEST } from "./routes/manifest";
+import { PAGE_PATHS, type PagePathConfig } from "./routes/paths";
 
 const currentYear = new Date().getFullYear();
 
@@ -66,7 +67,7 @@ export default function App() {
 
   const location = useLocation();
   useEffect(() => {
-    const match = Object.values(PAGE_MANIFEST).find((p) => matchPath(p.path, location.pathname));
+    const match = Object.values(PAGE_PATHS).find((p) => matchPath(p.path, location.pathname));
     if (match) {
       document.title = `${match.nav.label} — Elastic Peek`;
       return;
@@ -164,9 +165,10 @@ export default function App() {
                 }}
               >
                 <Routes>
-                  {Object.entries(PAGE_MANIFEST).map(([, config]) => {
-                    const pageConfig: PageConfig = config;
-                    const PageComponent = pageConfig.component;
+                  {Object.entries(PAGE_MANIFEST).map(([pageId, Component]) => {
+                    const pageConfig = PAGE_PATHS[
+                      pageId as keyof typeof PAGE_PATHS
+                    ] as PagePathConfig;
                     const skeletonVariant = pageConfig.skeletonVariant;
                     const fallback = skeletonVariant ? (
                       <ContentSkeleton variant={skeletonVariant} />
@@ -183,7 +185,7 @@ export default function App() {
                           ) : (
                             <ErrorBoundary>
                               <Suspense fallback={fallback}>
-                                <PageComponent />
+                                <Component />
                               </Suspense>
                             </ErrorBoundary>
                           )

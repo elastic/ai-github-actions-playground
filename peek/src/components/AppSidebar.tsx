@@ -10,11 +10,40 @@ import IconButton from "@mui/material/IconButton";
 import Divider from "@mui/material/Divider";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
-import SettingsIcon from "@mui/icons-material/Settings";
-import ChatIcon from "@mui/icons-material/Chat";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import DashboardIcon from "@mui/icons-material/Dashboard";
+import SearchIcon from "@mui/icons-material/Search";
+import ExploreIcon from "@mui/icons-material/Explore";
+import TimelineIcon from "@mui/icons-material/Timeline";
+import TerminalIcon from "@mui/icons-material/Terminal";
+import ChatIcon from "@mui/icons-material/Chat";
+import InfoIcon from "@mui/icons-material/Info";
+import RocketLaunchIcon from "@mui/icons-material/RocketLaunch";
+import DatasetIcon from "@mui/icons-material/Dataset";
+import PeopleIcon from "@mui/icons-material/People";
+import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
+import MenuBookIcon from "@mui/icons-material/MenuBook";
+import SecurityIcon from "@mui/icons-material/Security";
+import SettingsIcon from "@mui/icons-material/Settings";
+import SpeedIcon from "@mui/icons-material/Speed";
+import AccountTreeIcon from "@mui/icons-material/AccountTree";
+import StorageIcon from "@mui/icons-material/Storage";
+import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
+import PendingActionsIcon from "@mui/icons-material/PendingActions";
+import MemoryIcon from "@mui/icons-material/Memory";
+import ViewModuleIcon from "@mui/icons-material/ViewModule";
+import ShieldIcon from "@mui/icons-material/Shield";
+import VpnKeyIcon from "@mui/icons-material/VpnKey";
+import PolicyIcon from "@mui/icons-material/Policy";
+import MiscellaneousServicesIcon from "@mui/icons-material/MiscellaneousServices";
+import SubjectIcon from "@mui/icons-material/Subject";
+import CloudIcon from "@mui/icons-material/Cloud";
+import DnsIcon from "@mui/icons-material/Dns";
+import DescriptionIcon from "@mui/icons-material/Description";
+import BugReportIcon from "@mui/icons-material/BugReport";
+
 import { useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useShallow } from "zustand/react/shallow";
@@ -34,7 +63,7 @@ import { useUIStore } from "../store/useUIStore";
 interface NavItem {
   label: string;
   page: PageId;
-  icon: React.ReactNode;
+  iconKey?: string;
   requiresConnection?: boolean;
   requiredCapability?: keyof UserCapabilities;
 }
@@ -52,6 +81,39 @@ interface AppSidebarProps {
   onRequestReset?: () => void;
 }
 
+const iconKeyToComponent: Record<string, React.ReactNode> = {
+  DashboardIcon: <DashboardIcon fontSize="small" />,
+  SearchIcon: <SearchIcon fontSize="small" />,
+  ExploreIcon: <ExploreIcon fontSize="small" />,
+  TimelineIcon: <TimelineIcon fontSize="small" />,
+  TerminalIcon: <TerminalIcon fontSize="small" />,
+  ChatIcon: <ChatIcon fontSize="small" />,
+  InfoIcon: <InfoIcon fontSize="small" />,
+  RocketLaunchIcon: <RocketLaunchIcon fontSize="small" />,
+  DatasetIcon: <DatasetIcon fontSize="small" />,
+  PeopleIcon: <PeopleIcon fontSize="small" />,
+  AdminPanelSettingsIcon: <AdminPanelSettingsIcon fontSize="small" />,
+  MenuBookIcon: <MenuBookIcon fontSize="small" />,
+  SecurityIcon: <SecurityIcon fontSize="small" />,
+  SettingsIcon: <SettingsIcon fontSize="small" />,
+  SpeedIcon: <SpeedIcon fontSize="small" />,
+  AccountTreeIcon: <AccountTreeIcon fontSize="small" />,
+  StorageIcon: <StorageIcon fontSize="small" />,
+  HealthAndSafetyIcon: <HealthAndSafetyIcon fontSize="small" />,
+  PendingActionsIcon: <PendingActionsIcon fontSize="small" />,
+  MemoryIcon: <MemoryIcon fontSize="small" />,
+  ViewModuleIcon: <ViewModuleIcon fontSize="small" />,
+  ShieldIcon: <ShieldIcon fontSize="small" />,
+  VpnKeyIcon: <VpnKeyIcon fontSize="small" />,
+  PolicyIcon: <PolicyIcon fontSize="small" />,
+  MiscellaneousServicesIcon: <MiscellaneousServicesIcon fontSize="small" />,
+  SubjectIcon: <SubjectIcon fontSize="small" />,
+  CloudIcon: <CloudIcon fontSize="small" />,
+  DnsIcon: <DnsIcon fontSize="small" />,
+  DescriptionIcon: <DescriptionIcon fontSize="small" />,
+  BugReportIcon: <BugReportIcon fontSize="small" />,
+};
+
 function buildNavSections(): NavSection[] {
   const groups = new Map<string, NavItem[]>();
 
@@ -61,7 +123,7 @@ function buildNavSections(): NavSection[] {
     items.push({
       label: config.nav.label,
       page,
-      icon: config.nav.icon,
+      iconKey: config.nav.iconKey,
       requiresConnection: config.requiresConnection,
       requiredCapability: config.requiredCapability,
     });
@@ -232,7 +294,7 @@ export default function AppSidebar({
                           color: isActive ? "primary.main" : "inherit",
                         }}
                       >
-                        {item.icon}
+                        {item.iconKey ? iconKeyToComponent[item.iconKey] : null}
                       </ListItemIcon>
                       {!isCollapsed && (
                         <ListItemText
