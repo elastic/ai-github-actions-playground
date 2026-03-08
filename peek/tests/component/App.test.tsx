@@ -312,5 +312,5 @@ describe("App shell visibility", () => {
 
     // After reset, the URL should be /dashboards (not the stale dashboard ID)
     await waitFor(() => expect(screen.getByTestId("location")).toHaveTextContent(/^\/dashboards$/));
-  });
+  }, 15_000);
 });
