@@ -1,5 +1,6 @@
 import { type ElasticsearchClient } from "./es";
 import { extractHits, extractTotal, gracefulSearch } from "./es/searchHelpers";
+import { z } from "zod";
 
 // ---------------------------------------------------------------------------
 // Shared helpers
@@ -41,6 +42,156 @@ function readNested(source: Record<string, unknown>, path: string[]): unknown {
   }
   return current;
 }
+
+function parseFleetSchema<T>(schema: z.ZodType<T>, data: unknown, label: string): T {
+  const parsed = schema.safeParse(data);
+  if (parsed.success) {
+    return parsed.data;
+  }
+  const issues = parsed.error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`);
+  throw new Error(`Unexpected ${label} response shape: ${issues.join("; ")}`);
+}
+
+const fleetAgentsUnhealthyReasonSchema = z
+  .object({
+    input: z.number().optional().default(0),
+    output: z.number().optional().default(0),
+    other: z.number().optional().default(0),
+  })
+  .passthrough();
+
+const fleetAgentsStatusSchema = z
+  .object({
+    total: z.number().optional().default(0),
+    healthy: z.number().optional().default(0),
+    unhealthy: z.number().optional().default(0),
+    offline: z.number().optional().default(0),
+    updating: z.number().optional().default(0),
+    inactive: z.number().optional().default(0),
+    enrolled: z.number().optional().default(0),
+    unenrolled: z.number().optional().default(0),
+    unhealthy_reason: fleetAgentsUnhealthyReasonSchema
+      .optional()
+      .default({ input: 0, output: 0, other: 0 }),
+  })
+  .passthrough();
+
+const fleetOutputAggregationsSchema = z.object({
+  buckets: z
+    .array(
+      z.object({
+        key: z.string(),
+        latest: z.object({
+          hits: z.object({
+            hits: z.array(
+              z.object({
+                _source: z.record(z.string(), z.unknown()).optional(),
+              }),
+            ),
+          }),
+        }),
+      }),
+    )
+    .optional(),
+});
+
+const fleetOutputSourceSchema = z
+  .object({
+    output: z.string().optional(),
+    state: z.string().optional(),
+    message: z.string().optional(),
+    "@timestamp": z.string().optional(),
+  })
+  .passthrough();
+
+const inventoryAggregationsSchema = z.object({
+  agent_count: z.object({ value: z.number().optional() }).optional(),
+  error_agents: z
+    .object({ count: z.object({ value: z.number().optional() }).optional() })
+    .optional(),
+  agents: z
+    .object({
+      buckets: z
+        .array(
+          z.object({
+            key: z.string(),
+            doc_count: z.number(),
+            latest: z.object({
+              hits: z.object({
+                hits: z.array(z.object({ _source: z.record(z.string(), z.unknown()).optional() })),
+              }),
+            }),
+            errors: z.object({ doc_count: z.number() }),
+          }),
+        )
+        .optional(),
+    })
+    .optional(),
+});
+
+const actionSourceSchema = z
+  .object({
+    action_id: z.string().optional(),
+    type: z.string().optional(),
+    agents: z.array(z.string()).optional(),
+    expiration: z.string().optional(),
+    data: z.record(z.string(), z.unknown()).optional(),
+    "@timestamp": z.string().optional(),
+  })
+  .passthrough();
+
+const actionResultSourceSchema = z
+  .object({
+    action_id: z.string().optional(),
+    agent_id: z.string().optional(),
+    error: z.string().optional(),
+    completed_at: z.string().optional(),
+  })
+  .passthrough();
+
+const agentLogSourceSchema = z
+  .object({
+    "@timestamp": z.string().optional(),
+    log: z.object({ level: z.string().optional() }).optional(),
+    agent: z.object({ id: z.string().optional() }).optional(),
+    message: z.string().optional(),
+    component: z.string().optional(),
+  })
+  .passthrough();
+
+const agentMetricSourceSchema = z
+  .object({
+    "@timestamp": z.string().optional(),
+    system: z
+      .object({
+        process: z
+          .object({
+            cpu: z
+              .object({ total: z.object({ value: z.number().optional() }).optional() })
+              .optional(),
+            memory: z.object({ size: z.number().optional() }).optional(),
+            fd: z.object({ open: z.number().optional() }).optional(),
+          })
+          .optional(),
+      })
+      .optional(),
+    beat: z
+      .object({
+        stats: z
+          .object({
+            libbeat: z
+              .object({
+                output: z
+                  .object({ events: z.object({ total: z.number().optional() }).optional() })
+                  .optional(),
+              })
+              .optional(),
+          })
+          .optional(),
+      })
+      .optional(),
+  })
+  .passthrough();
 
 // ---------------------------------------------------------------------------
 // Fleet Agent types (from fleet-agents* simulator index)
@@ -305,22 +456,23 @@ export async function loadFleetServerStatus(
   const hits = extractHits(data);
   if (hits.length === 0) return null;
   const source = hits[0]!._source;
-  const agents = readNested(source, ["fleet", "agents"]) as Record<string, unknown> | undefined;
-  if (!agents) return null;
-  const reasons = (agents.unhealthy_reason ?? {}) as Record<string, unknown>;
+  const nestedAgents = readNested(source, ["fleet", "agents"]);
+  if (!nestedAgents) return null;
+  const agents = parseFleetSchema(fleetAgentsStatusSchema, nestedAgents, "Fleet server status");
+  const reasons = agents.unhealthy_reason;
   return {
-    total: (agents.total as number) ?? 0,
-    healthy: (agents.healthy as number) ?? 0,
-    unhealthy: (agents.unhealthy as number) ?? 0,
-    offline: (agents.offline as number) ?? 0,
-    updating: (agents.updating as number) ?? 0,
-    inactive: (agents.inactive as number) ?? 0,
-    enrolled: (agents.enrolled as number) ?? 0,
-    unenrolled: (agents.unenrolled as number) ?? 0,
+    total: agents.total,
+    healthy: agents.healthy,
+    unhealthy: agents.unhealthy,
+    offline: agents.offline,
+    updating: agents.updating,
+    inactive: agents.inactive,
+    enrolled: agents.enrolled,
+    unenrolled: agents.unenrolled,
     unhealthyReason: {
-      input: (reasons.input as number) ?? 0,
-      output: (reasons.output as number) ?? 0,
-      other: (reasons.other as number) ?? 0,
+      input: reasons.input,
+      output: reasons.output,
+      other: reasons.other,
     },
     timestamp: readNestedString(source, ["@timestamp"], ""),
   };
@@ -382,20 +534,23 @@ export async function loadFleetOutputHealth(
     query: { match_all: {} },
   });
   if (!data?.aggregations) return [];
-  const byOutput = data.aggregations.by_output as {
-    buckets?: Array<{
-      key: string;
-      latest: { hits: { hits: Array<{ _source: Record<string, unknown> }> } };
-    }>;
-  };
+  const byOutput = parseFleetSchema(
+    fleetOutputAggregationsSchema,
+    data.aggregations.by_output,
+    "Fleet output health aggregation",
+  );
   if (!byOutput?.buckets) return [];
   return byOutput.buckets.map((bucket) => {
-    const source = bucket.latest.hits.hits[0]?._source ?? {};
+    const source = parseFleetSchema(
+      fleetOutputSourceSchema,
+      bucket.latest.hits.hits[0]?._source ?? {},
+      "Fleet output health document",
+    );
     return {
-      output: (source.output as string) ?? bucket.key,
-      state: (source.state as string) ?? "UNKNOWN",
-      message: (source.message as string) ?? "",
-      timestamp: (source["@timestamp"] as string) ?? "",
+      output: source.output ?? bucket.key,
+      state: source.state ?? "UNKNOWN",
+      message: source.message ?? "",
+      timestamp: source["@timestamp"] ?? "",
     };
   });
 }
@@ -456,18 +611,14 @@ export async function loadElasticAgentInventory(
     },
   });
   if (!data?.aggregations) return { agents: [], total: 0, errorAgentTotal: 0 };
-  const agentCount = data.aggregations.agent_count as { value?: number } | undefined;
-  const errorAgentCount = data.aggregations.error_agents as
-    | { count?: { value?: number } }
-    | undefined;
-  const agg = data.aggregations.agents as {
-    buckets?: Array<{
-      key: string;
-      doc_count: number;
-      latest: { hits: { hits: Array<{ _source: Record<string, unknown> }> } };
-      errors: { doc_count: number };
-    }>;
-  };
+  const aggData = parseFleetSchema(
+    inventoryAggregationsSchema,
+    data.aggregations,
+    "Elastic Agent inventory aggregation",
+  );
+  const agentCount = aggData.agent_count;
+  const errorAgentCount = aggData.error_agents;
+  const agg = aggData.agents;
   if (!agg?.buckets) {
     return {
       agents: [],
@@ -544,14 +695,12 @@ export async function loadElasticAgentInfo(
     },
   });
   if (!data?.aggregations) return null;
-  const agg = data.aggregations.agents as {
-    buckets?: Array<{
-      key: string;
-      doc_count: number;
-      latest: { hits: { hits: Array<{ _source: Record<string, unknown> }> } };
-      errors: { doc_count: number };
-    }>;
-  };
+  const aggData = parseFleetSchema(
+    inventoryAggregationsSchema,
+    data.aggregations,
+    "Elastic Agent info aggregation",
+  );
+  const agg = aggData.agents;
   const bucket = agg?.buckets?.[0];
   if (!bucket) return null;
   const source = bucket.latest.hits.hits[0]?._source ?? {};
@@ -593,13 +742,22 @@ export async function loadElasticAgentLogs(
     _source: ["@timestamp", "log.level", "message", "component", "agent.id"],
     query: { bool: { must } },
   });
-  return extractHits(data).map((hit) => ({
-    timestamp: readNestedString(hit._source, ["@timestamp"], ""),
-    level: readNestedString(hit._source, ["log", "level"], "info"),
-    message: (hit._source.message as string) ?? "",
-    component: (hit._source.component as string) ?? "",
-    agentId: readNestedString(hit._source, ["agent", "id"], agentId),
-  }));
+  return extractHits(data).map((hit) => {
+    const source = parseFleetSchema(agentLogSourceSchema, hit._source, "Elastic Agent logs");
+    return {
+      timestamp: source["@timestamp"] ?? "",
+      level:
+        typeof source.log?.level === "string" && source.log.level.length > 0
+          ? source.log.level
+          : "info",
+      message: source.message ?? "",
+      component: source.component ?? "",
+      agentId:
+        typeof source.agent?.id === "string" && source.agent.id.length > 0
+          ? source.agent.id
+          : agentId,
+    };
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -628,25 +786,18 @@ export async function loadElasticAgentMetrics(
     },
   });
   return extractHits(data).map((hit) => {
-    const source = hit._source;
-    const ts = source["@timestamp"];
-    const systemProcess = (source.system as { process?: Record<string, unknown> } | undefined)
-      ?.process;
-    const cpuVal = (systemProcess?.cpu as { total?: { value?: unknown } } | undefined)?.total
-      ?.value;
-    const memVal = (systemProcess?.memory as { size?: unknown } | undefined)?.size;
-    const fdVal = (systemProcess?.fd as { open?: unknown } | undefined)?.open;
-    const eventsVal = (
-      source.beat as {
-        stats?: { libbeat?: { output?: { events?: { total?: unknown } } } };
-      }
-    )?.stats?.libbeat?.output?.events?.total;
+    const source = parseFleetSchema(agentMetricSourceSchema, hit._source, "Elastic Agent metrics");
+    const systemProcess = source.system?.process;
+    const cpuVal = systemProcess?.cpu?.total?.value;
+    const memVal = systemProcess?.memory?.size;
+    const fdVal = systemProcess?.fd?.open;
+    const eventsVal = source.beat?.stats?.libbeat?.output?.events?.total;
     return {
-      timestamp: typeof ts === "string" && ts.length > 0 ? ts : "",
-      cpuPct: typeof cpuVal === "number" ? cpuVal : null,
-      memoryPct: typeof memVal === "number" ? memVal : null,
-      handles: typeof fdVal === "number" ? fdVal : null,
-      eventsRate: typeof eventsVal === "number" ? eventsVal : null,
+      timestamp: source["@timestamp"] ?? "",
+      cpuPct: cpuVal ?? null,
+      memoryPct: memVal ?? null,
+      handles: fdVal ?? null,
+      eventsRate: eventsVal ?? null,
     };
   });
 }
@@ -662,15 +813,17 @@ export async function loadFleetActions(client: ElasticsearchClient): Promise<Fle
     _source: ["action_id", "type", "agents", "@timestamp", "expiration", "data"],
     query: { match_all: {} },
   });
-  return extractHits(data).map((hit) => ({
-    id: (hit._source.action_id as string) ?? hit._id ?? "",
-    type: (hit._source.type as string) ?? "UNKNOWN",
-    agents: Array.isArray(hit._source.agents) ? (hit._source.agents as string[]) : [],
-    createdAt: readNestedString(hit._source, ["@timestamp"], ""),
-    expiration:
-      typeof hit._source.expiration === "string" ? (hit._source.expiration as string) : null,
-    data: (hit._source.data as Record<string, unknown>) ?? {},
-  }));
+  return extractHits(data).map((hit) => {
+    const source = parseFleetSchema(actionSourceSchema, hit._source, "Fleet actions");
+    return {
+      id: source.action_id ?? hit._id ?? "",
+      type: source.type ?? "UNKNOWN",
+      agents: source.agents ?? [],
+      createdAt: source["@timestamp"] ?? "",
+      expiration: source.expiration ?? null,
+      data: source.data ?? {},
+    };
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -686,11 +839,13 @@ export async function loadFleetActionResults(
     _source: ["action_id", "agent_id", "error", "completed_at", "@timestamp"],
     query: { match_all: {} },
   });
-  return extractHits(data).map((hit) => ({
-    actionId: (hit._source.action_id as string) ?? "",
-    agentId: (hit._source.agent_id as string) ?? "",
-    error: typeof hit._source.error === "string" ? (hit._source.error as string) : null,
-    completedAt:
-      (hit._source.completed_at as string) ?? readNestedString(hit._source, ["@timestamp"], ""),
-  }));
+  return extractHits(data).map((hit) => {
+    const source = parseFleetSchema(actionResultSourceSchema, hit._source, "Fleet action results");
+    return {
+      actionId: source.action_id ?? "",
+      agentId: source.agent_id ?? "",
+      error: source.error ?? null,
+      completedAt: source.completed_at ?? readNestedString(hit._source, ["@timestamp"], ""),
+    };
+  });
 }
