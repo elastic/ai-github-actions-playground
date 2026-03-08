@@ -1,6 +1,7 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect } from "react";
 
 import type { SlotInsight } from "../types/insightSlots";
+import { useInsightStatusStore } from "../store/useInsightStatusStore";
 
 import { InsightSlotCtx } from "./InsightSlotContextStore";
 import type { InsightSlotContextValue } from "./InsightSlotContextStore";
@@ -20,6 +21,10 @@ export interface InsightSlotProviderProps {
  * Wrap a page component with this provider and pass the result of
  * `usePageSlotInsights`.  Children consume individual slot insights
  * via `useSlotInsight(slotId)`.
+ *
+ * Also syncs insight status to the global {@link useInsightStatusStore}
+ * so that the footer status indicator can display loading progress and
+ * insight counts without needing direct access to page-level context.
  */
 export function InsightSlotProvider({
   summary,
@@ -41,6 +46,21 @@ export function InsightSlotProvider({
     () => ({ summary, insightsBySlot, loading, error, refresh }),
     [summary, insightsBySlot, loading, error, refresh],
   );
+
+  // Sync page-level insight status to the global store for the footer.
+  const syncFromProvider = useInsightStatusStore((s) => s.syncFromProvider);
+  const slotIds = useMemo(() => insights.map((insight) => insight.slotId), [insights]);
+  useEffect(() => {
+    syncFromProvider({ loading, totalInsights: insights.length, error, slotIds });
+  }, [syncFromProvider, loading, insights.length, error, slotIds]);
+
+  // Clear global status on unmount (page navigation).
+  const resetInsightStatus = useInsightStatusStore((s) => s.resetInsightStatus);
+  useEffect(() => {
+    return () => {
+      resetInsightStatus();
+    };
+  }, [resetInsightStatus]);
 
   return React.createElement(InsightSlotCtx.Provider, { value }, children);
 }
