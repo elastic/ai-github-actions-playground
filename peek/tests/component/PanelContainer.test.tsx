@@ -81,12 +81,9 @@ describe("PanelContainer", () => {
 
     await screen.findByText("Visualization mock");
 
-    // eslint-disable-next-line testing-library/no-node-access -- icon button lacks accessible name
-    const downloadButton = screen.getByTestId("DownloadIcon").closest("button");
-    expect(downloadButton).not.toBeNull();
-
+    const downloadButton = screen.getByRole("button", { name: "Download PNG" });
     await waitFor(() => expect(downloadButton).toBeEnabled());
-    await user.click(downloadButton!);
+    await user.click(downloadButton);
 
     expect(click).toHaveBeenCalledTimes(1);
     expect(anchor.href).toContain("data:image/png;base64,ZmFrZQ==");
