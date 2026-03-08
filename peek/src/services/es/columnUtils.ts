@@ -25,6 +25,16 @@ export function getColumnIndex(lookup: Map<string, number>, ...aliases: string[]
   return -1;
 }
 
+export function findColumnIndex(
+  columns: ReadonlyArray<{ name: string }>,
+  ...aliases: string[]
+): number {
+  for (let i = 0; i < columns.length; i++) {
+    if (aliases.includes(columns[i]!.name)) return i;
+  }
+  return -1;
+}
+
 export function getRowValue(row: unknown[], index: number): unknown {
   return index >= 0 && index < row.length ? row[index] : null;
 }

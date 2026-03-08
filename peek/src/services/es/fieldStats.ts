@@ -99,8 +99,8 @@ export function buildTopValuesQuery(
   const escapedField = escapeEsqlIdentifier(field);
   return (
     `FROM ${indexPattern} | LIMIT ${sampleSize} | ` +
-    `STATS count = COUNT(*) BY ${escapedField} | ` +
-    `SORT count DESC | LIMIT ${limit}`
+    `STATS agg_count = COUNT(*) BY group_value = ${escapedField} | ` +
+    `SORT agg_count DESC | LIMIT ${limit}`
   );
 }
 
@@ -164,8 +164,8 @@ export async function fetchFieldStats(
     const topQuery = buildTopValuesQuery(indexPattern, fieldName);
     const topResp = await client.query({ query: topQuery }, signal);
     const topLookup = buildColumnLookup(topResp.columns);
-    const countIdx = getColumnIndex(topLookup, "count");
-    const fieldIdx = getColumnIndex(topLookup, fieldName);
+    const countIdx = getColumnIndex(topLookup, "agg_count");
+    const fieldIdx = getColumnIndex(topLookup, "group_value");
     if (countIdx >= 0 && fieldIdx >= 0) {
       result.topValues = topResp.values
         .filter((r) => getRowValue(r, fieldIdx) != null)

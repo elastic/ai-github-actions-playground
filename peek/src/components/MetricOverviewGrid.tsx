@@ -65,7 +65,9 @@ function buildSparklineOption(
     dateIdx >= 0
       ? data.values.map((row) => {
           const timestamp = getRowValue(row, dateIdx);
-          return timestamp ? new Date(String(timestamp)).getTime() : null;
+          return timestamp == null || timestamp === ""
+            ? null
+            : new Date(String(timestamp)).getTime();
         })
       : data.values.map((_, i) => i);
 

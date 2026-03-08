@@ -4,7 +4,12 @@ import { EditorView } from "@codemirror/view";
 import { useQueries } from "@tanstack/react-query";
 
 import { ElasticsearchClient, getFieldValues } from "../../services/es";
-import { buildColumnLookup, getColumnIndex, getRowValue } from "../../services/es/columnUtils";
+import {
+  buildColumnLookup,
+  findColumnIndex,
+  getColumnIndex,
+  getRowValue,
+} from "../../services/es/columnUtils";
 import { useConnectionStore } from "../../store/useConnectionStore";
 import { useThemeStore } from "../../store/useThemeStore";
 import { useSearchPanelUIStore } from "../../store/useSearchPanelUIStore";
@@ -132,7 +137,7 @@ export function useLogsPageState() {
 
   const histogramBuckets = useMemo<HistogramBucket[]>(() => {
     if (!result) return [];
-    const timestampIndex = getColumnIndex(buildColumnLookup(result.columns), TIMESTAMP_FIELD);
+    const timestampIndex = findColumnIndex(result.columns, TIMESTAMP_FIELD);
     if (timestampIndex < 0) return [];
     const bucketCounts = new Map<number, number>();
     for (const row of result.values) {

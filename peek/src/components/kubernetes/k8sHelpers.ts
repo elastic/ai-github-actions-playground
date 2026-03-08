@@ -2,7 +2,7 @@
  * Typed row models and ES|QL response parsers for Kubernetes observability pages.
  */
 
-import { buildColumnLookup, getColumnIndex, getRowValue } from "../../services/es/columnUtils";
+import { findColumnIndex, getRowValue } from "../../services/es/columnUtils";
 
 // ---------------------------------------------------------------------------
 // ES|QL response shape (shared with other parsers in the codebase)
@@ -86,7 +86,7 @@ export function formatMemory(bytes: number | null): string {
 // ---------------------------------------------------------------------------
 
 function columnIndex(columns: EsqlColumn[], name: string): number {
-  const idx = getColumnIndex(buildColumnLookup(columns), name);
+  const idx = findColumnIndex(columns, name);
   if (idx === -1) throw new Error(`Column "${name}" not found in response`);
   return idx;
 }
@@ -101,7 +101,7 @@ function columnIndex(columns: EsqlColumn[], name: string): number {
  * the column is missing (graceful degradation).
  */
 export function extractServiceNames(response: EsqlResponse): string[] {
-  const idx = getColumnIndex(buildColumnLookup(response.columns), "service.name");
+  const idx = findColumnIndex(response.columns, "service.name");
   if (idx === -1) return [];
   const names = new Set<string>();
   for (const row of response.values) {

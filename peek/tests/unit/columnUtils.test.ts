@@ -1,10 +1,13 @@
 import { describe, it, expect } from "vitest";
 
 import {
+  buildColumnLookup,
+  findColumnIndex,
   isDateColumn,
   findDateColumnIndex,
   findStringColumnIndices,
   findNumericColumnIndices,
+  getColumnIndex,
 } from "../../src/services/es/columnUtils";
 import type { EsqlResponse } from "../../src/types";
 
@@ -111,5 +114,28 @@ describe("findNumericColumnIndices", () => {
       values: [],
     };
     expect(findNumericColumnIndices(data)).toEqual([]);
+  });
+});
+
+describe("findColumnIndex", () => {
+  const columns = [
+    { name: "foo", type: "keyword" },
+    { name: "bar", type: "long" },
+    { name: "foo", type: "long" },
+  ];
+
+  it("returns first matching alias index", () => {
+    expect(findColumnIndex(columns, "foo")).toBe(0);
+    expect(findColumnIndex(columns, "missing", "bar")).toBe(1);
+  });
+
+  it("returns -1 when aliases are absent", () => {
+    expect(findColumnIndex(columns, "baz")).toBe(-1);
+  });
+
+  it("matches getColumnIndex(buildColumnLookup(...)) semantics", () => {
+    const lookup = buildColumnLookup(columns);
+    expect(findColumnIndex(columns, "foo")).toBe(getColumnIndex(lookup, "foo"));
+    expect(findColumnIndex(columns, "bar")).toBe(getColumnIndex(lookup, "bar"));
   });
 });
