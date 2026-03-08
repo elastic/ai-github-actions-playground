@@ -13,3 +13,4 @@ screenshot*.png
 public/demo.json
 *.tsbuildinfo
 .eslintcache
+screenshot-feature.json

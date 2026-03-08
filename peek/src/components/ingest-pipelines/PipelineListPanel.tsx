@@ -3,7 +3,6 @@ import Paper from "@mui/material/Paper";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
-import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TableSortLabel from "@mui/material/TableSortLabel";
@@ -13,6 +12,7 @@ import type { PipelineEntry } from "../../hooks/useIngestPipelines";
 import { useTableSort } from "../../hooks/useTableSort";
 import { formatMs } from "../../utils/formatDuration";
 import EmptyState from "../EmptyState";
+import ScrollableLayout from "../ScrollableLayout";
 import SearchFilterBar from "../SearchFilterBar";
 
 type PipelineSortField =
@@ -126,16 +126,19 @@ export default function PipelineListPanel({
       variant="outlined"
       sx={{ display: "flex", flexDirection: "column", width: "100%", minHeight: 0 }}
     >
-      <SearchFilterBar
-        search={search}
-        onSearchChange={onSearchChange}
-        placeholder="Search pipelines"
-        toggleLabel="Show system pipelines"
-        toggleChecked={showSystemPipelines}
-        onToggleChange={onShowSystemPipelinesChange}
-        divider={false}
-      />
-      <TableContainer sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
+      <ScrollableLayout
+        header={
+          <SearchFilterBar
+            search={search}
+            onSearchChange={onSearchChange}
+            placeholder="Search pipelines"
+            toggleLabel="Show system pipelines"
+            toggleChecked={showSystemPipelines}
+            onToggleChange={onShowSystemPipelinesChange}
+            divider={false}
+          />
+        }
+      >
         <Table size="small" stickyHeader aria-label="Ingest pipeline list">
           <TableHead>
             <TableRow>
@@ -242,7 +245,7 @@ export default function PipelineListPanel({
             )}
           </TableBody>
         </Table>
-      </TableContainer>
+      </ScrollableLayout>
     </Paper>
   );
 }

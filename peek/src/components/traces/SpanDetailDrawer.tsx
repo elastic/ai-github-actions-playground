@@ -28,6 +28,7 @@ import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 
 import { copyToClipboard } from "../../utils/copyToClipboard";
 import EmptyState from "../EmptyState";
+import ScrollableLayout from "../ScrollableLayout";
 import { COMPONENT_HEIGHTS } from "../../types/tokens";
 
 import type { Span, SpanLink } from "./traceUtils";
@@ -263,407 +264,396 @@ export default function SpanDetailDrawer({
       onClose={onClose}
       sx={{ "& .MuiDrawer-paper": { width: 440 } }}
     >
-      <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
-        {/* Header */}
-        <Box
-          sx={{
-            display: "flex",
-            gap: 1,
-            alignItems: "center",
-            py: 1,
-            px: 2,
-            borderBottom: 1,
-            borderColor: "divider",
-          }}
-        >
-          <Box
-            sx={{
-              flexShrink: 0,
-              width: 10,
-              height: 10,
-              borderRadius: "50%",
-              bgcolor: getServiceColor(span.serviceName),
-            }}
-          />
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography variant="body2" noWrap>
-              {span.name}
-            </Typography>
-            <Typography variant="caption" color="text.secondary" noWrap>
-              {span.serviceName} • {formatSpanDuration(span.durationUs)}
-            </Typography>
+      <ScrollableLayout
+        header={
+          <>
+            {/* Header */}
+            <Box
+              sx={{
+                display: "flex",
+                gap: 1,
+                alignItems: "center",
+                py: 1,
+                px: 2,
+                borderBottom: 1,
+                borderColor: "divider",
+              }}
+            >
+              <Box
+                sx={{
+                  flexShrink: 0,
+                  width: 10,
+                  height: 10,
+                  borderRadius: "50%",
+                  bgcolor: getServiceColor(span.serviceName),
+                }}
+              />
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography variant="body2" noWrap>
+                  {span.name}
+                </Typography>
+                <Typography variant="caption" color="text.secondary" noWrap>
+                  {span.serviceName} • {formatSpanDuration(span.durationUs)}
+                </Typography>
+              </Box>
+              <IconButton size="small" aria-label="Close span detail" onClick={onClose}>
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            </Box>
+
+            {/* Tabs */}
+            <Tabs
+              value={tabIndex}
+              onChange={(_, v: number) => setTabIndex(v)}
+              variant="scrollable"
+              scrollButtons="auto"
+              sx={{ minHeight: COMPONENT_HEIGHTS.tab, borderBottom: 1, borderColor: "divider" }}
+            >
+              <Tab label="Overview" sx={{ minHeight: COMPONENT_HEIGHTS.tab, py: 0 }} />
+              <Tab label="Attributes" sx={{ minHeight: COMPONENT_HEIGHTS.tab, py: 0 }} />
+              <Tab label="Resource Attributes" sx={{ minHeight: COMPONENT_HEIGHTS.tab, py: 0 }} />
+              <Tab label="Links" sx={{ minHeight: COMPONENT_HEIGHTS.tab, py: 0 }} />
+              <Tab label="Events" sx={{ minHeight: COMPONENT_HEIGHTS.tab, py: 0 }} />
+            </Tabs>
+          </>
+        }
+        footer={
+          <Box sx={{ display: "flex", gap: 1, p: 1, borderTop: 1, borderColor: "divider" }}>
+            <Button
+              size="small"
+              variant="outlined"
+              startIcon={<FilterAltIcon />}
+              onClick={() => onFilterBy(DEFAULT_FIELD_MAPPING_SERVICE, span.serviceName)}
+            >
+              Filter by service
+            </Button>
+            {onOpenInQueryLab && (
+              <Button
+                size="small"
+                variant="contained"
+                onClick={() =>
+                  onOpenInQueryLab({
+                    traceId: span.traceId,
+                    spanId: span.spanId,
+                    timestamp: span.timestamp,
+                  })
+                }
+              >
+                Open in Query Lab
+              </Button>
+            )}
           </Box>
-          <IconButton size="small" aria-label="Close span detail" onClick={onClose}>
-            <CloseIcon fontSize="small" />
-          </IconButton>
-        </Box>
-
-        {/* Tabs */}
-        <Tabs
-          value={tabIndex}
-          onChange={(_, v: number) => setTabIndex(v)}
-          variant="scrollable"
-          scrollButtons="auto"
-          sx={{ minHeight: COMPONENT_HEIGHTS.tab, borderBottom: 1, borderColor: "divider" }}
-        >
-          <Tab label="Overview" sx={{ minHeight: COMPONENT_HEIGHTS.tab, py: 0 }} />
-          <Tab label="Attributes" sx={{ minHeight: COMPONENT_HEIGHTS.tab, py: 0 }} />
-          <Tab label="Resource Attributes" sx={{ minHeight: COMPONENT_HEIGHTS.tab, py: 0 }} />
-          <Tab label="Links" sx={{ minHeight: COMPONENT_HEIGHTS.tab, py: 0 }} />
-          <Tab label="Events" sx={{ minHeight: COMPONENT_HEIGHTS.tab, py: 0 }} />
-        </Tabs>
-
-        {/* Tab content */}
-        <Box sx={{ flex: 1, overflow: "auto" }}>
-          {tabIndex === 0 && (
-            <Box sx={{ p: 1 }}>
+        }
+      >
+        {tabIndex === 0 && (
+          <Box sx={{ p: 1 }}>
+            <Box sx={{ py: 0.5, px: 1 }}>
+              <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
+                Quick facts
+              </Typography>
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                <Tooltip title={span.traceId}>
+                  <Chip
+                    size="small"
+                    variant="outlined"
+                    icon={<TimelineIcon />}
+                    label={`Trace ${shortId(span.traceId)}`}
+                    onClick={() => handleCopy(span.traceId)}
+                  />
+                </Tooltip>
+                <Tooltip title={span.spanId}>
+                  <Chip
+                    size="small"
+                    variant="outlined"
+                    icon={<FingerprintIcon />}
+                    label={`Span ${shortId(span.spanId)}`}
+                    onClick={() => handleCopy(span.spanId)}
+                  />
+                </Tooltip>
+                {span.parentSpanId && (
+                  <Tooltip title={span.parentSpanId}>
+                    <Chip
+                      size="small"
+                      variant="outlined"
+                      icon={<AccountTreeIcon />}
+                      label={`Parent ${shortId(span.parentSpanId)}`}
+                      onClick={() => handleCopy(span.parentSpanId!)}
+                    />
+                  </Tooltip>
+                )}
+                <Chip
+                  size="small"
+                  variant="outlined"
+                  icon={<ScheduleIcon />}
+                  label={formatSpanDuration(span.durationUs)}
+                />
+                <Chip
+                  size="small"
+                  variant="outlined"
+                  icon={<CheckCircleOutlineIcon />}
+                  label={formatStatusLabel(span.status)}
+                />
+              </Box>
+            </Box>
+            {timelineSpans.length > 0 && (
               <Box sx={{ py: 0.5, px: 1 }}>
                 <Typography
                   variant="caption"
                   color="text.secondary"
-                  sx={{ display: "block", mb: 1 }}
+                  sx={{ display: "block", mb: 0.5 }}
                 >
-                  Quick facts
+                  Trace timeline
                 </Typography>
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                  <Tooltip title={span.traceId}>
-                    <Chip
-                      size="small"
-                      variant="outlined"
-                      icon={<TimelineIcon />}
-                      label={`Trace ${shortId(span.traceId)}`}
-                      onClick={() => handleCopy(span.traceId)}
-                    />
-                  </Tooltip>
-                  <Tooltip title={span.spanId}>
-                    <Chip
-                      size="small"
-                      variant="outlined"
-                      icon={<FingerprintIcon />}
-                      label={`Span ${shortId(span.spanId)}`}
-                      onClick={() => handleCopy(span.spanId)}
-                    />
-                  </Tooltip>
-                  {span.parentSpanId && (
-                    <Tooltip title={span.parentSpanId}>
-                      <Chip
+                <Box sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
+                  <Tooltip title="Previous span">
+                    <span>
+                      <IconButton
                         size="small"
-                        variant="outlined"
-                        icon={<AccountTreeIcon />}
-                        label={`Parent ${shortId(span.parentSpanId)}`}
-                        onClick={() => handleCopy(span.parentSpanId!)}
-                      />
-                    </Tooltip>
-                  )}
-                  <Chip
-                    size="small"
-                    variant="outlined"
-                    icon={<ScheduleIcon />}
-                    label={formatSpanDuration(span.durationUs)}
-                  />
-                  <Chip
-                    size="small"
-                    variant="outlined"
-                    icon={<CheckCircleOutlineIcon />}
-                    label={formatStatusLabel(span.status)}
-                  />
+                        aria-label="Select previous span"
+                        disabled={!canSelectPrevTimelineSpan}
+                        onClick={() =>
+                          onSelectSpan?.(timelineSpans[selectedTimelineIndex - 1]!.spanId)
+                        }
+                        sx={{ p: 0.5 }}
+                      >
+                        <ChevronLeftIcon sx={{ fontSize: 16 }} />
+                      </IconButton>
+                    </span>
+                  </Tooltip>
+                  <Box
+                    sx={{
+                      position: "relative",
+                      flex: 1,
+                      height: COMPONENT_HEIGHTS.sidebarNavItem,
+                      overflow: "hidden",
+                      borderRadius: 1,
+                      bgcolor: "action.hover",
+                    }}
+                  >
+                    {timelineSpans.map((traceSpan) => {
+                      const leftPct =
+                        ((traceSpan.startTimeUs - traceStartUs) / traceDurationUs) * 100;
+                      const widthPct = Math.max(
+                        (traceSpan.durationUs / traceDurationUs) * 100,
+                        0.5,
+                      );
+                      const isSelected = traceSpan.spanId === selectedTimelineSpanId;
+                      return (
+                        <Tooltip
+                          key={traceSpan.spanId}
+                          title={`${traceSpan.serviceName} / ${traceSpan.name} • ${formatSpanDuration(traceSpan.durationUs)}`}
+                        >
+                          <ButtonBase
+                            component="button"
+                            disabled={!canSelectTimelineSpan}
+                            aria-label={`Select span ${traceSpan.name} from service ${traceSpan.serviceName}`}
+                            sx={{
+                              position: "absolute",
+                              top: isSelected ? 8 : 10,
+                              left: `${Math.min(Math.max(leftPct, 0), 100)}%`,
+                              width: `${Math.min(widthPct, 100)}%`,
+                              minWidth: 0,
+                              height: isSelected ? 16 : 12,
+                              p: 0,
+                              outline: isSelected ? "2px solid" : "none",
+                              outlineColor: "primary.main",
+                              borderRadius: 0.5,
+                              bgcolor: getServiceColor(traceSpan.serviceName),
+                              opacity: isSelected ? 0.95 : 0.65,
+                              cursor: canSelectTimelineSpan ? "pointer" : "default",
+                            }}
+                            onClick={() => onSelectSpan?.(traceSpan.spanId)}
+                          />
+                        </Tooltip>
+                      );
+                    })}
+                  </Box>
+                  <Tooltip title="Next span">
+                    <span>
+                      <IconButton
+                        size="small"
+                        aria-label="Select next span"
+                        disabled={!canSelectNextTimelineSpan}
+                        onClick={() =>
+                          onSelectSpan?.(timelineSpans[selectedTimelineIndex + 1]!.spanId)
+                        }
+                        sx={{ p: 0.5 }}
+                      >
+                        <ChevronRightIcon sx={{ fontSize: 16 }} />
+                      </IconButton>
+                    </span>
+                  </Tooltip>
                 </Box>
               </Box>
-              {timelineSpans.length > 0 && (
-                <Box sx={{ py: 0.5, px: 1 }}>
+            )}
+            <KeyValueRow
+              label="Service"
+              value={span.serviceName}
+              onCopy={() => handleCopy(span.serviceName)}
+            />
+            <KeyValueRow label="Operation" value={span.name} onCopy={() => handleCopy(span.name)} />
+            <KeyValueRow label="Span Kind" value={span.kind} onCopy={() => handleCopy(span.kind)} />
+            <KeyValueRow
+              label="Duration"
+              value={formatSpanDuration(span.durationUs)}
+              onCopy={() => handleCopy(String(span.durationUs))}
+            />
+            <KeyValueRow
+              label="Status"
+              value={formatStatusLabel(span.status)}
+              onCopy={() => handleCopy(span.status)}
+            />
+            <KeyValueRow
+              label="Trace ID"
+              value={span.traceId}
+              onCopy={() => handleCopy(span.traceId)}
+            />
+            <KeyValueRow
+              label="Span ID"
+              value={span.spanId}
+              onCopy={() => handleCopy(span.spanId)}
+            />
+            {span.parentSpanId && (
+              <KeyValueRow
+                label="Parent Span ID"
+                value={span.parentSpanId}
+                onCopy={() => handleCopy(span.parentSpanId!)}
+              />
+            )}
+            <KeyValueRow
+              label="Timestamp"
+              value={tsDisplay}
+              onCopy={span.timestamp ? () => handleCopy(tsDisplay) : undefined}
+            />
+          </Box>
+        )}
+
+        {tabIndex === 1 && (
+          <Box sx={{ p: 1 }}>
+            {spanAttrs.length === 0 ? (
+              <EmptyState size="small" heading="No span attributes" />
+            ) : (
+              spanAttrs.map((attr) => (
+                <KeyValueRow
+                  key={attr.key}
+                  label={attr.key}
+                  value={attr.value}
+                  onFilterBy={() => onFilterBy(attr.key, attr.value)}
+                  onExclude={() => onExclude(attr.key, attr.value)}
+                  onCopy={() => handleCopy(attr.value)}
+                />
+              ))
+            )}
+          </Box>
+        )}
+
+        {tabIndex === 2 && (
+          <Box sx={{ p: 1 }}>
+            {resourceAttrs.length === 0 ? (
+              <EmptyState size="small" heading="No resource attributes" />
+            ) : (
+              resourceAttrs.map((attr) => (
+                <KeyValueRow
+                  key={attr.key}
+                  label={attr.key}
+                  value={attr.value}
+                  onFilterBy={() => onFilterBy(attr.key, attr.value)}
+                  onExclude={() => onExclude(attr.key, attr.value)}
+                  onCopy={() => handleCopy(attr.value)}
+                />
+              ))
+            )}
+          </Box>
+        )}
+
+        {tabIndex === 3 && (
+          <Box sx={{ p: 1 }}>
+            {!span.links || span.links.length === 0 ? (
+              <Typography variant="caption" color="text.secondary" sx={{ p: 1 }}>
+                No span links
+              </Typography>
+            ) : (
+              span.links.map((link: SpanLink, i: number) => (
+                <Box
+                  key={`${link.traceId}-${link.spanId}-${i}`}
+                  sx={{ mb: 1, border: 1, borderColor: "divider", borderRadius: 1 }}
+                >
                   <Typography
                     variant="caption"
-                    color="text.secondary"
-                    sx={{ display: "block", mb: 0.5 }}
+                    sx={{ display: "block", pt: 0.5, px: 1, fontWeight: 600 }}
                   >
-                    Trace timeline
+                    Link {i + 1}
                   </Typography>
-                  <Box sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
-                    <Tooltip title="Previous span">
-                      <span>
-                        <IconButton
-                          size="small"
-                          aria-label="Select previous span"
-                          disabled={!canSelectPrevTimelineSpan}
-                          onClick={() =>
-                            onSelectSpan?.(timelineSpans[selectedTimelineIndex - 1]!.spanId)
-                          }
-                          sx={{ p: 0.5 }}
-                        >
-                          <ChevronLeftIcon sx={{ fontSize: 16 }} />
-                        </IconButton>
-                      </span>
-                    </Tooltip>
-                    <Box
-                      sx={{
-                        position: "relative",
-                        flex: 1,
-                        height: COMPONENT_HEIGHTS.sidebarNavItem,
-                        overflow: "hidden",
-                        borderRadius: 1,
-                        bgcolor: "action.hover",
-                      }}
-                    >
-                      {timelineSpans.map((traceSpan) => {
-                        const leftPct =
-                          ((traceSpan.startTimeUs - traceStartUs) / traceDurationUs) * 100;
-                        const widthPct = Math.max(
-                          (traceSpan.durationUs / traceDurationUs) * 100,
-                          0.5,
-                        );
-                        const isSelected = traceSpan.spanId === selectedTimelineSpanId;
-                        return (
-                          <Tooltip
-                            key={traceSpan.spanId}
-                            title={`${traceSpan.serviceName} / ${traceSpan.name} • ${formatSpanDuration(traceSpan.durationUs)}`}
-                          >
-                            <ButtonBase
-                              component="button"
-                              disabled={!canSelectTimelineSpan}
-                              aria-label={`Select span ${traceSpan.name} from service ${traceSpan.serviceName}`}
-                              sx={{
-                                position: "absolute",
-                                top: isSelected ? 8 : 10,
-                                left: `${Math.min(Math.max(leftPct, 0), 100)}%`,
-                                width: `${Math.min(widthPct, 100)}%`,
-                                minWidth: 0,
-                                height: isSelected ? 16 : 12,
-                                p: 0,
-                                outline: isSelected ? "2px solid" : "none",
-                                outlineColor: "primary.main",
-                                borderRadius: 0.5,
-                                bgcolor: getServiceColor(traceSpan.serviceName),
-                                opacity: isSelected ? 0.95 : 0.65,
-                                cursor: canSelectTimelineSpan ? "pointer" : "default",
-                              }}
-                              onClick={() => onSelectSpan?.(traceSpan.spanId)}
-                            />
-                          </Tooltip>
-                        );
-                      })}
-                    </Box>
-                    <Tooltip title="Next span">
-                      <span>
-                        <IconButton
-                          size="small"
-                          aria-label="Select next span"
-                          disabled={!canSelectNextTimelineSpan}
-                          onClick={() =>
-                            onSelectSpan?.(timelineSpans[selectedTimelineIndex + 1]!.spanId)
-                          }
-                          sx={{ p: 0.5 }}
-                        >
-                          <ChevronRightIcon sx={{ fontSize: 16 }} />
-                        </IconButton>
-                      </span>
-                    </Tooltip>
-                  </Box>
+                  <KeyValueRow
+                    label="trace.id"
+                    value={link.traceId}
+                    onCopy={() => handleCopy(link.traceId)}
+                  />
+                  <KeyValueRow
+                    label="span.id"
+                    value={link.spanId}
+                    onCopy={() => handleCopy(link.spanId)}
+                  />
+                  {Object.entries(link.attributes).map(([k, v]) => (
+                    <KeyValueRow
+                      key={k}
+                      label={k}
+                      value={String(v)}
+                      onCopy={() => handleCopy(String(v))}
+                    />
+                  ))}
                 </Box>
-              )}
-              <KeyValueRow
-                label="Service"
-                value={span.serviceName}
-                onCopy={() => handleCopy(span.serviceName)}
-              />
-              <KeyValueRow
-                label="Operation"
-                value={span.name}
-                onCopy={() => handleCopy(span.name)}
-              />
-              <KeyValueRow
-                label="Span Kind"
-                value={span.kind}
-                onCopy={() => handleCopy(span.kind)}
-              />
-              <KeyValueRow
-                label="Duration"
-                value={formatSpanDuration(span.durationUs)}
-                onCopy={() => handleCopy(String(span.durationUs))}
-              />
-              <KeyValueRow
-                label="Status"
-                value={formatStatusLabel(span.status)}
-                onCopy={() => handleCopy(span.status)}
-              />
-              <KeyValueRow
-                label="Trace ID"
-                value={span.traceId}
-                onCopy={() => handleCopy(span.traceId)}
-              />
-              <KeyValueRow
-                label="Span ID"
-                value={span.spanId}
-                onCopy={() => handleCopy(span.spanId)}
-              />
-              {span.parentSpanId && (
-                <KeyValueRow
-                  label="Parent Span ID"
-                  value={span.parentSpanId}
-                  onCopy={() => handleCopy(span.parentSpanId!)}
-                />
-              )}
-              <KeyValueRow
-                label="Timestamp"
-                value={tsDisplay}
-                onCopy={span.timestamp ? () => handleCopy(tsDisplay) : undefined}
-              />
-            </Box>
-          )}
+              ))
+            )}
+          </Box>
+        )}
 
-          {tabIndex === 1 && (
-            <Box sx={{ p: 1 }}>
-              {spanAttrs.length === 0 ? (
-                <EmptyState size="small" heading="No span attributes" />
-              ) : (
-                spanAttrs.map((attr) => (
-                  <KeyValueRow
-                    key={attr.key}
-                    label={attr.key}
-                    value={attr.value}
-                    onFilterBy={() => onFilterBy(attr.key, attr.value)}
-                    onExclude={() => onExclude(attr.key, attr.value)}
-                    onCopy={() => handleCopy(attr.value)}
-                  />
-                ))
-              )}
-            </Box>
-          )}
-
-          {tabIndex === 2 && (
-            <Box sx={{ p: 1 }}>
-              {resourceAttrs.length === 0 ? (
-                <EmptyState size="small" heading="No resource attributes" />
-              ) : (
-                resourceAttrs.map((attr) => (
-                  <KeyValueRow
-                    key={attr.key}
-                    label={attr.key}
-                    value={attr.value}
-                    onFilterBy={() => onFilterBy(attr.key, attr.value)}
-                    onExclude={() => onExclude(attr.key, attr.value)}
-                    onCopy={() => handleCopy(attr.value)}
-                  />
-                ))
-              )}
-            </Box>
-          )}
-
-          {tabIndex === 3 && (
-            <Box sx={{ p: 1 }}>
-              {!span.links || span.links.length === 0 ? (
-                <Typography variant="caption" color="text.secondary" sx={{ p: 1 }}>
-                  No span links
-                </Typography>
-              ) : (
-                span.links.map((link: SpanLink, i: number) => (
-                  <Box
-                    key={`${link.traceId}-${link.spanId}-${i}`}
-                    sx={{ mb: 1, border: 1, borderColor: "divider", borderRadius: 1 }}
-                  >
-                    <Typography
-                      variant="caption"
-                      sx={{ display: "block", pt: 0.5, px: 1, fontWeight: 600 }}
-                    >
-                      Link {i + 1}
+        {tabIndex === 4 && (
+          <Box sx={{ p: 1 }}>
+            {!span.events || span.events.length === 0 ? (
+              <Typography variant="caption" color="text.secondary" sx={{ p: 1 }}>
+                No events
+              </Typography>
+            ) : (
+              span.events.map((event, eventIdx) => (
+                <Box
+                  key={`${event.name ?? ""}-${event.timestamp ?? ""}-${eventIdx}`}
+                  sx={{ mb: 1, border: 1, borderColor: "divider", borderRadius: 1 }}
+                >
+                  <Box sx={{ py: 0.5, px: 1, borderBottom: 1, borderColor: "divider" }}>
+                    <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                      {event.name || "(unnamed event)"}
                     </Typography>
-                    <KeyValueRow
-                      label="trace.id"
-                      value={link.traceId}
-                      onCopy={() => handleCopy(link.traceId)}
-                    />
-                    <KeyValueRow
-                      label="span.id"
-                      value={link.spanId}
-                      onCopy={() => handleCopy(link.spanId)}
-                    />
-                    {Object.entries(link.attributes).map(([k, v]) => (
-                      <KeyValueRow
-                        key={k}
-                        label={k}
-                        value={String(v)}
-                        onCopy={() => handleCopy(String(v))}
-                      />
-                    ))}
-                  </Box>
-                ))
-              )}
-            </Box>
-          )}
-
-          {tabIndex === 4 && (
-            <Box sx={{ p: 1 }}>
-              {!span.events || span.events.length === 0 ? (
-                <Typography variant="caption" color="text.secondary" sx={{ p: 1 }}>
-                  No events
-                </Typography>
-              ) : (
-                span.events.map((event, eventIdx) => (
-                  <Box
-                    key={`${event.name ?? ""}-${event.timestamp ?? ""}-${eventIdx}`}
-                    sx={{ mb: 1, border: 1, borderColor: "divider", borderRadius: 1 }}
-                  >
-                    <Box sx={{ py: 0.5, px: 1, borderBottom: 1, borderColor: "divider" }}>
-                      <Typography variant="caption" sx={{ fontWeight: 600 }}>
-                        {event.name || "(unnamed event)"}
-                      </Typography>
-                      {event.timestamp && (
-                        <Typography
-                          variant="caption"
-                          color="text.secondary"
-                          sx={{ ml: 1, fontFamily: "monospace" }}
-                        >
-                          {formatEventTimestamp(event.timestamp)}
-                        </Typography>
-                      )}
-                    </Box>
-                    {Object.keys(event.attributes).length > 0 ? (
-                      Object.entries(event.attributes).map(([key, value]) => (
-                        <KeyValueRow
-                          key={key}
-                          label={key}
-                          value={String(value)}
-                          onCopy={() => handleCopy(String(value))}
-                        />
-                      ))
-                    ) : (
-                      <Typography variant="caption" color="text.secondary" sx={{ py: 0.5, px: 1 }}>
-                        No attributes
+                    {event.timestamp && (
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ ml: 1, fontFamily: "monospace" }}
+                      >
+                        {formatEventTimestamp(event.timestamp)}
                       </Typography>
                     )}
                   </Box>
-                ))
-              )}
-            </Box>
-          )}
-        </Box>
-
-        {/* Footer actions */}
-        <Box sx={{ display: "flex", gap: 1, p: 1, borderTop: 1, borderColor: "divider" }}>
-          <Button
-            size="small"
-            variant="outlined"
-            startIcon={<FilterAltIcon />}
-            onClick={() => onFilterBy(DEFAULT_FIELD_MAPPING_SERVICE, span.serviceName)}
-          >
-            Filter by service
-          </Button>
-          {onOpenInQueryLab && (
-            <Button
-              size="small"
-              variant="contained"
-              onClick={() =>
-                onOpenInQueryLab({
-                  traceId: span.traceId,
-                  spanId: span.spanId,
-                  timestamp: span.timestamp,
-                })
-              }
-            >
-              Open in Query Lab
-            </Button>
-          )}
-        </Box>
-      </Box>
+                  {Object.keys(event.attributes).length > 0 ? (
+                    Object.entries(event.attributes).map(([key, value]) => (
+                      <KeyValueRow
+                        key={key}
+                        label={key}
+                        value={String(value)}
+                        onCopy={() => handleCopy(String(value))}
+                      />
+                    ))
+                  ) : (
+                    <Typography variant="caption" color="text.secondary" sx={{ py: 0.5, px: 1 }}>
+                      No attributes
+                    </Typography>
+                  )}
+                </Box>
+              ))
+            )}
+          </Box>
+        )}
+      </ScrollableLayout>
     </Drawer>
   );
 }

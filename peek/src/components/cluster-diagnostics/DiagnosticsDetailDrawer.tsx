@@ -1,13 +1,13 @@
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
-import Drawer from "@mui/material/Drawer";
 import Link from "@mui/material/Link";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
 import type { HealthReportIndicator } from "../../services/es";
+import DetailSurface from "../DetailSurface";
 import { indicatorStatusColor } from "./helpers";
 import type { IndicatorStatus } from "./helpers";
 
@@ -39,25 +39,15 @@ interface Props {
 
 export default function DiagnosticsDetailDrawer({ selected, onClose }: Props) {
   return (
-    <Drawer
-      anchor="right"
+    <DetailSurface
       open={Boolean(selected)}
       onClose={onClose}
-      slotProps={{
-        paper: {
-          sx: {
-            width: { xs: "100%", sm: 560 },
-            p: 2,
-            gap: 1.5,
-            display: "flex",
-            flexDirection: "column",
-          },
-        },
-      }}
+      title={selected?.name ?? "Diagnostics"}
+      ariaLabel="Close diagnostics details"
+      bodySx={{ px: 1, py: 1, display: "flex", flexDirection: "column", gap: 1.5 }}
     >
       {selected && (
         <>
-          <Typography variant="h6">{selected.name}</Typography>
           <Chip
             size="small"
             color={indicatorStatusColor(selected.status)}
@@ -193,6 +183,6 @@ export default function DiagnosticsDetailDrawer({ selected, onClose }: Props) {
           </Button>
         </>
       )}
-    </Drawer>
+    </DetailSurface>
   );
 }

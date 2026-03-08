@@ -19,7 +19,7 @@ function makeInitialCounts(): TileCounts {
 
 /**
  * Fetch a log count per dimension tile for the given time range.
- * Returns "visible" (count > 0), "hidden" (count = 0 or error), or "loading".
+ * Returns "visible" (count > 0), "hidden" (count = 0), "error" (query failed), or "loading".
  * The "All logs" tile is not included — it is always shown.
  */
 export function useLogsTileCounts(

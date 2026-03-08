@@ -404,7 +404,6 @@ describe("DiscoverPage", () => {
   });
 
   it("populates _tstart and _tend params when referenced in the query", async () => {
-    const user = userEvent.setup();
     useDashboardStore
       .getState()
       .setTimeRange({ from: "2025-06-15T11:00:00.000Z", to: "2025-06-15T12:00:00.000Z" });
@@ -416,8 +415,7 @@ describe("DiscoverPage", () => {
 
     renderDiscoverPage();
 
-    await user.click(screen.getByRole("button", { name: /run query/i }));
-
+    // Draft queries auto-run on mount, so no manual click needed
     await waitFor(() => expect(queryMock).toHaveBeenCalledTimes(1));
     expect(queryMock).toHaveBeenCalledWith(
       expect.objectContaining({
