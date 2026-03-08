@@ -79,7 +79,9 @@ jobs:
     needs: detect-conflicted-prs
     if: needs.detect-conflicted-prs.outputs.count != '0'
     permissions:
+      actions: read
       contents: write
+      discussions: write
       issues: write
       pull-requests: write
     strategy:
