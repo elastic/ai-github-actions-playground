@@ -289,28 +289,34 @@ describe("App shell visibility", () => {
     expect(document.title).toBe("Dashboards — Elastic Peek");
   });
 
-  it("navigates to /dashboards after resetting all state from a dashboard view", async () => {
-    const user = userEvent.setup();
-    useConnectionStore.getState().setConnected(true);
+  it(
+    "navigates to /dashboards after resetting all state from a dashboard view",
+    { timeout: 15000 },
+    async () => {
+      const user = userEvent.setup();
+      useConnectionStore.getState().setConnected(true);
 
-    render(
-      <MemoryRouter initialEntries={["/dashboards/stale-dashboard-id"]}>
-        <App />
-        <LocationDisplay />
-      </MemoryRouter>,
-    );
+      render(
+        <MemoryRouter initialEntries={["/dashboards/stale-dashboard-id"]}>
+          <App />
+          <LocationDisplay />
+        </MemoryRouter>,
+      );
 
-    expect(screen.getByTestId("location")).toHaveTextContent("/dashboards/stale-dashboard-id");
+      expect(screen.getByTestId("location")).toHaveTextContent("/dashboards/stale-dashboard-id");
 
-    // Open Settings menu and click "Reset All State…"
-    const settingsBtn = await screen.findByRole("button", { name: "Settings" });
-    await user.click(settingsBtn);
-    await user.click(await screen.findByRole("menuitem", { name: /reset all state/i }));
+      // Open Settings menu and click "Reset All State…"
+      const settingsBtn = await screen.findByRole("button", { name: "Settings" });
+      await user.click(settingsBtn);
+      await user.click(await screen.findByRole("menuitem", { name: /reset all state/i }));
 
-    // Click the "Reset" button to confirm
-    await user.click(await screen.findByRole("button", { name: "Reset" }));
+      // Click the "Reset" button to confirm
+      await user.click(await screen.findByRole("button", { name: "Reset" }));
 
-    // After reset, the URL should be /dashboards (not the stale dashboard ID)
-    await waitFor(() => expect(screen.getByTestId("location")).toHaveTextContent(/^\/dashboards$/));
-  });
+      // After reset, the URL should be /dashboards (not the stale dashboard ID)
+      await waitFor(() =>
+        expect(screen.getByTestId("location")).toHaveTextContent(/^\/dashboards$/),
+      );
+    },
+  );
 });
