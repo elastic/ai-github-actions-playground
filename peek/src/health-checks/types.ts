@@ -5,6 +5,7 @@ import type {
   ClusterHealthResponse,
   ClusterPendingTasksResponse,
   GetApiKeysResponse,
+  HealthReportResponse,
   IlmExplainResponse,
   IlmPolicyResponse,
   NodesStatsResponse,
@@ -27,7 +28,8 @@ export type HealthQueryGroup =
   | "ilmCore"
   | "templatesCore"
   | "recoveryCore"
-  | "securityCore";
+  | "securityCore"
+  | "healthReport";
 
 export interface HealthSnapshot {
   fetchedAt: string;
@@ -62,6 +64,9 @@ export interface HealthSnapshot {
     };
     securityCore: {
       apiKeys: GetApiKeysResponse | null;
+    };
+    healthReport: {
+      healthReport: HealthReportResponse | null;
     };
   }>;
   errors: Partial<Record<HealthQueryGroup, string>>;
