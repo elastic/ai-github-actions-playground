@@ -977,6 +977,7 @@ export class ElasticsearchClient {
     path: string,
     body?: string,
     signal?: AbortSignal,
+    timeoutMs?: number,
   ): Promise<{ status: number; body: unknown }> {
     return executeRawRequest(
       (url, hdrs, opts) => this._doFetch(url, hdrs, opts),
@@ -986,6 +987,7 @@ export class ElasticsearchClient {
       path,
       body,
       signal,
+      timeoutMs,
     );
   }
 }

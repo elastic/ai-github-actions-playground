@@ -214,15 +214,102 @@ describe("executeRawRequest", () => {
         });
       });
 
-      const pending = executeRawRequest(doFetch, BASE_URL, HEADERS, "GET", "/");
-      const assertion = expect(pending).rejects.toEqual(
-        expect.objectContaining({
-          status: 0,
-          message: expect.stringContaining("Request timed out"),
-        }),
+      const pending = executeRawRequest(
+        doFetch,
+        BASE_URL,
+        HEADERS,
+        "GET",
+        "/",
+        undefined,
+        undefined,
+        250,
       );
+      // Attach rejection handler before advancing timers to avoid unhandled-rejection warnings.
+      let caughtError: unknown;
+      const handled = pending.catch((err) => {
+        caughtError = err;
+      });
+      await vi.advanceTimersByTimeAsync(251);
+      await handled;
+      const err = caughtError as { status: number; message: string };
+      expect(err.status).toBe(0);
+      expect(err.message).toMatch(/timeout/i);
+      expect(requestSignal?.aborted).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("aborts immediately when timeoutMs is 0", async () => {
+    vi.useFakeTimers();
+    try {
+      let requestSignal: AbortSignal | undefined;
+      const doFetch: DoFetch = vi.fn((_url, _headers, opts) => {
+        requestSignal = opts?.signal;
+        return new Promise((_resolve, reject) => {
+          requestSignal?.addEventListener("abort", () => reject(requestSignal?.reason), {
+            once: true,
+          });
+        });
+      });
+
+      const pending = executeRawRequest(
+        doFetch,
+        BASE_URL,
+        HEADERS,
+        "GET",
+        "/",
+        undefined,
+        undefined,
+        0,
+      );
+      let caughtError: unknown;
+      const handled = pending.catch((err) => {
+        caughtError = err;
+      });
+      await vi.advanceTimersByTimeAsync(1);
+      await handled;
+      const err = caughtError as { status: number; message: string };
+      expect(err.status).toBe(0);
+      expect(err.message).toMatch(/timeout/i);
+      expect(requestSignal?.aborted).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("falls back to default timeout for invalid timeoutMs", async () => {
+    vi.useFakeTimers();
+    try {
+      let requestSignal: AbortSignal | undefined;
+      const doFetch: DoFetch = vi.fn((_url, _headers, opts) => {
+        requestSignal = opts?.signal;
+        return new Promise((_resolve, reject) => {
+          requestSignal?.addEventListener("abort", () => reject(requestSignal?.reason), {
+            once: true,
+          });
+        });
+      });
+
+      const pending = executeRawRequest(
+        doFetch,
+        BASE_URL,
+        HEADERS,
+        "GET",
+        "/",
+        undefined,
+        undefined,
+        -1,
+      );
+      let caughtError: unknown;
+      const handled = pending.catch((err) => {
+        caughtError = err;
+      });
       await vi.advanceTimersByTimeAsync(RAW_REQUEST_TIMEOUT_MS + 1);
-      await assertion;
+      await handled;
+      const err = caughtError as { status: number; message: string };
+      expect(err.status).toBe(0);
+      expect(err.message).toMatch(/timeout/i);
       expect(requestSignal?.aborted).toBe(true);
     } finally {
       vi.useRealTimers();
@@ -382,6 +469,47 @@ describe("executeRawRequest", () => {
         executeRawRequest(doFetch, BASE_URL, HEADERS, httpMethod, "/_doc"),
       ).rejects.toEqual(expect.objectContaining({ status: 0, message: "Failed to fetch" }));
       expect(doFetch).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  it.each([NaN, Infinity, Number.MAX_SAFE_INTEGER + 1])(
+    "falls back to default timeout for invalid timeoutMs=%s",
+    async (badTimeout) => {
+      vi.useFakeTimers();
+      try {
+        let requestSignal: AbortSignal | undefined;
+        const doFetch: DoFetch = vi.fn((_url, _headers, opts) => {
+          requestSignal = opts?.signal;
+          return new Promise((_resolve, reject) => {
+            requestSignal?.addEventListener("abort", () => reject(requestSignal?.reason), {
+              once: true,
+            });
+          });
+        });
+
+        const pending = executeRawRequest(
+          doFetch,
+          BASE_URL,
+          HEADERS,
+          "GET",
+          "/",
+          undefined,
+          undefined,
+          badTimeout,
+        );
+        let caughtError: unknown;
+        const handled = pending.catch((err) => {
+          caughtError = err;
+        });
+        await vi.advanceTimersByTimeAsync(RAW_REQUEST_TIMEOUT_MS + 1);
+        await handled;
+        const err = caughtError as { status: number; message: string };
+        expect(err.status).toBe(0);
+        expect(err.message).toMatch(/timeout/i);
+        expect(requestSignal?.aborted).toBe(true);
+      } finally {
+        vi.useRealTimers();
+      }
     },
   );
 });
