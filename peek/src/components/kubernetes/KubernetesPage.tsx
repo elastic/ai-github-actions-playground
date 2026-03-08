@@ -10,7 +10,7 @@ import Tabs from "@mui/material/Tabs";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 
-import { PAGE_MANIFEST } from "../../routes/manifest";
+import { PAGE_PATHS } from "../../routes/paths";
 import type { KubernetesActiveTab } from "../../types/pageFilters";
 import DateRangePicker from "../DateRangePicker";
 import EmptyState from "../EmptyState";
@@ -126,7 +126,7 @@ export default function KubernetesPage() {
             icon={<SearchOffIcon />}
             heading="No Kubernetes data loaded"
             description="Click Search to discover Kubernetes resources from your metrics data."
-            addDataHref={PAGE_MANIFEST.addData.path}
+            addDataHref={PAGE_PATHS.addData.path}
           />
         </Paper>
       )}
@@ -136,7 +136,7 @@ export default function KubernetesPage() {
           <EmptyState
             heading={`No ${tabLabel.toLowerCase()} found`}
             description="No resources were found in the selected time range. Try expanding the time range or check your data ingestion."
-            addDataHref={PAGE_MANIFEST.addData.path}
+            addDataHref={PAGE_PATHS.addData.path}
           />
         </Paper>
       )}

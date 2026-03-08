@@ -16,7 +16,7 @@ import { createOpenAI } from "@ai-sdk/openai";
 import { streamText } from "ai";
 
 import { useLLMStore, type ChatMessage } from "../store/useLLMStore";
-import { PAGE_MANIFEST } from "../routes/manifest";
+import { PAGE_PATHS } from "../routes/paths";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { buildChatRuntime, getChatRequestTimeoutMs } from "../services/chatRuntime";
 
@@ -197,7 +197,7 @@ export default function ChatPage({ hideHeader = false }: { hideHeader?: boolean 
         <Button
           variant="contained"
           startIcon={<SettingsIcon />}
-          onClick={() => navigate(PAGE_MANIFEST.settings.path)}
+          onClick={() => navigate(PAGE_PATHS.settings.path)}
         >
           Go to Settings
         </Button>
