@@ -14,6 +14,12 @@ import { EChart } from "@perses-dev/components";
 
 import type { AggregationType, FieldInfo, ElasticsearchClient, MetricType } from "../services/es";
 import { buildDimensionOverviewQuery, buildOverviewQuery, isDimensionField } from "../services/es";
+import {
+  buildColumnLookup,
+  findDateColumnIndex,
+  getColumnIndex,
+  getRowValue,
+} from "../services/es/columnUtils";
 import type { EsqlResponse, TimeRange } from "../types";
 import { useBatchedOverviewQueries, hasOverviewData } from "../hooks/useBatchedOverviewQueries";
 import { usePageSlotInsights } from "../hooks/usePageSlotInsights";
@@ -70,16 +76,15 @@ function dimensionCardSlotId(metricField: string, dimensionField: string): strin
 }
 
 function getTopDimensionValues(data: EsqlResponse, limit = 5): string[] {
-  const dateIdx = data.columns.findIndex(
-    (c) => c.type === "date" || c.type === "date_nanos" || c.name === "@timestamp",
-  );
-  const metricIdx = data.columns.findIndex((c) => c.name === "metric");
+  const lookup = buildColumnLookup(data.columns);
+  const dateIdx = findDateColumnIndex(data);
+  const metricIdx = getColumnIndex(lookup, "metric");
   const dimIdx = data.columns.findIndex((_, i) => i !== dateIdx && i !== metricIdx);
   if (dimIdx < 0) return [];
 
   const counts = new Map<string, number>();
   for (const row of data.values) {
-    const dimVal = normalizeDimensionBucketLabel(row[dimIdx]);
+    const dimVal = normalizeDimensionBucketLabel(getRowValue(row, dimIdx));
     counts.set(dimVal, (counts.get(dimVal) ?? 0) + 1);
   }
   return Array.from(counts.entries())
@@ -97,10 +102,9 @@ function buildMultiSeriesSparkline(
   themeOpts: ReturnType<typeof useEChartTheme>,
   legendTextColor: string,
 ): Record<string, unknown> {
-  const dateIdx = data.columns.findIndex(
-    (c) => c.type === "date" || c.type === "date_nanos" || c.name === "@timestamp",
-  );
-  const metricIdx = data.columns.findIndex((c) => c.name === "metric");
+  const lookup = buildColumnLookup(data.columns);
+  const dateIdx = findDateColumnIndex(data);
+  const metricIdx = getColumnIndex(lookup, "metric");
   // Dimension column is the third column (not timestamp, not metric)
   const dimIdx = data.columns.findIndex((_, i) => i !== dateIdx && i !== metricIdx);
 
@@ -111,10 +115,11 @@ function buildMultiSeriesSparkline(
   // Group rows by dimension value
   const grouped = new Map<string, [number | null, unknown][]>();
   for (const row of data.values) {
-    const dimVal = dimIdx >= 0 ? normalizeDimensionBucketLabel(row[dimIdx]) : "all";
-    const ts = dateIdx >= 0 && row[dateIdx] ? new Date(row[dateIdx] as string).getTime() : null;
+    const dimVal = dimIdx >= 0 ? normalizeDimensionBucketLabel(getRowValue(row, dimIdx)) : "all";
+    const tsValue = getRowValue(row, dateIdx);
+    const ts = dateIdx >= 0 && tsValue ? new Date(String(tsValue)).getTime() : null;
     if (!grouped.has(dimVal)) grouped.set(dimVal, []);
-    grouped.get(dimVal)!.push([ts, row[metricIdx]]);
+    grouped.get(dimVal)!.push([ts, getRowValue(row, metricIdx)]);
   }
 
   // Take top N series by number of data points (proxy for frequency)

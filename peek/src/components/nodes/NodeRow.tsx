@@ -64,11 +64,12 @@ export function NodeRow({ row, onClick }: { row: NodeTableRow; onClick: () => vo
   return (
     <TableRow
       hover
+      role="button"
       tabIndex={0}
       aria-label={`Open node details for ${row.name}`}
       onClick={onClick}
       onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
+        if (event.key === "Enter" || event.key === " " || event.key === "Spacebar") {
           event.preventDefault();
           onClick();
         }

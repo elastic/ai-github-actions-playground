@@ -1,0 +1,35 @@
+name: React Performance Sweeper
+on:
+  schedule:
+    - cron: "0 10 * * 3"
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+  issues: write
+  pull-requests: read
+
+jobs:
+  run:
+    uses: elastic/ai-github-actions/.github/workflows/gh-aw-bug-hunter.lock.yml@main
+    with:
+      title-prefix: "[performance-sweeper]"
+      additional-instructions: |
+        Focus your investigation on a single, pervasive React rendering performance anti-pattern across the entire codebase (Elastic Peek).
+        You are a "Sweeper". Do not stop at finding 2-3 isolated bugs. Your job is to identify one specific type of performance leak and refactor EVERY instance of it across the repository in a single, comprehensive Pull Request.
+
+        ## How to sweep:
+        1. Audit the codebase for systemic performance issues. Examples include:
+           - Missing `useShallow` wrappers on Zustand object selectors causing massive re-render waterfalls.
+           - Synchronous filtering of large tables blocking user inputs (missing `useTransition` or `useDeferredValue`).
+           - Derived state anti-patterns (using `useEffect` to watch State A and `setState(B)` instead of deriving during render).
+        2. Identify the single anti-pattern that occurs most frequently.
+        3. Execute a sweeping pass to fix every instance of that specific anti-pattern.
+        4. Run `npm run typecheck` and `vitest` to ensure no regressions.
+
+        ## Output rules
+        - Open a PR fixing the pervasive pattern. If you cannot open a PR, file an issue detailing the extent of the performance anti-pattern and the necessary fixes.
+      setup-commands: "cd peek && PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 ELECTRON_SKIP_BINARY_DOWNLOAD=1 npm ci"
+    secrets:
+      COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}

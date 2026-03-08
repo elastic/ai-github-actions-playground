@@ -14,7 +14,6 @@ const LOAD_1M_HIGH = 10;
 const FD_RATIO_HIGH = 0.85;
 const FS_USED_HIGH = 0.9;
 const HTTP_CURRENT_OPEN_HIGH = 200;
-const HTTP_TOTAL_OPENED_BURST = 10_000;
 const HOTSPOT_RATIO = 2.0;
 const OS_MEM_USED_HIGH = 90;
 
@@ -35,22 +34,6 @@ function median(values: number[]): number {
   const sorted = [...values].sort((a, b) => a - b);
   const mid = Math.floor(sorted.length / 2);
   return sorted.length % 2 !== 0 ? sorted[mid]! : (sorted[mid - 1]! + sorted[mid]!) / 2;
-}
-
-function sumBreakerTrips(
-  nodes: NodeStatsNode[],
-  breakerName: string,
-): { total: number; affectedNodes: string[] } {
-  let total = 0;
-  const affectedNodes: string[] = [];
-  for (const node of nodes) {
-    const tripped = node.breakers?.[breakerName]?.tripped ?? 0;
-    if (tripped > 0) {
-      total += tripped;
-      affectedNodes.push(node.name ?? "unknown");
-    }
-  }
-  return { total, affectedNodes };
 }
 
 function unknownNodeStatsResult() {
@@ -495,34 +478,6 @@ export const nodeChecks: HealthCheckDefinition[] = [
       return { status: "pass", summary: "HTTP connection counts within threshold." };
     },
   },
-  // #43
-  {
-    id: "nodes.http.total_opened.burst_like",
-    domain: "nodes",
-    title: "HTTP connections burst",
-    description: `Warns when any node total opened HTTP connections > ${HTTP_TOTAL_OPENED_BURST}.`,
-    severityOnFail: "low",
-    surfaces: ["global"],
-    dependsOn: ["nodesCore"],
-    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/nodes-stats",
-    recommendation: "Consider using persistent connections to reduce churn.",
-    evaluate: (snapshot) => {
-      const nodes = getNodes(snapshot);
-      const hotNodes = nodes
-        .map((n) => ({ name: n.name ?? "unknown", totalOpened: n.http?.total_opened ?? 0 }))
-        .filter((n) => n.totalOpened > HTTP_TOTAL_OPENED_BURST);
-      if (hotNodes.length > 0) {
-        const worst = hotNodes.sort((a, b) => b.totalOpened - a.totalOpened)[0]!;
-        return {
-          status: "warn",
-          summary: `${worst.totalOpened} total HTTP connections opened on ${worst.name}.`,
-          observed: { worstNode: worst.name, totalOpened: worst.totalOpened },
-          recommendation: "Consider using persistent connections to reduce churn.",
-        };
-      }
-      return { status: "pass", summary: "HTTP total opened connections within threshold." };
-    },
-  },
   // #44
   {
     id: "nodes.distribution.hotspotting",
@@ -616,103 +571,6 @@ export const nodeChecks: HealthCheckDefinition[] = [
         }
       }
       return { status: "pass", summary: "Snapshot thread pool queues within threshold." };
-    },
-  },
-  // #53
-  {
-    id: "nodes.breaker.parent.tripped.nonzero",
-    domain: "nodes",
-    title: "Parent circuit breaker tripped",
-    description: "Warns when the parent circuit breaker has been tripped.",
-    severityOnFail: "high",
-    surfaces: ["global"],
-    dependsOn: ["nodesCore"],
-    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/circuit-breaker-settings",
-    recommendation: "Parent breaker trips indicate total memory pressure.",
-    evaluate: (snapshot) => {
-      const { total, affectedNodes } = sumBreakerTrips(getNodes(snapshot), "parent");
-      if (total > 0) {
-        return {
-          status: "warn",
-          summary: `Parent breaker tripped ${total} time${total === 1 ? "" : "s"}.`,
-          observed: { total, affectedNodes },
-          recommendation: "Parent breaker trips indicate total memory pressure.",
-        };
-      }
-      return { status: "pass", summary: "No parent circuit breaker trips." };
-    },
-  },
-  // #54
-  {
-    id: "nodes.breaker.request.tripped.nonzero",
-    domain: "nodes",
-    title: "Request circuit breaker tripped",
-    description: "Warns when the request circuit breaker has been tripped.",
-    severityOnFail: "medium",
-    surfaces: ["global"],
-    dependsOn: ["nodesCore"],
-    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/circuit-breaker-settings",
-    recommendation: "Request breaker trips indicate individual requests consuming too much memory.",
-    evaluate: (snapshot) => {
-      const { total, affectedNodes } = sumBreakerTrips(getNodes(snapshot), "request");
-      if (total > 0) {
-        return {
-          status: "warn",
-          summary: `Request breaker tripped ${total} time${total === 1 ? "" : "s"}.`,
-          observed: { total, affectedNodes },
-          recommendation:
-            "Request breaker trips indicate individual requests consuming too much memory.",
-        };
-      }
-      return { status: "pass", summary: "No request circuit breaker trips." };
-    },
-  },
-  // #55
-  {
-    id: "nodes.breaker.fielddata.tripped.nonzero",
-    domain: "nodes",
-    title: "Fielddata circuit breaker tripped",
-    description: "Warns when the fielddata circuit breaker has been tripped.",
-    severityOnFail: "medium",
-    surfaces: ["global"],
-    dependsOn: ["nodesCore"],
-    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/circuit-breaker-settings",
-    recommendation: "Consider using doc values instead of fielddata.",
-    evaluate: (snapshot) => {
-      const { total, affectedNodes } = sumBreakerTrips(getNodes(snapshot), "fielddata");
-      if (total > 0) {
-        return {
-          status: "warn",
-          summary: `Fielddata breaker tripped ${total} time${total === 1 ? "" : "s"}.`,
-          observed: { total, affectedNodes },
-          recommendation: "Consider using doc values instead of fielddata.",
-        };
-      }
-      return { status: "pass", summary: "No fielddata circuit breaker trips." };
-    },
-  },
-  // #56
-  {
-    id: "nodes.breaker.inflight_requests.tripped.nonzero",
-    domain: "nodes",
-    title: "In-flight requests breaker tripped",
-    description: "Warns when the in-flight requests circuit breaker has been tripped.",
-    severityOnFail: "medium",
-    surfaces: ["global"],
-    dependsOn: ["nodesCore"],
-    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/circuit-breaker-settings",
-    recommendation: "Reduce concurrent request volume.",
-    evaluate: (snapshot) => {
-      const { total, affectedNodes } = sumBreakerTrips(getNodes(snapshot), "in_flight_requests");
-      if (total > 0) {
-        return {
-          status: "warn",
-          summary: `In-flight requests breaker tripped ${total} time${total === 1 ? "" : "s"}.`,
-          observed: { total, affectedNodes },
-          recommendation: "Reduce concurrent request volume.",
-        };
-      }
-      return { status: "pass", summary: "No in-flight requests circuit breaker trips." };
     },
   },
   // nodes.os.mem.used_percent.high
@@ -809,64 +667,6 @@ export const nodeChecks: HealthCheckDefinition[] = [
         }
       }
       return { status: "pass", summary: "Indexing latency is within threshold." };
-    },
-  },
-  // Indexing failures
-  {
-    id: "nodes.indices.indexing.failed",
-    domain: "nodes",
-    title: "Indexing failures",
-    description: "Warns when index_failed count is non-zero on any node.",
-    severityOnFail: "high",
-    surfaces: ["global", "local"],
-    dependsOn: ["nodesCore"],
-    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/nodes-stats",
-    recommendation:
-      "Indexing failures mean documents are being rejected. Check for mapping or version conflicts.",
-    evaluate: (snapshot) => {
-      const nodes = getNodes(snapshot);
-      let totalFailed = 0;
-      for (const node of nodes) {
-        totalFailed += node.indices?.indexing?.index_failed ?? 0;
-      }
-      if (totalFailed > 0) {
-        return {
-          status: "warn",
-          summary: `${totalFailed} indexing failure${totalFailed === 1 ? "" : "s"} across cluster.`,
-          observed: { totalFailed },
-        };
-      }
-      return { status: "pass", summary: "No indexing failures." };
-    },
-  },
-  // Merge throttling
-  {
-    id: "nodes.indices.merges.throttled",
-    domain: "nodes",
-    title: "Merge throttling",
-    description:
-      "Warns when merge throttle time is non-zero, indicating merges are falling behind indexing.",
-    severityOnFail: "medium",
-    surfaces: ["global"],
-    dependsOn: ["nodesCore"],
-    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/nodes-stats",
-    recommendation:
-      "Merge throttling slows indexing. Consider reducing indexing rate or using faster storage.",
-    evaluate: (snapshot) => {
-      const nodes = getNodes(snapshot);
-      let totalThrottledMs = 0;
-      for (const node of nodes) {
-        totalThrottledMs += node.indices?.merges?.total_throttled_time_in_millis ?? 0;
-      }
-      if (totalThrottledMs > 0) {
-        const totalThrottledSec = +(totalThrottledMs / 1000).toFixed(1);
-        return {
-          status: "warn",
-          summary: `${totalThrottledSec}s of merge throttle time across cluster.`,
-          observed: { totalThrottledMs, totalThrottledSec },
-        };
-      }
-      return { status: "pass", summary: "No merge throttling." };
     },
   },
   // Translog uncommitted
@@ -1087,35 +887,6 @@ export const nodeChecks: HealthCheckDefinition[] = [
       return { status: "pass", summary: "Segment memory usage is within threshold." };
     },
   },
-  // Fielddata evictions
-  {
-    id: "nodes.indices.fielddata.evictions",
-    domain: "nodes",
-    title: "Fielddata evictions",
-    description:
-      "Warns when fielddata evictions are non-zero, indicating the fielddata cache is under pressure.",
-    severityOnFail: "medium",
-    surfaces: ["global"],
-    dependsOn: ["nodesCore"],
-    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/circuit-breaker-settings",
-    recommendation:
-      "Fielddata evictions mean the cache is too small or text fields are being aggregated. Use keyword fields.",
-    evaluate: (snapshot) => {
-      const nodes = getNodes(snapshot);
-      let totalEvictions = 0;
-      for (const node of nodes) {
-        totalEvictions += node.indices?.fielddata?.evictions ?? 0;
-      }
-      if (totalEvictions > 0) {
-        return {
-          status: "warn",
-          summary: `${totalEvictions} fielddata eviction${totalEvictions === 1 ? "" : "s"} across cluster.`,
-          observed: { totalEvictions },
-        };
-      }
-      return { status: "pass", summary: "No fielddata evictions." };
-    },
-  },
   // Query cache evictions
   {
     id: "nodes.indices.query_cache.evictions.high",
@@ -1144,62 +915,6 @@ export const nodeChecks: HealthCheckDefinition[] = [
         };
       }
       return { status: "pass", summary: "Query cache eviction rate is normal." };
-    },
-  },
-  // Get rejections
-  {
-    id: "nodes.thread_pool.get.rejected",
-    domain: "nodes",
-    title: "Get rejections",
-    description: "Warns when get thread pool rejections are non-zero.",
-    severityOnFail: "medium",
-    surfaces: ["global"],
-    dependsOn: ["nodesCore"],
-    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/thread-pool-settings",
-    recommendation: "Get rejections indicate document retrieval requests are being dropped.",
-    evaluate: (snapshot) => {
-      const nodes = getNodes(snapshot);
-      let total = 0;
-      for (const node of nodes) {
-        total += node.thread_pool?.get?.rejected ?? 0;
-      }
-      if (total > 0) {
-        return {
-          status: "warn",
-          summary: `${total} get thread pool rejection${total === 1 ? "" : "s"}.`,
-          observed: { totalGetRejections: total },
-        };
-      }
-      return { status: "pass", summary: "No get rejections." };
-    },
-  },
-  // Ingest pipeline failures
-  {
-    id: "nodes.ingest.pipeline.failures",
-    domain: "nodes",
-    title: "Ingest pipeline failures",
-    description: "Warns when ingest pipeline failure counts are non-zero across nodes.",
-    severityOnFail: "medium",
-    surfaces: ["global"],
-    dependsOn: ["nodesCore"],
-    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/nodes-stats",
-    recommendation:
-      "Ingest failures mean documents are being rejected. Check pipeline processor configurations.",
-    evaluate: (snapshot) => {
-      const nodes = getNodes(snapshot);
-      let totalFailed = 0;
-      for (const node of nodes) {
-        totalFailed += node.ingest?.total?.failed ?? 0;
-      }
-      if (totalFailed > 0) {
-        return {
-          status: "warn",
-          summary: `${totalFailed} ingest pipeline failure${totalFailed === 1 ? "" : "s"} across cluster.`,
-          observed: { totalFailed },
-          links: [{ label: "Ingest Pipelines", to: "/ingest-pipelines" }],
-        };
-      }
-      return { status: "pass", summary: "No ingest pipeline failures." };
     },
   },
 ];

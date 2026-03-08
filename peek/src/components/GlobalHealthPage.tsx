@@ -61,8 +61,9 @@ export default function GlobalHealthPage() {
         counts.unknown += 1;
         continue;
       }
-      if ((check.status === "fail" || check.status === "warn") && check.severity) {
-        counts[check.severity] += 1;
+      if (check.status === "fail" || check.status === "warn") {
+        if (check.severity) counts[check.severity] += 1;
+        else counts.unknown += 1;
       }
     }
     return counts;
@@ -82,7 +83,7 @@ export default function GlobalHealthPage() {
         <Chip
           size="small"
           color={failingCounts.high > 0 ? "error" : "default"}
-          variant="outlined"
+          variant={failingCounts.high > 0 ? "filled" : "outlined"}
           label={`High: ${failingCounts.high}`}
         />
         <Chip
