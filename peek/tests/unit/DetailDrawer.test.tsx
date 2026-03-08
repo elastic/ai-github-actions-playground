@@ -51,6 +51,6 @@ describe("DetailDrawer", () => {
         <div>Content</div>
       </DetailDrawer>,
     );
-    expect(screen.getByRole("button", { name: "Close pipeline details" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Close Pipeline details" })).toBeInTheDocument();
   });
 });

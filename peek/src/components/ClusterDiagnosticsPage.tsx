@@ -1,6 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
 import Alert from "@mui/material/Alert";
-import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import Paper from "@mui/material/Paper";
@@ -10,6 +9,7 @@ import TextField from "@mui/material/TextField";
 import type { HealthReportIndicator } from "../services/es";
 
 import PageHeader from "./PageHeader";
+import ScrollableLayout from "./ScrollableLayout";
 import DiagnosticsDetailDrawer from "./cluster-diagnostics/DiagnosticsDetailDrawer";
 import DiagnosticsIndicatorTable from "./cluster-diagnostics/DiagnosticsIndicatorTable";
 import { indicatorStatusColor } from "./cluster-diagnostics/helpers";
@@ -120,52 +120,59 @@ export default function ClusterDiagnosticsPage() {
   }, [rows]);
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, height: "100%", minHeight: 0 }}>
-      <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <PageHeader
-          title="Cluster Diagnostics"
-          actions={
-            <Button size="small" variant="outlined" onClick={refresh} disabled={loading}>
-              {loading ? "Refreshing..." : "Refresh"}
-            </Button>
-          }
-        />
-      </Paper>
+    <ScrollableLayout
+      gap={1.5}
+      header={
+        <>
+          <Paper variant="outlined" sx={{ p: 1.5 }}>
+            <PageHeader
+              title="Cluster Diagnostics"
+              actions={
+                <Button size="small" variant="outlined" onClick={refresh} disabled={loading}>
+                  {loading ? "Refreshing..." : "Refresh"}
+                </Button>
+              }
+            />
+          </Paper>
 
-      {error ? <Alert severity="error">{error}</Alert> : null}
+          {error ? <Alert severity="error">{error}</Alert> : null}
 
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-        <Chip
-          color={indicatorStatusColor(report?.status as IndicatorStatus | undefined)}
-          label={`Status: ${report?.status?.toUpperCase() ?? "—"}`}
-        />
-        <Chip label={`Indicators: ${kpis.total}`} variant="outlined" />
-        <Chip color={kpis.issues > 0 ? "warning" : "default"} label={`Issues: ${kpis.issues}`} />
-        <Chip label={`Total Impacts: ${kpis.totalImpacts}`} variant="outlined" />
-      </Stack>
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+            <Chip
+              color={indicatorStatusColor(report?.status as IndicatorStatus | undefined)}
+              label={`Status: ${report?.status?.toUpperCase() ?? "—"}`}
+            />
+            <Chip label={`Indicators: ${kpis.total}`} variant="outlined" />
+            <Chip
+              color={kpis.issues > 0 ? "warning" : "default"}
+              label={`Issues: ${kpis.issues}`}
+            />
+            <Chip label={`Total Impacts: ${kpis.totalImpacts}`} variant="outlined" />
+          </Stack>
 
-      <TextField
-        size="small"
-        placeholder="Filter indicators..."
-        value={filterText}
-        onChange={(e) => setFilterText(e.target.value)}
-        sx={{ maxWidth: 360 }}
-        aria-label="Filter indicators"
+          <TextField
+            size="small"
+            placeholder="Filter indicators..."
+            value={filterText}
+            onChange={(e) => setFilterText(e.target.value)}
+            sx={{ maxWidth: 360 }}
+            aria-label="Filter indicators"
+          />
+        </>
+      }
+      bodySx={{ border: 1, borderColor: "divider", borderRadius: 1 }}
+    >
+      <DiagnosticsIndicatorTable
+        rows={filteredRows}
+        loading={loading}
+        filterText={filterText}
+        sortField={sortField}
+        sortDir={sortDir}
+        onSort={handleSort}
+        onSelect={setSelectedKey}
       />
 
-      <Paper variant="outlined" sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
-        <DiagnosticsIndicatorTable
-          rows={filteredRows}
-          loading={loading}
-          filterText={filterText}
-          sortField={sortField}
-          sortDir={sortDir}
-          onSort={handleSort}
-          onSelect={setSelectedKey}
-        />
-      </Paper>
-
       <DiagnosticsDetailDrawer selected={selectedIndicator} onClose={() => setSelectedKey(null)} />
-    </Box>
+    </ScrollableLayout>
   );
 }
