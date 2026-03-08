@@ -192,6 +192,13 @@ export const healthReportChecks: HealthCheckDefinition[] = [
             observed: { status: indicator.status },
           };
         }
+        if (indicator.status === "unknown") {
+          return {
+            status: "unknown",
+            summary: indicator.symptom ?? `${title} status is unknown.`,
+            observed: { status: indicator.status },
+          };
+        }
         return {
           status: "pass",
           summary: indicator.symptom ?? `${title} is GREEN.`,

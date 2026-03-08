@@ -131,6 +131,15 @@ export default function NodesPage() {
           <MetricChip
             label="CPU avg"
             value={summary.avgCpu !== null ? `${summary.avgCpu.toFixed(0)}%` : "n/a"}
+            level={
+              summary.avgCpu !== null
+                ? percentLevel(
+                    summary.avgCpu,
+                    NODE_THRESHOLDS.cpu.warning,
+                    NODE_THRESHOLDS.cpu.critical,
+                  )
+                : "ok"
+            }
           />
           <MetricChip
             label="Heap max"
@@ -148,6 +157,15 @@ export default function NodesPage() {
           <MetricChip
             label="Heap avg"
             value={summary.avgHeap !== null ? `${summary.avgHeap.toFixed(0)}%` : "n/a"}
+            level={
+              summary.avgHeap !== null
+                ? percentLevel(
+                    summary.avgHeap,
+                    NODE_THRESHOLDS.heap.warning,
+                    NODE_THRESHOLDS.heap.critical,
+                  )
+                : "ok"
+            }
           />
           <MetricChip
             label="Disk max"
@@ -165,6 +183,15 @@ export default function NodesPage() {
           <MetricChip
             label="Disk avg"
             value={summary.avgDisk !== null ? `${summary.avgDisk.toFixed(0)}%` : "n/a"}
+            level={
+              summary.avgDisk !== null
+                ? percentLevel(
+                    summary.avgDisk,
+                    NODE_THRESHOLDS.disk.warning,
+                    NODE_THRESHOLDS.disk.critical,
+                  )
+                : "ok"
+            }
           />
           <MetricChip label="Docs" value={summary.totalDocs.toLocaleString()} />
           <MetricChip label="Shards" value={summary.totalShards.toLocaleString()} />

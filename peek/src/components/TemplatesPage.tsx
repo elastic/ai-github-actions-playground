@@ -19,6 +19,7 @@ import TableSortLabel from "@mui/material/TableSortLabel";
 import Tabs from "@mui/material/Tabs";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import ButtonBase from "@mui/material/ButtonBase";
 import CloseIcon from "@mui/icons-material/Close";
 import DescriptionIcon from "@mui/icons-material/Description";
 import { parseAsBoolean, parseAsString, parseAsStringEnum, useQueryStates } from "nuqs";
@@ -270,12 +271,13 @@ export default function TemplatesPage() {
           value={search}
           onChange={(e) => void setUrlState({ q: e.target.value })}
           sx={{ minWidth: 260 }}
-          aria-label="Filter templates"
+          slotProps={{ htmlInput: { "aria-label": "Filter templates" } }}
         />
         <Button
           size="small"
           variant={showSystem ? "contained" : "outlined"}
           onClick={() => void setUrlState({ showSystem: !showSystem })}
+          aria-pressed={showSystem}
         >
           Show system templates
         </Button>
@@ -287,8 +289,9 @@ export default function TemplatesPage() {
               onChange={(e) => void setUrlState({ priorityMin: e.target.value })}
               placeholder="Min priority"
               sx={{ width: 130 }}
-              inputProps={{ inputMode: "numeric" }}
-              aria-label="Minimum template priority"
+              slotProps={{
+                htmlInput: { inputMode: "numeric", "aria-label": "Minimum template priority" },
+              }}
             />
             <TextField
               size="small"
@@ -296,13 +299,15 @@ export default function TemplatesPage() {
               onChange={(e) => void setUrlState({ priorityMax: e.target.value })}
               placeholder="Max priority"
               sx={{ width: 130 }}
-              inputProps={{ inputMode: "numeric" }}
-              aria-label="Maximum template priority"
+              slotProps={{
+                htmlInput: { inputMode: "numeric", "aria-label": "Maximum template priority" },
+              }}
             />
             <Button
               size="small"
               variant={dataStreamOnly ? "contained" : "outlined"}
               onClick={() => void setUrlState({ dataStreamOnly: !dataStreamOnly })}
+              aria-pressed={dataStreamOnly}
             >
               Data-stream only
             </Button>
@@ -370,25 +375,18 @@ export default function TemplatesPage() {
                     key={tpl.name}
                     hover
                     selected={tpl.name === selectedTemplateName}
-                    tabIndex={0}
-                    role="button"
-                    aria-label={`Open template details for ${tpl.name}`}
                     onClick={() => setSelectedTemplateName(tpl.name)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter" || event.key === " " || event.key === "Spacebar") {
-                        event.preventDefault();
-                        setSelectedTemplateName(tpl.name);
-                      }
-                    }}
                     sx={{ cursor: "pointer" }}
                   >
                     <TableCell>
-                      <Typography
-                        variant="body2"
+                      <ButtonBase
+                        component="span"
+                        onClick={() => setSelectedTemplateName(tpl.name)}
+                        aria-label={`Open template details for ${tpl.name}`}
                         sx={{ fontFamily: "monospace", fontSize: "0.8rem" }}
                       >
                         {tpl.name}
-                      </Typography>
+                      </ButtonBase>
                     </TableCell>
                     <TableCell>
                       <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
@@ -480,25 +478,18 @@ export default function TemplatesPage() {
                   <TableRow
                     key={ct.name}
                     hover
-                    tabIndex={0}
-                    role="button"
-                    aria-label={`View component template ${ct.name}`}
                     onClick={() => setSelectedTemplateName(ct.name)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter" || event.key === " " || event.key === "Spacebar") {
-                        event.preventDefault();
-                        setSelectedTemplateName(ct.name);
-                      }
-                    }}
                     sx={{ cursor: "pointer" }}
                   >
                     <TableCell>
-                      <Typography
-                        variant="body2"
+                      <ButtonBase
+                        component="span"
+                        onClick={() => setSelectedTemplateName(ct.name)}
+                        aria-label={`View component template ${ct.name}`}
                         sx={{ fontFamily: "monospace", fontSize: "0.8rem" }}
                       >
                         {ct.name}
-                      </Typography>
+                      </ButtonBase>
                     </TableCell>
                     <TableCell>
                       <Box sx={{ display: "flex", gap: 0.5 }}>
