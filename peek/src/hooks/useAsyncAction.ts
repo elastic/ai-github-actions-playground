@@ -3,7 +3,7 @@ import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
 
 import type { DataFetchResult } from "../types/query";
 
-type AsyncActionStatus = DataFetchResult<void>["status"];
+type AsyncActionStatus = Exclude<DataFetchResult<void>["status"], "success">;
 
 export interface AsyncActionState {
   /** Current status of the action. */
@@ -60,14 +60,15 @@ export function useAsyncAction<TResult = void>(options: {
     onSuccess: options.onSuccess,
     onError: options.onError,
   });
+  const { mutate, reset: resetMutation } = mutation;
 
   const execute = useCallback(() => {
-    mutation.mutate();
-  }, [mutation.mutate]);
+    mutate();
+  }, [mutate]);
 
   const reset = useCallback(() => {
-    mutation.reset();
-  }, [mutation.reset]);
+    resetMutation();
+  }, [resetMutation]);
 
   let status: AsyncActionStatus = "idle";
   if (mutation.isPending) status = "loading";
