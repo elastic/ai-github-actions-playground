@@ -115,8 +115,8 @@ export interface NodeSummary {
   avgHeap: number | null;
   maxDisk: number | null;
   avgDisk: number | null;
-  totalDocs: number;
-  totalShards: number;
+  totalDocs: number | null;
+  totalShards: number | null;
 }
 
 export function computeSummary(rows: NodeTableRow[]): NodeSummary {
@@ -126,6 +126,8 @@ export function computeSummary(rows: NodeTableRow[]): NodeSummary {
   const hasCpuGaps = rows.length === 0 || cpus.length !== rows.length;
   const hasHeapGaps = rows.length === 0 || heaps.length !== rows.length;
   const hasDiskGaps = rows.length === 0 || disks.length !== rows.length;
+  const hasDocGaps = rows.some((r) => r.docCount === null);
+  const hasShardGaps = rows.some((r) => r.shardCount === null);
 
   return {
     count: rows.length,
@@ -135,7 +137,7 @@ export function computeSummary(rows: NodeTableRow[]): NodeSummary {
     avgHeap: hasHeapGaps ? null : heaps.reduce((a, b) => a + b, 0) / heaps.length,
     maxDisk: hasDiskGaps ? null : Math.max(...disks),
     avgDisk: hasDiskGaps ? null : disks.reduce((a, b) => a + b, 0) / disks.length,
-    totalDocs: rows.reduce((sum, r) => sum + (r.docCount ?? 0), 0),
-    totalShards: rows.reduce((sum, r) => sum + (r.shardCount ?? 0), 0),
+    totalDocs: hasDocGaps ? null : rows.reduce((sum, r) => sum + (r.docCount ?? 0), 0),
+    totalShards: hasShardGaps ? null : rows.reduce((sum, r) => sum + (r.shardCount ?? 0), 0),
   };
 }
