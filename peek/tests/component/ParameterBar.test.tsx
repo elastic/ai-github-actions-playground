@@ -16,6 +16,13 @@ vi.mock("../../src/services/es", () => ({
   })),
 }));
 
+async function flushAsyncEffects(): Promise<void> {
+  await act(async () => {
+    await Promise.resolve();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
+}
+
 describe("ParameterBar", () => {
   beforeEach(() => {
     queryMock.mockReset();
@@ -218,5 +225,76 @@ describe("ParameterBar", () => {
         .dashboard.parameters?.find((p) => p.name === "threshold");
       expect(param?.value).toBe(-7);
     });
+  });
+
+  it("does not refetch unrelated ES|QL parameter options when another variable changes", async () => {
+    queryMock.mockResolvedValue({ values: [["value"]], executionTimeMs: 1 });
+    useDashboardStore.getState().addParameter({
+      name: "service",
+      label: "Service",
+      type: "keyword",
+      source: { mode: "esql", query: "FROM logs-* | LIMIT 1" },
+      value: "",
+    });
+    useDashboardStore.getState().addParameter({
+      name: "env",
+      label: "Environment",
+      type: "keyword",
+      source: { mode: "esql", query: "FROM metrics-* | LIMIT 1" },
+      value: "",
+    });
+
+    renderWithQueryClient(<ParameterBar />);
+
+    await waitFor(() => {
+      expect(queryMock).toHaveBeenCalledTimes(2);
+    });
+
+    act(() => {
+      useDashboardStore.getState().setParameterValue("service", "checkout");
+    });
+
+    await flushAsyncEffects();
+    expect(queryMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("refetches ES|QL options that reference a changed variable", async () => {
+    queryMock.mockResolvedValue({ values: [["value"]], executionTimeMs: 1 });
+    useDashboardStore.getState().addParameter({
+      name: "service",
+      label: "Service",
+      type: "keyword",
+      source: { mode: "esql", query: "FROM logs-* | LIMIT 1" },
+      value: "",
+    });
+    useDashboardStore.getState().addParameter({
+      name: "env",
+      label: "Environment",
+      type: "keyword",
+      source: {
+        mode: "esql",
+        query: "FROM metrics-* | WHERE service.name == '{{service}}' | LIMIT 1",
+      },
+      value: "",
+    });
+
+    renderWithQueryClient(<ParameterBar />);
+
+    await waitFor(() => {
+      expect(queryMock).toHaveBeenCalledTimes(2);
+    });
+
+    act(() => {
+      useDashboardStore.getState().setParameterValue("service", "checkout");
+    });
+
+    // env references {{service}}, so its options should refetch (2 initial + 1 refetch = 3)
+    await waitFor(() => {
+      expect(queryMock).toHaveBeenCalledTimes(3);
+    });
+    await flushAsyncEffects();
+    expect(queryMock).toHaveBeenCalledTimes(3);
+    const thirdCallQuery = queryMock.mock.calls[2]?.[0]?.query;
+    expect(thirdCallQuery).toContain("FROM metrics-*");
   });
 });
