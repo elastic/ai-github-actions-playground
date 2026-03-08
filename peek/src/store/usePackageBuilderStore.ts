@@ -264,7 +264,7 @@ export const usePackageBuilderStore = create<PackageBuilderState>()(
         unlinkDir: () => set({ linkedDir: null }),
 
         // Reset
-        reset: () => set({ ...DEFAULT_STATE, readmeGenerated: false }),
+        reset: () => set({ ...DEFAULT_STATE, readmeGenerated: false, linkedDir: null }),
       }),
       {
         name: "package-builder",
