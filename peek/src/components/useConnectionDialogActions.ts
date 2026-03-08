@@ -53,12 +53,18 @@ export function useConnectionDialogActions({
     canAttemptConnection && Boolean(profileName.trim()) && !isDuplicateProfileName;
 
   const runConnectionAction = useCallback(
-    async (onSuccess: (caps: UserCapabilities) => void | Promise<void>) => {
+    async (
+      onSuccess: (
+        caps: UserCapabilities,
+        connection: ElasticsearchConnection,
+      ) => void | Promise<void>,
+    ) => {
       setTesting(true);
       setResult(null);
       try {
-        const caps = await fetchCapabilitiesForConnection(buildConnection());
-        await onSuccess(caps);
+        const connection = buildConnection();
+        const caps = await fetchCapabilitiesForConnection(connection);
+        await onSuccess(caps, connection);
       } catch (error: unknown) {
         const message = isElasticsearchError(error) ? error.message : String(error);
         setResult({ ok: false, message });
@@ -70,27 +76,18 @@ export function useConnectionDialogActions({
   );
 
   const handleConnect = useCallback(async () => {
-    await runConnectionAction((caps) => {
-      const connection = buildConnection();
+    await runConnectionAction((caps, connection) => {
       setConnection(connection);
       setConnected(true);
       setCapabilities(caps);
       closeDialog();
     });
-  }, [
-    buildConnection,
-    closeDialog,
-    runConnectionAction,
-    setCapabilities,
-    setConnected,
-    setConnection,
-  ]);
+  }, [closeDialog, runConnectionAction, setCapabilities, setConnected, setConnection]);
 
   const handleConnectAndSave = useCallback(async () => {
     if (!canConfirmConnectAndSave) return;
     const trimmedName = profileName.trim();
-    await runConnectionAction(async (caps) => {
-      const connection = buildConnection();
+    await runConnectionAction(async (caps, connection) => {
       const id = saveConnectionProfile(trimmedName, connection);
       if (id && savePin.trim()) await lockProfile(id, savePin.trim());
       setConnection(connection);
@@ -102,7 +99,6 @@ export function useConnectionDialogActions({
       closeDialog();
     });
   }, [
-    buildConnection,
     canConfirmConnectAndSave,
     closeDialog,
     lockProfile,
