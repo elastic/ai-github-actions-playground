@@ -238,13 +238,22 @@ describe("executeRawRequest", () => {
     }
   });
 
-  it("normalizes invalid timeout values as RawRequestError", async () => {
-    const doFetch: DoFetch = vi.fn();
+  it("falls back to default timeout for invalid timeoutMs", async () => {
+    const doFetch: DoFetch = vi.fn().mockResolvedValueOnce(jsonResponse({ ok: true }));
 
-    await expect(
-      executeRawRequest(doFetch, BASE_URL, HEADERS, "GET", "/", undefined, undefined, -1),
-    ).rejects.toEqual(expect.objectContaining({ status: 0, message: expect.any(String) }));
-    expect(doFetch).not.toHaveBeenCalled();
+    const result = await executeRawRequest(
+      doFetch,
+      BASE_URL,
+      HEADERS,
+      "GET",
+      "/",
+      undefined,
+      undefined,
+      -1,
+    );
+
+    expect(result.status).toBe(200);
+    expect(doFetch).toHaveBeenCalledTimes(1);
   });
 
   it("exports the timeout constant", () => {
@@ -399,6 +408,27 @@ describe("executeRawRequest", () => {
       await expect(
         executeRawRequest(doFetch, BASE_URL, HEADERS, httpMethod, "/_doc"),
       ).rejects.toEqual(expect.objectContaining({ status: 0, message: "Failed to fetch" }));
+      expect(doFetch).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  it.each([NaN, Infinity, 0])(
+    "falls back to default timeout for invalid timeoutMs=%s",
+    async (badTimeout) => {
+      const doFetch: DoFetch = vi.fn().mockResolvedValueOnce(jsonResponse({ ok: true }));
+
+      const result = await executeRawRequest(
+        doFetch,
+        BASE_URL,
+        HEADERS,
+        "GET",
+        "/",
+        undefined,
+        undefined,
+        badTimeout,
+      );
+
+      expect(result.status).toBe(200);
       expect(doFetch).toHaveBeenCalledTimes(1);
     },
   );

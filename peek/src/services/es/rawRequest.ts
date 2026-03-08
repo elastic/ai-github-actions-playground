@@ -74,7 +74,11 @@ export async function executeRawRequest(
   const normalizedMethod = method.toUpperCase();
   const shouldRetryMethod = RETRYABLE_METHODS.has(normalizedMethod);
   try {
-    const signals: AbortSignal[] = [AbortSignal.timeout(timeoutMs ?? RAW_REQUEST_TIMEOUT_MS)];
+    const effectiveTimeout =
+      typeof timeoutMs === "number" && Number.isFinite(timeoutMs) && timeoutMs > 0
+        ? timeoutMs
+        : RAW_REQUEST_TIMEOUT_MS;
+    const signals: AbortSignal[] = [AbortSignal.timeout(effectiveTimeout)];
     if (signal) {
       try {
         // Validate signal is acceptable to AbortSignal.any (can reject cross-realm/proxy values)
