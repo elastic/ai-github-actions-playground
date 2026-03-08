@@ -238,6 +238,40 @@ describe("executeRawRequest", () => {
     }
   });
 
+  it("aborts immediately when timeoutMs is 0", async () => {
+    vi.useFakeTimers();
+    try {
+      let requestSignal: AbortSignal | undefined;
+      const doFetch: DoFetch = vi.fn((_url, _headers, opts) => {
+        requestSignal = opts?.signal;
+        return new Promise((_resolve, reject) => {
+          requestSignal?.addEventListener("abort", () => reject(requestSignal?.reason), {
+            once: true,
+          });
+        });
+      });
+
+      const pending = executeRawRequest(
+        doFetch,
+        BASE_URL,
+        HEADERS,
+        "GET",
+        "/",
+        undefined,
+        undefined,
+        0,
+      );
+      const assertion = expect(pending).rejects.toEqual(
+        expect.objectContaining({ status: 0, message: expect.stringMatching(/timeout/i) }),
+      );
+      await vi.advanceTimersByTimeAsync(1);
+      await assertion;
+      expect(requestSignal?.aborted).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("falls back to default timeout for invalid timeoutMs", async () => {
     vi.useFakeTimers();
     try {
