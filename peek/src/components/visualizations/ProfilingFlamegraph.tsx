@@ -120,6 +120,34 @@ function getFlameColor(name: string, frameType: FrameType): string {
   return palette[Math.abs(hash) % palette.length]!;
 }
 
+/** Parse a hex color (#RGB or #RRGGBB) into [R, G, B] in 0–255. */
+function hexToRgb(hex: string): [number, number, number] {
+  const h = hex.replace("#", "");
+  const norm =
+    h.length === 3
+      ? h
+          .split("")
+          .map((c) => c + c)
+          .join("")
+      : h;
+  const int = Number.parseInt(norm, 16);
+  return [(int >> 16) & 255, (int >> 8) & 255, int & 255];
+}
+
+/** Relative luminance per WCAG 2.1 (0 = black, 1 = white). */
+function relativeLuminance(hex: string): number {
+  const [r, g, b] = hexToRgb(hex).map((v) => {
+    const s = v / 255;
+    return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r! + 0.7152 * g! + 0.0722 * b!;
+}
+
+/** Return "#fff" or "#000" to ensure readable contrast against the given background. */
+function getLabelColor(bgHex: string): string {
+  return relativeLuminance(bgHex) > 0.179 ? "#000" : "#fff";
+}
+
 const MIN_LABEL_WIDTH = 30;
 const TEXT_PADDING = 6;
 /** Approximate character width for font-size 11px. Used for manual truncation. */
@@ -230,12 +258,13 @@ export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
             const isMatch =
               lowerSearch.length > 0 && String(name).toLowerCase().includes(lowerSearch);
             const isDimmed = lowerSearch.length > 0 && !isMatch;
+            const fillColor = getFlameColor(String(name), frameType);
 
             return {
               type: "rect" as const,
               shape: { x, y, width: Math.max(w - 1, 1), height: Math.max(h - 2, 1) },
               style: api.style({
-                fill: getFlameColor(String(name), frameType),
+                fill: fillColor,
                 stroke: isMatch ? muiTheme.palette.primary.main : muiTheme.palette.background.paper,
                 lineWidth: isMatch ? 2 : 0.5,
                 opacity: isDimmed ? DIMMED_OPACITY : 1,
@@ -252,7 +281,7 @@ export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
                     if (label.length <= maxChars) return label;
                     return label.slice(0, maxChars - 1) + "…";
                   })(),
-                  fill: "#fff",
+                  fill: getLabelColor(fillColor),
                   fontSize: 11,
                   fontFamily: "monospace",
                   opacity: isDimmed ? DIMMED_OPACITY : 1,
