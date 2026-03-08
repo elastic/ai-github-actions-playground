@@ -11,11 +11,10 @@ import Stack from "@mui/material/Stack";
 import LinearProgress from "@mui/material/LinearProgress";
 import Autocomplete from "@mui/material/Autocomplete";
 import TextField from "@mui/material/TextField";
-import FolderOpenIcon from "@mui/icons-material/FolderOpen";
-import UploadFileIcon from "@mui/icons-material/UploadFile";
 import GitHubIcon from "@mui/icons-material/GitHub";
 
 import { usePackageBuilderStore } from "../../store/usePackageBuilderStore";
+import type { PackageBuilderData } from "../../types/packageBuilder";
 import {
   importFromZip,
   importFromFolder,
@@ -26,13 +25,15 @@ import {
   fetchPackageFiles,
   type CatalogEntry,
 } from "../../services/packageBuilder/githubCatalog";
+import ImportUploadSection from "./ImportUploadSection";
 
 interface Props {
   open: boolean;
   onClose: () => void;
+  onImportComplete?: (data: PackageBuilderData) => void;
 }
 
-export default function ImportPackageDialog({ open, onClose }: Props) {
+export default function ImportPackageDialog({ open, onClose, onImportComplete }: Props) {
   const loadPackage = usePackageBuilderStore((s) => s.loadPackage);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,12 +42,8 @@ export default function ImportPackageDialog({ open, onClose }: Props) {
   const [catalog, setCatalog] = useState<CatalogEntry[]>([]);
   const [catalogLoading, setCatalogLoading] = useState(false);
   const [catalogError, setCatalogError] = useState<string | null>(null);
-
-  const zipInputRef = useRef<HTMLInputElement>(null);
-  const folderInputRef = useRef<HTMLInputElement>(null);
   const importAbortRef = useRef<AbortController | null>(null);
 
-  // Load catalog when dialog opens
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
@@ -87,24 +84,17 @@ export default function ImportPackageDialog({ open, onClose }: Props) {
         if (controller.signal.aborted) return;
         setWarnings(result.warnings);
         loadPackage(result.data);
-        if (result.warnings.length === 0) {
-          onClose();
-        }
-        // If there are warnings, keep dialog open so the user can see them,
-        // but the data is already loaded.
+        onImportComplete?.(result.data);
+        if (result.warnings.length === 0) onClose();
       } catch (err) {
         if (controller.signal.aborted) return;
         setError(err instanceof Error ? err.message : String(err));
       } finally {
-        if (importAbortRef.current === controller) {
-          importAbortRef.current = null;
-        }
-        if (!controller.signal.aborted) {
-          setLoading(false);
-        }
+        if (importAbortRef.current === controller) importAbortRef.current = null;
+        if (!controller.signal.aborted) setLoading(false);
       }
     },
-    [loadPackage, onClose],
+    [loadPackage, onClose, onImportComplete],
   );
 
   const handleZipUpload = useCallback(
@@ -161,15 +151,7 @@ export default function ImportPackageDialog({ open, onClose }: Props) {
           </Box>
         ) : (
           <Stack spacing={2}>
-            {/* GitHub catalog */}
-            <Box
-              sx={{
-                border: "1px solid",
-                borderColor: "divider",
-                borderRadius: 2,
-                p: 2,
-              }}
-            >
+            <Box sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2, p: 2 }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
                 <GitHubIcon sx={{ fontSize: 20, color: "text.secondary" }} />
                 <Typography variant="body2" sx={{ fontWeight: 600 }}>
@@ -208,61 +190,10 @@ export default function ImportPackageDialog({ open, onClose }: Props) {
               )}
             </Box>
 
-            <Typography variant="body2" color="text.secondary" textAlign="center">
-              or upload from disk
-            </Typography>
-
-            {/* Zip upload */}
-            <Button
-              variant="outlined"
-              fullWidth
-              sx={{
-                border: "2px dashed",
-                borderColor: "divider",
-                borderRadius: 2,
-                p: 3,
-                textAlign: "center",
-                "&:hover": { borderColor: "primary.main", bgcolor: "action.hover" },
-                textTransform: "none",
-              }}
-              onClick={() => zipInputRef.current?.click()}
-            >
-              <UploadFileIcon sx={{ fontSize: 40, color: "action.active", mb: 1 }} />
-              <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                Upload .zip file
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                A zip archive containing the package directory
-              </Typography>
-            </Button>
-
-            <Typography variant="body2" color="text.secondary" textAlign="center">
-              or
-            </Typography>
-
-            {/* Folder upload */}
-            <Button
-              variant="outlined"
-              fullWidth
-              sx={{
-                border: "2px dashed",
-                borderColor: "divider",
-                borderRadius: 2,
-                p: 3,
-                textAlign: "center",
-                "&:hover": { borderColor: "primary.main", bgcolor: "action.hover" },
-                textTransform: "none",
-              }}
-              onClick={() => folderInputRef.current?.click()}
-            >
-              <FolderOpenIcon sx={{ fontSize: 40, color: "action.active", mb: 1 }} />
-              <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                Select package folder
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                The folder containing manifest.yml
-              </Typography>
-            </Button>
+            <ImportUploadSection
+              onZipUpload={handleZipUpload}
+              onFolderUpload={handleFolderUpload}
+            />
           </Stack>
         )}
 
@@ -275,24 +206,13 @@ export default function ImportPackageDialog({ open, onClose }: Props) {
         {warnings.length > 0 && (
           <Stack spacing={1} sx={{ mt: 2 }}>
             <Alert severity="success">Package loaded successfully!</Alert>
-            {warnings.map((w, i) => (
-              <Alert key={i} severity="warning" sx={{ py: 0.5 }}>
+            {warnings.map((w) => (
+              <Alert key={w} severity="warning" sx={{ py: 0.5 }}>
                 {w}
               </Alert>
             ))}
           </Stack>
         )}
-
-        {/* Hidden file inputs */}
-        <input ref={zipInputRef} type="file" accept=".zip" hidden onChange={handleZipUpload} />
-        <input
-          ref={folderInputRef}
-          type="file"
-          // @ts-expect-error -- webkitdirectory is non-standard but widely supported
-          webkitdirectory=""
-          hidden
-          onChange={handleFolderUpload}
-        />
       </DialogContent>
       <DialogActions>
         {warnings.length > 0 ? (

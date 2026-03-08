@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Alert from "@mui/material/Alert";
-import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
@@ -20,7 +19,8 @@ import RefreshToolbar from "./RefreshToolbar";
 import ResilienceSignalsView from "./cluster-health/ResilienceSignalsView";
 import ShardDistributionView from "./cluster-health/ShardDistributionView";
 import TaskBacklogView from "./cluster-health/TaskBacklogView";
-import PageHeader from "./PageHeader";
+import PageContainer from "./PageContainer";
+import PageHeaderSection from "./PageHeaderSection";
 
 export type ClusterHealthView =
   | "rules"
@@ -147,22 +147,20 @@ export default function ClusterHealthPage({ defaultTab = "rules" }: ClusterHealt
   const insightCacheKey = `cluster-health::${activeTab}::${data?.clusterHealth?.status ?? ""}::${data?.clusterHealth?.unassigned_shards ?? 0}::${data?.pendingTasks?.tasks?.length ?? 0}::${data?.clusterHealth?.number_of_nodes ?? 0}`;
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, height: "100%", minHeight: 0 }}>
-      <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <PageHeader
-          title="Health"
-          actions={
-            <RefreshToolbar
-              lastUpdatedAt={lastUpdatedAt}
-              refreshIntervalSeconds={refreshIntervalMs / 1000}
-              refreshOptions={CLUSTER_HEALTH_REFRESH_OPTIONS}
-              onIntervalChange={(s) => setRefreshIntervalMs(s * 1000)}
-              onRefresh={refresh}
-              loading={loading}
-            />
-          }
-        />
-      </Paper>
+    <PageContainer gap={1.5}>
+      <PageHeaderSection
+        title="Health"
+        actions={
+          <RefreshToolbar
+            lastUpdatedAt={lastUpdatedAt}
+            refreshIntervalSeconds={refreshIntervalMs / 1000}
+            refreshOptions={CLUSTER_HEALTH_REFRESH_OPTIONS}
+            onIntervalChange={(s) => setRefreshIntervalMs(s * 1000)}
+            onRefresh={refresh}
+            loading={loading}
+          />
+        }
+      />
 
       {error ? <Alert severity="error">{error}</Alert> : null}
       {!error && partialErrors.length > 0 && !partialDismissed ? (
@@ -217,6 +215,6 @@ export default function ClusterHealthPage({ defaultTab = "rules" }: ClusterHealt
           {activeTab === "resilienceSignals" && <ResilienceSignalsView data={data} />}
         </Paper>
       )}
-    </Box>
+    </PageContainer>
   );
 }

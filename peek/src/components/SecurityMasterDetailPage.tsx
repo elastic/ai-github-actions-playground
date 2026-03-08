@@ -3,7 +3,8 @@ import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
 
 import ContentSkeleton from "./ContentSkeleton";
-import PageHeader from "./PageHeader";
+import PageContainer from "./PageContainer";
+import PageHeaderSection from "./PageHeaderSection";
 
 interface SecurityMasterDetailPageProps {
   title: string;
@@ -23,10 +24,8 @@ export default function SecurityMasterDetailPage({
   detailPane,
 }: SecurityMasterDetailPageProps) {
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1, height: "100%", minHeight: 0 }}>
-      <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <PageHeader title={title} actions={actions} />
-      </Paper>
+    <PageContainer>
+      <PageHeaderSection title={title} actions={actions} />
 
       {alerts}
 
@@ -57,6 +56,6 @@ export default function SecurityMasterDetailPage({
           </Paper>
         </Box>
       )}
-    </Box>
+    </PageContainer>
   );
 }
