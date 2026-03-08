@@ -4,12 +4,12 @@ Elastic Peek includes keyboard shortcuts and productivity tips to help you navig
 
 ## Keyboard shortcuts
 
-| Shortcut | Action |
-|---|---|
-| `Ctrl/Cmd + K` | Open the command palette |
-| `Ctrl/Cmd + Shift + A` | Toggle the AI Assistant drawer |
-| `Ctrl/Cmd + Enter` | Run the current ES\|QL query (Query Lab, Panel Editor, Logs Explorer) |
-| `Arrow Up / Down` | Navigate between rows in Query Lab while the row inspector is open |
+| Shortcut               | Action                                                                |
+| ---------------------- | --------------------------------------------------------------------- |
+| `Ctrl/Cmd + K`         | Open the command palette                                              |
+| `Ctrl/Cmd + Shift + A` | Toggle the AI Assistant drawer                                        |
+| `Ctrl/Cmd + Enter`     | Run the current ES\|QL query (Query Lab, Panel Editor, Logs Explorer) |
+| `Arrow Up / Down`      | Navigate between rows in Query Lab while the row inspector is open    |
 
 ## Command palette
 
