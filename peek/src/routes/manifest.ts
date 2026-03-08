@@ -88,7 +88,7 @@ const HostsWindowsPage = lazy(() => import("../components/hosts/HostsWindowsPage
 const HostsMacosPage = lazy(() => import("../components/hosts/HostsMacosPage"));
 const TaskManagerPage = lazy(() => import("../components/TaskManagerPage"));
 const IlmPage = lazy(() => import("../components/IlmPage"));
-const TemplatesPage = lazy(() => import("../components/TemplatesPage"));
+const IndexTemplatesPage = lazy(() => import("../components/IndexTemplatesPage"));
 
 export type NavGroup = "Data" | "Workspace" | "Security" | "System" | "Help" | "Settings";
 
@@ -699,7 +699,7 @@ export const PAGE_MANIFEST = {
   },
   templates: {
     path: "/templates",
-    component: TemplatesPage,
+    component: IndexTemplatesPage,
     requiresConnection: true,
     showTimeControls: false,
     skeletonVariant: "table",
