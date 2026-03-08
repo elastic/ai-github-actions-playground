@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 
 import { useSimpleEsqlQuery } from "../../hooks/useSimpleEsqlQuery";
-import { usePageFiltersStore } from "../../store/usePageFiltersStore";
+import { useHostsFiltersStore } from "../../store/useHostsFiltersStore";
 import type { HostOsType, HostRow } from "./hostTypes";
 
 import { buildHostInventoryQuery, type HostQueryFilters } from "./hostQueryBuilder";
@@ -11,7 +11,7 @@ import { parseHostInventory } from "./hostHelpers";
 export type HostSortDirection = "asc" | "desc";
 
 export function useHostsInventorySearch(osTypeOverride?: HostOsType) {
-  const { filters, updateFilters, resetFilters } = usePageFiltersStore(
+  const { filters, updateFilters, resetFilters } = useHostsFiltersStore(
     useShallow((s) => ({
       filters: s.hostsFilters,
       updateFilters: s.updateHostsFilters,

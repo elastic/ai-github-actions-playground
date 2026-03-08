@@ -3,7 +3,7 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import FleetAgentsTable from "../../src/components/fleet/FleetAgentsTable";
-import { usePageFiltersStore } from "../../src/store/usePageFiltersStore";
+import { useFleetFiltersStore } from "../../src/store/useFleetFiltersStore";
 import type { ElasticAgentInfo } from "../../src/services/fleet";
 
 const makeAgent = (
@@ -49,7 +49,7 @@ const getVersionChipButtons = (): Array<string | null> =>
 
 describe("FleetAgentsTable version sorting", () => {
   beforeEach(() => {
-    usePageFiltersStore.getState().resetFleetFilters();
+    useFleetFiltersStore.getState().resetFleetFilters();
   });
 
   it("sorts versions semantically in ascending order", async () => {

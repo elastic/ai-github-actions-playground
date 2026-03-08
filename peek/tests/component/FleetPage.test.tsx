@@ -7,7 +7,7 @@ import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import FleetAgentPage from "../../src/components/FleetAgentPage";
 import FleetPage from "../../src/components/FleetPage";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
-import { usePageFiltersStore } from "../../src/store/usePageFiltersStore";
+import { useFleetFiltersStore } from "../../src/store/useFleetFiltersStore";
 import { resetAllStores } from "../fixtures/test-utils";
 
 const rawRequestMock = vi.fn();
@@ -195,7 +195,7 @@ describe("Fleet pages", () => {
       .getState()
       .setConnection({ url: "https://example.es.local:9200", apiKey: "key" });
     // Reset fleet store
-    usePageFiltersStore.setState({
+    useFleetFiltersStore.setState({
       fleetActiveTab: "overview",
       fleetAutoRefreshEnabled: true,
       agentFilter: { search: "", version: null, hasErrors: false, staleness: null },
@@ -637,7 +637,7 @@ describe("Fleet pages", () => {
     });
 
     // Set staleness to "stale" via store
-    usePageFiltersStore.setState({
+    useFleetFiltersStore.setState({
       fleetActiveTab: "agents",
       agentFilter: { search: "", version: null, hasErrors: false, staleness: "stale" },
     });

@@ -2,11 +2,11 @@
 import { describe, expect, it } from "vitest";
 
 import { resetAllStores } from "../fixtures/test-utils";
-import { usePageFiltersStore } from "../../src/store/usePageFiltersStore";
+import { useFleetFiltersStore } from "../../src/store/useFleetFiltersStore";
 
 describe("fleet store reset reproduction", () => {
   it("global reset should restore fleet tab and auto-refresh defaults", () => {
-    usePageFiltersStore.setState({
+    useFleetFiltersStore.setState({
       fleetActiveTab: "agents",
       fleetAutoRefreshEnabled: false,
       agentFilter: {
@@ -19,7 +19,7 @@ describe("fleet store reset reproduction", () => {
 
     resetAllStores();
 
-    const state = usePageFiltersStore.getState();
+    const state = useFleetFiltersStore.getState();
     expect(state.agentFilter).toEqual({
       search: "",
       version: null,

@@ -27,7 +27,10 @@ import ProfilingFlamegraph from "../visualizations/ProfilingFlamegraph";
 import ProfilingFlamescope from "../visualizations/ProfilingFlamescope";
 import TimeSeriesChart from "../visualizations/TimeSeriesChart";
 import { useConnectionStore } from "../../store/useConnectionStore";
-import { usePageFiltersStore, type ProfilingViewMode } from "../../store/usePageFiltersStore";
+import {
+  useProfilingFiltersStore,
+  type ProfilingViewMode,
+} from "../../store/useProfilingFiltersStore";
 import { useOpenInDiscover } from "../../hooks/useOpenInDiscover";
 import { INSIGHT_GUARDRAIL } from "../../hooks/insightPromptUtils";
 import type { EsqlResponse } from "../../types";
@@ -75,7 +78,7 @@ export default function ProfilingPage() {
     setViewMode,
     toggleExpandedStacktraceId,
     resetFilters,
-  } = usePageFiltersStore(
+  } = useProfilingFiltersStore(
     useShallow((s) => ({
       filters: s.profilingFilters,
       rawQuery: s.profilingRawQuery,
