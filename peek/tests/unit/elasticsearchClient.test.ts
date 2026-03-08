@@ -813,4 +813,30 @@ describe("rawRequest", () => {
       vi.useRealTimers();
     }
   });
+
+  it("passes through custom timeout to raw request execution", async () => {
+    vi.useFakeTimers();
+    try {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn((_url, init: RequestInit) => {
+          const signal = init.signal;
+          return new Promise((_resolve, reject) => {
+            signal?.addEventListener("abort", () => reject(signal.reason), { once: true });
+          });
+        }),
+      );
+
+      const client = makeClient();
+      const pending = expect(
+        client.rawRequest("GET", "/", undefined, undefined, 250),
+      ).rejects.toEqual(
+        expect.objectContaining({ status: 0, message: expect.stringMatching(/timeout/i) }),
+      );
+      await vi.advanceTimersByTimeAsync(251);
+      await pending;
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

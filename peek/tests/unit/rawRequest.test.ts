@@ -214,14 +214,23 @@ describe("executeRawRequest", () => {
         });
       });
 
-      const pending = executeRawRequest(doFetch, BASE_URL, HEADERS, "GET", "/");
+      const pending = executeRawRequest(
+        doFetch,
+        BASE_URL,
+        HEADERS,
+        "GET",
+        "/",
+        undefined,
+        undefined,
+        250,
+      );
       const assertion = expect(pending).rejects.toEqual(
         expect.objectContaining({
           status: 0,
-          message: expect.stringContaining("Request timed out"),
+          message: expect.stringMatching(/timeout/i),
         }),
       );
-      await vi.advanceTimersByTimeAsync(RAW_REQUEST_TIMEOUT_MS + 1);
+      await vi.advanceTimersByTimeAsync(251);
       await assertion;
       expect(requestSignal?.aborted).toBe(true);
     } finally {

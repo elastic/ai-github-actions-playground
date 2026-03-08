@@ -65,16 +65,12 @@ export async function executeRawRequest(
   path: string,
   body?: string,
   signal?: AbortSignal,
+  timeoutMs?: number,
 ): Promise<{ status: number; body: unknown }> {
   const normalizedBaseUrl = baseUrl.replace(/\/+$/, "");
   const trimmedPath = path.trim();
   const url = `${normalizedBaseUrl}${trimmedPath.startsWith("/") ? trimmedPath : `/${trimmedPath}`}`;
-  // Keep manual timer wiring for fake-timer tests while using AbortSignal.any for composition.
-  const timeoutController = new AbortController();
-  const timeoutId = setTimeout(() => {
-    timeoutController.abort(new DOMException("Request timed out", "AbortError"));
-  }, RAW_REQUEST_TIMEOUT_MS);
-  const signals: AbortSignal[] = [timeoutController.signal];
+  const signals: AbortSignal[] = [AbortSignal.timeout(timeoutMs ?? RAW_REQUEST_TIMEOUT_MS)];
   if (signal) {
     try {
       // Validate signal is acceptable to AbortSignal.any (can reject cross-realm/proxy values)
@@ -142,7 +138,5 @@ export async function executeRawRequest(
       status: 0,
       message: err instanceof Error ? err.message : String(err),
     } satisfies RawRequestError;
-  } finally {
-    clearTimeout(timeoutId);
   }
 }
