@@ -291,7 +291,6 @@ describe("App shell visibility", () => {
 
   it(
     "navigates to /dashboards after resetting all state from a dashboard view",
-    { timeout: 15000 },
     async () => {
       const user = userEvent.setup();
       useConnectionStore.getState().setConnected(true);
@@ -318,5 +317,6 @@ describe("App shell visibility", () => {
         expect(screen.getByTestId("location")).toHaveTextContent(/^\/dashboards$/),
       );
     },
+    { timeout: 15_000 },
   );
 });
