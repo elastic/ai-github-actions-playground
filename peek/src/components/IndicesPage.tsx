@@ -37,6 +37,7 @@ import PageContainer from "./PageContainer";
 import PageHeaderSection from "./PageHeaderSection";
 import IndexDetailPanel from "./IndexDetailPanel";
 import AskAiButton from "./AskAiButton";
+import DocLink from "./DocLink";
 import InsightSlot from "./InsightSlot";
 import { InsightSlotProvider } from "./InsightSlotContext";
 import { OverviewInfoCard } from "./OverviewInfoCard";
@@ -259,6 +260,7 @@ export default function IndicesPage() {
       <PageContainer>
         <PageHeaderSection
           title="Indices"
+          titleAdornment={<DocLink section="indices" tooltip="Indices docs" />}
           actions={
             <>
               <LoadingButton

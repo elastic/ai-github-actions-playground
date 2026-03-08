@@ -11,6 +11,7 @@ import { useConnectionStore } from "../../store/useConnectionStore";
 import EmptyState from "../EmptyState";
 import PageContainer from "../PageContainer";
 import PageHeaderSection from "../PageHeaderSection";
+import DocLink from "../DocLink";
 
 import K8sDashboardControls from "./K8sDashboardControls";
 import K8sDashboardSummaryCards, { type K8sDashboardSummary } from "./K8sDashboardSummaryCards";
@@ -76,6 +77,7 @@ export default function K8sClusterDashboardPage() {
     <PageContainer gap={2}>
       <PageHeaderSection
         title={clusterName}
+        titleAdornment={<DocLink section="kubernetes" tooltip="Kubernetes docs" />}
         description="Cluster-level dashboard showing namespaces, resource utilization, logs, and traces."
         actions={
           <Button size="small" variant="text" onClick={() => navigate(PAGE_PATHS.kubernetes.path)}>
