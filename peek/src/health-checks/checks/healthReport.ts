@@ -100,52 +100,50 @@ export const healthReportChecks: HealthCheckDefinition[] = [
     },
   },
   // ── Per-indicator checks ─────────────────────────────────────────────
-  ...(
-    [
-      {
-        key: "master_is_stable",
-        title: "Master stability",
-        description: "Warns when the master node is unstable.",
-        severityOnFail: "critical" as HealthSeverity,
-      },
-      {
-        key: "shards_availability",
-        title: "Shard availability",
-        description: "Warns when shards are unavailable.",
-        severityOnFail: "critical" as HealthSeverity,
-      },
-      {
-        key: "disk",
-        title: "Disk watermarks",
-        description: "Warns when disk watermarks are breached.",
-        severityOnFail: "high" as HealthSeverity,
-      },
-      {
-        key: "repository_integrity",
-        title: "Repository integrity",
-        description: "Warns when snapshot repository integrity is degraded.",
-        severityOnFail: "high" as HealthSeverity,
-      },
-      {
-        key: "ilm",
-        title: "ILM status",
-        description: "Warns when Index Lifecycle Management reports issues.",
-        severityOnFail: "medium" as HealthSeverity,
-      },
-      {
-        key: "slm",
-        title: "SLM status",
-        description: "Warns when Snapshot Lifecycle Management reports issues.",
-        severityOnFail: "medium" as HealthSeverity,
-      },
-      {
-        key: "shards_capacity",
-        title: "Shard capacity",
-        description: "Warns when the cluster is approaching its shard limits.",
-        severityOnFail: "medium" as HealthSeverity,
-      },
-    ] as const
-  ).map(
+  ...[
+    {
+      key: "master_is_stable",
+      title: "Master stability",
+      description: "Warns when the master node is unstable.",
+      severityOnFail: "critical" as HealthSeverity,
+    },
+    {
+      key: "shards_availability",
+      title: "Shard availability",
+      description: "Warns when shards are unavailable.",
+      severityOnFail: "critical" as HealthSeverity,
+    },
+    {
+      key: "disk",
+      title: "Disk watermarks",
+      description: "Warns when disk watermarks are breached.",
+      severityOnFail: "high" as HealthSeverity,
+    },
+    {
+      key: "repository_integrity",
+      title: "Repository integrity",
+      description: "Warns when snapshot repository integrity is degraded.",
+      severityOnFail: "high" as HealthSeverity,
+    },
+    {
+      key: "ilm",
+      title: "ILM status",
+      description: "Warns when Index Lifecycle Management reports issues.",
+      severityOnFail: "medium" as HealthSeverity,
+    },
+    {
+      key: "slm",
+      title: "SLM status",
+      description: "Warns when Snapshot Lifecycle Management reports issues.",
+      severityOnFail: "medium" as HealthSeverity,
+    },
+    {
+      key: "shards_capacity",
+      title: "Shard capacity",
+      description: "Warns when the cluster is approaching its shard limits.",
+      severityOnFail: "medium" as HealthSeverity,
+    },
+  ].map(
     ({ key, title, description, severityOnFail }): HealthCheckDefinition => ({
       id: `cluster.health_report.indicator.${key}`,
       domain: "cluster",

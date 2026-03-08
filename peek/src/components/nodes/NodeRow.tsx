@@ -120,7 +120,11 @@ export function NodeRow({ row, onClick }: { row: NodeTableRow; onClick: () => vo
           "n/a"
         ) : (
           <Tooltip
-            title={`${row.gcOldCount.toLocaleString()} collections, ${(row.gcOldMs ?? 0).toLocaleString()} ms total`}
+            title={
+              row.gcOldMs === null
+                ? `${row.gcOldCount.toLocaleString()} collections, GC time unavailable`
+                : `${row.gcOldCount.toLocaleString()} collections, ${row.gcOldMs.toLocaleString()} ms total`
+            }
           >
             <span>
               {row.gcOldCount.toLocaleString()} /{" "}

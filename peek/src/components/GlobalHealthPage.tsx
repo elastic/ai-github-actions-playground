@@ -61,8 +61,9 @@ export default function GlobalHealthPage() {
         counts.unknown += 1;
         continue;
       }
-      if ((check.status === "fail" || check.status === "warn") && check.severity) {
-        counts[check.severity] += 1;
+      if (check.status === "fail" || check.status === "warn") {
+        if (check.severity) counts[check.severity] += 1;
+        else counts.unknown += 1;
       }
     }
     return counts;
