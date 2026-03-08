@@ -1,0 +1,157 @@
+import { useCallback, useState } from "react";
+
+import { fetchCapabilitiesForConnection, isElasticsearchError } from "../services/es";
+import type { UserCapabilities } from "../services/es";
+import type { ConnectionProfile, ElasticsearchConnection } from "../types";
+import type { AuthType } from "./useConnectionDialogForm";
+
+interface Params {
+  formState: {
+    authType: AuthType;
+    apiKey: string;
+    username: string;
+    password: string;
+    url: string;
+  };
+  buildConnection: () => ElasticsearchConnection;
+  connectionProfiles: ConnectionProfile[];
+  saveConnectionProfile: (name: string, connection: ElasticsearchConnection) => string | null;
+  deleteConnectionProfile: (id: string) => void;
+  lockProfile: (id: string, pin: string) => Promise<void>;
+  setConnection: (connection: ElasticsearchConnection) => void;
+  setConnected: (connected: boolean) => void;
+  setCapabilities: (capabilities: UserCapabilities | null) => void;
+  closeDialog: () => void;
+}
+
+export function useConnectionDialogActions({
+  formState,
+  buildConnection,
+  connectionProfiles,
+  saveConnectionProfile,
+  deleteConnectionProfile,
+  lockProfile,
+  setConnection,
+  setConnected,
+  setCapabilities,
+  closeDialog,
+}: Params) {
+  const [testing, setTesting] = useState(false);
+  const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
+  const [profileName, setProfileName] = useState("");
+  const [savePin, setSavePin] = useState("");
+  const [savePromptOpen, setSavePromptOpen] = useState(false);
+
+  const hasCredentials =
+    formState.authType === "none" ||
+    (formState.authType === "apiKey"
+      ? Boolean(formState.apiKey.trim())
+      : Boolean(formState.username.trim() && formState.password.trim()));
+  const canAttemptConnection = !testing && Boolean(formState.url.trim()) && hasCredentials;
+  const isDuplicateProfileName = profileName.trim()
+    ? connectionProfiles.some((profile) => profile.name === profileName.trim())
+    : false;
+  const canConfirmConnectAndSave =
+    canAttemptConnection && Boolean(profileName.trim()) && !isDuplicateProfileName;
+
+  const runConnectionAction = useCallback(
+    async (
+      onSuccess: (
+        caps: UserCapabilities,
+        connection: ElasticsearchConnection,
+      ) => void | Promise<void>,
+    ) => {
+      setTesting(true);
+      setResult(null);
+      try {
+        const connection = buildConnection();
+        const caps = await fetchCapabilitiesForConnection(connection);
+        await onSuccess(caps, connection);
+      } catch (error: unknown) {
+        const message = isElasticsearchError(error) ? error.message : String(error);
+        setResult({ ok: false, message });
+      } finally {
+        setTesting(false);
+      }
+    },
+    [buildConnection],
+  );
+
+  const handleConnect = useCallback(async () => {
+    await runConnectionAction((caps, connection) => {
+      setConnection(connection);
+      setConnected(true);
+      setCapabilities(caps);
+      closeDialog();
+    });
+  }, [closeDialog, runConnectionAction, setCapabilities, setConnected, setConnection]);
+
+  const handleConnectAndSave = useCallback(async () => {
+    if (!canConfirmConnectAndSave) return;
+    const trimmedName = profileName.trim();
+    await runConnectionAction(async (caps, connection) => {
+      const id = saveConnectionProfile(trimmedName, connection);
+      if (!id) {
+        throw new Error("Profile name already exists.");
+      }
+      const trimmedPin = savePin.trim();
+      if (trimmedPin) {
+        try {
+          await lockProfile(id, trimmedPin);
+        } catch (error) {
+          deleteConnectionProfile(id);
+          throw error;
+        }
+      }
+      setConnection(connection);
+      setConnected(true);
+      setCapabilities(caps);
+      setProfileName("");
+      setSavePin("");
+      setSavePromptOpen(false);
+      closeDialog();
+    });
+  }, [
+    canConfirmConnectAndSave,
+    closeDialog,
+    deleteConnectionProfile,
+    lockProfile,
+    profileName,
+    runConnectionAction,
+    saveConnectionProfile,
+    savePin,
+    setCapabilities,
+    setConnected,
+    setConnection,
+  ]);
+
+  const handleTest = useCallback(async () => {
+    await runConnectionAction(() => setResult({ ok: true, message: "Connected successfully." }));
+  }, [runConnectionAction]);
+
+  const handleDisconnect = useCallback(() => {
+    setConnected(false);
+    setCapabilities(null);
+    setResult(null);
+    closeDialog();
+  }, [closeDialog, setCapabilities, setConnected]);
+
+  return {
+    testing,
+    result,
+    setResult,
+    profileName,
+    setProfileName,
+    savePin,
+    setSavePin,
+    savePromptOpen,
+    setSavePromptOpen,
+    isDuplicateProfileName,
+    canAttemptConnection,
+    canConfirmConnectAndSave,
+    handleConnect,
+    handleConnectAndSave,
+    handleTest,
+    handleDisconnect,
+  };
+}
