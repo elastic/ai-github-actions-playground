@@ -58,6 +58,7 @@ const HostsMacosPage = lazy(() => import("../components/hosts/HostsMacosPage"));
 const TaskManagerPage = lazy(() => import("../components/TaskManagerPage"));
 const IlmPage = lazy(() => import("../components/IlmPage"));
 const TemplatesPage = lazy(() => import("../components/TemplatesPage"));
+const SnapshotsPage = lazy(() => import("../components/SnapshotsPage"));
 
 export const PAGE_MANIFEST: Record<PageId, ComponentType> = {
   dashboards: DashboardsLandingPage,
@@ -102,6 +103,7 @@ export const PAGE_MANIFEST: Record<PageId, ComponentType> = {
   nodesHotThreads: NodesHotThreadsPage,
   watcherGetWatch: WatcherGetWatchPage,
   ilm: IlmPage,
+  snapshots: SnapshotsPage,
   templates: TemplatesPage,
   fleet: FleetPage,
   fleetAgentDetail: FleetAgentPage,
