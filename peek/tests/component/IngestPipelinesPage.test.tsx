@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor, fireEvent, within } from "@testing-library/react";
+import { screen, waitFor, fireEvent, within } from "@testing-library/react";
+import { renderWithQueryClient } from "../helpers/renderWithQueryClient";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 
@@ -56,7 +57,7 @@ describe("IngestPipelinesPage", () => {
   it("renders the pipeline list and keeps detail flyout closed by default", async () => {
     getIngestPipelinesMock.mockResolvedValue(PIPELINES_RESPONSE);
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <IngestPipelinesPage />
       </MemoryRouter>,
@@ -74,7 +75,7 @@ describe("IngestPipelinesPage", () => {
   it("shows pipeline metadata in the detail panel", async () => {
     getIngestPipelinesMock.mockResolvedValue(PIPELINES_RESPONSE);
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <IngestPipelinesPage />
       </MemoryRouter>,
@@ -95,7 +96,7 @@ describe("IngestPipelinesPage", () => {
   it("renders processors in structured fieldset/legend UI", async () => {
     getIngestPipelinesMock.mockResolvedValue(PIPELINES_RESPONSE);
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <IngestPipelinesPage />
       </MemoryRouter>,
@@ -123,7 +124,7 @@ describe("IngestPipelinesPage", () => {
     const user = userEvent.setup();
     getIngestPipelinesMock.mockResolvedValue(PIPELINES_RESPONSE);
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <IngestPipelinesPage />
       </MemoryRouter>,
@@ -142,7 +143,7 @@ describe("IngestPipelinesPage", () => {
     const user = userEvent.setup();
     getIngestPipelinesMock.mockResolvedValue(PIPELINES_RESPONSE);
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <IngestPipelinesPage />
       </MemoryRouter>,
@@ -158,7 +159,7 @@ describe("IngestPipelinesPage", () => {
     const user = userEvent.setup();
     getIngestPipelinesMock.mockResolvedValue(PIPELINES_RESPONSE);
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <IngestPipelinesPage />
       </MemoryRouter>,
@@ -180,7 +181,7 @@ describe("IngestPipelinesPage", () => {
   it("shows error alert when loading fails", async () => {
     getIngestPipelinesMock.mockRejectedValue({ status: 403, message: "permission_denied" });
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <IngestPipelinesPage />
       </MemoryRouter>,
@@ -193,7 +194,7 @@ describe("IngestPipelinesPage", () => {
     getIngestPipelinesMock.mockResolvedValue(PIPELINES_RESPONSE);
     getNodeStatsMock.mockRejectedValue({ status: 403, message: "forbidden_node_stats" });
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <IngestPipelinesPage />
       </MemoryRouter>,
@@ -208,7 +209,7 @@ describe("IngestPipelinesPage", () => {
     const user = userEvent.setup();
     getIngestPipelinesMock.mockResolvedValue(PIPELINES_RESPONSE);
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <IngestPipelinesPage />
       </MemoryRouter>,
@@ -236,7 +237,7 @@ describe("IngestPipelinesPage", () => {
       docs: [{ doc: { _source: { env: "production" } } }],
     });
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <IngestPipelinesPage />
       </MemoryRouter>,
@@ -273,7 +274,7 @@ describe("IngestPipelinesPage", () => {
       ],
     });
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <IngestPipelinesPage />
       </MemoryRouter>,
@@ -296,7 +297,7 @@ describe("IngestPipelinesPage", () => {
       docs: [{ doc: { _source: { env: "production" } } }, { doc: { _source: { env: "staging" } } }],
     });
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <IngestPipelinesPage />
       </MemoryRouter>,
@@ -336,7 +337,7 @@ describe("IngestPipelinesPage", () => {
       docs: [{ doc: { _source: { a: 1 } } }, { doc: { _source: { b: 2 } } }],
     });
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <IngestPipelinesPage />
       </MemoryRouter>,
@@ -374,7 +375,7 @@ describe("IngestPipelinesPage", () => {
       ],
     });
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <IngestPipelinesPage />
       </MemoryRouter>,
@@ -407,7 +408,7 @@ describe("IngestPipelinesPage", () => {
     getIngestPipelinesMock.mockResolvedValue(PIPELINES_RESPONSE);
     simulateIngestPipelineMock.mockRejectedValue({ status: 400, message: "simulation_failed" });
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <IngestPipelinesPage />
       </MemoryRouter>,
@@ -426,7 +427,7 @@ describe("IngestPipelinesPage", () => {
     const user = userEvent.setup();
     getIngestPipelinesMock.mockResolvedValue(PIPELINES_RESPONSE);
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <IngestPipelinesPage />
       </MemoryRouter>,
@@ -506,7 +507,7 @@ describe("IngestPipelinesPage", () => {
       },
     });
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <IngestPipelinesPage />
       </MemoryRouter>,
@@ -557,7 +558,7 @@ describe("IngestPipelinesPage", () => {
       },
     });
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <IngestPipelinesPage />
       </MemoryRouter>,
@@ -585,7 +586,7 @@ describe("IngestPipelinesPage", () => {
       .mockResolvedValueOnce(PIPELINES_RESPONSE)
       .mockResolvedValueOnce({ "new-pipeline": { processors: [] } });
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <IngestPipelinesPage />
       </MemoryRouter>,
@@ -605,7 +606,7 @@ describe("IngestPipelinesPage", () => {
       docs: [{ doc: { _source: { env: "production" } } }],
     });
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <IngestPipelinesPage />
       </MemoryRouter>,
@@ -629,7 +630,7 @@ describe("IngestPipelinesPage", () => {
   it("shows actionable empty state with Add data link when the cluster has no pipelines", async () => {
     getIngestPipelinesMock.mockResolvedValue({});
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <IngestPipelinesPage />
       </MemoryRouter>,
@@ -652,7 +653,7 @@ describe("IngestPipelinesPage", () => {
     const user = userEvent.setup();
     getIngestPipelinesMock.mockResolvedValue(PIPELINES_RESPONSE);
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <IngestPipelinesPage />
       </MemoryRouter>,
