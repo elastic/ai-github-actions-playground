@@ -1,7 +1,7 @@
 name: PR Actions Detective
 on:
   workflow_run:
-    workflows: ["CI", "Build", "Test"]
+    workflows: ["CI", "Build", "Test", "UI Smoke Test PR Review"]
     types: [completed]
 
 permissions:
