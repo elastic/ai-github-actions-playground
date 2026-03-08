@@ -11,7 +11,7 @@ import type { HostRow } from "./hostTypes";
 import { osLabel, toHostRef } from "./hostTypes";
 import type { HostSortDirection } from "./useHostsInventorySearch";
 import HostLink from "./HostLink";
-import { fmtPct, fmtCount, fmtTimestamp } from "./hostFormatters";
+import { fmtPct, fmtCount, fmtTimestamp, fmtLoadAvg } from "./hostFormatters";
 
 interface Column {
   id: keyof HostRow;
@@ -22,10 +22,12 @@ interface Column {
 const COLUMNS: Column[] = [
   { id: "hostName", label: "Host" },
   { id: "osType", label: "OS" },
+  { id: "hostArch", label: "Arch" },
   { id: "lastSeen", label: "Last Seen" },
   { id: "cpuUtilization", label: "CPU %", align: "right" },
-  { id: "memoryUtilization", label: "Memory %", align: "right" },
-  { id: "processCount", label: "Processes", align: "right" },
+  { id: "memoryUtilization", label: "Mem %", align: "right" },
+  { id: "loadAvg1m", label: "Load (1m)", align: "right" },
+  { id: "processCount", label: "Procs", align: "right" },
 ];
 
 interface HostInventoryTableProps {
@@ -92,9 +94,11 @@ export default function HostInventoryTable({
               <TableCell>
                 <Chip label={osLabel(row.osType)} size="small" variant="outlined" />
               </TableCell>
+              <TableCell>{row.hostArch || "—"}</TableCell>
               <TableCell>{fmtTimestamp(row.lastSeen)}</TableCell>
               <TableCell align="right">{fmtPct(row.cpuUtilization)}</TableCell>
               <TableCell align="right">{fmtPct(row.memoryUtilization)}</TableCell>
+              <TableCell align="right">{fmtLoadAvg(row.loadAvg1m)}</TableCell>
               <TableCell align="right">{fmtCount(row.processCount)}</TableCell>
             </TableRow>
           ))}

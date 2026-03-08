@@ -104,6 +104,10 @@ describe("parseHostInventory", () => {
     expect(rows[0].cpuUtilization).toBeNull();
     expect(rows[0].memoryUtilization).toBeNull();
     expect(rows[0].processCount).toBeNull();
+    expect(rows[0].osFull).toBe("");
+    expect(rows[0].loadAvg1m).toBeNull();
+    expect(rows[0].hostArch).toBe("");
+    expect(rows[0].hostIp).toBeUndefined();
   });
 
   it("falls back to host_key when host.id is missing", () => {
@@ -120,17 +124,7 @@ describe("parseHostInventory", () => {
         { name: "process_count", type: "long" },
       ],
       values: [
-        [
-          "web-1::linux",
-          "web-1",
-          "linux",
-          "Debian",
-          "12",
-          "2026-01-01T00:00:00Z",
-          0.1,
-          0.3,
-          50,
-        ],
+        ["web-1::linux", "web-1", "linux", "Debian", "12", "2026-01-01T00:00:00Z", 0.1, 0.3, 50],
       ],
     };
 
