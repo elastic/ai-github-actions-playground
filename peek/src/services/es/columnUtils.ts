@@ -11,7 +11,8 @@ export function isDateColumn(column: EsqlColumn): boolean {
 export function buildColumnLookup(columns: ReadonlyArray<{ name: string }>): Map<string, number> {
   const lookup = new Map<string, number>();
   for (let i = 0; i < columns.length; i++) {
-    lookup.set(columns[i]!.name, i);
+    const name = columns[i]!.name;
+    if (!lookup.has(name)) lookup.set(name, i);
   }
   return lookup;
 }

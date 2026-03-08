@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { ElasticsearchClient, isElasticsearchError } from "../../services/es";
-import { buildColumnLookup, getColumnIndex, getRowValue } from "../../services/es/columnUtils";
+import { buildColumnAccessor } from "../../services/es/columnUtils";
 import { escapeEsqlString } from "../../services/es/esqlUtils";
 import { useOpenInDiscover } from "../../hooks/useOpenInDiscover";
 import type { ElasticsearchConnection, EsqlResponse } from "../../types";
@@ -33,10 +33,6 @@ import {
 } from "./profilingUtils";
 
 export type ViewMode = "topFunctions" | "stacktraces" | "timeline" | "flamegraph" | "flamescope";
-
-function readColumn(row: unknown[], columns: Array<{ name: string }>, field: string): unknown {
-  return getRowValue(row, getColumnIndex(buildColumnLookup(columns), field));
-}
 
 /** Map a focus dimension + value to a partial ProfilingFilters override. */
 function dimensionToFilters(
@@ -144,13 +140,14 @@ export function useProfilingData({
   const runStacktraces = useCallback(
     async (client: ElasticsearchClient, signal: AbortSignal) => {
       const eventsResponse = await client.query({ query: effectiveQuery }, signal);
+      const getEvent = buildColumnAccessor(eventsResponse.columns);
       const events: ProfilingEvent[] = eventsResponse.values
         .map((row) => ({
-          timestamp: String(readColumn(row, eventsResponse.columns, "@timestamp") ?? ""),
-          stacktraceId: String(readColumn(row, eventsResponse.columns, "Stacktrace.id") ?? ""),
-          count: Number(readColumn(row, eventsResponse.columns, "Stacktrace.count") ?? 0),
-          serviceName: String(readColumn(row, eventsResponse.columns, "service.name") ?? ""),
-          hostName: String(readColumn(row, eventsResponse.columns, "host.name") ?? ""),
+          timestamp: String(getEvent(row, "@timestamp") ?? ""),
+          stacktraceId: String(getEvent(row, "Stacktrace.id") ?? ""),
+          count: Number(getEvent(row, "Stacktrace.count") ?? 0),
+          serviceName: String(getEvent(row, "service.name") ?? ""),
+          hostName: String(getEvent(row, "host.name") ?? ""),
         }))
         .filter((event) => event.stacktraceId.length > 0);
       const stacktraceIds = [...new Set(events.map((event) => event.stacktraceId))];
@@ -166,15 +163,12 @@ export function useProfilingData({
         { query: buildStacktraceLookupQuery(stacktraceIds) },
         signal,
       );
+      const getTrace = buildColumnAccessor(stacktraceResponse.columns);
       const stacktraceRows: StacktraceFrameMap[] = stacktraceResponse.values
         .map((row) => ({
-          id: String(readColumn(row, stacktraceResponse.columns, "_id") ?? ""),
-          frameIds: String(
-            readColumn(row, stacktraceResponse.columns, "Stacktrace.frame.ids") ?? "",
-          ),
-          frameTypes: String(
-            readColumn(row, stacktraceResponse.columns, "Stacktrace.frame.types") ?? "",
-          ),
+          id: String(getTrace(row, "_id") ?? ""),
+          frameIds: String(getTrace(row, "Stacktrace.frame.ids") ?? ""),
+          frameTypes: String(getTrace(row, "Stacktrace.frame.types") ?? ""),
         }))
         .filter((item) => item.id.length > 0);
 
@@ -183,19 +177,18 @@ export function useProfilingData({
         { query: buildStackframeLookupQuery(frameIds) },
         signal,
       );
+      const getFrame = buildColumnAccessor(frameResponse.columns);
       const frames: FrameSymbol[] = frameResponse.values
         .map((row) => ({
-          id: String(readColumn(row, frameResponse.columns, "_id") ?? ""),
-          functionName: String(
-            readColumn(row, frameResponse.columns, "Stackframe.function.name") ?? "(unknown)",
-          ),
-          fileName: String(readColumn(row, frameResponse.columns, "Stackframe.file.name") ?? ""),
+          id: String(getFrame(row, "_id") ?? ""),
+          functionName: String(getFrame(row, "Stackframe.function.name") ?? "(unknown)"),
+          fileName: String(getFrame(row, "Stackframe.file.name") ?? ""),
           lineNumber: (() => {
-            const v = readColumn(row, frameResponse.columns, "Stackframe.line.number");
+            const v = getFrame(row, "Stackframe.line.number");
             return v != null ? Number(v) : null;
           })(),
           functionOffset: (() => {
-            const v = readColumn(row, frameResponse.columns, "Stackframe.function.offset");
+            const v = getFrame(row, "Stackframe.function.offset");
             return v != null ? Number(v) : null;
           })(),
         }))

@@ -18,7 +18,7 @@ import { useShallow } from "zustand/react/shallow";
 
 import { PAGE_PATHS } from "../../routes/paths";
 import { ElasticsearchClient, isElasticsearchError } from "../../services/es";
-import { buildColumnLookup, getColumnIndex, getRowValue } from "../../services/es/columnUtils";
+import { buildColumnAccessor } from "../../services/es/columnUtils";
 import { escapeEsqlString } from "../../services/es/esqlUtils";
 import DateRangePicker from "../DateRangePicker";
 import EmptyState from "../EmptyState";
@@ -59,10 +59,6 @@ import {
   normalizeTopFunctions,
   parseFrameIds,
 } from "./profilingUtils";
-
-function readColumn(row: unknown[], columns: Array<{ name: string }>, field: string): unknown {
-  return getRowValue(row, getColumnIndex(buildColumnLookup(columns), field));
-}
 
 export default function ProfilingPage() {
   const navigate = useNavigate();
@@ -139,13 +135,14 @@ export default function ProfilingPage() {
   const runStacktraces = useCallback(
     async (client: ElasticsearchClient, signal: AbortSignal) => {
       const eventsResponse = await client.query({ query: effectiveQuery }, signal);
+      const getEvent = buildColumnAccessor(eventsResponse.columns);
       const events: ProfilingEvent[] = eventsResponse.values
         .map((row) => ({
-          timestamp: String(readColumn(row, eventsResponse.columns, "@timestamp") ?? ""),
-          stacktraceId: String(readColumn(row, eventsResponse.columns, "Stacktrace.id") ?? ""),
-          count: Number(readColumn(row, eventsResponse.columns, "Stacktrace.count") ?? 0),
-          serviceName: String(readColumn(row, eventsResponse.columns, "service.name") ?? ""),
-          hostName: String(readColumn(row, eventsResponse.columns, "host.name") ?? ""),
+          timestamp: String(getEvent(row, "@timestamp") ?? ""),
+          stacktraceId: String(getEvent(row, "Stacktrace.id") ?? ""),
+          count: Number(getEvent(row, "Stacktrace.count") ?? 0),
+          serviceName: String(getEvent(row, "service.name") ?? ""),
+          hostName: String(getEvent(row, "host.name") ?? ""),
         }))
         .filter((event) => event.stacktraceId.length > 0);
       const stacktraceIds = [...new Set(events.map((event) => event.stacktraceId))];
@@ -162,15 +159,12 @@ export default function ProfilingPage() {
         },
         signal,
       );
+      const getTrace = buildColumnAccessor(stacktraceResponse.columns);
       const stacktraceRows: StacktraceFrameMap[] = stacktraceResponse.values
         .map((row) => ({
-          id: String(readColumn(row, stacktraceResponse.columns, "_id") ?? ""),
-          frameIds: String(
-            readColumn(row, stacktraceResponse.columns, "Stacktrace.frame.ids") ?? "",
-          ),
-          frameTypes: String(
-            readColumn(row, stacktraceResponse.columns, "Stacktrace.frame.types") ?? "",
-          ),
+          id: String(getTrace(row, "_id") ?? ""),
+          frameIds: String(getTrace(row, "Stacktrace.frame.ids") ?? ""),
+          frameTypes: String(getTrace(row, "Stacktrace.frame.types") ?? ""),
         }))
         .filter((item) => item.id.length > 0);
 
@@ -181,19 +175,18 @@ export default function ProfilingPage() {
         },
         signal,
       );
+      const getFrame = buildColumnAccessor(frameResponse.columns);
       const frames: FrameSymbol[] = frameResponse.values
         .map((row) => ({
-          id: String(readColumn(row, frameResponse.columns, "_id") ?? ""),
-          functionName: String(
-            readColumn(row, frameResponse.columns, "Stackframe.function.name") ?? "(unknown)",
-          ),
-          fileName: String(readColumn(row, frameResponse.columns, "Stackframe.file.name") ?? ""),
+          id: String(getFrame(row, "_id") ?? ""),
+          functionName: String(getFrame(row, "Stackframe.function.name") ?? "(unknown)"),
+          fileName: String(getFrame(row, "Stackframe.file.name") ?? ""),
           lineNumber: (() => {
-            const v = readColumn(row, frameResponse.columns, "Stackframe.line.number");
+            const v = getFrame(row, "Stackframe.line.number");
             return v != null ? Number(v) : null;
           })(),
           functionOffset: (() => {
-            const v = readColumn(row, frameResponse.columns, "Stackframe.function.offset");
+            const v = getFrame(row, "Stackframe.function.offset");
             return v != null ? Number(v) : null;
           })(),
         }))
@@ -274,10 +267,9 @@ export default function ProfilingPage() {
   const timelineHasData = (timelineResult?.values.length ?? 0) > 0;
   const timelineCountStats = useMemo(() => {
     if (!timelineResult) return null;
-    const countIdx = getColumnIndex(buildColumnLookup(timelineResult.columns), "count");
-    if (countIdx < 0) return null;
+    const getCol = buildColumnAccessor(timelineResult.columns);
     const counts = timelineResult.values
-      .map((row) => Number(getRowValue(row, countIdx) ?? 0))
+      .map((row) => Number(getCol(row, "count") ?? 0))
       .filter((value) => Number.isFinite(value));
     if (counts.length === 0) return null;
     return {
