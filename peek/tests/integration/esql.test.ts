@@ -6,6 +6,7 @@ import { startElasticsearch, seedWebLogs, type TestContext } from "./setup";
 let ctx: TestContext;
 let connection: ElasticsearchConnection;
 let client: ElasticsearchClient;
+const ensureSeededWebLogs = async () => seedWebLogs(ctx.esClient);
 
 beforeAll(async () => {
   ctx = await startElasticsearch();
@@ -64,7 +65,7 @@ describe("executeEsql", () => {
 
 describe("web_logs queries", () => {
   beforeAll(async () => {
-    await seedWebLogs(ctx.esClient);
+    await ensureSeededWebLogs();
   });
 
   it("FROM returns all 6 rows", async () => {
@@ -169,7 +170,7 @@ describe("web_logs queries", () => {
 
 describe("client.query time range filter", () => {
   beforeAll(async () => {
-    await seedWebLogs(ctx.esClient);
+    await ensureSeededWebLogs();
   });
 
   it("returns all rows when time range covers all data", async () => {
@@ -199,7 +200,7 @@ describe("client.query time range filter", () => {
 
 describe("response structure", () => {
   beforeAll(async () => {
-    await seedWebLogs(ctx.esClient);
+    await ensureSeededWebLogs();
   });
 
   it("columns include name and type", async () => {
