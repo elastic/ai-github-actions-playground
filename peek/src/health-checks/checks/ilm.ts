@@ -1,20 +1,32 @@
 import type { HealthCheckDefinition } from "../types";
 
+const ILM_DELETE_BACKLOG = 50;
+const ILM_HOT_BACKLOG = 100;
+
+function unknownIlmDataResult() {
+  return {
+    status: "unknown" as const,
+    summary: "ILM data unavailable.",
+    recommendation: "Ensure ILM explain data is collected and verify cluster permissions.",
+  };
+}
+
 export const ilmChecks: HealthCheckDefinition[] = [
+  // #96
   {
-    id: "ilm.indices.error",
+    id: "ilm.indices.error.present",
     domain: "ilm",
     title: "ILM indices in error",
-    description: "Fails when ILM-managed indices are stuck in a failed step.",
+    description: "Fails when ILM-managed indices are in a failed step.",
     severityOnFail: "high",
     surfaces: ["global", "local"],
     dependsOn: ["ilmCore"],
-    docsUrl:
-      "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/ilm-explain-lifecycle",
-    recommendation:
-      "Use the ILM Explain API to identify the failed step and error, then fix the root cause and retry the step.",
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/ilm-explain-lifecycle",
+    recommendation: "Retry the failed ILM step or fix the underlying issue.",
     evaluate: (snapshot) => {
-      const indices = snapshot.data.ilmCore?.ilmExplain?.indices ?? {};
+      const ilmExplain = snapshot.data.ilmCore?.ilmExplain;
+      if (!ilmExplain) return unknownIlmDataResult();
+      const indices = ilmExplain.indices ?? {};
       const failed = Object.entries(indices)
         .filter(([, entry]) => Boolean(entry.failed_step))
         .map(([index, entry]) => ({ index, failedStep: entry.failed_step }));
@@ -23,26 +35,29 @@ export const ilmChecks: HealthCheckDefinition[] = [
         return {
           status: "fail",
           summary: `${failed.length} ILM index${failed.length === 1 ? "" : "es"} in failed state.`,
-          observed: { failed: failed.slice(0, 10) },
+          observed: { failed_count: failed.length, failed: failed.slice(0, 10) },
+          recommendation: "Retry the failed ILM step or fix the underlying issue.",
           links: [{ label: "Resilience", to: "/cluster-resilience" }],
         };
       }
       return { status: "pass", summary: "No ILM indices in failed steps." };
     },
   },
+  // #101
   {
-    id: "ilm.policy.missing_or_invalid",
+    id: "ilm.policy.missing",
     domain: "ilm",
     title: "ILM missing policies",
-    description: "Fails when ILM-managed indices reference lifecycle policies that do not exist.",
+    description: "Fails when ILM-managed indices reference missing lifecycle policies.",
     severityOnFail: "medium",
     surfaces: ["global"],
     dependsOn: ["ilmCore"],
-    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/ilm-get-lifecycle",
-    recommendation:
-      "Recreate the missing ILM policy or reassign affected indices to an existing policy.",
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/ilm-explain-lifecycle",
+    recommendation: "Create the missing ILM policies or update index settings.",
     evaluate: (snapshot) => {
-      const indices = snapshot.data.ilmCore?.ilmExplain?.indices ?? {};
+      const ilmExplain = snapshot.data.ilmCore?.ilmExplain;
+      if (!ilmExplain) return unknownIlmDataResult();
+      const indices = ilmExplain.indices ?? {};
       const policyNames = new Set(Object.keys(snapshot.data.ilmCore?.ilmPolicies ?? {}));
       const missing = Object.entries(indices)
         .filter(
@@ -54,100 +69,137 @@ export const ilmChecks: HealthCheckDefinition[] = [
         return {
           status: "fail",
           summary: `${missing.length} index${missing.length === 1 ? "" : "es"} reference missing ILM policies.`,
-          observed: { missing: missing.slice(0, 10) },
+          observed: { missing_count: missing.length, missing: missing.slice(0, 10) },
+          recommendation: "Create the missing ILM policies or update index settings.",
           links: [{ label: "Resilience", to: "/cluster-resilience" }],
         };
       }
       return { status: "pass", summary: "All ILM-managed indices reference existing policies." };
     },
   },
+  // #98
   {
-    id: "ilm.indices.step_info.exception",
+    id: "ilm.indices.step_info.exception.present",
     domain: "ilm",
-    title: "ILM step exceptions",
-    description:
-      "Warns when ILM-managed indices have step_info containing error reasons, even if not yet in a failed step.",
+    title: "ILM step info exceptions",
+    description: "Warns when ILM indices have step_info with error reasons.",
     severityOnFail: "medium",
     surfaces: ["global"],
     dependsOn: ["ilmCore"],
-    docsUrl:
-      "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/ilm-explain-lifecycle",
-    recommendation:
-      "Step info exceptions often precede failed steps. Investigate the reason and fix proactively.",
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/ilm-explain-lifecycle",
+    recommendation: "Review ILM step errors and retry or fix the underlying issue.",
     evaluate: (snapshot) => {
-      const indices = snapshot.data.ilmCore?.ilmExplain?.indices ?? {};
-      const withErrors = Object.entries(indices)
-        .filter(([, entry]) => entry.managed && entry.step_info?.reason && !entry.failed_step)
-        .map(([index, entry]) => ({ index, reason: entry.step_info?.reason }));
-
-      if (withErrors.length > 0) {
+      const ilmExplain = snapshot.data.ilmCore?.ilmExplain;
+      if (!ilmExplain) return unknownIlmDataResult();
+      const indices = ilmExplain.indices ?? {};
+      const withExceptions = Object.entries(indices)
+        .filter(([, entry]) => Boolean(entry.step_info?.reason))
+        .map(([index]) => index);
+      if (withExceptions.length > 0) {
         return {
           status: "warn",
-          summary: `${withErrors.length} ILM index${withErrors.length === 1 ? "" : "es"} with step exceptions.`,
-          observed: { withErrors: withErrors.slice(0, 10) },
-          links: [{ label: "Resilience", to: "/cluster-resilience" }],
+          summary: `${withExceptions.length} ILM index${withExceptions.length === 1 ? "" : "es"} with step exceptions.`,
+          observed: { count: withExceptions.length, indices: withExceptions.slice(0, 10) },
+          recommendation: "Review ILM step errors and retry or fix the underlying issue.",
         };
       }
-      return { status: "pass", summary: "No ILM step exceptions." };
+      return { status: "pass", summary: "No ILM step info exceptions." };
     },
   },
+  // #99
   {
-    id: "ilm.indices.hot_phase.backlog",
+    id: "ilm.phase.delete_backlog",
+    domain: "ilm",
+    title: "ILM delete phase backlog",
+    description: `Warns when > ${ILM_DELETE_BACKLOG} indices are currently in the delete phase.`,
+    severityOnFail: "medium",
+    surfaces: ["global"],
+    dependsOn: ["ilmCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/ilm-explain-lifecycle",
+    recommendation:
+      "Large delete backlogs may indicate permission issues or slow snapshot cleanup.",
+    evaluate: (snapshot) => {
+      const ilmExplain = snapshot.data.ilmCore?.ilmExplain;
+      if (!ilmExplain) return unknownIlmDataResult();
+      const indices = ilmExplain.indices ?? {};
+      const inDelete = Object.entries(indices).filter(
+        ([, entry]) => entry.managed && entry.phase === "delete",
+      );
+      if (inDelete.length > ILM_DELETE_BACKLOG) {
+        return {
+          status: "warn",
+          summary: `${inDelete.length} indices in ILM delete phase.`,
+          observed: { count: inDelete.length },
+          recommendation:
+            "Large delete backlogs may indicate permission issues or slow snapshot cleanup.",
+        };
+      }
+      return {
+        status: "pass",
+        summary: `Delete phase backlog (${inDelete.length}) within threshold.`,
+      };
+    },
+  },
+  // #100
+  {
+    id: "ilm.phase.hot_backlog",
     domain: "ilm",
     title: "ILM hot phase backlog",
-    description: "Warns when many ILM-managed indices are stuck in the hot phase.",
-    severityOnFail: "medium",
-    surfaces: ["global"],
-    dependsOn: ["ilmCore"],
-    docsUrl:
-      "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/ilm-explain-lifecycle",
-    recommendation:
-      "A backlog in the hot phase may indicate rollover is not triggering. Check max_age, max_size, and max_docs conditions.",
-    evaluate: (snapshot) => {
-      const indices = snapshot.data.ilmCore?.ilmExplain?.indices ?? {};
-      const hotIndices = Object.entries(indices).filter(
-        ([, entry]) => entry.managed && entry.phase === "hot",
-      );
-      if (hotIndices.length >= 50) {
-        return {
-          status: "warn",
-          summary: `${hotIndices.length} ILM indices in hot phase — possible rollover backlog.`,
-          observed: { hotPhaseCount: hotIndices.length },
-          links: [{ label: "Resilience", to: "/cluster-resilience" }],
-        };
-      }
-      return { status: "pass", summary: "Hot phase index count is normal." };
-    },
-  },
-  {
-    id: "ilm.indices.unmanaged.ratio",
-    domain: "ilm",
-    title: "Unmanaged indices ratio",
-    description:
-      "Warns when a large proportion of indices are not managed by ILM, which may indicate missing lifecycle policies.",
+    description: `Warns when > ${ILM_HOT_BACKLOG} managed indices remain in the hot phase.`,
     severityOnFail: "low",
     surfaces: ["global"],
     dependsOn: ["ilmCore"],
-    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/ilm-get-lifecycle",
-    recommendation:
-      "Unmanaged indices will not be automatically rolled over or deleted. Consider assigning ILM policies to prevent unbounded growth.",
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/ilm-explain-lifecycle",
+    recommendation: "Many indices lingering in hot phase may indicate misconfigured rollover.",
     evaluate: (snapshot) => {
-      const indices = snapshot.data.ilmCore?.ilmExplain?.indices ?? {};
-      const entries = Object.values(indices);
-      if (entries.length === 0) {
-        return { status: "pass", summary: "No indices to assess ILM coverage." };
-      }
-      const unmanaged = entries.filter((e) => !e.managed).length;
-      const pct = (unmanaged / entries.length) * 100;
-      if (unmanaged >= 10 && pct >= 50) {
+      const ilmExplain = snapshot.data.ilmCore?.ilmExplain;
+      if (!ilmExplain) return unknownIlmDataResult();
+      const indices = ilmExplain.indices ?? {};
+      const inHot = Object.entries(indices).filter(
+        ([, entry]) => entry.managed && entry.phase === "hot",
+      );
+      if (inHot.length > ILM_HOT_BACKLOG) {
         return {
           status: "warn",
-          summary: `${unmanaged} of ${entries.length} indices (${pct.toFixed(0)}%) are not ILM-managed.`,
-          observed: { unmanaged, total: entries.length, unmanagedPercent: +pct.toFixed(1) },
-          links: [{ label: "Resilience", to: "/cluster-resilience" }],
+          summary: `${inHot.length} indices still in ILM hot phase.`,
+          observed: { count: inHot.length },
+          recommendation:
+            "Many indices lingering in hot phase may indicate misconfigured rollover.",
         };
       }
-      return { status: "pass", summary: "ILM coverage is adequate." };
+      return { status: "pass", summary: `Hot phase indices (${inHot.length}) within threshold.` };
+    },
+  },
+  // #102
+  {
+    id: "ilm.policy.invalid_action_config",
+    domain: "ilm",
+    title: "ILM invalid action configuration",
+    description: "Warns when ILM step_info indicates an invalid action configuration.",
+    severityOnFail: "medium",
+    surfaces: ["global"],
+    dependsOn: ["ilmCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/ilm-explain-lifecycle",
+    recommendation: "Review and correct the ILM policy action configuration.",
+    evaluate: (snapshot) => {
+      const ilmExplain = snapshot.data.ilmCore?.ilmExplain;
+      if (!ilmExplain) return unknownIlmDataResult();
+      const indices = ilmExplain.indices ?? {};
+      const invalid = Object.entries(indices)
+        .filter(([, entry]) => {
+          const reason = (entry.step_info?.reason ?? "").toLowerCase();
+          return reason.includes("invalid") || reason.includes("illegal_argument");
+        })
+        .map(([index]) => index);
+      if (invalid.length > 0) {
+        return {
+          status: "warn",
+          summary: `${invalid.length} index${invalid.length === 1 ? "" : "es"} with invalid ILM action config.`,
+          observed: { count: invalid.length, indices: invalid.slice(0, 10) },
+          recommendation: "Review and correct the ILM policy action configuration.",
+        };
+      }
+      return { status: "pass", summary: "No invalid ILM action configurations detected." };
     },
   },
 ];
