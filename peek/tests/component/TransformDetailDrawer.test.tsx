@@ -67,4 +67,21 @@ describe("TransformDetailDrawer raw JSON toggle", () => {
     // Expected UX: each open starts collapsed.
     expect(screen.getByRole("button", { name: "Show raw JSON" })).toBeInTheDocument();
   });
+
+  it("keeps raw JSON expanded when the same transform id is refreshed", () => {
+    const row = makeRow("tx-1");
+    const refreshedRow = {
+      ...makeRow("tx-1"),
+      docsProcessed: 2,
+      stats: { id: "tx-1", state: "started" },
+    };
+    const { rerender } = render(<TransformDetailDrawer row={row} onClose={() => {}} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Show raw JSON" }));
+    expect(screen.getByRole("button", { name: "Hide raw JSON" })).toBeInTheDocument();
+
+    rerender(<TransformDetailDrawer row={refreshedRow} onClose={() => {}} />);
+
+    expect(screen.getByRole("button", { name: "Hide raw JSON" })).toBeInTheDocument();
+  });
 });

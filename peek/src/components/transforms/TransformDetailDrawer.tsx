@@ -19,7 +19,7 @@ export function TransformDetailDrawer({ row, onClose }: TransformDetailDrawerPro
 
   useEffect(() => {
     setShowRawJson(false);
-  }, [row]);
+  }, [row?.id]);
 
   return (
     <DetailSurface
