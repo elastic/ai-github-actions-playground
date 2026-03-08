@@ -17,7 +17,7 @@ jobs:
       title-prefix: "[ui-boilerplate-sweeper]"
       additional-instructions: |
         Focus your investigation on repetitive UI markup, CSS gymnastics, and layout boilerplate across the entire codebase (Elastic Peek). 
-        You are a "Sweeper". Do not stop at finding 2-3 isolated bugs. Your job is to identify a single, pervasive UI anti-pattern and refactor EVERY instance of it across the repository in a single, comprehensive Pull Request.
+        You are a "Sweeper". Do not stop at finding 2-3 isolated bugs. Your job is to identify a single, pervasive UI anti-pattern and file a comprehensive report detailing EVERY instance of it across the repository so that an engineer can execute the refactor.
 
         All components live under `peek/src/components/`. 
 
@@ -25,11 +25,11 @@ jobs:
         1. Audit the codebase for common structural repetitions. For example: Do we copy-paste the exact same `<Box sx={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>` 100 times instead of having a `<ScrollableLayout>`? Do we manually type `<Alert severity="error">{error}</Alert>` 50 times instead of using a unified wrapper? Do we have repetitive drawer/flyout scaffolding?
         2. Identify the worst offender.
         3. Design a single, clean React primitive to abstract it.
-        4. Execute a sweeping pass to replace the boilerplate with your new primitive everywhere it occurs.
-        5. Verify the app still builds and passes tests.
+        4. Execute a sweeping pass to find EVERY occurrence of the boilerplate in the codebase.
+        5. File an issue that clearly defines the new primitive and lists the exact file paths and line numbers of all instances that need to be replaced.
 
         ## Output rules
-        - Open a PR fixing the pervasive pattern. If you cannot open a PR, file an issue detailing the extent of the repetition and the proposed primitive.
+        - File a single issue containing the proposed architectural primitive and an exhaustive checklist of every file/location that needs to be updated.
       setup-commands: "cd peek && PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 ELECTRON_SKIP_BINARY_DOWNLOAD=1 npm ci"
     secrets:
       COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
