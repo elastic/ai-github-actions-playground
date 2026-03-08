@@ -74,9 +74,9 @@ RATE(field)   — per-second rate of increase across the bucket (most common)
 IRATE(field)  — instantaneous rate from last two data points
 INCREASE(field) — total absolute increase within the bucket
 
-Example (disk throughput):
+Example (process count over time):
 TS metrics-hostmetricsreceiver*
-| STATS disk_rate = SUM(RATE(system.disk.io))
+| STATS process_count = MAX(AVG_OVER_TIME(system.processes.count))
     BY bucket = BUCKET(@timestamp, 20, ?_tstart, ?_tend)
 | SORT bucket ASC
 
@@ -116,17 +116,15 @@ BY bucket = BUCKET(@timestamp, 20, NOW() - 1 hour, NOW())
 Field names containing numeric segments must be backtick-quoted:
 
 // WRONG
-| STATS load = AVG(AVG_OVER_TIME(system.cpu.load_average.1m))
+| STATS p50 = AVG(AVG_OVER_TIME(latency.p50))
 
 // CORRECT
-| STATS load = MAX(AVG_OVER_TIME(\`system.cpu.load_average.1m\`))
+| STATS p50 = MAX(AVG_OVER_TIME(\`latency.p50\`))
 
 ### OTel hostmetricsreceiver Field Reference
 Gauges (use AVG_OVER_TIME):  system.cpu.utilization, system.memory.utilization,
-  \`system.cpu.load_average.1m\`, \`system.cpu.load_average.5m\`, \`system.cpu.load_average.15m\`,
   system.processes.count
-Counters (use RATE):  system.disk.io, system.network.io, system.network.errors,
-  system.paging.faults, system.paging.operations
+Counters (use RATE):  none currently ingested in metrics-hostmetricsreceiver*
 Host metadata: host.name (keyword), host.ip (ip), host.arch (keyword),
   host.os.full (keyword), os.type (keyword)
 Identity key: CONCAT(COALESCE(host.name, TO_STRING(host.ip), "unknown"), "::", COALESCE(os.type, "unknown"))
