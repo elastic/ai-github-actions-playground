@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Alert from "@mui/material/Alert";
@@ -18,6 +18,7 @@ export default function GitHubCatalogSection({ open, onSelect }: Props) {
   const [catalog, setCatalog] = useState<CatalogEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const retryControllerRef = useRef<AbortController | null>(null);
 
   const loadCatalog = useCallback(async (signal: AbortSignal) => {
     setLoading(true);
@@ -35,7 +36,9 @@ export default function GitHubCatalogSection({ open, onSelect }: Props) {
   }, []);
 
   const handleRetry = useCallback(() => {
+    retryControllerRef.current?.abort();
     const controller = new AbortController();
+    retryControllerRef.current = controller;
     void loadCatalog(controller.signal);
   }, [loadCatalog]);
 
@@ -45,6 +48,8 @@ export default function GitHubCatalogSection({ open, onSelect }: Props) {
     void loadCatalog(controller.signal);
     return () => {
       controller.abort();
+      retryControllerRef.current?.abort();
+      retryControllerRef.current = null;
     };
   }, [open, loadCatalog]);
 
