@@ -10,8 +10,36 @@ import IconButton from "@mui/material/IconButton";
 import Divider from "@mui/material/Divider";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
+import AccountTreeIcon from "@mui/icons-material/AccountTree";
+import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
+import BugReportIcon from "@mui/icons-material/BugReport";
 import SettingsIcon from "@mui/icons-material/Settings";
 import ChatIcon from "@mui/icons-material/Chat";
+import CloudIcon from "@mui/icons-material/Cloud";
+import DashboardIcon from "@mui/icons-material/Dashboard";
+import DatasetIcon from "@mui/icons-material/Dataset";
+import DescriptionIcon from "@mui/icons-material/Description";
+import DnsIcon from "@mui/icons-material/Dns";
+import ExploreIcon from "@mui/icons-material/Explore";
+import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
+import InfoIcon from "@mui/icons-material/Info";
+import MemoryIcon from "@mui/icons-material/Memory";
+import MenuBookIcon from "@mui/icons-material/MenuBook";
+import MiscellaneousServicesIcon from "@mui/icons-material/MiscellaneousServices";
+import PendingActionsIcon from "@mui/icons-material/PendingActions";
+import PeopleIcon from "@mui/icons-material/People";
+import PolicyIcon from "@mui/icons-material/Policy";
+import RocketLaunchIcon from "@mui/icons-material/RocketLaunch";
+import SearchIcon from "@mui/icons-material/Search";
+import SecurityIcon from "@mui/icons-material/Security";
+import ShieldIcon from "@mui/icons-material/Shield";
+import SpeedIcon from "@mui/icons-material/Speed";
+import StorageIcon from "@mui/icons-material/Storage";
+import SubjectIcon from "@mui/icons-material/Subject";
+import TerminalIcon from "@mui/icons-material/Terminal";
+import TimelineIcon from "@mui/icons-material/Timeline";
+import ViewModuleIcon from "@mui/icons-material/ViewModule";
+import VpnKeyIcon from "@mui/icons-material/VpnKey";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
@@ -52,6 +80,45 @@ interface AppSidebarProps {
   onRequestReset?: () => void;
 }
 
+const NAV_ICON_COMPONENTS = {
+  AccountTreeIcon,
+  AdminPanelSettingsIcon,
+  BugReportIcon,
+  ChatIcon,
+  CloudIcon,
+  DashboardIcon,
+  DatasetIcon,
+  DescriptionIcon,
+  DnsIcon,
+  ExploreIcon,
+  HealthAndSafetyIcon,
+  InfoIcon,
+  MemoryIcon,
+  MenuBookIcon,
+  MiscellaneousServicesIcon,
+  PendingActionsIcon,
+  PeopleIcon,
+  PolicyIcon,
+  RocketLaunchIcon,
+  SearchIcon,
+  SecurityIcon,
+  SettingsIcon,
+  ShieldIcon,
+  SpeedIcon,
+  StorageIcon,
+  SubjectIcon,
+  TerminalIcon,
+  TimelineIcon,
+  ViewModuleIcon,
+  VpnKeyIcon,
+} as const;
+
+function renderNavIcon(iconKey: string | undefined): React.ReactNode {
+  if (!iconKey) return null;
+  const Icon = NAV_ICON_COMPONENTS[iconKey as keyof typeof NAV_ICON_COMPONENTS];
+  return Icon ? <Icon fontSize="small" /> : null;
+}
+
 function buildNavSections(): NavSection[] {
   const groups = new Map<string, NavItem[]>();
 
@@ -61,7 +128,7 @@ function buildNavSections(): NavSection[] {
     items.push({
       label: config.nav.label,
       page,
-      icon: config.nav.icon,
+      icon: renderNavIcon(config.nav.iconKey),
       requiresConnection: config.requiresConnection,
       requiredCapability: config.requiredCapability,
     });

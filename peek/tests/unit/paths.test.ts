@@ -53,10 +53,10 @@ describe("PAGE_PATHS", () => {
     expect(PAGE_PATHS.chat.requiresConnection).toBe(true);
   });
 
-  it("every sidebar-visible manifest entry has a non-null icon", () => {
+  it("every sidebar-visible manifest entry has a non-null icon key", () => {
     for (const [page, config] of entries) {
       if (config.nav.showInSidebar) {
-        expect(config.nav.icon, `${page} is sidebar-visible but has no icon`).toBeTruthy();
+        expect(config.nav.iconKey, `${page} is sidebar-visible but has no icon key`).toBeTruthy();
       }
     }
   });
