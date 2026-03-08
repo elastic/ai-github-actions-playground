@@ -2,11 +2,22 @@ import type { ClusterTaskInfo, TasksListResponse } from "../../services/es";
 
 import type { HealthCheckDefinition } from "../types";
 
-const LONG_TASK_NANOS = 300_000_000_000; // 5 minutes
+const LONG_TASK_NANOS = 1_800_000_000_000; // 30 minutes
+
+/** Internal/transport actions that routinely run long and should not trigger alerts. */
+const INTERNAL_ACTION_PREFIXES = ["cluster:monitor/", "internal:", "indices:monitor/"];
+
+function isInternalAction(action: string): boolean {
+  return INTERNAL_ACTION_PREFIXES.some((prefix) => action.startsWith(prefix));
+}
 
 function flattenTasks(tasksCore: TasksListResponse | null | undefined): ClusterTaskInfo[] {
   const nodes = tasksCore?.nodes ?? {};
   return Object.values(nodes).flatMap((node) => Object.values(node.tasks ?? {}));
+}
+
+function flattenUserTasks(tasksCore: TasksListResponse | null | undefined): ClusterTaskInfo[] {
+  return flattenTasks(tasksCore).filter((t) => !isInternalAction(t.action ?? ""));
 }
 
 export const taskChecks: HealthCheckDefinition[] = [
@@ -40,20 +51,20 @@ export const taskChecks: HealthCheckDefinition[] = [
     id: "tasks.long_running.absolute",
     domain: "tasks",
     title: "Long-running tasks",
-    description: "Fails when tasks exceed the absolute runtime threshold.",
+    description: "Warns when user-facing tasks exceed the 30-minute runtime threshold.",
     severityOnFail: "high",
     surfaces: ["global"],
     dependsOn: ["tasksCore"],
     docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/list-tasks",
     recommendation: "Investigate or cancel long-running tasks to free cluster resources.",
     evaluate: (snapshot) => {
-      const tasks = flattenTasks(snapshot.data.tasksCore?.tasks ?? null);
+      const tasks = flattenUserTasks(snapshot.data.tasksCore?.tasks ?? null);
       const longRunning = tasks.filter(
         (task) => Number(task.running_time_in_nanos ?? 0) >= LONG_TASK_NANOS,
       );
       if (longRunning.length > 0) {
         return {
-          status: "fail",
+          status: "warn",
           summary: `${longRunning.length} long-running task${longRunning.length === 1 ? "" : "s"} detected.`,
           observed: { long_running_count: longRunning.length, threshold_nanos: LONG_TASK_NANOS },
           recommendation: "Investigate or cancel long-running tasks to free cluster resources.",
@@ -75,7 +86,7 @@ export const taskChecks: HealthCheckDefinition[] = [
     docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/list-tasks",
     recommendation: "Review slow search queries. Consider cancelling or optimizing them.",
     evaluate: (snapshot) => {
-      const tasks = flattenTasks(snapshot.data.tasksCore?.tasks ?? null);
+      const tasks = flattenUserTasks(snapshot.data.tasksCore?.tasks ?? null);
       const longSearches = tasks.filter(
         (task) =>
           Number(task.running_time_in_nanos ?? 0) >= LONG_TASK_NANOS &&
@@ -111,7 +122,7 @@ export const taskChecks: HealthCheckDefinition[] = [
     docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/list-tasks",
     recommendation: "Monitor reindex progress; consider slicing for large reindex operations.",
     evaluate: (snapshot) => {
-      const tasks = flattenTasks(snapshot.data.tasksCore?.tasks ?? null);
+      const tasks = flattenUserTasks(snapshot.data.tasksCore?.tasks ?? null);
       const matched = tasks.filter(
         (t) =>
           (t.action ?? "").includes("reindex") &&
@@ -142,7 +153,7 @@ export const taskChecks: HealthCheckDefinition[] = [
     docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/list-tasks",
     recommendation: "Large update_by_query operations can consume significant resources.",
     evaluate: (snapshot) => {
-      const tasks = flattenTasks(snapshot.data.tasksCore?.tasks ?? null);
+      const tasks = flattenUserTasks(snapshot.data.tasksCore?.tasks ?? null);
       const matched = tasks.filter(
         (t) =>
           (t.action ?? "").includes("update_by_query") &&
@@ -172,7 +183,7 @@ export const taskChecks: HealthCheckDefinition[] = [
     docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/list-tasks",
     recommendation: "Large delete_by_query operations can cause significant merge overhead.",
     evaluate: (snapshot) => {
-      const tasks = flattenTasks(snapshot.data.tasksCore?.tasks ?? null);
+      const tasks = flattenUserTasks(snapshot.data.tasksCore?.tasks ?? null);
       const matched = tasks.filter(
         (t) =>
           (t.action ?? "").includes("delete_by_query") &&
@@ -202,7 +213,7 @@ export const taskChecks: HealthCheckDefinition[] = [
     docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/list-tasks",
     recommendation: "Long snapshot operations may impact cluster performance.",
     evaluate: (snapshot) => {
-      const tasks = flattenTasks(snapshot.data.tasksCore?.tasks ?? null);
+      const tasks = flattenUserTasks(snapshot.data.tasksCore?.tasks ?? null);
       const matched = tasks.filter(
         (t) =>
           (t.action ?? "").includes("snapshot") &&
@@ -232,7 +243,7 @@ export const taskChecks: HealthCheckDefinition[] = [
     docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/list-tasks",
     recommendation: "Consider cancelling stale tasks to free resources.",
     evaluate: (snapshot) => {
-      const tasks = flattenTasks(snapshot.data.tasksCore?.tasks ?? null);
+      const tasks = flattenUserTasks(snapshot.data.tasksCore?.tasks ?? null);
       const matched = tasks.filter(
         (t) => t.cancellable === true && Number(t.running_time_in_nanos ?? 0) >= LONG_TASK_NANOS,
       );
@@ -323,14 +334,15 @@ export const taskChecks: HealthCheckDefinition[] = [
     id: "tasks.description.large_fanout",
     domain: "tasks",
     title: "Large fan-out tasks",
-    description: "Warns when task descriptions indicate wildcard or multi-index fan-out.",
+    description:
+      "Warns when user-facing task descriptions indicate wildcard or multi-index fan-out.",
     severityOnFail: "low",
     surfaces: ["global"],
     dependsOn: ["tasksCore"],
     docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/list-tasks",
     recommendation: "Wildcard or many-index operations cause fan-out. Use targeted patterns.",
     evaluate: (snapshot) => {
-      const tasks = flattenTasks(snapshot.data.tasksCore?.tasks ?? null);
+      const tasks = flattenUserTasks(snapshot.data.tasksCore?.tasks ?? null);
       const fanout = tasks.filter((t) => {
         const desc = t.description ?? "";
         return desc.includes("*") || (desc.match(/,/g) ?? []).length >= 5;
