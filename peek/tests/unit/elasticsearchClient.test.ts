@@ -167,6 +167,64 @@ describe("request construction", () => {
     expect(init.method).toBeUndefined();
   });
 
+  it("getTransforms() paginates and merges pages", async () => {
+    const page1 = Array.from({ length: 100 }, (_, i) => ({
+      id: `transform-${i + 1}`,
+      source: { index: ["web_logs"] },
+      dest: { index: `dest-${i + 1}` },
+    }));
+    const page2 = Array.from({ length: 50 }, (_, i) => ({
+      id: `transform-${i + 101}`,
+      source: { index: ["web_logs"] },
+      dest: { index: `dest-${i + 101}` },
+    }));
+    const fetchSpy = mockFetchSequence(
+      { body: { count: 150, transforms: page1 } },
+      { body: { count: 150, transforms: page2 } },
+    );
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const client = makeClient();
+    const result = await client.getTransforms();
+
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+    expect((fetchSpy.mock.calls[0] as [string])[0]).toBe(`${BASE_URL}/_transform?from=0&size=100`);
+    expect((fetchSpy.mock.calls[1] as [string])[0]).toBe(
+      `${BASE_URL}/_transform?from=100&size=100`,
+    );
+    expect(result.count).toBe(150);
+    expect(result.transforms).toHaveLength(150);
+  });
+
+  it("getTransformStats() paginates and merges pages", async () => {
+    const page1 = Array.from({ length: 100 }, (_, i) => ({
+      id: `transform-${i + 1}`,
+      state: "started",
+    }));
+    const page2 = Array.from({ length: 20 }, (_, i) => ({
+      id: `transform-${i + 101}`,
+      state: "stopped",
+    }));
+    const fetchSpy = mockFetchSequence(
+      { body: { count: 120, transforms: page1 } },
+      { body: { count: 120, transforms: page2 } },
+    );
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const client = makeClient();
+    const result = await client.getTransformStats();
+
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+    expect((fetchSpy.mock.calls[0] as [string])[0]).toBe(
+      `${BASE_URL}/_transform/_stats?from=0&size=100`,
+    );
+    expect((fetchSpy.mock.calls[1] as [string])[0]).toBe(
+      `${BASE_URL}/_transform/_stats?from=100&size=100`,
+    );
+    expect(result.count).toBe(120);
+    expect(result.transforms).toHaveLength(120);
+  });
+
   it("getSecurityUsers() GETs /_security/user", async () => {
     const fetchSpy = mockFetchOnce({});
     vi.stubGlobal("fetch", fetchSpy);
