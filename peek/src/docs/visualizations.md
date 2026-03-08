@@ -44,7 +44,17 @@ Raw tabular output for detailed inspection of query results. Table panels includ
 
 ## Markdown
 
-Rich text panels for adding context, notes, and instructions to dashboards. Supports full Markdown syntax including headings, lists, links, and code blocks. Use embedded ES|QL expressions (`${FROM index | STATS count=COUNT(*)}`) to display live query results inline.
+Rich text panels for adding context, notes, and instructions to dashboards. Supports full Markdown syntax including headings, lists, links, and code blocks.
+
+Use **parameterized tokens** with `{{name}}` to insert the current value of a dashboard variable. For example, if you have a parameter called `service`, writing `Owner: {{service}}` renders the current value. Unknown tokens are left as-is. This lets you build dynamic runbook notes, escalation links, and context panels that follow the current dashboard state.
+
+Use **embedded ES|QL queries** with `${query}` syntax to display live query results inline:
+
+- **Single value** (1 row, 1 column): rendered inline as text — `the top customer is ${FROM sales-* | SORT revenue DESC | KEEP name | LIMIT 1}`
+- **List** (N rows, 1 column): rendered as a bulleted list — `${FROM sales-* | SORT revenue DESC | KEEP name | LIMIT 3}`
+- **Table** (N rows, multiple columns): rendered as a markdown table — `${FROM sales-* | SORT revenue DESC | KEEP name, dob, revenue | LIMIT 5}`
+
+Embedded queries respect the dashboard time range and parameter values (using `?param` syntax inside the ES|QL). If a query fails or the cluster is not connected, the raw `${...}` token is left in place.
 
 ## Choosing the right type
 
@@ -59,13 +69,3 @@ Rich text panels for adding context, notes, and instructions to dashboards. Supp
 | Single KPI value | Stat or Gauge |
 | Detailed rows | Table |
 | Annotations and notes | Markdown |
-
-Markdown — rich-text panel rendered from Markdown. Supports **parameterized tokens**: use `{{name}}` to insert the current value of a dashboard variable. For example, if you have a parameter called `service`, writing `Owner: {{service}}` will render the current value of that parameter. Unknown tokens are left as-is. This lets you build dynamic runbook notes, escalation links, and context panels that follow the current dashboard state.
-
-Markdown panels also support **embedded ES|QL queries** using `${query}` syntax. The query runs against the connected Elasticsearch cluster and the result is rendered inline:
-
-- **Single value** (1 row, 1 column): rendered inline as text — `the top customer is ${FROM sales-* | SORT revenue DESC | KEEP name | LIMIT 1}`
-- **List** (N rows, 1 column): rendered as a bulleted list — `${FROM sales-* | SORT revenue DESC | KEEP name | LIMIT 3}`
-- **Table** (N rows, multiple columns): rendered as a markdown table — `${FROM sales-* | SORT revenue DESC | KEEP name, dob, revenue | LIMIT 5}`
-
-Embedded queries respect the dashboard time range and parameter values (using `?param` syntax inside the ES|QL). If a query fails or the cluster is not connected, the raw `${...}` token is left in place.
