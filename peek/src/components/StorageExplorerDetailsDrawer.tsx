@@ -4,11 +4,8 @@ import Drawer from "@mui/material/Drawer";
 import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
 import CloseIcon from "@mui/icons-material/Close";
-import StorageIcon from "@mui/icons-material/Storage";
-
 import { formatBytes } from "../utils/formatBytes";
 
-import EmptyState from "./EmptyState";
 import { formatShardSplit, type TreeNode } from "./storageExplorerTreeUtils";
 
 interface StorageExplorerDetailsDrawerProps {
@@ -45,7 +42,7 @@ export default function StorageExplorerDetailsDrawer({
       </Box>
 
       <Box sx={{ p: 1.5, display: "flex", flexDirection: "column", gap: 1, overflow: "auto" }}>
-        {selectedNode ? (
+        {selectedNode && (
           <>
             <Typography variant="body2" sx={{ fontWeight: 600 }} title={selectedNode.label}>
               {selectedNode.label}
@@ -119,13 +116,6 @@ export default function StorageExplorerDetailsDrawer({
               </Button>
             )}
           </>
-        ) : (
-          <EmptyState
-            size="small"
-            icon={<StorageIcon sx={{ fontSize: 28 }} />}
-            heading="No selection"
-            description="Select a row in the tree to inspect aggregate storage details."
-          />
         )}
       </Box>
     </Drawer>

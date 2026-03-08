@@ -59,12 +59,13 @@ export default function IndexTemplatesToolbar({
         value={search}
         onChange={(event) => onSetSearch(event.target.value)}
         sx={{ minWidth: 260 }}
-        aria-label="Filter templates"
+        slotProps={{ htmlInput: { "aria-label": "Filter templates" } }}
       />
       <Button
         size="small"
         variant={showSystem ? "contained" : "outlined"}
         onClick={onToggleShowSystem}
+        aria-pressed={showSystem}
       >
         Show system templates
       </Button>
@@ -76,8 +77,9 @@ export default function IndexTemplatesToolbar({
             onChange={(event) => onSetPriorityMin(event.target.value)}
             placeholder="Min priority"
             sx={{ width: 130 }}
-            inputProps={{ inputMode: "numeric" }}
-            aria-label="Minimum template priority"
+            slotProps={{
+              htmlInput: { inputMode: "numeric", "aria-label": "Minimum template priority" },
+            }}
           />
           <TextField
             size="small"
@@ -85,13 +87,15 @@ export default function IndexTemplatesToolbar({
             onChange={(event) => onSetPriorityMax(event.target.value)}
             placeholder="Max priority"
             sx={{ width: 130 }}
-            inputProps={{ inputMode: "numeric" }}
-            aria-label="Maximum template priority"
+            slotProps={{
+              htmlInput: { inputMode: "numeric", "aria-label": "Maximum template priority" },
+            }}
           />
           <Button
             size="small"
             variant={dataStreamOnly ? "contained" : "outlined"}
             onClick={onToggleDataStreamOnly}
+            aria-pressed={dataStreamOnly}
           >
             Data-stream only
           </Button>

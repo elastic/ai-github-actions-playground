@@ -1,4 +1,5 @@
 import Box from "@mui/material/Box";
+import ButtonBase from "@mui/material/ButtonBase";
 import Chip from "@mui/material/Chip";
 import LinearProgress from "@mui/material/LinearProgress";
 import Paper from "@mui/material/Paper";
@@ -9,7 +10,6 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TableSortLabel from "@mui/material/TableSortLabel";
-import Typography from "@mui/material/Typography";
 import DescriptionIcon from "@mui/icons-material/Description";
 
 import type { ComponentTemplateRow } from "../services/es";
@@ -88,22 +88,18 @@ export default function ComponentTemplatesTable({
               <TableRow
                 key={template.name}
                 hover
-                tabIndex={0}
-                role="button"
-                aria-label={`View component template ${template.name}`}
                 onClick={() => onSelectTemplate(template.name)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" || event.key === " " || event.key === "Spacebar") {
-                    event.preventDefault();
-                    onSelectTemplate(template.name);
-                  }
-                }}
                 sx={{ cursor: "pointer" }}
               >
                 <TableCell>
-                  <Typography variant="body2" sx={{ fontFamily: "monospace", fontSize: "0.8rem" }}>
+                  <ButtonBase
+                    component="span"
+                    onClick={() => onSelectTemplate(template.name)}
+                    aria-label={`View component template ${template.name}`}
+                    sx={{ fontFamily: "monospace", fontSize: "0.8rem" }}
+                  >
                     {template.name}
-                  </Typography>
+                  </ButtonBase>
                 </TableCell>
                 <TableCell>
                   <Box sx={{ display: "flex", gap: 0.5 }}>

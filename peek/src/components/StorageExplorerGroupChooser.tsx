@@ -123,8 +123,8 @@ export default function StorageExplorerGroupChooser({
         How would you like to slice it?
       </Typography>
       <Typography variant="body2" color="text.secondary">
-        Pick how you want to start the storage tree. You can change this from the controls above the
-        table.
+        Pick how you want to start the storage tree. You can change this later with the Change View
+        button.
       </Typography>
       <Stack
         direction={{ xs: "column", sm: "row" }}
