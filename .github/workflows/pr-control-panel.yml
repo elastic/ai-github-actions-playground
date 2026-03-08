@@ -25,42 +25,71 @@ jobs:
     steps:
       - name: Sync control panel via GitHub API only (no checkout)
         uses: actions/github-script@v7
+        env:
+          CONTROL_PANEL_ITEMS: |
+            no-update-pr-body|Keep PR description updated|Keeps the PR description aligned with the latest commits so reviewers have accurate context.|1d76db|Disable Update PR Body workflow
+            no-address-pr-feedback|Auto-address bot review feedback|Applies straightforward bot review suggestions automatically to reduce manual cleanup.|5319e7|Disable Address PR Review Feedback workflow
+            no-address-merge-conflicts|Auto-resolve merge conflicts|Automatically resolves simple main-branch merge conflicts so the PR stays mergeable.|d73a4a|Disable Address Merge Conflicts workflow
+            no-pr-review|Run automated PR review|Runs the automated PR reviewer to surface bugs, risks, and maintainability issues earlier.|0e8a16|Disable PR Review workflow
+            no-pr-actions-detective|Automatically investigate PR Check failures|Posts a quick diagnosis and suggested fixes when PR checks fail, so recovery is faster.|fbca04|Disable PR Actions Detective workflow
         with:
           script: |
             // Security invariant for pull_request_target:
             // this script only reads GitHub event/API data and writes labels/comments.
             // Do not run code from the PR branch in this workflow.
             const MARKER = "<!-- pr-control-panel -->";
-            const LABEL_UPDATE_PR_BODY = "no-update-pr-body";
-            const LABEL_ADDRESS_PR_FEEDBACK = "no-address-pr-feedback";
-            const LABEL_ADDRESS_MERGE_CONFLICTS = "no-address-merge-conflicts";
-            const LABEL_PR_REVIEW = "no-pr-review";
-            const LABEL_PR_ACTIONS_DETECTIVE = "no-pr-actions-detective";
-            const LABELS = [
-              LABEL_UPDATE_PR_BODY,
-              LABEL_ADDRESS_PR_FEEDBACK,
-              LABEL_ADDRESS_MERGE_CONFLICTS,
-              LABEL_PR_REVIEW,
-              LABEL_PR_ACTIONS_DETECTIVE,
-            ];
-            const ITEM_UPDATE_PR_BODY =
-              "<span title='Keeps the PR description aligned with the latest commits so reviewers have accurate context.'>Keep PR description updated</span>";
-            const ITEM_ADDRESS_PR_FEEDBACK =
-              "<span title='Applies straightforward bot review suggestions automatically to reduce manual cleanup.'>Auto-address bot review feedback</span>";
-            const ITEM_ADDRESS_MERGE_CONFLICTS =
-              "<span title='Automatically resolves simple main-branch merge conflicts so the PR stays mergeable.'>Auto-resolve merge conflicts</span>";
-            const ITEM_PR_REVIEW =
-              "<span title='Runs the automated PR reviewer to surface bugs, risks, and maintainability issues earlier.'>Run automated PR review</span>";
-            const ITEM_PR_ACTIONS_DETECTIVE =
-              "<span title='Posts a quick diagnosis and suggested fixes when PR checks fail, so recovery is faster.'>Automatically investigate PR Check failures</span>";
+            const KEY_PREFIX = "label";
+            const CONFIG_DELIMITER = "|";
 
             const owner = context.repo.owner;
             const repo = context.repo.repo;
 
-            function readCheckbox(body, label) {
-              const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-              const checked = new RegExp(`- \\[[xX]\\] ${escaped}`).test(body);
-              const unchecked = new RegExp(`- \\[ \\] ${escaped}`).test(body);
+            function escapeHtml(value) {
+              return String(value)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+            }
+
+            function parseItemsConfig(raw) {
+              const lines = raw
+                .split("\n")
+                .map((line) => line.trim())
+                .filter(Boolean);
+              return lines.map((line) => {
+                const parts = line.split(CONFIG_DELIMITER).map((part) => part.trim());
+                if (parts.length < 5) {
+                  throw new Error(
+                    `Invalid CONTROL_PANEL_ITEMS line (expected 5 fields): ${line}`,
+                  );
+                }
+                const [label, title, tooltip, color, description] = parts;
+                return {
+                  label,
+                  title,
+                  tooltip,
+                  color,
+                  description,
+                  displayLabel: `<span title='${escapeHtml(tooltip)}'>${escapeHtml(title)}</span>`,
+                };
+              });
+            }
+
+            const ITEMS = parseItemsConfig(process.env.CONTROL_PANEL_ITEMS ?? "");
+            if (ITEMS.length === 0) {
+              throw new Error("CONTROL_PANEL_ITEMS must include at least one item.");
+            }
+
+            function readCheckboxByKey(body, key) {
+              const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+              const checked = new RegExp(
+                `- \\[[xX]\\][^\\n]*<!--\\s*${KEY_PREFIX}:${escaped}\\s*-->`,
+              ).test(body);
+              const unchecked = new RegExp(
+                `- \\[ \\][^\\n]*<!--\\s*${KEY_PREFIX}:${escaped}\\s*-->`,
+              ).test(body);
               if (checked) return true;
               if (unchecked) return false;
               return null;
@@ -73,11 +102,10 @@ jobs:
                 "",
                 "Toggle automation for this PR by checking boxes below.",
                 "",
-                `- [${state.updatePrBody ? "x" : " "}] ${ITEM_UPDATE_PR_BODY}`,
-                `- [${state.addressPrFeedback ? "x" : " "}] ${ITEM_ADDRESS_PR_FEEDBACK}`,
-                `- [${state.addressMergeConflicts ? "x" : " "}] ${ITEM_ADDRESS_MERGE_CONFLICTS}`,
-                `- [${state.prReview ? "x" : " "}] ${ITEM_PR_REVIEW}`,
-                `- [${state.prActionsDetective ? "x" : " "}] ${ITEM_PR_ACTIONS_DETECTIVE}`,
+                ...ITEMS.map(
+                  (item) =>
+                    `- [${state[item.label] ? "x" : " "}] ${item.displayLabel} <!-- ${KEY_PREFIX}:${item.label} -->`,
+                ),
               ].join("\n");
             }
 
@@ -98,23 +126,9 @@ jobs:
             }
 
             async function ensureControlLabels() {
-              await ensureLabel(LABEL_UPDATE_PR_BODY, "1d76db", "Disable Update PR Body workflow");
-              await ensureLabel(
-                LABEL_ADDRESS_PR_FEEDBACK,
-                "5319e7",
-                "Disable Address PR Review Feedback workflow",
-              );
-              await ensureLabel(
-                LABEL_ADDRESS_MERGE_CONFLICTS,
-                "d73a4a",
-                "Disable Address Merge Conflicts workflow",
-              );
-              await ensureLabel(LABEL_PR_REVIEW, "0e8a16", "Disable PR Review workflow");
-              await ensureLabel(
-                LABEL_PR_ACTIONS_DETECTIVE,
-                "fbca04",
-                "Disable PR Actions Detective workflow",
-              );
+              for (const item of ITEMS) {
+                await ensureLabel(item.label, item.color, item.description);
+              }
             }
 
             async function listComments(issueNumber) {
@@ -196,20 +210,10 @@ jobs:
                 core.info(`Removed label: ${name}`);
               }
 
-              if (state.updatePrBody) await removeLabel(LABEL_UPDATE_PR_BODY);
-              else await addLabel(LABEL_UPDATE_PR_BODY);
-
-              if (state.addressPrFeedback) await removeLabel(LABEL_ADDRESS_PR_FEEDBACK);
-              else await addLabel(LABEL_ADDRESS_PR_FEEDBACK);
-
-              if (state.addressMergeConflicts) await removeLabel(LABEL_ADDRESS_MERGE_CONFLICTS);
-              else await addLabel(LABEL_ADDRESS_MERGE_CONFLICTS);
-
-              if (state.prReview) await removeLabel(LABEL_PR_REVIEW);
-              else await addLabel(LABEL_PR_REVIEW);
-
-              if (state.prActionsDetective) await removeLabel(LABEL_PR_ACTIONS_DETECTIVE);
-              else await addLabel(LABEL_PR_ACTIONS_DETECTIVE);
+              for (const item of ITEMS) {
+                if (state[item.label]) await removeLabel(item.label);
+                else await addLabel(item.label);
+              }
             }
 
             if (context.eventName === "pull_request_target") {
@@ -217,23 +221,11 @@ jobs:
               await ensureControlLabels();
               const existing = await findControlPanelComment(prNumber);
               const labels = new Set((context.payload.pull_request.labels || []).map((l) => l.name));
-              const hasAnyOptOutLabel = LABELS.some((name) => labels.has(name));
+              const hasAnyOptOutLabel = ITEMS.some((item) => labels.has(item.label));
               const state =
                 existing || hasAnyOptOutLabel
-                  ? {
-                      updatePrBody: !labels.has(LABEL_UPDATE_PR_BODY),
-                      addressPrFeedback: !labels.has(LABEL_ADDRESS_PR_FEEDBACK),
-                      addressMergeConflicts: !labels.has(LABEL_ADDRESS_MERGE_CONFLICTS),
-                      prReview: !labels.has(LABEL_PR_REVIEW),
-                      prActionsDetective: !labels.has(LABEL_PR_ACTIONS_DETECTIVE),
-                    }
-                  : {
-                      updatePrBody: true,
-                      addressPrFeedback: true,
-                      addressMergeConflicts: true,
-                      prReview: true,
-                      prActionsDetective: true,
-                    };
+                  ? Object.fromEntries(ITEMS.map((item) => [item.label, !labels.has(item.label)]))
+                  : Object.fromEntries(ITEMS.map((item) => [item.label, true]));
               await syncLabelsFromState(prNumber, labels, state);
               await upsertControlPanel(prNumber, state);
               return;
@@ -250,27 +242,15 @@ jobs:
             await ensureControlLabels();
             const pr = await getPullRequest(issueNumber);
             const labels = new Set((pr.labels || []).map((l) => l.name));
-            const currentState = {
-              updatePrBody: !labels.has(LABEL_UPDATE_PR_BODY),
-              addressPrFeedback: !labels.has(LABEL_ADDRESS_PR_FEEDBACK),
-              addressMergeConflicts: !labels.has(LABEL_ADDRESS_MERGE_CONFLICTS),
-              prReview: !labels.has(LABEL_PR_REVIEW),
-              prActionsDetective: !labels.has(LABEL_PR_ACTIONS_DETECTIVE),
-            };
-            const desiredState = {
-              updatePrBody:
-                readCheckbox(commentBody, ITEM_UPDATE_PR_BODY) ?? currentState.updatePrBody,
-              addressPrFeedback:
-                readCheckbox(commentBody, ITEM_ADDRESS_PR_FEEDBACK) ??
-                currentState.addressPrFeedback,
-              addressMergeConflicts:
-                readCheckbox(commentBody, ITEM_ADDRESS_MERGE_CONFLICTS) ??
-                currentState.addressMergeConflicts,
-              prReview: readCheckbox(commentBody, ITEM_PR_REVIEW) ?? currentState.prReview,
-              prActionsDetective:
-                readCheckbox(commentBody, ITEM_PR_ACTIONS_DETECTIVE) ??
-                currentState.prActionsDetective,
-            };
+            const currentState = Object.fromEntries(
+              ITEMS.map((item) => [item.label, !labels.has(item.label)]),
+            );
+            const desiredState = Object.fromEntries(
+              ITEMS.map((item) => [
+                item.label,
+                readCheckboxByKey(commentBody, item.label) ?? currentState[item.label],
+              ]),
+            );
 
             await syncLabelsFromState(issueNumber, labels, desiredState);
             await upsertControlPanel(issueNumber, desiredState);
