@@ -43,6 +43,7 @@ export default function DetailSurface({
       onClose={onClose}
       PaperProps={{
         sx: {
+          boxSizing: "border-box",
           width: { xs: "calc(100vw - 16px)", md: width },
           maxWidth: "100vw",
           display: "flex",
