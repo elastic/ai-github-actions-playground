@@ -37,25 +37,24 @@ export function TransformKpiCards({
       <Box sx={{ minWidth: 150 }}>
         <OverviewInfoCard title="Failed">
           <Typography variant="h6">
-            {failed}
-            {failed > 0 && <Chip label={failed} color="error" size="small" sx={{ ml: 1 }} />}
+            {failed > 0 ? <Chip label={failed} color="error" size="small" /> : failed}
           </Typography>
         </OverviewInfoCard>
       </Box>
       <Box sx={{ minWidth: 150 }}>
         <OverviewInfoCard title="Stopped">
           <Typography variant="h6">
-            {stopped}
-            {stopped > 0 && <Chip label={stopped} size="small" sx={{ ml: 1 }} />}
+            {stopped > 0 ? <Chip label={stopped} size="small" /> : stopped}
           </Typography>
         </OverviewInfoCard>
       </Box>
       <Box sx={{ minWidth: 170 }}>
         <OverviewInfoCard title="Health Issues">
           <Typography variant="h6">
-            {healthIssues}
-            {healthIssues > 0 && (
-              <Chip label={healthIssues} color="warning" size="small" sx={{ ml: 1 }} />
+            {healthIssues > 0 ? (
+              <Chip label={healthIssues} color="warning" size="small" />
+            ) : (
+              healthIssues
             )}
           </Typography>
         </OverviewInfoCard>

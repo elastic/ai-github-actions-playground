@@ -67,7 +67,7 @@ export const transformChecks: HealthCheckDefinition[] = [
           links: [{ label: "Transforms", to: "/transforms" }],
         };
       }
-      return { status: "pass", summary: "All transforms have healthy status." };
+      return { status: "pass", summary: "No transforms with red health status." };
     },
   },
   {

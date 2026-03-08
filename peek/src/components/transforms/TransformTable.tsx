@@ -116,13 +116,17 @@ export function TransformTable({
               <TableCell>
                 <Chip
                   label={row.healthStatus}
-                  color={healthColor(row.healthStatus)}
+                  color={row.state === "failed" ? "default" : healthColor(row.healthStatus)}
                   size="small"
-                  variant="outlined"
+                  variant={row.state === "failed" ? "filled" : "outlined"}
                 />
               </TableCell>
               <TableCell>
-                <Chip label={row.state} color={stateColor(row.state)} size="small" />
+                <Chip
+                  label={row.state}
+                  color={row.state === "failed" ? "default" : stateColor(row.state)}
+                  size="small"
+                />
               </TableCell>
               <TableCell sx={{ fontFamily: "monospace", fontSize: "0.8rem" }}>{row.id}</TableCell>
               <TableCell>{row.type}</TableCell>
