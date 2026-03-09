@@ -47,7 +47,6 @@ export function useAddDataPageState() {
   const [clusterVersion, setClusterVersion] = useState<string | null>(null);
   const [ingestAvailable, setIngestAvailable] = useState<boolean | null>(null);
   const [derivedOtlpUrl, setDerivedOtlpUrl] = useState<string | null>(null);
-  const [prevIngestCandidatesKey, setPrevIngestCandidatesKey] = useState("");
 
   const apiKeyResult = useAddDataApiKey();
   const creatingApiKey = apiKeyResult.status === "loading";
@@ -79,11 +78,10 @@ export function useAddDataPageState() {
     [hasIngestOverride, ingestOverrideUrl, esUrl],
   );
   const ingestCandidatesKey = ingestCandidates.join(",");
-  if (ingestCandidatesKey !== prevIngestCandidatesKey) {
-    setPrevIngestCandidatesKey(ingestCandidatesKey);
+  useEffect(() => {
     setDerivedOtlpUrl(null);
     setIngestAvailable(null);
-  }
+  }, [ingestCandidatesKey]);
 
   const effectiveDerivedOtlpUrl = hasIngestOverride ? ingestOverrideUrl : derivedOtlpUrl;
   const probeTargetOtlpUrl = effectiveDerivedOtlpUrl ?? ingestCandidates[0] ?? null;
