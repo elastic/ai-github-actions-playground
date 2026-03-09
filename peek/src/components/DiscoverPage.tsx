@@ -1,4 +1,5 @@
-import { useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useQueryStates } from "nuqs";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Paper from "@mui/material/Paper";
@@ -19,6 +20,12 @@ import DataTable from "./visualizations/DataTable";
 import DiscoverEditorPanel from "./DiscoverEditorPanel";
 import ToolbarRow from "./ToolbarRow";
 import { useDiscoverOrchestrator } from "./useDiscoverOrchestrator";
+import {
+  buildDiscoverShareUrl,
+  discoverSearchParsers,
+  discoverSearchUrlKeys,
+  useDiscoverUrlSync,
+} from "./useDiscoverUrlSync";
 
 interface DiscoverPageProps {
   mode?: "query-lab" | "logs";
@@ -33,6 +40,58 @@ export default function DiscoverPage({ mode = "query-lab" }: DiscoverPageProps) 
   // When the user hasn't manually selected columns and LLM is configured,
   // show AI row summaries for visible rows in the data table.
   const showRowSummaries = Boolean(o.result && !o.fieldsManuallySelected && llmConfigured);
+
+  // URL state synchronization
+  const [urlState, setUrlState] = useQueryStates(discoverSearchParsers, {
+    urlKeys: discoverSearchUrlKeys,
+    history: "replace",
+  });
+  const [initialUrlState] = useState(() => urlState);
+  const [runAfterHydration, setRunAfterHydration] = useState(false);
+  const [preserveSelectedFieldsOnHydration, setPreserveSelectedFieldsOnHydration] = useState(false);
+  const hydratedRunQueryRef = useRef(o.runDiscoverQuery);
+
+  useEffect(() => {
+    hydratedRunQueryRef.current = o.runDiscoverQuery;
+  }, [o.runDiscoverQuery]);
+
+  const handleUrlHydrated = useCallback(
+    (meta: { hasQuery: boolean; hasExplicitFields: boolean }) => {
+      if (!meta.hasQuery) return;
+      setPreserveSelectedFieldsOnHydration(meta.hasExplicitFields);
+      setRunAfterHydration(true);
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (!runAfterHydration) return;
+    setRunAfterHydration(false);
+    hydratedRunQueryRef.current({
+      preserveSelectedFields: preserveSelectedFieldsOnHydration,
+    });
+  }, [runAfterHydration, preserveSelectedFieldsOnHydration]);
+
+  const handleCopyLink = useCallback(() => {
+    if (typeof window === "undefined") return "";
+    return buildDiscoverShareUrl(window.location.href, {
+      query: o.effectiveQuery,
+      selectedFields: o.selectedFields,
+      timeRange: o.timeRange,
+    });
+  }, [o.effectiveQuery, o.selectedFields, o.timeRange]);
+
+  useDiscoverUrlSync({
+    initialUrlState,
+    query: o.effectiveQuery,
+    selectedFields: o.selectedFields,
+    timeRange: o.timeRange,
+    setQuery: o.handleQueryChange,
+    setSelectedFields: o.setSelectedFields,
+    setTimeRange: o.setTimeRange,
+    setUrlState,
+    onHydrated: handleUrlHydrated,
+  });
 
   // Cmd/Ctrl+[ toggles the query panel collapse
   const toggleDiscoverCollapse = useCallback(
@@ -78,6 +137,7 @@ export default function DiscoverPage({ mode = "query-lab" }: DiscoverPageProps) 
         historyAnchor={o.historyAnchor}
         setHistoryAnchor={o.setHistoryAnchor}
         handleSelectHistory={o.handleSelectHistory}
+        onCopyLink={handleCopyLink}
       />
 
       <DataFetchAlert error={o.error} />
