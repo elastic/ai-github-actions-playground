@@ -579,4 +579,26 @@ describe("DataTable", () => {
     expect(selectedRow).toHaveTextContent("A");
     expect(screen.getByTestId("row-inspector-field-message")).toHaveTextContent("A");
   });
+
+  it("preserves duplicate-row occurrence when fallback matching after rerender", async () => {
+    const user = userEvent.setup();
+    const initial: EsqlResponse = {
+      columns: [{ name: "message", type: "keyword" }],
+      values: [["A"], ["A"], ["B"]],
+    };
+
+    const { container, rerender } = render(<DataTable data={initial} />);
+    await user.click(screen.getAllByText("A")[1]!);
+
+    const clonedWithDuplicates: EsqlResponse = {
+      columns: [{ name: "message", type: "keyword" }],
+      values: [["A"], ["A"], ["B"]],
+    };
+    rerender(<DataTable data={clonedWithDuplicates} />);
+
+    const selectedRow = container.querySelector("tr.Mui-selected");
+    expect(selectedRow).not.toBeNull();
+    expect(selectedRow).toHaveAttribute("data-row-index", "1");
+    expect(screen.getByTestId("row-inspector-field-message")).toHaveTextContent("A");
+  });
 });
