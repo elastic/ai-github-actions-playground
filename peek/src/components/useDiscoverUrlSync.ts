@@ -98,6 +98,7 @@ export function useDiscoverUrlSync({
 }: UseDiscoverUrlSyncOptions): void {
   const hasHydratedFromUrlRef = useRef(false);
   const skipInitialUrlSyncRef = useRef(true);
+  const hadInitialUrlParamsRef = useRef(false);
 
   // Restore discover state from URL on first mount
   useEffect(() => {
@@ -106,17 +107,21 @@ export function useDiscoverUrlSync({
       initialUrlState.fields !== null ||
       initialUrlState.from !== null ||
       initialUrlState.to !== null;
+    hadInitialUrlParamsRef.current = hasUrlParams;
 
     if (!hasUrlParams) {
       hasHydratedFromUrlRef.current = true;
       return;
     }
 
+    const decodedFields = decodeFields(initialUrlState.fields);
+    const hasExplicitFields = initialUrlState.fields !== null && decodedFields.size > 0;
+
     if (initialUrlState.q !== null) {
       setQuery(initialUrlState.q);
     }
-    if (initialUrlState.fields !== null) {
-      setSelectedFields(decodeFields(initialUrlState.fields));
+    if (hasExplicitFields) {
+      setSelectedFields(decodedFields);
     }
     if (initialUrlState.from && initialUrlState.to) {
       setTimeRange({ from: initialUrlState.from, to: initialUrlState.to });
@@ -125,7 +130,7 @@ export function useDiscoverUrlSync({
     hasHydratedFromUrlRef.current = true;
     onHydrated?.({
       hasQuery: initialUrlState.q !== null,
-      hasExplicitFields: initialUrlState.fields !== null,
+      hasExplicitFields,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -136,7 +141,7 @@ export function useDiscoverUrlSync({
     if (!hasHydratedFromUrlRef.current) return;
     if (skipInitialUrlSyncRef.current) {
       skipInitialUrlSyncRef.current = false;
-      return;
+      if (hadInitialUrlParamsRef.current) return;
     }
     let cancelled = false;
     const timer = setTimeout(() => {

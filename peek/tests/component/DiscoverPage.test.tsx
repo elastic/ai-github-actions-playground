@@ -127,6 +127,44 @@ describe("DiscoverPage", () => {
     );
   });
 
+  it("does not preserve fields when the URL fields param is empty", async () => {
+    const manyColumns = [
+      "@timestamp",
+      "message",
+      "host.name",
+      "service.name",
+      "log.level",
+      "event.dataset",
+      "agent.name",
+      "field1",
+      "field2",
+      "field3",
+      "field4",
+      "field5",
+    ].map((name) => ({ name, type: "keyword" }));
+    queryMock.mockResolvedValueOnce({
+      columns: manyColumns,
+      values: [manyColumns.map(() => "v")],
+      executionTimeMs: 1,
+    });
+
+    renderDiscoverPage(`q=${encodeURIComponent("FROM logs-* | LIMIT 10")}&fields=`);
+
+    await waitFor(() => expect(queryMock).toHaveBeenCalledTimes(1));
+    await waitFor(() => {
+      const selected = useQueryStore.getState().discoverSelectedFields;
+      expect(selected.size).toBe(7);
+      expect(selected.has("@timestamp")).toBe(true);
+      expect(selected.has("message")).toBe(true);
+      expect(selected.has("host.name")).toBe(true);
+      expect(selected.has("service.name")).toBe(true);
+      expect(selected.has("log.level")).toBe(true);
+      expect(selected.has("event.dataset")).toBe(true);
+      expect(selected.has("agent.name")).toBe(true);
+      expect(selected.has("field1")).toBe(false);
+    });
+  });
+
   it("selects only preferred fields when result has many columns", async () => {
     const manyColumns = [
       "@timestamp",
