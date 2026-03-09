@@ -20,6 +20,8 @@ interface DataTableHeaderProps {
   pinnedLeftOffsets: Map<number, number>;
   onSortToggle: (columnName: string) => void;
   onOpenMenu: (event: React.MouseEvent<HTMLButtonElement>, colIdx: number) => void;
+  /** When true, render a leading "Summary" column header. */
+  showSummaryColumn?: boolean;
 }
 
 export default function DataTableHeader({
@@ -30,10 +32,31 @@ export default function DataTableHeader({
   pinnedLeftOffsets,
   onSortToggle,
   onOpenMenu,
+  showSummaryColumn,
 }: DataTableHeaderProps) {
   return (
     <TableHead>
       <TableRow>
+        {showSummaryColumn && (
+          <TableCell
+            sx={{
+              whiteSpace: "nowrap",
+              fontWeight: 600,
+              fontSize: "0.75rem",
+              minWidth: 200,
+              maxWidth: 360,
+            }}
+          >
+            <Box sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
+              <Typography component="span" variant="caption" sx={{ fontWeight: 600 }}>
+                Summary
+              </Typography>
+              <Typography component="span" variant="caption" sx={{ opacity: 0.5 }}>
+                AI
+              </Typography>
+            </Box>
+          </TableCell>
+        )}
         {orderedVisibleColumnIndices.map((colIdx) => {
           const col = data.columns[colIdx];
           if (!col) return null;
