@@ -264,6 +264,21 @@ describe("useSimpleEsqlQuery", () => {
     expect(mockExecute).not.toHaveBeenCalled();
   });
 
+  it("suppresses AbortError instead of surfacing it as a user-facing error", async () => {
+    useConnectionStore.setState({ connection: MOCK_CONNECTION });
+    mockExecute.mockRejectedValueOnce(new DOMException("aborted", "AbortError"));
+
+    const { result } = renderHook(() => useSimpleEsqlQuery({ query: "FROM index | LIMIT 1" }), {
+      wrapper: createWrapper(),
+    });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    expect(result.current.error).toBeNull();
+  });
+
   it("does not execute when query is only whitespace", () => {
     useConnectionStore.setState({ connection: MOCK_CONNECTION });
     const { result } = renderHook(() => useSimpleEsqlQuery({ query: "   " }), {
