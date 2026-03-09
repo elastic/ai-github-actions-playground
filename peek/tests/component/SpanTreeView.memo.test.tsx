@@ -8,7 +8,10 @@ import type { SpanTreeGroupRow } from "../../src/components/traces/span-tree-plu
 type SpanTreeGroupRowProps = React.ComponentProps<typeof SpanTreeGroupRow>;
 
 const rowRenderCounts = new Map<string, number>();
+const rowClickHandlers = new Map<string, (spanId: string) => void>();
 let groupRowRenderCount = 0;
+let groupRepresentativeSpanId: string | null = null;
+let groupRowClickHandler: ((spanId: string) => void) | null = null;
 
 vi.mock("react-virtuoso", () => ({
   Virtuoso: ({
@@ -89,19 +92,23 @@ vi.mock("../../src/components/traces/span-tree-plugin/useSpanTree", () => ({
 vi.mock("../../src/components/traces/span-tree-plugin/SpanTreeRow", () => ({
   SpanTreeRow: React.memo(function MockSpanTreeRow({
     node,
+    onClick,
   }: {
     node: { span: { spanId: string } };
     selected: boolean;
     onClick: (spanId: string) => void;
   }) {
     rowRenderCounts.set(node.span.spanId, (rowRenderCounts.get(node.span.spanId) ?? 0) + 1);
+    rowClickHandlers.set(node.span.spanId, onClick);
     return <div data-testid={`row-${node.span.spanId}`} />;
   }),
 }));
 
 vi.mock("../../src/components/traces/span-tree-plugin/SpanTreeGroupRow", () => ({
-  SpanTreeGroupRow: React.memo((_props: SpanTreeGroupRowProps) => {
+  SpanTreeGroupRow: React.memo((props: SpanTreeGroupRowProps) => {
     groupRowRenderCount += 1;
+    groupRepresentativeSpanId = props.representativeSpanId;
+    groupRowClickHandler = props.onClick;
     return <div data-testid="group-row" />;
   }),
 }));
@@ -132,24 +139,52 @@ function buildSpan(spanId: string): Span {
 describe("SpanTreeView memo", () => {
   beforeEach(() => {
     rowRenderCounts.clear();
+    rowClickHandlers.clear();
     groupRowRenderCount = 0;
+    groupRepresentativeSpanId = null;
+    groupRowClickHandler = null;
     flatRowCache.clear();
     nextStartTimeUs = 1;
   });
 
   it("does not re-render unaffected rows when only selectedSpanId changes", () => {
     const spans = [buildSpan("span-1"), buildSpan("span-2"), buildSpan("span-3")];
+    const onSelectTrace = vi.fn();
+    const onSelectSpan = vi.fn();
 
     const { rerender } = render(
-      <SpanTreeView spans={spans} showToolbar={false} selectedSpanId={"span-1"} />,
+      <SpanTreeView
+        spans={spans}
+        showToolbar={false}
+        selectedSpanId={"span-1"}
+        onSelectTrace={onSelectTrace}
+        onSelectSpan={onSelectSpan}
+      />,
     );
 
     expect(rowRenderCounts.get("span-1")).toBe(1);
     expect(rowRenderCounts.get("span-2")).toBe(1);
     expect(rowRenderCounts.get("span-3")).toBe(1);
     expect(groupRowRenderCount).toBe(1);
+    expect(groupRepresentativeSpanId).toBe("span-2");
 
-    rerender(<SpanTreeView spans={spans} showToolbar={false} selectedSpanId={"span-3"} />);
+    rowClickHandlers.get("span-3")?.("span-3");
+    expect(onSelectTrace).toHaveBeenLastCalledWith("trace-1", "span-3", spans[2]?.timestamp);
+    expect(onSelectSpan).toHaveBeenLastCalledWith("span-3");
+
+    groupRowClickHandler?.("span-2");
+    expect(onSelectTrace).toHaveBeenLastCalledWith("trace-1", "span-2", spans[1]?.timestamp);
+    expect(onSelectSpan).toHaveBeenLastCalledWith("span-2");
+
+    rerender(
+      <SpanTreeView
+        spans={spans}
+        showToolbar={false}
+        selectedSpanId={"span-3"}
+        onSelectTrace={onSelectTrace}
+        onSelectSpan={onSelectSpan}
+      />,
+    );
 
     // span-1 changed: selected true → false → should rerender
     expect(rowRenderCounts.get("span-1")).toBe(2);
