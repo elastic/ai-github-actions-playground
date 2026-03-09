@@ -49,6 +49,7 @@ import DocLink from "./DocLink";
 import PageInsightBanner from "./PageInsightBanner";
 import InsightSlot from "./InsightSlot";
 import { InsightSlotProvider } from "./InsightSlotContext";
+import { InventoryHealthSummaryCards } from "./InventoryHealthSummaryCards";
 import { OverviewInfoCard } from "./OverviewInfoCard";
 import {
   DATA_STREAMS_INSIGHT_SLOT_IDS,
@@ -415,64 +416,17 @@ export default function DataStreamsPage() {
 
         {!loadingStreams && dataStreams.length > 0 && (
           <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
-            <Box sx={{ flex: 1, minWidth: 100 }}>
-              <InsightSlot slotId={DATA_STREAMS_INSIGHT_SLOT_IDS.totalStreamsCard}>
-                <OverviewInfoCard title="Total Streams">
-                  <Typography
-                    variant="h5"
-                    component="p"
-                    sx={{ fontVariantNumeric: "tabular-nums" }}
-                  >
-                    {streamMetrics.total}
-                  </Typography>
-                </OverviewInfoCard>
-              </InsightSlot>
-            </Box>
-            <Box sx={{ flex: 1, minWidth: 100 }}>
-              <InsightSlot slotId={DATA_STREAMS_INSIGHT_SLOT_IDS.healthyCard}>
-                <OverviewInfoCard title="Healthy">
-                  <Typography
-                    variant="h5"
-                    component="p"
-                    sx={{ color: "success.main", fontVariantNumeric: "tabular-nums" }}
-                  >
-                    {streamMetrics.green}
-                  </Typography>
-                </OverviewInfoCard>
-              </InsightSlot>
-            </Box>
-            <Box sx={{ flex: 1, minWidth: 100 }}>
-              <InsightSlot slotId={DATA_STREAMS_INSIGHT_SLOT_IDS.degradedCard}>
-                <OverviewInfoCard title="Degraded">
-                  <Typography
-                    variant="h5"
-                    component="p"
-                    sx={{
-                      color: streamMetrics.yellow > 0 ? "warning.main" : "text.primary",
-                      fontVariantNumeric: "tabular-nums",
-                    }}
-                  >
-                    {streamMetrics.yellow}
-                  </Typography>
-                </OverviewInfoCard>
-              </InsightSlot>
-            </Box>
-            <Box sx={{ flex: 1, minWidth: 100 }}>
-              <InsightSlot slotId={DATA_STREAMS_INSIGHT_SLOT_IDS.unhealthyCard}>
-                <OverviewInfoCard title="Unhealthy">
-                  <Typography
-                    variant="h5"
-                    component="p"
-                    sx={{
-                      color: streamMetrics.red > 0 ? "error.main" : "text.primary",
-                      fontVariantNumeric: "tabular-nums",
-                    }}
-                  >
-                    {streamMetrics.red}
-                  </Typography>
-                </OverviewInfoCard>
-              </InsightSlot>
-            </Box>
+            <InventoryHealthSummaryCards
+              totalTitle="Total Streams"
+              totalSlotId={DATA_STREAMS_INSIGHT_SLOT_IDS.totalStreamsCard}
+              total={streamMetrics.total}
+              healthySlotId={DATA_STREAMS_INSIGHT_SLOT_IDS.healthyCard}
+              healthy={streamMetrics.green}
+              degradedSlotId={DATA_STREAMS_INSIGHT_SLOT_IDS.degradedCard}
+              degraded={streamMetrics.yellow}
+              unhealthySlotId={DATA_STREAMS_INSIGHT_SLOT_IDS.unhealthyCard}
+              unhealthy={streamMetrics.red}
+            />
             <Box sx={{ flex: 1, minWidth: 100 }}>
               <InsightSlot slotId={DATA_STREAMS_INSIGHT_SLOT_IDS.backingIndicesCard}>
                 <OverviewInfoCard title="Backing Indices">

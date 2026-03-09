@@ -12,14 +12,9 @@ import LinearProgress from "@mui/material/LinearProgress";
 
 import { usePackageBuilderStore } from "../../store/usePackageBuilderStore";
 import type { PackageBuilderData } from "../../types/packageBuilder";
-import {
-  importFromZip,
-  importFromFolder,
-  importFromFileMap,
-} from "../../services/packageBuilder/importPackage";
+import { importFromFileMap } from "../../services/packageBuilder/importPackage";
 import { fetchPackageFiles, type CatalogEntry } from "../../services/packageBuilder/githubCatalog";
 import GitHubCatalogSection from "./GitHubCatalogSection";
-import ImportUploadSection from "./ImportUploadSection";
 import DataFetchAlert from "../DataFetchAlert";
 
 interface Props {
@@ -39,7 +34,7 @@ export default function ImportPackageDialog({ open, onClose, onImportComplete }:
 
   const handleResult = useCallback(
     async (
-      importFn: (signal: AbortSignal) => Promise<Awaited<ReturnType<typeof importFromZip>>>,
+      importFn: (signal: AbortSignal) => Promise<Awaited<ReturnType<typeof importFromFileMap>>>,
     ) => {
       importAbortRef.current?.abort();
       const controller = new AbortController();
@@ -65,26 +60,6 @@ export default function ImportPackageDialog({ open, onClose, onImportComplete }:
     [loadPackage, onClose, onImportComplete],
   );
 
-  const handleZipUpload = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-      handleResult(() => importFromZip(file));
-      e.target.value = "";
-    },
-    [handleResult],
-  );
-
-  const handleFolderUpload = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const files = e.target.files;
-      if (!files || files.length === 0) return;
-      handleResult(() => importFromFolder(files));
-      e.target.value = "";
-    },
-    [handleResult],
-  );
-
   const handleCatalogSelect = useCallback(
     (entry: CatalogEntry) => {
       handleResult(async (signal) => {
@@ -106,10 +81,10 @@ export default function ImportPackageDialog({ open, onClose, onImportComplete }:
 
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Open Package</DialogTitle>
+      <DialogTitle>Open from GitHub</DialogTitle>
       <DialogContent>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-          Load an existing OTel input package from GitHub, a .zip file, or a folder on disk.
+          Search and load an existing OTel input package from the elastic/integrations repository.
         </Typography>
 
         {loading ? (
@@ -117,13 +92,7 @@ export default function ImportPackageDialog({ open, onClose, onImportComplete }:
             <LinearProgress />
           </Box>
         ) : (
-          <Stack spacing={2}>
-            <GitHubCatalogSection open={open} onSelect={handleCatalogSelect} />
-            <ImportUploadSection
-              onZipUpload={handleZipUpload}
-              onFolderUpload={handleFolderUpload}
-            />
-          </Stack>
+          <GitHubCatalogSection open={open} onSelect={handleCatalogSelect} />
         )}
 
         <DataFetchAlert error={error} sx={{ mt: 2 }} />

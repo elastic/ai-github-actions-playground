@@ -179,7 +179,7 @@ Has icon: ${identity.icon ? "yes" : "no"}`;
       error={error}
       refresh={refresh}
     >
-      <Box sx={{ display: "flex", gap: 3 }}>
+      <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, gap: 3 }}>
         <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 2.5 }}>
           <Typography variant="h6">Package Identity</Typography>
 
@@ -221,7 +221,7 @@ Has icon: ${identity.icon ? "yes" : "no"}`;
             />
           </InsightSlot>
 
-          <Box sx={{ display: "flex", gap: 2 }}>
+          <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 2 }}>
             <InsightSlot slotId="identity-version">
               <TextField
                 label="Version"
@@ -246,7 +246,7 @@ Has icon: ${identity.icon ? "yes" : "no"}`;
             </InsightSlot>
           </Box>
 
-          <Box sx={{ display: "flex", gap: 2 }}>
+          <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 2 }}>
             <InsightSlot slotId="identity-owner-github">
               <TextField
                 label="Owner GitHub team"
@@ -290,7 +290,7 @@ Has icon: ${identity.icon ? "yes" : "no"}`;
             />
           </InsightSlot>
 
-          <Box sx={{ display: "flex", gap: 2 }}>
+          <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 2 }}>
             <InsightSlot slotId="identity-kibana-version">
               <TextField
                 label="Kibana version"
@@ -323,10 +323,10 @@ Has icon: ${identity.icon ? "yes" : "no"}`;
           <Paper
             variant="outlined"
             sx={{
-              width: 220,
+              width: { xs: "100%", md: 220 },
               p: 2,
               display: "flex",
-              flexDirection: "column",
+              flexDirection: { xs: "row", md: "column" },
               alignItems: "center",
               gap: 1.5,
             }}

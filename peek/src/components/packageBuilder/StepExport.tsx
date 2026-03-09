@@ -226,7 +226,15 @@ export default function StepExport() {
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: 1,
+        }}
+      >
         <Box>
           <Typography variant="h6">Review &amp; Validate</Typography>
           <Typography variant="body2" color="text.secondary">
@@ -257,9 +265,13 @@ export default function StepExport() {
       )}
       <DataFetchAlert error={exportError} sx={{ py: 0.5 }} />
 
-      <Box sx={{ display: "flex", gap: 2, minHeight: 400 }}>
+      <Box
+        sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, gap: 2, minHeight: 400 }}
+      >
         {/* Left: file tree + validation */}
-        <Box sx={{ width: 300, display: "flex", flexDirection: "column", gap: 2 }}>
+        <Box
+          sx={{ width: { xs: "100%", md: 300 }, display: "flex", flexDirection: "column", gap: 2 }}
+        >
           {/* File tree */}
           <Paper variant="outlined">
             <Typography

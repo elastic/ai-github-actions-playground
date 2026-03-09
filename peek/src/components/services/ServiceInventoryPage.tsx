@@ -18,6 +18,7 @@ import InsightSlot from "../InsightSlot";
 import { InsightSlotProvider } from "../InsightSlotContext";
 import PageHeader from "../PageHeader";
 import { toDashboardTimeRange, toTraceTimeRange } from "../timePresets";
+import ToolbarRow from "../ToolbarRow";
 
 import { formatLatency, formatErrorRate } from "./serviceInventoryHelpers";
 import ServiceOverviewCards from "./ServiceOverviewCards";
@@ -205,7 +206,7 @@ export default function ServiceInventoryPage() {
         />
         <InsightSlot slotId={SERVICE_INSIGHT_SLOT_IDS.serviceSearch}>
           <Paper variant="outlined" sx={{ p: 1.5 }}>
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center" }}>
+            <ToolbarRow>
               <DateRangePicker
                 value={toDashboardTimeRange({ from: filters.timeFrom, to: filters.timeTo })}
                 onChange={(range) => {
@@ -225,7 +226,7 @@ export default function ServiceInventoryPage() {
                   {serviceRows.length} {serviceRows.length === 1 ? "service" : "services"} found
                 </Typography>
               )}
-            </Box>
+            </ToolbarRow>
           </Paper>
         </InsightSlot>
 

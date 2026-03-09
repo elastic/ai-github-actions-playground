@@ -220,8 +220,14 @@ _PR_FIELDS = "number,title,isDraft,author,headRefOid,headRefName,mergeable,revie
 
 
 def fetch_runs(ctx: Ctx) -> list[dict]:
-    return gh_json("run", "list", "--limit", "200", "--json", _RUN_FIELDS,
-                   repo=ctx.repo_args)
+    # The default gh run list omits action_required runs, so fetch them
+    # separately and merge (deduplicating by run ID).
+    default = gh_json("run", "list", "--limit", "200", "--json", _RUN_FIELDS,
+                      repo=ctx.repo_args) or []
+    pending = gh_json("run", "list", "--limit", "200", "--status", "action_required",
+                      "--json", _RUN_FIELDS, repo=ctx.repo_args) or []
+    seen = {r["databaseId"] for r in default}
+    return default + [r for r in pending if r["databaseId"] not in seen]
 
 
 def fetch_prs(ctx: Ctx) -> list[PRInfo]:
@@ -284,7 +290,13 @@ def phase_approve_runs(prs: list[PRInfo], runs: list[dict], ctx: Ctx) -> int:
             continue
         blocked = [r for r in runs
                    if r.get("event") in ("pull_request", "pull_request_target")
-                   and r.get("headSha") == pr.head_sha
+                   and (
+                       # pull_request: match by sha (sha is meaningful — run uses PR branch)
+                       (r.get("event") == "pull_request" and r.get("headSha") == pr.head_sha)
+                       # pull_request_target: match by branch (runs off main, sha drifts as
+                       # new commits are pushed without re-triggering a new run)
+                       or (r.get("event") == "pull_request_target" and r.get("headBranch") == pr.branch)
+                   )
                    and (r.get("status") == "action_required"
                         or r.get("conclusion") == "action_required")]
         if not blocked:

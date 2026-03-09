@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -33,6 +33,7 @@ export default function RolesPage() {
   const navigate = useNavigate();
   const [urlRole, setUrlRole] = useQueryState("role", parseAsString);
   const [search, setSearch] = useSearchParam();
+  const deferredSearch = useDeferredValue(search);
   const [copied, setCopied] = useState(false);
   const scheduleCopyFeedbackReset = useCopyFeedbackTimeout(() => setCopied(false));
 
@@ -56,10 +57,10 @@ export default function RolesPage() {
   }, [roles, selectedRoleName, urlRole, setUrlRole]);
 
   const filteredRoles = useMemo(() => {
-    const term = search.trim().toLowerCase();
+    const term = deferredSearch.trim().toLowerCase();
     if (!term) return roles;
     return roles.filter((entry) => entry.name.toLowerCase().includes(term));
-  }, [roles, search]);
+  }, [roles, deferredSearch]);
 
   // When filtered results don't include the selected role (e.g. search
   // excludes it), hide the detail panel while keeping the selection so it

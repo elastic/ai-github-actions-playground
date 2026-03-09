@@ -39,7 +39,7 @@ export default function FleetOverviewTab({
             <FleetStatCard
               title="Unhealthy"
               value={serverStatus.unhealthy}
-              color="warning.main"
+              color="error.main"
               onClick={
                 serverStatus.unhealthy > 0 ? () => onDrillIn({ hasErrors: true }) : undefined
               }

@@ -201,7 +201,7 @@ export default function StepTemplate() {
       )}
 
       {/* Split pane: editor + preview */}
-      <Box sx={{ display: "flex", gap: 2 }}>
+      <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, gap: 2 }}>
         {/* Editor */}
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Typography variant="caption" color="text.secondary" gutterBottom display="block">

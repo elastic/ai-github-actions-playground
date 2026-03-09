@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -143,8 +143,9 @@ export default function WatcherGetWatchPage() {
       }),
     [listedWatches],
   );
+  const deferredSearch = useDeferredValue(search);
   const filteredRows = useMemo(() => {
-    const term = search.trim().toLowerCase();
+    const term = deferredSearch.trim().toLowerCase();
     const rows = term
       ? tableRows.filter((row) =>
           [
@@ -189,7 +190,7 @@ export default function WatcherGetWatchPage() {
       return sortDirection === "asc" ? compare : -compare;
     });
     return sorted;
-  }, [search, sortDirection, sortField, tableRows]);
+  }, [deferredSearch, sortDirection, sortField, tableRows]);
 
   return (
     <PageContainer>

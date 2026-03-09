@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -33,6 +33,7 @@ export default function UsersPage() {
   const navigate = useNavigate();
   const [urlUsername, setUrlUsername] = useQueryState("username", parseAsString);
   const [search, setSearch] = useSearchParam();
+  const deferredSearch = useDeferredValue(search);
   const [copied, setCopied] = useState(false);
   const scheduleCopyFeedbackReset = useCopyFeedbackTimeout(() => setCopied(false));
 
@@ -56,10 +57,10 @@ export default function UsersPage() {
   }, [users, selectedUsername, urlUsername, setUrlUsername]);
 
   const filteredUsers = useMemo(() => {
-    const term = search.trim().toLowerCase();
+    const term = deferredSearch.trim().toLowerCase();
     if (!term) return users;
     return users.filter((user) => user.username.toLowerCase().includes(term));
-  }, [search, users]);
+  }, [deferredSearch, users]);
 
   const displayedUser = filteredUsers.some((user) => user.username === selectedUsername)
     ? selectedUser
