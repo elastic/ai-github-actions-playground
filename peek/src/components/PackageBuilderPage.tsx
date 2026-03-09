@@ -92,7 +92,16 @@ export default function PackageBuilderPage() {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
       {/* Header */}
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          mb: 1,
+          flexWrap: "wrap",
+          gap: 1,
+        }}
+      >
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <Typography variant="h5" fontWeight={600}>
             {packageData.identity.name || "Unnamed Package"}
@@ -103,16 +112,22 @@ export default function PackageBuilderPage() {
         </Box>
         <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
           {saveStatus === "saving" && <CircularProgress size={14} />}
-          {saveStatus === "saved" && (
-            <Typography variant="caption" color="success.main">
-              Saved
-            </Typography>
-          )}
-          {saveStatus === "error" && (
-            <Typography variant="caption" color="error.main">
-              Save failed
-            </Typography>
-          )}
+          <Box
+            role={saveStatus === "error" ? "alert" : "status"}
+            aria-live={saveStatus === "error" ? "assertive" : "polite"}
+            aria-atomic="true"
+          >
+            {saveStatus === "saved" && (
+              <Typography variant="caption" color="success.main">
+                Saved
+              </Typography>
+            )}
+            {saveStatus === "error" && (
+              <Typography variant="caption" color="error.main">
+                Save failed
+              </Typography>
+            )}
+          </Box>
           <Button size="small" startIcon={<RestartAltIcon />} onClick={handleReset} color="warning">
             Close Package
           </Button>

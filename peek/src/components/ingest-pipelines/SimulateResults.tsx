@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
@@ -15,11 +15,9 @@ interface SimulateResultsProps {
 
 export default function SimulateResults({ simulateResult }: SimulateResultsProps) {
   const [expandedDocs, setExpandedDocs] = useState<Set<string>>(new Set());
-  const [prevResult, setPrevResult] = useState(simulateResult);
-  if (simulateResult !== prevResult) {
-    setPrevResult(simulateResult);
+  useEffect(() => {
     setExpandedDocs(new Set());
-  }
+  }, [simulateResult]);
   const seenDocKeys = new Map<string, number>();
 
   return (

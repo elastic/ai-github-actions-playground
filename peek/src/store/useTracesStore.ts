@@ -84,10 +84,16 @@ export const useTracesStore = create<TracesState>()(
       setDrawerOpen: (open) =>
         set(open ? { drawerOpen: true } : { drawerOpen: false, selectedSpanId: null }),
       addTagFilter: (key, value, exclude = false) =>
-        set((s) => ({
-          filters: { ...s.filters, tags: [...s.filters.tags, { key, value, exclude }] },
-          rawQuery: null,
-        })),
+        set((s) => {
+          const exists = s.filters.tags.some(
+            (t) => t.key === key && t.value === value && t.exclude === exclude,
+          );
+          if (exists) return {};
+          return {
+            filters: { ...s.filters, tags: [...s.filters.tags, { key, value, exclude }] },
+            rawQuery: null,
+          };
+        }),
       removeTagFilter: (index) =>
         set((s) => ({
           filters: { ...s.filters, tags: s.filters.tags.filter((_, i) => i !== index) },

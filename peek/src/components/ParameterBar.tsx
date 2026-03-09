@@ -1,5 +1,4 @@
 import { useState, useCallback } from "react";
-import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
@@ -14,6 +13,7 @@ import type { DashboardParameter } from "../types";
 import { EMPTY_PARAMETERS } from "./parameter-bar/parameterUtils";
 import ParameterControl from "./parameter-bar/ParameterControl";
 import ParameterDialog from "./parameter-bar/ParameterDialog";
+import ToolbarRow from "./ToolbarRow";
 
 export default function ParameterBar() {
   const { parameters, setParameterValue, addParameter, updateParameter, removeParameter } =
@@ -58,11 +58,8 @@ export default function ParameterBar() {
 
   if (parameters.length === 0 && !dialogOpen) {
     return (
-      <Box
+      <ToolbarRow
         sx={{
-          display: "flex",
-          gap: 1,
-          alignItems: "center",
           py: 0.5,
           px: 2,
           borderBottom: 1,
@@ -79,18 +76,14 @@ export default function ParameterBar() {
             <AddIcon sx={{ fontSize: 16 }} />
           </IconButton>
         </Tooltip>
-      </Box>
+      </ToolbarRow>
     );
   }
 
   return (
     <>
-      <Box
+      <ToolbarRow
         sx={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: 1,
-          alignItems: "center",
           py: 0.5,
           px: 2,
           borderBottom: 1,
@@ -121,7 +114,7 @@ export default function ParameterBar() {
             <AddIcon sx={{ fontSize: 16 }} />
           </IconButton>
         </Tooltip>
-      </Box>
+      </ToolbarRow>
 
       <ParameterDialog
         open={dialogOpen}

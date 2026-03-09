@@ -48,13 +48,11 @@ export function usePanelData(
   const supportsCSVExport = panel.visualization === "table";
 
   // Clear export image callback when the panel no longer supports image export.
-  const [prevSupportsImageExport, setPrevSupportsImageExport] = useState(supportsImageExport);
-  if (supportsImageExport !== prevSupportsImageExport) {
-    setPrevSupportsImageExport(supportsImageExport);
+  useEffect(() => {
     if (!supportsImageExport) {
       setExportImage(null);
     }
-  }
+  }, [supportsImageExport]);
 
   const handleExportImage = useCallback(() => {
     if (!exportImage) return;

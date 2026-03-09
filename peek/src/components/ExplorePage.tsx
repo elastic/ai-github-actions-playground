@@ -64,9 +64,9 @@ export default function ExplorePage() {
   const queryClient = useQueryClient();
   const [selectedNamespace, setSelectedNamespace] = useState<string | null>(null);
   const [dismissedError, setDismissedError] = useState<string | null>(null);
-  const { dashboard, setTimeRange } = useDashboardEditorStore(
+  const { timeRange, setTimeRange } = useDashboardEditorStore(
     useShallow((s) => ({
-      dashboard: s.dashboard,
+      timeRange: s.dashboard.timeRange,
       setTimeRange: s.setTimeRange,
     })),
   );
@@ -133,7 +133,7 @@ export default function ExplorePage() {
     aggregation,
     filters,
     groupBy,
-    timeRange: dashboard.timeRange,
+    timeRange,
     setIndexPattern,
     setSelectedMetric,
     setSelectedNamespace,
@@ -215,7 +215,7 @@ export default function ExplorePage() {
     aggregation,
     filters,
     groupBy,
-    timeRange: dashboard.timeRange,
+    timeRange,
     enabled: Boolean(
       connection &&
       selectedMetric &&
@@ -267,18 +267,10 @@ export default function ExplorePage() {
       aggregation,
       filters,
       groupBy: groupBy ?? undefined,
-      timeRange: dashboard.timeRange,
+      timeRange,
     });
     return result.esql;
-  }, [
-    indexPattern,
-    selectedMetric,
-    metricType,
-    aggregation,
-    filters,
-    groupBy,
-    dashboard.timeRange,
-  ]);
+  }, [indexPattern, selectedMetric, metricType, aggregation, filters, groupBy, timeRange]);
   const displayQuery = useMemo(() => {
     const raw = rawQuery ?? effectiveQuery;
     if (!raw.trim()) return raw;
@@ -501,7 +493,7 @@ export default function ExplorePage() {
                     filters={filters}
                     groupBy={groupBy}
                     rawQuery={rawQuery}
-                    timeRange={dashboard.timeRange}
+                    timeRange={timeRange}
                     onIndexPatternChange={setIndexPattern}
                     onNamespaceChange={(namespace) => {
                       setSelectedNamespace(namespace);
@@ -699,7 +691,7 @@ export default function ExplorePage() {
                     metricNotFound={metricNotFound}
                     chartData={chartData}
                     queryStatus={queryResult.status}
-                    timeRange={dashboard.timeRange}
+                    timeRange={timeRange}
                     onMetricSelect={handleMetricSelect}
                     onDimensionSelect={handleDimensionSelect}
                     onBackToOverview={handleBackToOverview}

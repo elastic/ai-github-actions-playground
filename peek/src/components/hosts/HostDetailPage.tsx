@@ -18,6 +18,7 @@ import DateRangePicker from "../DateRangePicker";
 import EmptyState from "../EmptyState";
 import PageHeader from "../PageHeader";
 import { toDashboardTimeRange, toTraceTimeRange } from "../timePresets";
+import ToolbarRow from "../ToolbarRow";
 
 import { buildHostDetailQuery, type HostQueryFilters } from "./hostQueryBuilder";
 import { fmtPct, fmtCount, fmtTimestamp, MetricCard } from "./hostFormatters";
@@ -81,7 +82,7 @@ export default function HostDetailPage() {
         description={descriptionText}
       />
       <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center" }}>
+        <ToolbarRow>
           <DateRangePicker
             value={toDashboardTimeRange({ from: filters.timeFrom, to: filters.timeTo })}
             onChange={(range) => {
@@ -90,7 +91,7 @@ export default function HostDetailPage() {
             }}
           />
           {loading && <CircularProgress size={16} />}
-        </Box>
+        </ToolbarRow>
       </Paper>
 
       {error && <Alert severity="error">{error}</Alert>}

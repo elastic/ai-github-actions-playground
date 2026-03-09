@@ -1,9 +1,9 @@
-import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Paper from "@mui/material/Paper";
 
 import DateRangePicker from "../DateRangePicker";
 import { toDashboardTimeRange, toTraceTimeRange } from "../timePresets";
+import ToolbarRow from "../ToolbarRow";
 
 interface ServiceDashboardControlsProps {
   loading: boolean;
@@ -22,7 +22,7 @@ export default function ServiceDashboardControls({
 }: ServiceDashboardControlsProps) {
   return (
     <Paper variant="outlined" sx={{ p: 1 }}>
-      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center" }}>
+      <ToolbarRow>
         <DateRangePicker
           value={toDashboardTimeRange({ from: timeFrom, to: timeTo })}
           onChange={(range) => {
@@ -33,7 +33,7 @@ export default function ServiceDashboardControls({
         <Button variant="text" size="small" onClick={onReset} disabled={loading}>
           Reset
         </Button>
-      </Box>
+      </ToolbarRow>
     </Paper>
   );
 }

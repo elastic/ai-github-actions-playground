@@ -16,6 +16,7 @@ import PoliciesTable from "./snapshots/PoliciesTable";
 import RepositoriesTable from "./snapshots/RepositoriesTable";
 import { SnapshotKpiCards, PolicyKpiCards } from "./snapshots/SnapshotKpiCards";
 import SnapshotsTable from "./snapshots/SnapshotsTable";
+import ToolbarRow from "./ToolbarRow";
 import {
   compareSnapshots,
   comparePolicies,
@@ -208,7 +209,7 @@ export default function SnapshotsPage() {
         />
       )}
 
-      <Box sx={{ display: "flex", gap: 1, alignItems: "center", flexWrap: "wrap" }}>
+      <ToolbarRow>
         <Tabs
           value={activeTab}
           onChange={(_, v) =>
@@ -240,7 +241,7 @@ export default function SnapshotsPage() {
           sx={{ minWidth: 260 }}
           aria-label={filterLabel}
         />
-      </Box>
+      </ToolbarRow>
 
       {activeTab === "snapshots" && (
         <SnapshotsTable
