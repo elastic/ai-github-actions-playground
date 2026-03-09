@@ -189,6 +189,7 @@ export default function ExplorePage() {
   // fire network requests until the user clicks "Search Metrics" or presses
   // Cmd/Ctrl+Enter.
   const [committedRawQuery, setCommittedRawQuery] = useState(() => rawQuery);
+  const pendingSearchRef = useRef(false);
 
   // Sync committedRawQuery when rawQuery is programmatically cleared (e.g.
   // navigating away, metric change, or auto-clear when rawQuery matches the
@@ -220,9 +221,15 @@ export default function ExplorePage() {
   });
 
   const handleSearch = useCallback(() => {
+    pendingSearchRef.current = true;
     setCommittedRawQuery(rawQuery);
+  }, [rawQuery]);
+
+  useEffect(() => {
+    if (!pendingSearchRef.current) return;
+    pendingSearchRef.current = false;
     void queryClient.invalidateQueries({ queryKey: ["explore-query", connection?.url] });
-  }, [queryClient, connection?.url, rawQuery]);
+  }, [committedRawQuery, queryClient, connection?.url]);
 
   // Query editor extensions for the CodeMirror editor — ref keeps the
   // closure fresh without recreating the extension array on every render.

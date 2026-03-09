@@ -20,20 +20,21 @@ const COUNTER_QS = COUNTER_URL.slice(COUNTER_URL.indexOf("?"));
 const NOT_FOUND_URL =
   "/?index=metrics-system*&metric=zzz.nonexistent&agg=avg&groupBy=host.name&from=now-24h&to=now";
 const NOT_FOUND_QS = NOT_FOUND_URL.slice(NOT_FOUND_URL.indexOf("?"));
-
-const { queryMock, listFieldsMock } = vi.hoisted(() => ({
-  queryMock: vi.fn().mockResolvedValue({
-    columns: [
-      { name: "timestamp", type: "date" },
-      { name: "metric", type: "double" },
-    ],
-    values: [["2026-01-01T00:00:00.000Z", 1]],
-    executionTimeMs: 1,
-  }),
-  listFieldsMock: vi
-    .fn()
-    .mockResolvedValue([{ name: "system.cpu.total.pct", type: "double", metricType: "gauge" }]),
-}));
+const { queryMock, listFieldsMock, defaultFields } = vi.hoisted(() => {
+  const defaultFields = [{ name: "system.cpu.total.pct", type: "double", metricType: "gauge" }];
+  return {
+    queryMock: vi.fn().mockResolvedValue({
+      columns: [
+        { name: "timestamp", type: "date" },
+        { name: "metric", type: "double" },
+      ],
+      values: [["2026-01-01T00:00:00.000Z", 1]],
+      executionTimeMs: 1,
+    }),
+    listFieldsMock: vi.fn().mockResolvedValue(defaultFields),
+    defaultFields,
+  };
+});
 
 vi.mock("../../src/services/es", async () => {
   const actual = await vi.importActual<EsService>("../../src/services/es");
@@ -49,6 +50,7 @@ vi.mock("../../src/services/es", async () => {
 describe("ExplorePage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    listFieldsMock.mockResolvedValue(defaultFields);
     localStorage.clear();
     sessionStorage.clear();
     resetAllStores();
