@@ -140,11 +140,13 @@ export default function DocsNavSidebar({
         const visibleIds = group.sectionIds.filter((id) => filteredSectionIds.has(id));
         if (visibleIds.length === 0) return null;
         const isCollapsed = collapsedGroups[group.label] ?? false;
+        const groupId = `docs-nav-group-${group.label.toLowerCase().replace(/\s+/g, "-")}`;
         return (
           <Box key={group.label}>
             <ButtonBase
               onClick={() => toggleGroup(group.label)}
               aria-expanded={!isCollapsed}
+              aria-controls={groupId}
               sx={{
                 display: "flex",
                 width: "100%",
@@ -176,7 +178,7 @@ export default function DocsNavSidebar({
                 }}
               />
             </ButtonBase>
-            <Collapse in={!isCollapsed} timeout={150}>
+            <Collapse id={groupId} in={!isCollapsed} timeout={150}>
               <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, pl: 1 }}>
                 {visibleIds.map((id) => {
                   const section = sectionById.get(id);
