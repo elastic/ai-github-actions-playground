@@ -1,5 +1,4 @@
 import { useCallback, useDeferredValue, useMemo, useState } from "react";
-import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Switch from "@mui/material/Switch";
@@ -18,6 +17,7 @@ import IlmIndicesTable from "./IlmIndicesTable";
 import IlmKpiCards from "./IlmKpiCards";
 import IlmPoliciesTable from "./IlmPoliciesTable";
 import IlmPolicyDetailDrawer from "./IlmPolicyDetailDrawer";
+import ToolbarRow from "./ToolbarRow";
 import {
   compareIndexRows,
   comparePolicyRows,
@@ -157,7 +157,7 @@ export default function IlmPage() {
         policyCount={policyRows.length}
         phaseDistribution={phaseDistribution}
       />
-      <Box sx={{ display: "flex", gap: 1, alignItems: "center", flexWrap: "wrap" }}>
+      <ToolbarRow>
         <Tabs
           value={activeTab}
           onChange={(_, v) => void setUrlState({ tab: v as "indices" | "policies" })}
@@ -208,7 +208,7 @@ export default function IlmPage() {
             />
           </>
         )}
-      </Box>
+      </ToolbarRow>
       {activeTab === "indices" && (
         <IlmIndicesTable
           loading={loading}
