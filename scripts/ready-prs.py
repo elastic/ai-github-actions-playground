@@ -220,8 +220,14 @@ _PR_FIELDS = "number,title,isDraft,author,headRefOid,headRefName,mergeable,revie
 
 
 def fetch_runs(ctx: Ctx) -> list[dict]:
-    return gh_json("run", "list", "--limit", "200", "--json", _RUN_FIELDS,
-                   repo=ctx.repo_args)
+    # The default gh run list omits action_required runs, so fetch them
+    # separately and merge (deduplicating by run ID).
+    default = gh_json("run", "list", "--limit", "200", "--json", _RUN_FIELDS,
+                      repo=ctx.repo_args) or []
+    pending = gh_json("run", "list", "--limit", "200", "--status", "action_required",
+                      "--json", _RUN_FIELDS, repo=ctx.repo_args) or []
+    seen = {r["databaseId"] for r in default}
+    return default + [r for r in pending if r["databaseId"] not in seen]
 
 
 def fetch_prs(ctx: Ctx) -> list[PRInfo]:

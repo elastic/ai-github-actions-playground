@@ -19,7 +19,8 @@ concurrency:
 jobs:
   deploy-preview:
     if: >-
-      contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.pull_request.author_association)
+      contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.pull_request.author_association) ||
+      contains(fromJSON('["Copilot","dependabot[bot]","github-actions[bot]"]'), github.event.pull_request.user.login)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
