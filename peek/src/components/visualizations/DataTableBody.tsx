@@ -6,10 +6,12 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 
 import type { EsqlResponse, TablePanelOptions } from "../../types";
+import type { RowSummaryEntry } from "../../hooks/useRowSummaries";
 
 import { isNumericType } from "./chartUtils";
 import { resolveThresholdColor, THRESHOLD_PALETTE } from "./thresholdUtils";
 import TruncatedCell from "./TruncatedCell";
+import SummaryCell from "./SummaryCell";
 import { PINNED_COLUMN_MIN_WIDTH } from "./dataTableUtils";
 
 interface DataTableBodyProps {
@@ -24,6 +26,12 @@ interface DataTableBodyProps {
   onRowClick: (row: unknown[], rowIndex: number) => void;
   selectedRowIndex?: number | null;
   onCellClick?: (params: { columnName: string; value: string }) => void;
+  /** Row summary entries keyed by row index (within the current page). */
+  rowSummaries?: Map<number, RowSummaryEntry>;
+  /** Callback to register/unregister an element for IntersectionObserver tracking. */
+  observeSummaryRow?: (index: number, element: Element | null) => void;
+  /** Callback to unobserve a row element. */
+  unobserveSummaryRow?: (index: number) => void;
 }
 
 export default function DataTableBody({
@@ -38,6 +46,9 @@ export default function DataTableBody({
   onRowClick,
   selectedRowIndex,
   onCellClick,
+  rowSummaries,
+  observeSummaryRow,
+  unobserveSummaryRow,
 }: DataTableBodyProps) {
   return (
     <TableBody>
@@ -64,6 +75,14 @@ export default function DataTableBody({
               }}
               sx={{ cursor: "pointer" }}
             >
+              {rowSummaries && (
+                <SummaryCell
+                  rowIdx={rowIdx}
+                  entry={rowSummaries.get(rowIdx)}
+                  observeRow={observeSummaryRow}
+                  unobserveRow={unobserveSummaryRow}
+                />
+              )}
               {orderedVisibleColumnIndices.map((colIdx) => {
                 const col = data.columns[colIdx];
                 if (!col) return null;
