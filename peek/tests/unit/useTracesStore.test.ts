@@ -98,6 +98,24 @@ describe("useTracesStore", () => {
       expect(tags).toEqual([{ key: "http.status_code", value: "500", exclude: true }]);
     });
 
+    it("addTagFilter is idempotent for the same key/value/exclude", () => {
+      useTracesStore.getState().addTagFilter("service.name", "checkout", false);
+      useTracesStore.getState().addTagFilter("service.name", "checkout", false);
+      useTracesStore.getState().addTagFilter("service.name", "checkout", false);
+
+      const { tags } = useTracesStore.getState().filters;
+      expect(tags).toEqual([{ key: "service.name", value: "checkout", exclude: false }]);
+    });
+
+    it("addTagFilter allows different key/value/exclude combinations", () => {
+      useTracesStore.getState().addTagFilter("service.name", "checkout", false);
+      useTracesStore.getState().addTagFilter("service.name", "checkout", true);
+      useTracesStore.getState().addTagFilter("service.name", "api", false);
+
+      const { tags } = useTracesStore.getState().filters;
+      expect(tags).toHaveLength(3);
+    });
+
     it("removeTagFilter removes by index", () => {
       useTracesStore.getState().addTagFilter("a", "1");
       useTracesStore.getState().addTagFilter("b", "2");
