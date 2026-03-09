@@ -14,6 +14,7 @@ import EmptyState from "./EmptyState";
 import FieldPickerSidebar from "./FieldPickerSidebar";
 import DataTable from "./visualizations/DataTable";
 import DiscoverEditorPanel from "./DiscoverEditorPanel";
+import ToolbarRow from "./ToolbarRow";
 import { useDiscoverOrchestrator } from "./useDiscoverOrchestrator";
 
 interface DiscoverPageProps {
@@ -86,9 +87,9 @@ export default function DiscoverPage({ mode = "query-lab" }: DiscoverPageProps) 
 
       {o.error && <Alert severity="error">{o.error}</Alert>}
       {o.result && o.lastRunDurationMs !== null && (
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center" }}>
+        <ToolbarRow>
           <Chip size="small" label={`took ${o.lastRunDurationMs} ms`} />
-        </Box>
+        </ToolbarRow>
       )}
       {o.result && o.lastRunIsPartial && o.lastRunPartialMetadata !== null && (
         <PartialResultPanel
