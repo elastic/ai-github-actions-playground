@@ -15,14 +15,12 @@ import EmptyState from "./EmptyState";
 import { TransformDetailDrawer } from "./transforms/TransformDetailDrawer";
 import { TransformKpiCards } from "./transforms/TransformKpiCards";
 import { TransformTable } from "./transforms/TransformTable";
-import TransformsToolbar from "./transforms/TransformsToolbar";
+import TransformsToolbar, { ALL_STATES } from "./transforms/TransformsToolbar";
 import {
   compareTransformRows,
   type SortDirection,
   type SortField,
 } from "./transforms/transformSortUtils";
-
-const ALL_STATES = "all";
 
 export default function TransformsPage() {
   const result = useTransforms();

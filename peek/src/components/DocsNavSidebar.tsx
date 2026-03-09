@@ -85,11 +85,22 @@ export default function DocsNavSidebar({
     () => new Set(filteredSections.map((s) => s.id)),
     [filteredSections],
   );
+  // `sections` is a module-level import, so this never needs recomputation.
   const sectionById = useMemo(() => {
     const map = new Map<string, DocSection>();
     for (const s of sections) map.set(s.id, s);
     return map;
   }, []);
+  if (import.meta.env.DEV) {
+    const knownIds = new Set(sections.map((s) => s.id));
+    for (const group of NAV_GROUPS) {
+      for (const id of group.sectionIds) {
+        if (!knownIds.has(id)) {
+          console.warn(`DocsNavSidebar: unknown sectionId "${id}" in group "${group.label}"`);
+        }
+      }
+    }
+  }
 
   const toggleGroup = useCallback((label: string) => {
     setCollapsedGroups((prev) => ({ ...prev, [label]: !prev[label] }));

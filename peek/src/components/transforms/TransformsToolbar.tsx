@@ -4,7 +4,9 @@ import Stack from "@mui/material/Stack";
 import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
 
-const ALL_STATES = "all";
+import { COMPONENT_HEIGHTS } from "../../types/tokens";
+
+export const ALL_STATES = "all";
 
 interface TransformsToolbarProps {
   search: string;
@@ -54,6 +56,7 @@ export default function TransformsToolbar({
             size="small"
             checked={showOnlyUnhealthy}
             onChange={(e) => onShowOnlyUnhealthyChange(e.target.checked)}
+            sx={{ height: COMPONENT_HEIGHTS.input }}
           />
         }
         label="Show only unhealthy"

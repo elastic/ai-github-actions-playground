@@ -46,7 +46,7 @@ export default function SnapshotsToolbar({
         placeholder="Filter..."
         value={search}
         onChange={(e) => onSearchChange(e.target.value)}
-        sx={{ minWidth: 260 }}
+        sx={{ minWidth: 260, "& .MuiInputBase-root": { height: COMPONENT_HEIGHTS.input } }}
         aria-label={filterLabel}
       />
     </Box>
