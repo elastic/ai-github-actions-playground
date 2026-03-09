@@ -9,12 +9,16 @@ import Chip from "@mui/material/Chip";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import TableChartIcon from "@mui/icons-material/TableChart";
 
+import { useGlobalCollapseShortcut } from "../hooks/useGlobalCollapseShortcut";
+import { useLLMStore } from "../store/useLLMStore";
+import { useSearchPanelUIStore } from "../store/useSearchPanelUIStore";
 import QueryProfilePanel from "./QueryProfilePanel";
 import PartialResultPanel from "./PartialResultPanel";
 import EmptyState from "./EmptyState";
 import FieldPickerSidebar from "./FieldPickerSidebar";
 import DataTable from "./visualizations/DataTable";
 import DiscoverEditorPanel from "./DiscoverEditorPanel";
+import ToolbarRow from "./ToolbarRow";
 import { useDiscoverOrchestrator } from "./useDiscoverOrchestrator";
 import {
   buildDiscoverShareUrl,
@@ -29,7 +33,13 @@ interface DiscoverPageProps {
 
 export default function DiscoverPage({ mode = "query-lab" }: DiscoverPageProps) {
   const o = useDiscoverOrchestrator(mode);
-  const setDiscoverSearchCollapsed = o.setDiscoverSearchCollapsed;
+  const { setDiscoverSearchCollapsed } = o;
+
+  const llmConfigured = useLLMStore((s) => s.config.apiKey.trim().length > 0);
+
+  // When the user hasn't manually selected columns and LLM is configured,
+  // show AI row summaries for visible rows in the data table.
+  const showRowSummaries = Boolean(o.result && !o.fieldsManuallySelected && llmConfigured);
 
   // URL state synchronization
   const [urlState, setUrlState] = useQueryStates(discoverSearchParsers, {
@@ -84,25 +94,11 @@ export default function DiscoverPage({ mode = "query-lab" }: DiscoverPageProps) 
   });
 
   // Cmd/Ctrl+[ toggles the query panel collapse
-  useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      const target = e.target as HTMLElement | null;
-      if (
-        target &&
-        (target.closest("input, textarea, select, [contenteditable='true'], .cm-editor") ||
-          target.getAttribute("role") === "textbox" ||
-          target.isContentEditable)
-      ) {
-        return;
-      }
-      if ((e.metaKey || e.ctrlKey) && e.key === "[" && !e.repeat) {
-        e.preventDefault();
-        setDiscoverSearchCollapsed(!o.discoverSearchCollapsed);
-      }
-    }
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [setDiscoverSearchCollapsed, o.discoverSearchCollapsed]);
+  const toggleDiscoverCollapse = useCallback(
+    () => setDiscoverSearchCollapsed(!useSearchPanelUIStore.getState().discoverSearchCollapsed),
+    [setDiscoverSearchCollapsed],
+  );
+  useGlobalCollapseShortcut(toggleDiscoverCollapse);
 
   return (
     <Box
@@ -146,9 +142,9 @@ export default function DiscoverPage({ mode = "query-lab" }: DiscoverPageProps) 
 
       {o.error && <Alert severity="error">{o.error}</Alert>}
       {o.result && o.lastRunDurationMs !== null && (
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center" }}>
+        <ToolbarRow>
           <Chip size="small" label={`took ${o.lastRunDurationMs} ms`} />
-        </Box>
+        </ToolbarRow>
       )}
       {o.result && o.lastRunIsPartial && o.lastRunPartialMetadata !== null && (
         <PartialResultPanel
@@ -232,6 +228,9 @@ export default function DiscoverPage({ mode = "query-lab" }: DiscoverPageProps) 
               onRemoveColumn={o.toggleField}
               currentSort={o.currentSort}
               onSortChange={o.handleSortChange}
+              summaryEnabled={showRowSummaries}
+              fullResultColumns={o.result?.columns}
+              fullResultValues={o.result?.values}
             />
           )}
           {o.filteredResult && o.filteredResult.columns.length === 0 && o.result && (

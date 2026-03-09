@@ -109,6 +109,7 @@ export function useDiscoverOrchestrator(mode: "query-lab" | "logs") {
   const [profileMode, setProfileMode] = useState(false);
   const [lastExecutedQuery, setLastExecutedQuery] = useState(query);
   const [expandedInsight, setExpandedInsight] = useState<string | null>(null);
+  const [fieldsManuallySelected, setFieldsManuallySelected] = useState(false);
   const [insightsCache, setInsightsCache] = useState<
     Record<string, { loading: boolean; error: string | null; data: EsqlResponse | null }>
   >({});
@@ -171,6 +172,7 @@ export function useDiscoverOrchestrator(mode: "query-lab" | "logs") {
         }
       }
       setTableVersion((prev) => prev + 1);
+      setFieldsManuallySelected(false);
       timingsCleared.current = false;
     },
     onFailure: () => {
@@ -343,6 +345,7 @@ export function useDiscoverOrchestrator(mode: "query-lab" | "logs") {
       else next.add(name);
       setSelectedFields(next);
       setTableVersion((prev) => prev + 1);
+      setFieldsManuallySelected(true);
     },
     [selectedFields, setSelectedFields],
   );
@@ -378,12 +381,14 @@ export function useDiscoverOrchestrator(mode: "query-lab" | "logs") {
     for (const col of visibleColumns) next.add(col.name);
     setSelectedFields(next);
     setTableVersion((prev) => prev + 1);
+    setFieldsManuallySelected(true);
   }, [selectedFields, setSelectedFields, visibleColumns]);
   const deselectVisibleFields = useCallback(() => {
     const next = new Set(selectedFields);
     for (const col of visibleColumns) next.delete(col.name);
     setSelectedFields(next);
     setTableVersion((prev) => prev + 1);
+    setFieldsManuallySelected(true);
   }, [selectedFields, setSelectedFields, visibleColumns]);
   const hasPendingRunChanges = effectiveQuery.trim() !== lastExecutedQuery.trim();
 
@@ -453,6 +458,7 @@ export function useDiscoverOrchestrator(mode: "query-lab" | "logs") {
     selectVisibleFields,
     deselectVisibleFields,
     visibleColumns,
+    fieldsManuallySelected,
 
     // Time range
     timeRange,

@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback, memo, useRef } from "react";
+import { memo } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Link from "@mui/material/Link";
@@ -9,16 +9,15 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import DownloadIcon from "@mui/icons-material/Download";
 
-import type { EsqlResponse, TablePanelOptions } from "../../types";
+import type { EsqlResponse, EsqlColumn, TablePanelOptions } from "../../types";
 import EmptyState from "../EmptyState";
-import { getEmptyColumnIndices, paginateRows } from "../discoverUtils";
 
 import RowInspectorFlyout from "./RowInspectorFlyout";
 import DataTableHeader from "./DataTableHeader";
 import DataTableBody from "./DataTableBody";
 import DataTableColumnMenu from "./DataTableColumnMenu";
 import type { SortState, SortDirection } from "./dataTableUtils";
-import { PINNED_COLUMN_MIN_WIDTH, reconcileColumnOrder } from "./dataTableUtils";
+import { useDataTableState } from "./useDataTableState";
 
 export type { SortState, SortDirection } from "./dataTableUtils";
 
@@ -30,6 +29,12 @@ interface Props {
   currentSort?: SortState | null;
   onSortChange?: (columnName: string, direction: SortDirection | null) => void;
   onCellClick?: (params: { columnName: string; value: string }) => void;
+  /** Enable AI row summaries (requires LLM to be configured). */
+  summaryEnabled?: boolean;
+  /** Full (unfiltered) result columns — used for richer summary context. */
+  fullResultColumns?: EsqlColumn[];
+  /** Full (unfiltered) result values — must be index-aligned with `data.values`. */
+  fullResultValues?: unknown[][];
 }
 
 export default memo(function DataTable({
@@ -40,161 +45,29 @@ export default memo(function DataTable({
   currentSort,
   onSortChange,
   onCellClick,
+  summaryEnabled,
+  fullResultColumns,
+  fullResultValues,
 }: Props) {
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(25);
-  const [inspectedRow, setInspectedRow] = useState<unknown[] | null>(null);
-  const [selectedRowIndex, setSelectedRowIndex] = useState<number | null>(null);
-  const [showEmptyColumns, setShowEmptyColumns] = useState(false);
-  const tableContainerRef = useRef<HTMLDivElement>(null);
-  const [columnOrder, setColumnOrder] = useState<number[]>(() => data.columns.map((_, i) => i));
-  const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
-  const [menuColumnIndex, setMenuColumnIndex] = useState<number | null>(null);
-  const [pinnedColumns, setPinnedColumns] = useState<Set<number>>(new Set());
-  const allColumnIndices = useMemo(() => data.columns.map((_, i) => i), [data.columns]);
-  const resolvedColumnOrder = useMemo(
-    () => reconcileColumnOrder(columnOrder, allColumnIndices),
-    [columnOrder, allColumnIndices],
-  );
-
-  const emptyColumnIndices = useMemo(() => getEmptyColumnIndices(data), [data]);
-
-  const orderedVisibleColumnIndices = useMemo(() => {
-    const visible = showEmptyColumns
-      ? allColumnIndices
-      : allColumnIndices.filter((i) => !emptyColumnIndices.has(i));
-    const visibleSet = new Set(visible);
-    const ordered = resolvedColumnOrder.filter((i) => visibleSet.has(i));
-    const pinned = ordered.filter((i) => pinnedColumns.has(i));
-    const unpinned = ordered.filter((i) => !pinnedColumns.has(i));
-    return [...pinned, ...unpinned];
-  }, [allColumnIndices, emptyColumnIndices, showEmptyColumns, resolvedColumnOrder, pinnedColumns]);
-
-  const pinnedLeftOffsets = useMemo(() => {
-    const offsets = new Map<number, number>();
-    let accumulated = 0;
-    for (const colIdx of orderedVisibleColumnIndices) {
-      if (!pinnedColumns.has(colIdx)) break;
-      offsets.set(colIdx, accumulated);
-      accumulated += PINNED_COLUMN_MIN_WIDTH;
-    }
-    return offsets;
-  }, [pinnedColumns, orderedVisibleColumnIndices]);
-
-  const visibleRows = useMemo(
-    () => paginateRows(data.values, page, rowsPerPage),
-    [data.values, page, rowsPerPage],
-  );
-
-  const handleRowClick = useCallback(
-    (row: unknown[]) => {
-      setInspectedRow(row);
-      const idx = visibleRows.indexOf(row);
-      setSelectedRowIndex(idx >= 0 ? idx : null);
-    },
-    [visibleRows],
-  );
-
-  const handleCloseInspector = useCallback(() => {
-    setInspectedRow(null);
-    setSelectedRowIndex(null);
-  }, []);
-
-  const handleKeyDown = useCallback(
-    (event: React.KeyboardEvent) => {
-      if (inspectedRow === null || selectedRowIndex === null) return;
-      if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
-      const target = event.target as HTMLElement | null;
-      if (!target?.closest("tr[data-row-index]")) return;
-      if (visibleRows.length === 0) return;
-      const maxIndex = visibleRows.length - 1;
-      const currentIndex = Math.min(Math.max(selectedRowIndex, 0), maxIndex);
-      event.preventDefault();
-
-      const nextIndex =
-        event.key === "ArrowDown"
-          ? Math.min(currentIndex + 1, maxIndex)
-          : Math.max(currentIndex - 1, 0);
-
-      if (nextIndex === currentIndex) return;
-
-      const nextRow = visibleRows[nextIndex];
-      if (nextRow) {
-        setSelectedRowIndex(nextIndex);
-        setInspectedRow(nextRow);
-
-        const rowEl = tableContainerRef.current?.querySelector(`[data-row-index="${nextIndex}"]`);
-        if (rowEl && typeof rowEl.scrollIntoView === "function") {
-          rowEl.scrollIntoView({ block: "nearest" });
-        }
-      }
-    },
-    [inspectedRow, selectedRowIndex, visibleRows],
-  );
-
-  const handleSortToggle = useCallback(
-    (columnName: string) => {
-      if (!onSortChange) return;
-      if (!currentSort || currentSort.columnName !== columnName) {
-        onSortChange(columnName, "asc");
-      } else if (currentSort.direction === "asc") {
-        onSortChange(columnName, "desc");
-      } else {
-        onSortChange(columnName, null);
-      }
-      setPage(0);
-    },
-    [currentSort, onSortChange],
-  );
-
-  const moveColumn = useCallback(
-    (columnIndex: number, direction: "left" | "right") => {
-      setColumnOrder((prev) => {
-        const nextIndices = data.columns.map((_, i) => i);
-        const normalized = reconcileColumnOrder(prev, nextIndices);
-        const from = normalized.indexOf(columnIndex);
-        if (from < 0) return prev;
-        const to = direction === "left" ? from - 1 : from + 1;
-        if (to < 0 || to >= normalized.length) return prev;
-        const next = [...normalized];
-        [next[from], next[to]] = [next[to]!, next[from]!];
-        return next;
-      });
-    },
-    [data.columns],
-  );
-
-  const closeMenu = useCallback(() => {
-    setMenuAnchor(null);
-    setMenuColumnIndex(null);
-  }, []);
-
-  const handlePinColumn = useCallback((colIdx: number) => {
-    setPinnedColumns((prev) => {
-      const next = new Set(prev);
-      next.add(colIdx);
-      return next;
-    });
-  }, []);
-
-  const handleUnpinColumn = useCallback((colIdx: number) => {
-    setPinnedColumns((prev) => {
-      const next = new Set(prev);
-      next.delete(colIdx);
-      return next;
-    });
-  }, []);
+  const s = useDataTableState({
+    data,
+    currentSort,
+    onSortChange,
+    summaryEnabled,
+    fullResultColumns,
+    fullResultValues,
+  });
 
   if (data.columns.length === 0) {
     return <EmptyState size="small" heading="No data" />;
   }
 
-  const hiddenCount = emptyColumnIndices.size;
+  const hiddenCount = s.emptyColumnIndices.size;
 
   return (
     <Box
       sx={{ display: "flex", flexDirection: "column", height: "100%" }}
-      onKeyDown={handleKeyDown}
+      onKeyDown={s.handleKeyDown}
     >
       {hiddenCount > 0 && (
         <Box
@@ -209,46 +82,50 @@ export default memo(function DataTable({
           }}
         >
           <Typography variant="caption" color="text.secondary">
-            {showEmptyColumns
+            {s.showEmptyColumns
               ? `${hiddenCount} empty ${hiddenCount === 1 ? "column" : "columns"}`
               : `${hiddenCount} empty ${hiddenCount === 1 ? "column" : "columns"} hidden`}
           </Typography>
           <Link
             component="button"
             variant="caption"
-            onClick={() => setShowEmptyColumns((prev) => !prev)}
+            onClick={() => s.setShowEmptyColumns((prev) => !prev)}
             sx={{ cursor: "pointer" }}
           >
-            {showEmptyColumns ? "Hide" : "Show"}
+            {s.showEmptyColumns ? "Hide" : "Show"}
           </Link>
         </Box>
       )}
-      <TableContainer ref={tableContainerRef} sx={{ flex: 1, minHeight: 0 }}>
+      <TableContainer ref={s.tableContainerRef} sx={{ flex: 1, minHeight: 0 }}>
         <Table size="small" stickyHeader>
           <DataTableHeader
             data={data}
-            orderedVisibleColumnIndices={orderedVisibleColumnIndices}
+            orderedVisibleColumnIndices={s.orderedVisibleColumnIndices}
             currentSort={currentSort}
-            pinnedColumns={pinnedColumns}
-            pinnedLeftOffsets={pinnedLeftOffsets}
-            onSortToggle={handleSortToggle}
+            pinnedColumns={s.pinnedColumns}
+            pinnedLeftOffsets={s.pinnedLeftOffsets}
+            onSortToggle={s.handleSortToggle}
+            showSummaryColumn={Boolean(summaryEnabled)}
             onOpenMenu={(event, colIdx) => {
-              setMenuAnchor(event.currentTarget);
-              setMenuColumnIndex(colIdx);
+              s.setMenuAnchor(event.currentTarget);
+              s.setMenuColumnIndex(colIdx);
             }}
           />
           <DataTableBody
             data={data}
             options={options}
-            visibleRows={visibleRows}
-            orderedVisibleColumnIndices={orderedVisibleColumnIndices}
-            pinnedColumns={pinnedColumns}
-            pinnedLeftOffsets={pinnedLeftOffsets}
-            page={page}
-            rowsPerPage={rowsPerPage}
-            onRowClick={handleRowClick}
-            selectedRowIndex={selectedRowIndex}
+            visibleRows={s.visibleRows}
+            orderedVisibleColumnIndices={s.orderedVisibleColumnIndices}
+            pinnedColumns={s.pinnedColumns}
+            pinnedLeftOffsets={s.pinnedLeftOffsets}
+            page={s.page}
+            rowsPerPage={s.rowsPerPage}
+            onRowClick={s.handleRowClick}
+            selectedRowIndex={s.selectedRowIndex}
             onCellClick={onCellClick}
+            rowSummaries={summaryEnabled ? s.rowSummaries : undefined}
+            observeSummaryRow={summaryEnabled ? s.observeSummaryRow : undefined}
+            unobserveSummaryRow={summaryEnabled ? s.unobserveSummaryRow : undefined}
           />
         </Table>
         {data.values.length === 0 && (
@@ -271,12 +148,12 @@ export default memo(function DataTable({
         <TablePagination
           component="div"
           count={data.values.length}
-          page={page}
-          onPageChange={(_, nextPage) => setPage(nextPage)}
-          rowsPerPage={rowsPerPage}
+          page={s.page}
+          onPageChange={(_, nextPage) => s.setPage(nextPage)}
+          rowsPerPage={s.rowsPerPage}
           onRowsPerPageChange={(event) => {
-            setRowsPerPage(parseInt(event.target.value, 10));
-            setPage(0);
+            s.setRowsPerPage(parseInt(event.target.value, 10));
+            s.setPage(0);
           }}
           rowsPerPageOptions={[25, 50, 100]}
           sx={{ flex: 1 }}
@@ -290,24 +167,24 @@ export default memo(function DataTable({
         )}
       </Box>
       <RowInspectorFlyout
-        open={inspectedRow !== null}
-        onClose={handleCloseInspector}
+        open={s.inspectedRowState !== null && s.selectedRowIndex !== null}
+        onClose={s.handleCloseInspector}
         columns={data.columns}
-        row={inspectedRow}
+        row={s.inspectedRowState?.row ?? null}
       />
       <DataTableColumnMenu
         data={data}
-        menuAnchor={menuAnchor}
-        menuColumnIndex={menuColumnIndex}
-        orderedColumnIndices={orderedVisibleColumnIndices}
-        pinnedColumns={pinnedColumns}
+        menuAnchor={s.menuAnchor}
+        menuColumnIndex={s.menuColumnIndex}
+        orderedColumnIndices={s.orderedVisibleColumnIndices}
+        pinnedColumns={s.pinnedColumns}
         onSortChange={onSortChange}
         onRemoveColumn={onRemoveColumn}
-        onMoveColumn={moveColumn}
-        onPinColumn={handlePinColumn}
-        onUnpinColumn={handleUnpinColumn}
-        onClose={closeMenu}
-        onResetPage={() => setPage(0)}
+        onMoveColumn={s.moveColumn}
+        onPinColumn={s.handlePinColumn}
+        onUnpinColumn={s.handleUnpinColumn}
+        onClose={s.closeMenu}
+        onResetPage={() => s.setPage(0)}
       />
     </Box>
   );

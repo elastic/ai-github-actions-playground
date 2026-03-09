@@ -23,6 +23,7 @@ import {
 import type { EsqlResponse, TimeRange } from "../types";
 import { useBatchedOverviewQueries, hasOverviewData } from "../hooks/useBatchedOverviewQueries";
 import { usePageSlotInsights } from "../hooks/usePageSlotInsights";
+import ToolbarRow from "./ToolbarRow";
 import { INSIGHT_GUARDRAIL } from "../hooks/insightPromptUtils";
 
 import { InsightSlotProvider } from "./InsightSlotContext";
@@ -460,7 +461,7 @@ export default function DimensionOverviewGrid({
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%", overflow: "auto", p: 1 }}>
       {/* Header */}
-      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center", mb: 1 }}>
+      <ToolbarRow sx={{ mb: 1 }}>
         <Button size="small" startIcon={<ArrowBackIcon />} onClick={onBackToOverview}>
           Back to overview
         </Button>
@@ -489,7 +490,7 @@ export default function DimensionOverviewGrid({
         <Button size="small" variant="outlined" onClick={onViewUngrouped}>
           View ungrouped
         </Button>
-      </Box>
+      </ToolbarRow>
 
       <InsightSlotProvider
         summary={dimensionCardInsights.summary}

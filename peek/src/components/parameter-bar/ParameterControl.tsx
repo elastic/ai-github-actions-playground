@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
@@ -90,12 +90,10 @@ export default function ParameterControl({
     .map((entry) => ({ label: entry.label, value: entry.parsed.value as ParameterValue }));
   const currentValueInput = formatValueForInput(param.type, param.value);
   const [draftInput, setDraftInput] = useState(currentValueInput);
-  const [prevParamValue, setPrevParamValue] = useState(param.value);
-  if (param.value !== prevParamValue) {
-    setPrevParamValue(param.value);
+  useEffect(() => {
     setDraftInput(currentValueInput);
     setValidationError(null);
-  }
+  }, [currentValueInput]);
 
   const commitDraftValue = useCallback(() => {
     const parsed = parseParameterValue(param.type, draftInput);

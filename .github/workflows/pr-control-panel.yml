@@ -22,9 +22,8 @@ jobs:
   sync-control-panel:
     if: >-
       (github.event_name == 'pull_request_target' &&
-       (github.event.pull_request.author_association == 'OWNER' ||
-        github.event.pull_request.author_association == 'MEMBER' ||
-        github.event.pull_request.author_association == 'COLLABORATOR')) ||
+       (contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.pull_request.author_association) ||
+        contains(fromJSON('["Copilot","dependabot[bot]","github-actions[bot]"]'), github.event.pull_request.user.login))) ||
       (github.event_name == 'issue_comment' &&
        github.event.issue.pull_request != null &&
        github.event.sender.login != 'github-actions[bot]' &&
@@ -187,6 +186,8 @@ jobs:
                 "This control panel only adds or removes labels on the PR.",
                 "It does not directly start workflows.",
                 "If you toggle an option, related automation may not run until its next normal trigger event.",
+                "",
+                "- [ ] Re-sync control panel from labels <!-- action:reset -->",
                 "</details>",
               ].join("\n");
             }
@@ -367,15 +368,26 @@ jobs:
             const pr = await getPullRequest(issueNumber);
             const panelConfig = getPanelConfig(pr);
             const labels = new Set((pr.labels || []).map((l) => l.name));
-            const currentState = Object.fromEntries(
+
+            // Check if the reset toggle was checked
+            const resetRequested = /- \[[xX]\][^\n]*<!--\s*action:reset\s*-->/.test(commentBody);
+
+            // Labels are always the baseline; checkboxes override unless resetting
+            const labelState = Object.fromEntries(
               panelConfig.managedItems.map((item) => [item.label, !labels.has(item.label)]),
             );
-            const desiredState = Object.fromEntries(
-              panelConfig.managedItems.map((item) => [
-                item.label,
-                readCheckboxByKey(commentBody, item.label) ?? currentState[item.label],
-              ]),
-            );
+            const desiredState = resetRequested
+              ? labelState
+              : Object.fromEntries(
+                  panelConfig.managedItems.map((item) => [
+                    item.label,
+                    readCheckboxByKey(commentBody, item.label) ?? labelState[item.label],
+                  ]),
+                );
+
+            if (resetRequested) {
+              core.info("Reset requested — rebuilding control panel from labels");
+            }
 
             await syncLabelsFromState(issueNumber, labels, desiredState, panelConfig);
             await upsertControlPanel(issueNumber, panelConfig, desiredState);

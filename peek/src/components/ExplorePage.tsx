@@ -26,6 +26,7 @@ import type { FieldInfo, ExplorerFilter } from "../services/es";
 import type { EsqlResponse } from "../types";
 import { useExploreFields } from "../hooks/useExploreFields";
 import { useExploreQuery } from "../hooks/useExploreQuery";
+import { useGlobalCollapseShortcut } from "../hooks/useGlobalCollapseShortcut";
 import { INSIGHT_GUARDRAIL } from "../hooks/insightPromptUtils";
 import { usePageSlotInsights } from "../hooks/usePageSlotInsights";
 import { formatEsqlQuery } from "../services/es/queryText";
@@ -63,9 +64,9 @@ export default function ExplorePage() {
   const queryClient = useQueryClient();
   const [selectedNamespace, setSelectedNamespace] = useState<string | null>(null);
   const [dismissedError, setDismissedError] = useState<string | null>(null);
-  const { dashboard, setTimeRange } = useDashboardEditorStore(
+  const { timeRange, setTimeRange } = useDashboardEditorStore(
     useShallow((s) => ({
-      dashboard: s.dashboard,
+      timeRange: s.dashboard.timeRange,
       setTimeRange: s.setTimeRange,
     })),
   );
@@ -132,7 +133,7 @@ export default function ExplorePage() {
     aggregation,
     filters,
     groupBy,
-    timeRange: dashboard.timeRange,
+    timeRange,
     setIndexPattern,
     setSelectedMetric,
     setSelectedNamespace,
@@ -214,7 +215,7 @@ export default function ExplorePage() {
     aggregation,
     filters,
     groupBy,
-    timeRange: dashboard.timeRange,
+    timeRange,
     enabled: Boolean(
       connection &&
       selectedMetric &&
@@ -266,18 +267,10 @@ export default function ExplorePage() {
       aggregation,
       filters,
       groupBy: groupBy ?? undefined,
-      timeRange: dashboard.timeRange,
+      timeRange,
     });
     return result.esql;
-  }, [
-    indexPattern,
-    selectedMetric,
-    metricType,
-    aggregation,
-    filters,
-    groupBy,
-    dashboard.timeRange,
-  ]);
+  }, [indexPattern, selectedMetric, metricType, aggregation, filters, groupBy, timeRange]);
   const displayQuery = useMemo(() => {
     const raw = rawQuery ?? effectiveQuery;
     if (!raw.trim()) return raw;
@@ -314,25 +307,11 @@ export default function ExplorePage() {
   }, [effectiveQuery, rawQuery, setRawQuery]);
 
   // Cmd/Ctrl+[ toggles the search panel collapse
-  useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      const target = e.target as HTMLElement | null;
-      if (
-        target &&
-        (target.closest("input, textarea, select, [contenteditable='true'], .cm-editor") ||
-          target.getAttribute("role") === "textbox" ||
-          target.isContentEditable)
-      ) {
-        return;
-      }
-      if ((e.metaKey || e.ctrlKey) && e.key === "[" && !e.repeat) {
-        e.preventDefault();
-        setMetricsSearchCollapsed(!useSearchPanelUIStore.getState().metricsSearchCollapsed);
-      }
-    }
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [setMetricsSearchCollapsed]);
+  const toggleMetricsCollapse = useCallback(
+    () => setMetricsSearchCollapsed(!useSearchPanelUIStore.getState().metricsSearchCollapsed),
+    [setMetricsSearchCollapsed],
+  );
+  useGlobalCollapseShortcut(toggleMetricsCollapse);
 
   if (
     dismissedError !== null &&
@@ -514,7 +493,7 @@ export default function ExplorePage() {
                     filters={filters}
                     groupBy={groupBy}
                     rawQuery={rawQuery}
-                    timeRange={dashboard.timeRange}
+                    timeRange={timeRange}
                     onIndexPatternChange={setIndexPattern}
                     onNamespaceChange={(namespace) => {
                       setSelectedNamespace(namespace);
@@ -540,7 +519,7 @@ export default function ExplorePage() {
                     onSearch={handleSearch}
                     searchResultCount={chartData ? chartData.values.length : null}
                     collapsed={metricsSearchCollapsed}
-                    onToggleCollapsed={() => setMetricsSearchCollapsed(!metricsSearchCollapsed)}
+                    onToggleCollapsed={toggleMetricsCollapse}
                   />
                 </Box>
               </InsightSlot>
@@ -712,7 +691,7 @@ export default function ExplorePage() {
                     metricNotFound={metricNotFound}
                     chartData={chartData}
                     queryStatus={queryResult.status}
-                    timeRange={dashboard.timeRange}
+                    timeRange={timeRange}
                     onMetricSelect={handleMetricSelect}
                     onDimensionSelect={handleDimensionSelect}
                     onBackToOverview={handleBackToOverview}
