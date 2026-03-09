@@ -91,11 +91,6 @@ export default function ServiceDashboardPage() {
     timeTo,
   });
   const {
-    score: instrumentationScore,
-    loading: instrumentationScoreLoading,
-    error: instrumentationScoreError,
-  } = useInstrumentationScore({ connection, serviceName, timeFrom, timeTo });
-  const {
     sortField: routeSortField,
     sortDirection: routeSortDirection,
     getSortLabelProps: getRouteSortLabelProps,
@@ -177,6 +172,18 @@ export default function ServiceDashboardPage() {
     routeRows.length === 0 &&
     recentTraces.length === 0 &&
     k8sRows.length === 0;
+  const shouldShowInstrumentationScorePanel = hasLoadedResults && !isDashboardEmpty;
+  const {
+    score: instrumentationScore,
+    loading: instrumentationScoreLoading,
+    error: instrumentationScoreError,
+  } = useInstrumentationScore({
+    connection,
+    serviceName,
+    timeFrom,
+    timeTo,
+    enabled: shouldShowInstrumentationScorePanel,
+  });
   const topRouteSignals = useMemo(() => topRouteRows.slice(0, 20), [topRouteRows]);
   const topTraceSignals = useMemo(() => recentTraces.slice(0, 20), [recentTraces]);
   const traceSignals = useMemo(() => summarizeTraceSignals(recentTraces), [recentTraces]);
@@ -436,7 +443,7 @@ export default function ServiceDashboardPage() {
                 </InsightSlot>
               )}
 
-              {!isDashboardEmpty && (
+              {shouldShowInstrumentationScorePanel && (
                 <ServiceInstrumentationScorePanel
                   score={instrumentationScore}
                   loading={instrumentationScoreLoading}

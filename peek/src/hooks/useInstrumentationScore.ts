@@ -20,6 +20,7 @@ interface UseInstrumentationScoreParams {
   serviceName: string;
   timeFrom: string;
   timeTo: string;
+  enabled?: boolean;
 }
 
 const KEY_PREFIX = "instrumentation-score-" as const;
@@ -61,10 +62,11 @@ export function useInstrumentationScore({
   serviceName,
   timeFrom,
   timeTo,
+  enabled = true,
 }: UseInstrumentationScoreParams) {
   const connectionFingerprint = getConnectionFingerprint(connection);
   const normalizedServiceName = serviceName.trim();
-  const canFetch = Boolean(connection) && normalizedServiceName.length > 0;
+  const canFetch = enabled && Boolean(connection) && normalizedServiceName.length > 0;
 
   const filters = useMemo(
     () => ({ serviceName: normalizedServiceName, timeFrom, timeTo }),

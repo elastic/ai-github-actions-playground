@@ -140,4 +140,26 @@ describe("useInstrumentationScore", () => {
     });
     expect(result.current.error).not.toBe("[object Object]");
   });
+
+  it("does not execute queries when disabled", async () => {
+    const { result } = renderHook(
+      () =>
+        useInstrumentationScore({
+          connection: MOCK_CONNECTION,
+          serviceName: "checkout-service",
+          timeFrom: "now-1h",
+          timeTo: "now",
+          enabled: false,
+        }),
+      { wrapper: createWrapper() },
+    );
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    expect(result.current.score).toBeNull();
+    expect(result.current.error).toBeNull();
+    expect(instrumentationScoreState.mockExecute).not.toHaveBeenCalled();
+  });
 });
