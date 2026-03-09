@@ -12,13 +12,19 @@ import EmptyState from "./EmptyState";
 
 /** Navigation groups for the docs sidebar. */
 interface NavGroup {
+  id: string;
   label: string;
-  sectionIds: string[];
+  sectionIds: readonly string[];
 }
 
-export const NAV_GROUPS: NavGroup[] = [
-  { label: "Getting Started", sectionIds: ["about", "connecting", "cors", "proxy-mode"] },
+export const NAV_GROUPS: readonly NavGroup[] = [
   {
+    id: "getting-started",
+    label: "Getting Started",
+    sectionIds: ["about", "connecting", "cors", "proxy-mode"],
+  },
+  {
+    id: "observability",
     label: "Observability",
     sectionIds: [
       "metrics-workflow",
@@ -29,6 +35,7 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
+    id: "features",
     label: "Features",
     sectionIds: [
       "dashboard-workflow",
@@ -40,8 +47,9 @@ export const NAV_GROUPS: NavGroup[] = [
       "dashboard-management",
     ],
   },
-  { label: "AI Features", sectionIds: ["chat", "llm-settings"] },
+  { id: "ai-features", label: "AI Features", sectionIds: ["chat", "llm-settings"] },
   {
+    id: "cluster-admin",
     label: "Cluster Admin",
     sectionIds: [
       "cluster-overview",
@@ -60,10 +68,11 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
+    id: "infrastructure",
     label: "Infrastructure",
     sectionIds: ["fleet", "kubernetes", "hosts", "nodes"],
   },
-  { label: "Security", sectionIds: ["users-roles", "api-keys"] },
+  { id: "security", label: "Security", sectionIds: ["users-roles", "api-keys"] },
 ];
 
 if (import.meta.env.DEV) {
@@ -103,8 +112,8 @@ export default function DocsNavSidebar({
     return map;
   }, []);
 
-  const toggleGroup = useCallback((label: string) => {
-    setCollapsedGroups((prev) => ({ ...prev, [label]: !prev[label] }));
+  const toggleGroup = useCallback((id: string) => {
+    setCollapsedGroups((prev) => ({ ...prev, [id]: !prev[id] }));
   }, []);
 
   if (filteredSections.length === 0) {
@@ -140,12 +149,12 @@ export default function DocsNavSidebar({
       {NAV_GROUPS.map((group) => {
         const visibleIds = group.sectionIds.filter((id) => filteredSectionIds.has(id));
         if (visibleIds.length === 0) return null;
-        const isCollapsed = collapsedGroups[group.label] ?? false;
-        const groupId = `docs-nav-group-${group.label.toLowerCase().replace(/\s+/g, "-")}`;
+        const isCollapsed = collapsedGroups[group.id] ?? false;
+        const groupId = `docs-nav-group-${group.id}`;
         return (
-          <Box key={group.label}>
+          <Box key={group.id}>
             <ButtonBase
-              onClick={() => toggleGroup(group.label)}
+              onClick={() => toggleGroup(group.id)}
               aria-expanded={!isCollapsed}
               aria-controls={groupId}
               sx={{
