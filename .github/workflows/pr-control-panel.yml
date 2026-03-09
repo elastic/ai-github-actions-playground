@@ -9,6 +9,10 @@ on:
   issue_comment:
     types: [edited]
 
+concurrency:
+  group: pr-control-panel-${{ github.event.pull_request.number || github.event.issue.number }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
   issues: write
