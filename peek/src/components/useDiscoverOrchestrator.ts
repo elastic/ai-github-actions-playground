@@ -124,6 +124,7 @@ export function useDiscoverOrchestrator(mode: "query-lab" | "logs") {
   const {
     runQuery,
     loading,
+    abort,
     error,
     activeStep,
     stepDurationsMs,
@@ -233,6 +234,10 @@ export function useDiscoverOrchestrator(mode: "query-lab" | "logs") {
   const handleRunQuery = useCallback(() => {
     runDiscoverQuery();
   }, [runDiscoverQuery]);
+  const handleCancelQuery = useCallback(() => {
+    preserveSelectedFieldsNextRunRef.current = false;
+    abort();
+  }, [abort]);
   const handleQueryChange = useCallback(
     (nextQuery: string) => {
       if (discoverQueryDraft) setDiscoverQueryDraft(null);
@@ -417,6 +422,7 @@ export function useDiscoverOrchestrator(mode: "query-lab" | "logs") {
     activeStep,
     stepDurationsMs,
     handleRunQuery,
+    handleCancelQuery,
     runDiscoverQuery,
     handleRunStep,
     profileMode,

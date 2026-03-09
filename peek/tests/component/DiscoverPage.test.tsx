@@ -611,4 +611,43 @@ describe("DiscoverPage", () => {
 
     expect(screen.getByRole("button", { name: /run query/i })).toBeDisabled();
   });
+
+  it("shows a Cancel Query button while a query is running", async () => {
+    const user = userEvent.setup();
+    let resolveQuery!: (value: unknown) => void;
+    let signal: AbortSignal | undefined;
+    queryMock.mockImplementationOnce(
+      (_request: unknown, nextSignal: AbortSignal) =>
+        new Promise((resolve) => {
+          signal = nextSignal;
+          resolveQuery = resolve;
+        }),
+    );
+
+    renderDiscoverPage();
+
+    await user.click(screen.getByRole("button", { name: /run query/i }));
+
+    // While loading, the button should switch to "Cancel Query"
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /cancel query/i })).toBeInTheDocument();
+    });
+    expect(screen.getByRole("button", { name: /cancel query/i })).toBeEnabled();
+
+    // Click cancel to abort
+    await user.click(screen.getByRole("button", { name: /cancel query/i }));
+    expect(signal?.aborted).toBe(true);
+
+    // After cancellation, the button should revert to "Run Query"
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /run query/i })).toBeInTheDocument();
+    });
+
+    // Resolve the pending promise to avoid act() warnings
+    resolveQuery({
+      columns: [{ name: "@timestamp", type: "date" }],
+      values: [],
+      executionTimeMs: 0,
+    });
+  });
 });
