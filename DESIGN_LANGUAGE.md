@@ -1,6 +1,6 @@
 # Elastic Peek Design Language
 
-The canonical visual and interaction specification for Elastic Peek. AI agents and humans building UI for this project treat this document as the single authority on how things look, feel, and behave. Engineering standards (file structure, state management, testing) live in DEVELOPING.md — this document covers only design decisions.
+The canonical visual and interaction specification for Elastic Peek. AI agents and humans building UI for this project treat this document as the single authority on how things look, feel, and behave.
 
 ---
 
