@@ -32,8 +32,8 @@ describe("ToolbarRow", () => {
       </ToolbarRow>,
     );
 
-    expect(container.firstElementChild).not.toBeNull();
-    expect(container.firstElementChild!.querySelector("span")).not.toBeNull();
+    expect(container.childElementCount).toBe(1);
+    expect(container.firstElementChild).toContainElement(screen.getByText("Item"));
   });
 
   it("accepts additional sx overrides", () => {
@@ -43,7 +43,7 @@ describe("ToolbarRow", () => {
       </ToolbarRow>,
     );
 
-    expect(container.firstElementChild).not.toBeNull();
+    expect(container.firstElementChild).toHaveStyle({ marginBottom: "16px" });
     expect(screen.getByText("Item")).toBeInTheDocument();
   });
 });
