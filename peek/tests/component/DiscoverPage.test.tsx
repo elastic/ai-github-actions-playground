@@ -80,7 +80,7 @@ describe("DiscoverPage", () => {
     ]);
   });
 
-  it("selects only preferred fields when result has many columns", async () => {
+  it("selects all fields when Query Lab result has many columns", async () => {
     const manyColumns = [
       "@timestamp",
       "message",
@@ -110,8 +110,7 @@ describe("DiscoverPage", () => {
     await user.click(screen.getByRole("button", { name: /run query/i }));
     await waitFor(() => {
       const selected = useQueryStore.getState().discoverSelectedFields;
-      // Should select the full preferred subset, not all 12 fields
-      expect(selected.size).toBe(7);
+      expect(selected.size).toBe(12);
       expect(selected.has("@timestamp")).toBe(true);
       expect(selected.has("message")).toBe(true);
       expect(selected.has("host.name")).toBe(true);
@@ -119,11 +118,12 @@ describe("DiscoverPage", () => {
       expect(selected.has("log.level")).toBe(true);
       expect(selected.has("event.dataset")).toBe(true);
       expect(selected.has("agent.name")).toBe(true);
-      expect(selected.has("field1")).toBe(false);
+      expect(selected.has("field1")).toBe(true);
+      expect(selected.has("field5")).toBe(true);
     });
   });
 
-  it("falls back to first 10 fields when no preferred fields exist", async () => {
+  it("selects all fields even when no preferred fields exist", async () => {
     const manyColumns = Array.from({ length: 12 }, (_, i) => ({
       name: `col_${i + 1}`,
       type: "keyword",
@@ -144,11 +144,11 @@ describe("DiscoverPage", () => {
 
     await waitFor(() => {
       const selected = useQueryStore.getState().discoverSelectedFields;
-      expect(selected.size).toBe(10);
+      expect(selected.size).toBe(12);
       expect(selected.has("col_1")).toBe(true);
       expect(selected.has("col_10")).toBe(true);
-      expect(selected.has("col_11")).toBe(false);
-      expect(selected.has("col_12")).toBe(false);
+      expect(selected.has("col_11")).toBe(true);
+      expect(selected.has("col_12")).toBe(true);
     });
   });
 
