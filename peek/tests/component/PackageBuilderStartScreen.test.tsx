@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import PackageBuilderStartScreen from "../../src/components/packageBuilder/PackageBuilderStartScreen";
@@ -40,7 +40,10 @@ describe("PackageBuilderStartScreen", () => {
     render(<PackageBuilderStartScreen />);
 
     await user.click(screen.getByRole("button", { name: /new package/i }));
-    expect(screen.getByRole("dialog", { name: /pick a package workspace/i })).toBeInTheDocument();
+    const dialog = screen.getByRole("dialog", { name: /pick a package workspace/i });
+    expect(dialog).toBeInTheDocument();
+    expect(within(dialog).getByText(/choose a directory to use as your/i)).toBeInTheDocument();
+    expect(within(dialog).getByText(/saved automatically/i)).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /choose directory/i }));
 
