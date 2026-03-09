@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  buildDuplicateInstanceIdQuery,
   buildInstrumentationScoreQuery,
   buildInternalSpanCountQuery,
 } from "../../src/instrumentation-score/queryBuilder";
@@ -30,6 +31,8 @@ describe("buildInstrumentationScoreQuery", () => {
     expect(query).toContain("has_instance_id");
     expect(query).toContain("has_version");
     expect(query).toContain("has_environment");
+    expect(query).toContain("has_k8s_context");
+    expect(query).toContain("has_k8s_pod_uid");
     expect(query).toContain("LIMIT 1");
   });
 
@@ -54,9 +57,23 @@ describe("buildInternalSpanCountQuery", () => {
     expect(query).toContain("FROM traces-*");
     expect(query).toContain('service.name == "my-service"');
     expect(query).toContain("INTERNAL");
+    expect(query).toContain("is_short_internal");
+    expect(query).toContain("max_short_internal_per_trace");
     expect(query).toContain("STATS internal_count = COUNT(*)");
     expect(query).toContain("trace.id");
     expect(query).toContain("max_internal_per_trace");
+    expect(query).toContain("LIMIT 1");
+  });
+});
+
+describe("buildDuplicateInstanceIdQuery", () => {
+  it("produces valid ES|QL for duplicate service.instance.id detection", () => {
+    const query = buildDuplicateInstanceIdQuery(BASE_FILTERS);
+    expect(query).toContain("FROM traces-*");
+    expect(query).toContain('service.name == "my-service"');
+    expect(query).toContain("resource.attributes.service\\.instance\\.id IS NOT NULL");
+    expect(query).toContain("logical_resource");
+    expect(query).toContain("duplicate_instance_id_count");
     expect(query).toContain("LIMIT 1");
   });
 });
@@ -67,7 +84,7 @@ describe("buildInternalSpanCountQuery", () => {
 
 describe("parseInstrumentationScoreResult", () => {
   it("returns defaults when main result is null", () => {
-    const snapshot = parseInstrumentationScoreResult("svc", null, null);
+    const snapshot = parseInstrumentationScoreResult("svc", null, null, null);
     expect(snapshot.serviceName).toBe("svc");
     expect(snapshot.hasServiceName).toBe(true);
     expect(snapshot.hasServiceInstanceId).toBe(false);
@@ -81,7 +98,7 @@ describe("parseInstrumentationScoreResult", () => {
       columns: [{ name: "total_spans", type: "long" }],
       values: [],
     };
-    const snapshot = parseInstrumentationScoreResult("svc", emptyResult, null);
+    const snapshot = parseInstrumentationScoreResult("svc", emptyResult, null, null);
     expect(snapshot.totalSpanCount).toBe(0);
   });
 
@@ -95,10 +112,12 @@ describe("parseInstrumentationScoreResult", () => {
         { name: "has_instance_id", type: "long" },
         { name: "has_version", type: "long" },
         { name: "has_environment", type: "long" },
+        { name: "has_k8s_context", type: "long" },
+        { name: "has_k8s_pod_uid", type: "long" },
       ],
-      values: [[500, 100, 5, 1, 2, 2, 1]],
+      values: [[500, 100, 5, 1, 2, 2, 1, 2, 1]],
     };
-    const snapshot = parseInstrumentationScoreResult("svc", mainResult, null);
+    const snapshot = parseInstrumentationScoreResult("svc", mainResult, null, null);
     expect(snapshot.totalSpanCount).toBe(500);
     expect(snapshot.rootSpanCount).toBe(100);
     expect(snapshot.rootClientSpanCount).toBe(5);
@@ -108,6 +127,8 @@ describe("parseInstrumentationScoreResult", () => {
     expect(snapshot.hasServiceVersion).toBe(true);
     // has_environment = 1 means only sentinel, so absent
     expect(snapshot.hasDeploymentEnvironment).toBe(false);
+    expect(snapshot.hasK8sContext).toBe(true);
+    expect(snapshot.hasK8sPodUid).toBe(false);
   });
 
   it("parses internal span result correctly", () => {
@@ -120,14 +141,30 @@ describe("parseInstrumentationScoreResult", () => {
         { name: "has_instance_id", type: "long" },
         { name: "has_version", type: "long" },
         { name: "has_environment", type: "long" },
+        { name: "has_k8s_context", type: "long" },
+        { name: "has_k8s_pod_uid", type: "long" },
       ],
-      values: [[500, 100, 0, 1, 2, 2, 2]],
+      values: [[500, 100, 0, 1, 2, 2, 2, 1, 1]],
     };
     const internalResult: EsqlResponse = {
-      columns: [{ name: "max_internal_per_trace", type: "long" }],
-      values: [[15]],
+      columns: [
+        { name: "max_internal_per_trace", type: "long" },
+        { name: "max_short_internal_per_trace", type: "long" },
+      ],
+      values: [[15, 12]],
     };
-    const snapshot = parseInstrumentationScoreResult("svc", mainResult, internalResult);
+    const duplicateResult: EsqlResponse = {
+      columns: [{ name: "duplicate_instance_id_count", type: "long" }],
+      values: [[3]],
+    };
+    const snapshot = parseInstrumentationScoreResult(
+      "svc",
+      mainResult,
+      internalResult,
+      duplicateResult,
+    );
     expect(snapshot.maxInternalSpansPerTrace).toBe(15);
+    expect(snapshot.maxShortInternalSpansPerTrace).toBe(12);
+    expect(snapshot.duplicateInstanceIdCount).toBe(3);
   });
 });

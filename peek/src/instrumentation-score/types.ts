@@ -49,6 +49,12 @@ export interface InstrumentationScoreSnapshot {
   /** Whether any span carries a deployment.environment.name or service.environment value. */
   hasDeploymentEnvironment: boolean;
 
+  /** Whether any Kubernetes resource attributes are present for this service. */
+  hasK8sContext: boolean;
+
+  /** Whether any span carries a k8s.pod.uid resource attribute. */
+  hasK8sPodUid: boolean;
+
   /** Count of root spans (parent.id IS NULL) with span kind = CLIENT. */
   rootClientSpanCount: number;
 
@@ -57,6 +63,12 @@ export interface InstrumentationScoreSnapshot {
 
   /** Maximum number of INTERNAL spans observed in any single trace for this service. */
   maxInternalSpansPerTrace: number;
+
+  /** Maximum number of short (<5ms) INTERNAL spans observed in any single trace. */
+  maxShortInternalSpansPerTrace: number;
+
+  /** Number of service.instance.id values reused across multiple logical resources. */
+  duplicateInstanceIdCount: number;
 
   /** Total number of spans sampled. */
   totalSpanCount: number;

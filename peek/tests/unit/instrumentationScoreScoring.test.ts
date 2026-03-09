@@ -124,9 +124,13 @@ const GOOD_SNAPSHOT: InstrumentationScoreSnapshot = {
   hasServiceInstanceId: true,
   hasServiceVersion: true,
   hasDeploymentEnvironment: true,
+  hasK8sContext: false,
+  hasK8sPodUid: false,
   rootClientSpanCount: 0,
   rootSpanCount: 100,
   maxInternalSpansPerTrace: 5,
+  maxShortInternalSpansPerTrace: 5,
+  duplicateInstanceIdCount: 0,
   totalSpanCount: 500,
 };
 
@@ -136,9 +140,13 @@ const POOR_SNAPSHOT: InstrumentationScoreSnapshot = {
   hasServiceInstanceId: false,
   hasServiceVersion: false,
   hasDeploymentEnvironment: false,
+  hasK8sContext: true,
+  hasK8sPodUid: false,
   rootClientSpanCount: 50,
   rootSpanCount: 100,
   maxInternalSpansPerTrace: 25,
+  maxShortInternalSpansPerTrace: 30,
+  duplicateInstanceIdCount: 2,
   totalSpanCount: 500,
 };
 

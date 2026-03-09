@@ -61,7 +61,9 @@ export function buildInstrumentationScoreQuery(
       `has_service_name = COUNT_DISTINCT(${fields.serviceName}), ` +
       'has_instance_id = COUNT_DISTINCT(COALESCE(resource.attributes.service\\.instance\\.id, "@@MISSING@@")), ' +
       `has_version = COUNT_DISTINCT(COALESCE(${fields.serviceVersion}, "@@MISSING@@")), ` +
-      'has_environment = COUNT_DISTINCT(COALESCE(service.environment, deployment.environment, "@@MISSING@@"))',
+      'has_environment = COUNT_DISTINCT(COALESCE(service.environment, deployment.environment, "@@MISSING@@")), ' +
+      'has_k8s_context = COUNT_DISTINCT(COALESCE(k8s.pod.uid, k8s.pod.name, k8s.namespace.name, k8s.node.name, "@@MISSING@@")), ' +
+      'has_k8s_pod_uid = COUNT_DISTINCT(COALESCE(k8s.pod.uid, "@@MISSING@@"))',
     `LIMIT 1`,
   ]);
 }
@@ -88,8 +90,39 @@ export function buildInternalSpanCountQuery(
   return buildPipeline([
     `FROM ${fields.index}`,
     buildWherePipe(whereClauses),
-    `STATS internal_count = COUNT(*) BY ${fields.traceId}`,
-    `STATS max_internal_per_trace = MAX(internal_count)`,
+    `EVAL is_short_internal = CASE(${fields.durationNs} < 5000000 OR ${fields.durationUs} < 5000, 1, 0)`,
+    `STATS internal_count = COUNT(*), short_internal_count = SUM(is_short_internal) BY ${fields.traceId}`,
+    `STATS max_internal_per_trace = MAX(internal_count), max_short_internal_per_trace = MAX(short_internal_count)`,
     `LIMIT 1`,
+  ]);
+}
+
+/**
+ * Builds an ES|QL query that finds duplicate service.instance.id usage across
+ * logical resources (e.g. pod/host/container). Used for RES-002 evaluation.
+ */
+export function buildDuplicateInstanceIdQuery(
+  filters: InstrumentationScoreFilters,
+  fields: TraceFieldMapping = DEFAULT_FIELD_MAPPING,
+): string {
+  const safeTimeFrom = toSafeRelativeTimeExpression(filters.timeFrom);
+  const safeTimeTo = toSafeRelativeTimeExpression(filters.timeTo);
+  const safeServiceName = escapeEsqlString(filters.serviceName);
+
+  const whereClauses: string[] = [
+    `${fields.serviceName} == "${safeServiceName}"`,
+    `${fields.timestamp} >= ${safeTimeFrom}`,
+    `${fields.timestamp} <= ${safeTimeTo}`,
+    "resource.attributes.service\\.instance\\.id IS NOT NULL",
+    'resource.attributes.service\\.instance\\.id != ""',
+  ];
+
+  return buildPipeline([
+    `FROM ${fields.index}`,
+    buildWherePipe(whereClauses),
+    'EVAL logical_resource = COALESCE(k8s.pod.uid, k8s.pod.name, host.id, host.name, container.id, service.node.name, "@@UNKNOWN@@")',
+    "STATS distinct_resources = COUNT_DISTINCT(logical_resource) BY instance_id = resource.attributes.service\\.instance\\.id",
+    "STATS duplicate_instance_id_count = COUNT(*) WHERE distinct_resources > 1",
+    "LIMIT 1",
   ]);
 }

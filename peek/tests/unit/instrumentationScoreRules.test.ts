@@ -14,9 +14,13 @@ function makeSnapshot(
     hasServiceInstanceId: true,
     hasServiceVersion: true,
     hasDeploymentEnvironment: true,
+    hasK8sContext: false,
+    hasK8sPodUid: false,
     rootClientSpanCount: 0,
     rootSpanCount: 100,
     maxInternalSpansPerTrace: 5,
+    maxShortInternalSpansPerTrace: 5,
+    duplicateInstanceIdCount: 0,
     totalSpanCount: 500,
     ...overrides,
   };
@@ -92,6 +96,53 @@ describe("RES-001: service.instance.id is present", () => {
   });
 });
 
+describe("RES-002: service.instance.id is unique across logical resources", () => {
+  const rule = resourceRules.find((r) => r.id === "RES-002")!;
+
+  it("has important impact", () => {
+    expect(rule.impact).toBe("important");
+  });
+
+  it("passes when no duplicate instance IDs are detected", () => {
+    const result = rule.evaluate(
+      makeSnapshot({ duplicateInstanceIdCount: 0, hasServiceInstanceId: true }),
+    );
+    expect(result.passed).toBe(true);
+  });
+
+  it("fails when duplicate instance IDs are detected", () => {
+    const result = rule.evaluate(
+      makeSnapshot({ duplicateInstanceIdCount: 2, hasServiceInstanceId: true }),
+    );
+    expect(result.passed).toBe(false);
+    expect(result.summary).toContain("2");
+  });
+});
+
+describe("RES-003: k8s.pod.uid is present for Kubernetes workloads", () => {
+  const rule = resourceRules.find((r) => r.id === "RES-003")!;
+
+  it("has important impact", () => {
+    expect(rule.impact).toBe("important");
+  });
+
+  it("passes when no Kubernetes context is detected", () => {
+    const result = rule.evaluate(makeSnapshot({ hasK8sContext: false, hasK8sPodUid: false }));
+    expect(result.passed).toBe(true);
+  });
+
+  it("passes when Kubernetes context includes k8s.pod.uid", () => {
+    const result = rule.evaluate(makeSnapshot({ hasK8sContext: true, hasK8sPodUid: true }));
+    expect(result.passed).toBe(true);
+  });
+
+  it("fails when Kubernetes context exists without k8s.pod.uid", () => {
+    const result = rule.evaluate(makeSnapshot({ hasK8sContext: true, hasK8sPodUid: false }));
+    expect(result.passed).toBe(false);
+    expect(result.summary).toContain("k8s.pod.uid");
+  });
+});
+
 // ---------------------------------------------------------------------------
 // Span rules
 // ---------------------------------------------------------------------------
@@ -143,5 +194,29 @@ describe("SPA-001: Limited INTERNAL spans per trace", () => {
     expect(result.passed).toBe(false);
     expect(result.summary).toContain("15");
     expect(result.observed?.maxInternalSpansPerTrace).toBe(15);
+  });
+});
+
+describe("SPA-005: No high number of short INTERNAL spans per trace", () => {
+  const rule = spanRules.find((r) => r.id === "SPA-005")!;
+
+  it("has important impact", () => {
+    expect(rule.impact).toBe("important");
+  });
+
+  it("passes when no spans exist", () => {
+    const result = rule.evaluate(makeSnapshot({ totalSpanCount: 0 }));
+    expect(result.passed).toBe(true);
+  });
+
+  it("passes when short internal span count is within limit", () => {
+    const result = rule.evaluate(makeSnapshot({ maxShortInternalSpansPerTrace: 20 }));
+    expect(result.passed).toBe(true);
+  });
+
+  it("fails when short internal span count exceeds limit", () => {
+    const result = rule.evaluate(makeSnapshot({ maxShortInternalSpansPerTrace: 35 }));
+    expect(result.passed).toBe(false);
+    expect(result.summary).toContain("35");
   });
 });

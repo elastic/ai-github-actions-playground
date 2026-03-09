@@ -4,6 +4,7 @@
  * These checks evaluate trace span quality:
  * - SPA-004: Root spans are not CLIENT spans (Important)
  * - SPA-001: Limited number of INTERNAL spans per trace per service (Normal)
+ * - SPA-005: No high number of short INTERNAL spans per trace (Important)
  */
 import type { InstrumentationScoreRule } from "../types";
 
@@ -11,6 +12,7 @@ const SPEC_BASE_URL = "https://github.com/instrumentation-score/spec/blob/main/r
 
 /** Per the spec, no more than 10 INTERNAL spans per trace per service. */
 const MAX_INTERNAL_SPANS_PER_TRACE = 10;
+const MAX_SHORT_INTERNAL_SPANS_PER_TRACE = 20;
 
 export const spanRules: InstrumentationScoreRule[] = [
   {
@@ -88,6 +90,47 @@ export const spanRules: InstrumentationScoreRule[] = [
         observed: {
           maxInternalSpansPerTrace: snapshot.maxInternalSpansPerTrace,
           threshold: MAX_INTERNAL_SPANS_PER_TRACE,
+        },
+      };
+    },
+  },
+  {
+    id: "SPA-005",
+    description: "Traces do not contain a high number of short INTERNAL spans",
+    rationale:
+      "A high count of short INTERNAL spans can indicate excessive instrumentation " +
+      "overhead or unnecessarily chatty internal operations.",
+    target: "span",
+    impact: "important",
+    specUrl: `${SPEC_BASE_URL}/SPA-005.md`,
+    evaluate: (snapshot) => {
+      if (snapshot.totalSpanCount === 0) {
+        return {
+          passed: true,
+          summary: "No spans observed to evaluate.",
+          observed: { totalSpanCount: 0 },
+        };
+      }
+      if (snapshot.maxShortInternalSpansPerTrace <= MAX_SHORT_INTERNAL_SPANS_PER_TRACE) {
+        return {
+          passed: true,
+          summary:
+            `Maximum short INTERNAL spans per trace is ${snapshot.maxShortInternalSpansPerTrace} ` +
+            `(limit: ${MAX_SHORT_INTERNAL_SPANS_PER_TRACE}).`,
+          observed: {
+            maxShortInternalSpansPerTrace: snapshot.maxShortInternalSpansPerTrace,
+            threshold: MAX_SHORT_INTERNAL_SPANS_PER_TRACE,
+          },
+        };
+      }
+      return {
+        passed: false,
+        summary:
+          `Found traces with up to ${snapshot.maxShortInternalSpansPerTrace} short INTERNAL spans ` +
+          `(limit: ${MAX_SHORT_INTERNAL_SPANS_PER_TRACE}). Reduce excessive short internal operations.`,
+        observed: {
+          maxShortInternalSpansPerTrace: snapshot.maxShortInternalSpansPerTrace,
+          threshold: MAX_SHORT_INTERNAL_SPANS_PER_TRACE,
         },
       };
     },

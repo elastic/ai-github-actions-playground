@@ -9,6 +9,7 @@ import {
   INSTRUMENTATION_SCORE_RULES,
   buildInstrumentationScoreQuery,
   buildInternalSpanCountQuery,
+  buildDuplicateInstanceIdQuery,
   evaluateInstrumentationScore,
 } from "../instrumentation-score";
 import { parseInstrumentationScoreResult } from "../instrumentation-score/snapshotParser";
@@ -94,8 +95,27 @@ export function useInstrumentationScore({
     ...QUERY_OPTIONS,
   });
 
-  const loading = mainQuery.isFetching || internalSpanQuery.isFetching;
   const hasData = mainQuery.data != null;
+  const duplicateInstanceQuery = useQuery<EsqlResponse | null>({
+    queryKey: [
+      `${KEY_PREFIX}duplicate-instance-id`,
+      connectionFingerprint,
+      normalizedServiceName,
+      timeFrom,
+      timeTo,
+    ] as const,
+    queryFn: async ({ signal }) => {
+      if (!connection) return null;
+      const query = buildDuplicateInstanceIdQuery(filters);
+      return createPersesEsqlDatasource(connection).execute({ query: query.trim() }, signal);
+    },
+    enabled: canFetch,
+    initialData: null,
+    ...QUERY_OPTIONS,
+  });
+
+  const loading =
+    mainQuery.isFetching || internalSpanQuery.isFetching || duplicateInstanceQuery.isFetching;
 
   const score: ServiceInstrumentationScore | null = useMemo(() => {
     if (!hasData) return null;
@@ -103,15 +123,22 @@ export function useInstrumentationScore({
       normalizedServiceName,
       mainQuery.data,
       internalSpanQuery.data,
+      duplicateInstanceQuery.data,
     );
     return evaluateInstrumentationScore(INSTRUMENTATION_SCORE_RULES, snapshot);
-  }, [normalizedServiceName, hasData, mainQuery.data, internalSpanQuery.data]);
+  }, [
+    normalizedServiceName,
+    hasData,
+    mainQuery.data,
+    internalSpanQuery.data,
+    duplicateInstanceQuery.data,
+  ]);
 
   const error = useMemo(() => {
-    const first = mainQuery.error ?? internalSpanQuery.error;
+    const first = mainQuery.error ?? internalSpanQuery.error ?? duplicateInstanceQuery.error;
     if (!first) return null;
     return first instanceof Error ? first.message : String(first);
-  }, [mainQuery.error, internalSpanQuery.error]);
+  }, [mainQuery.error, internalSpanQuery.error, duplicateInstanceQuery.error]);
 
   return {
     score,

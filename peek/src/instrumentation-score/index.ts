@@ -11,5 +11,9 @@ export type {
 export { IMPACT_WEIGHTS } from "./types";
 export { calculateScore, evaluateInstrumentationScore, getScoreCategory } from "./scoring";
 export { INSTRUMENTATION_SCORE_RULES } from "./rules";
-export { buildInstrumentationScoreQuery, buildInternalSpanCountQuery } from "./queryBuilder";
+export {
+  buildDuplicateInstanceIdQuery,
+  buildInstrumentationScoreQuery,
+  buildInternalSpanCountQuery,
+} from "./queryBuilder";
 export type { InstrumentationScoreFilters } from "./queryBuilder";
