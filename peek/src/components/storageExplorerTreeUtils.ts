@@ -55,7 +55,7 @@ export function uniquePreviewValues(values: string[], max = 3): string[] {
 
 function mergeNodeNames(existing: string[], nextName: string): string[] {
   if (existing.includes(nextName)) return existing;
-  return [...existing, nextName].sort((a, b) => a.localeCompare(b));
+  return [...existing, nextName];
 }
 
 export function aggregateTree(shards: StorageExplorerShard[], groupBy: GroupBy) {
@@ -140,13 +140,11 @@ export function aggregateTree(shards: StorageExplorerShard[], groupBy: GroupBy) 
   for (const shard of shards) {
     const levels = levelOrder[groupBy];
     const levelNodes: TreeNode[] = [];
-    const pathSegments: string[] = [];
+    let parentId: string | null = null;
 
     for (const [index, level] of levels.entries()) {
       const info = segmentInfo(level, shard);
-      pathSegments.push(info.segment);
-      const id = pathSegments.join("|");
-      const parentId = index === 0 ? null : pathSegments.slice(0, index).join("|");
+      const id: string = parentId ? `${parentId}|${info.segment}` : info.segment;
       const treeNode = upsertNode(
         id,
         parentId,
@@ -159,6 +157,7 @@ export function aggregateTree(shards: StorageExplorerShard[], groupBy: GroupBy) 
         level === "shard" ? shard.prirep.toLowerCase() : null,
       );
       levelNodes.push(treeNode);
+      parentId = id;
     }
 
     for (const current of levelNodes) {
@@ -167,6 +166,7 @@ export function aggregateTree(shards: StorageExplorerShard[], groupBy: GroupBy) 
   }
 
   for (const node of nodesById.values()) {
+    node.nodeNames.sort((a, b) => a.localeCompare(b));
     node.children.sort((aId, bId) => {
       const a = nodesById.get(aId);
       const b = nodesById.get(bId);

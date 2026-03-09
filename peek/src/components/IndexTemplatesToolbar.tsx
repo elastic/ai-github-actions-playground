@@ -1,4 +1,3 @@
-import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
@@ -8,6 +7,7 @@ import { COMPONENT_HEIGHTS } from "../types/tokens";
 
 /** Ensure toolbar toggle buttons match the standard input height (36 px). */
 const toolbarButtonSx = { height: COMPONENT_HEIGHTS.input } as const;
+import ToolbarRow from "./ToolbarRow";
 
 interface IndexTemplatesToolbarProps {
   activeTab: "index" | "component";
@@ -39,7 +39,7 @@ export default function IndexTemplatesToolbar({
   onToggleDataStreamOnly,
 }: IndexTemplatesToolbarProps) {
   return (
-    <Box sx={{ display: "flex", gap: 1.5, alignItems: "center", flexWrap: "wrap" }}>
+    <ToolbarRow>
       <Tabs
         value={activeTab}
         onChange={(_, value) => onSetTab(value as "index" | "component")}
@@ -106,6 +106,6 @@ export default function IndexTemplatesToolbar({
           </Button>
         </>
       )}
-    </Box>
+    </ToolbarRow>
   );
 }

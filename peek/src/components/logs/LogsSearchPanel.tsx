@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
@@ -83,11 +83,9 @@ export default function LogsSearchPanel({
   const [levelFilterInput, setLevelFilterInput] = useState("");
 
   // Reset guided input when the parent searchText prop changes.
-  const [prevSearchText, setPrevSearchText] = useState(searchText);
-  if (searchText !== prevSearchText) {
-    setPrevSearchText(searchText);
+  useEffect(() => {
     setGuidedInput(searchText);
-  }
+  }, [searchText]);
 
   const activeFilterCount = useMemo(
     () => filters.length + (searchText.trim() ? 1 : 0),
