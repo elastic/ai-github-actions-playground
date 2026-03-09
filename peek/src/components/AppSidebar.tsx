@@ -12,6 +12,7 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import AccountTreeIcon from "@mui/icons-material/AccountTree";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
+import BackupIcon from "@mui/icons-material/Backup";
 import BugReportIcon from "@mui/icons-material/BugReport";
 import SettingsIcon from "@mui/icons-material/Settings";
 import ChatIcon from "@mui/icons-material/Chat";
@@ -38,6 +39,7 @@ import StorageIcon from "@mui/icons-material/Storage";
 import SubjectIcon from "@mui/icons-material/Subject";
 import TerminalIcon from "@mui/icons-material/Terminal";
 import TimelineIcon from "@mui/icons-material/Timeline";
+import TransformIcon from "@mui/icons-material/Transform";
 import ViewModuleIcon from "@mui/icons-material/ViewModule";
 import VpnKeyIcon from "@mui/icons-material/VpnKey";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
@@ -83,6 +85,7 @@ interface AppSidebarProps {
 const NAV_ICON_COMPONENTS = {
   AccountTreeIcon,
   AdminPanelSettingsIcon,
+  BackupIcon,
   BugReportIcon,
   ChatIcon,
   CloudIcon,
@@ -109,6 +112,7 @@ const NAV_ICON_COMPONENTS = {
   SubjectIcon,
   TerminalIcon,
   TimelineIcon,
+  TransformIcon,
   ViewModuleIcon,
   VpnKeyIcon,
 } as const;
@@ -196,6 +200,7 @@ export default function AppSidebar({
         flexShrink: 0,
         flexDirection: "column",
         width: mobile ? 260 : isCollapsed ? 68 : 200,
+        height: mobile ? "100%" : undefined,
         minHeight: 0,
         overflow: "hidden",
         borderRight: mobile ? 0 : 1,

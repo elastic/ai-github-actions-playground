@@ -8,10 +8,10 @@ import ButtonBase from "@mui/material/ButtonBase";
 import Typography from "@mui/material/Typography";
 import Tooltip from "@mui/material/Tooltip";
 import Chip from "@mui/material/Chip";
-import { alpha } from "@mui/material/styles";
+import { alpha, useTheme } from "@mui/material/styles";
 
 import { formatSpanDuration } from "../traceUtils";
-import { getServiceColor } from "../traceColors";
+import { getServiceColor, getServiceTextColor } from "../traceColors";
 import InsightSlot from "../../InsightSlot";
 
 import type { GroupStats } from "./spanTreeTypes";
@@ -49,7 +49,9 @@ export const SpanTreeGroupRow = React.memo(function SpanTreeGroupRow({
   timelineFraction,
   showTimeline = true,
 }: SpanTreeGroupRowProps) {
+  const theme = useTheme();
   const serviceColor = getServiceColor(stats.serviceName);
+  const serviceTextColor = getServiceTextColor(stats.serviceName, theme.palette.background.default);
   const showDurationBar = showTimeline && !isTraceRootGroup;
   const clampedOffset = Math.min(Math.max(timelineOffset ?? 0, 0), 1);
   const leftPct = clampedOffset * 100;
@@ -70,7 +72,8 @@ export const SpanTreeGroupRow = React.memo(function SpanTreeGroupRow({
         display: "flex",
         justifyContent: "flex-start",
         alignItems: "center",
-        width: "100%",
+        minWidth: "100%",
+        width: "max-content",
         height: ROW_HEIGHT,
         pl: `${depth * INDENT_PX}px`,
         borderLeft: stats.errorCount > 0 ? "3px solid" : "3px solid transparent",
@@ -150,7 +153,7 @@ export const SpanTreeGroupRow = React.memo(function SpanTreeGroupRow({
             px: 1,
             borderRadius: 0.5,
             bgcolor: alpha(serviceColor, 0.15),
-            color: serviceColor,
+            color: serviceTextColor,
             lineHeight: 1.4,
             whiteSpace: "nowrap",
             textOverflow: "ellipsis",
