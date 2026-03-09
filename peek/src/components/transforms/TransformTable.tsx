@@ -97,7 +97,15 @@ export function TransformTable({
               key={row.id}
               hover
               selected={row.id === selectedId}
+              tabIndex={0}
+              aria-label={`Open transform details for ${row.id}`}
               onClick={() => onSelect(row.id)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " " || event.key === "Spacebar") {
+                  event.preventDefault();
+                  onSelect(row.id);
+                }
+              }}
               sx={{
                 cursor: "pointer",
                 ...(row.state === "failed" && {
