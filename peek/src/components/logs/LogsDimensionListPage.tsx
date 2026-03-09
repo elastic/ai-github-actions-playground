@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -38,19 +38,8 @@ export default function LogsDimensionListPage({
 
   const buildQuery = useCallback(() => {
     const timeFilter = timeRangeToEsqlFilter(timeRange);
-    let query = `FROM logs-* | WHERE ${timeFilter} | WHERE ${dimension} IS NOT NULL`;
-    const trimmedSearch = search.trim();
-    if (trimmedSearch) {
-      const escaped = trimmedSearch
-        .replace(/\\/g, "\\\\")
-        .replace(/"/g, '\\"')
-        .replace(/\*/g, "\\*")
-        .replace(/\?/g, "\\?");
-      query += ` | WHERE ${dimension} LIKE "*${escaped}*"`;
-    }
-    query += ` | STATS count = COUNT(*) BY ${dimension} | SORT count DESC | LIMIT 200`;
-    return query;
-  }, [dimension, timeRange, search]);
+    return `FROM logs-* | WHERE ${timeFilter} | WHERE ${dimension} IS NOT NULL | STATS count = COUNT(*) BY ${dimension} | SORT count DESC | LIMIT 200`;
+  }, [dimension, timeRange]);
 
   const { rows, loading, error } = useRankedDimensionValues({
     connection,
@@ -58,6 +47,10 @@ export default function LogsDimensionListPage({
     dimensionColumn: dimension,
     metricColumn: "count",
   });
+  const filtered = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    return term ? rows.filter((row) => row.value.toLowerCase().includes(term)) : rows;
+  }, [rows, search]);
 
   const handleOpenInQueryLab = useCallback(
     (value: string) => {
@@ -118,12 +111,17 @@ export default function LogsDimensionListPage({
 
       {error && <Alert severity="error">{error}</Alert>}
 
-      {!loading && !error && rows.length === 0 && (
+      {!loading && !error && filtered.length === 0 && (
         <EmptyState heading={emptyHeading} description={emptyDescription} size="small" />
       )}
 
-      {!loading && !error && rows.length > 0 && (
-        <RankedValueList rows={rows} metricLabel="logs" onSelect={handleOpenInQueryLab} />
+      {!loading && !error && filtered.length > 0 && (
+        <RankedValueList
+          rows={filtered}
+          metricLabel="logs"
+          maxMetric={rows[0]?.metric}
+          onSelect={handleOpenInQueryLab}
+        />
       )}
     </Paper>
   );
