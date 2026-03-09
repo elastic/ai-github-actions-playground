@@ -61,7 +61,7 @@ describe("TransformTable keyboard accessibility", () => {
     expect(row).toHaveAttribute("tabindex", "0");
   });
 
-  it("activates onSelect when Enter is pressed on a focused row", async () => {
+  it("activates onSelect when Enter is pressed after tab focus", async () => {
     const onSelect = vi.fn();
     const user = userEvent.setup();
 
@@ -77,13 +77,16 @@ describe("TransformTable keyboard accessibility", () => {
     );
 
     const row = screen.getByRole("row", { name: /Open transform details for tx-1/i });
-    row.focus();
+    const sortableHeaders = screen.getAllByRole("button");
+    sortableHeaders[sortableHeaders.length - 1]?.focus();
+    await user.tab();
+    expect(row).toHaveFocus();
     await user.keyboard("{Enter}");
 
     expect(onSelect).toHaveBeenCalledWith("tx-1");
   });
 
-  it("activates onSelect when Space is pressed on a focused row", async () => {
+  it("activates onSelect when Space is pressed after tab focus", async () => {
     const onSelect = vi.fn();
     const user = userEvent.setup();
 
@@ -99,13 +102,16 @@ describe("TransformTable keyboard accessibility", () => {
     );
 
     const row = screen.getByRole("row", { name: /Open transform details for tx-1/i });
-    row.focus();
+    const sortableHeaders = screen.getAllByRole("button");
+    sortableHeaders[sortableHeaders.length - 1]?.focus();
+    await user.tab();
+    expect(row).toHaveFocus();
     await user.keyboard(" ");
 
     expect(onSelect).toHaveBeenCalledWith("tx-1");
   });
 
-  it("does not activate onSelect for other keys", async () => {
+  it("does not activate onSelect for non-activation keys", async () => {
     const onSelect = vi.fn();
     const user = userEvent.setup();
 
@@ -121,8 +127,11 @@ describe("TransformTable keyboard accessibility", () => {
     );
 
     const row = screen.getByRole("row", { name: /Open transform details for tx-1/i });
-    row.focus();
-    await user.keyboard("{Tab}");
+    const sortableHeaders = screen.getAllByRole("button");
+    sortableHeaders[sortableHeaders.length - 1]?.focus();
+    await user.tab();
+    expect(row).toHaveFocus();
+    await user.keyboard("{ArrowRight}");
 
     expect(onSelect).not.toHaveBeenCalled();
   });
