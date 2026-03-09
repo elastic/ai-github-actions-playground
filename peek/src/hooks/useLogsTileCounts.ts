@@ -12,13 +12,14 @@ export type TileCountState = "loading" | "visible" | "hidden" | "error";
 export type TileCounts = Record<LogsFocusDimension, TileCountState>;
 
 const DIMENSIONS = Object.keys(LOGS_DIMENSION_LABELS) as LogsFocusDimension[];
+const TILE_DISTINCT_PRECISION = 1000;
 
 function makeInitialCounts(): TileCounts {
   return Object.fromEntries(DIMENSIONS.map((d) => [d, "loading"])) as TileCounts;
 }
 
 /**
- * Fetch a log count per dimension tile for the given time range.
+ * Fetch a distinct entity count per dimension tile for the given time range.
  * Returns "visible" (count > 0), "hidden" (count = 0), "error" (query failed), or "loading".
  * The "All logs" tile is not included — it is always shown.
  */
@@ -56,13 +57,15 @@ export function useLogsTileCounts(
     await Promise.all(
       DIMENSIONS.map(async (dimension) => {
         try {
-          const query = `FROM logs-* | WHERE ${timeFilter} | WHERE ${dimension} IS NOT NULL AND ${dimension} != "" | STATS count = COUNT(*) | LIMIT 1`;
+          const query = `FROM logs-* | WHERE ${timeFilter} | WHERE ${dimension} IS NOT NULL AND ${dimension} != "" | STATS count = COUNT_DISTINCT(${dimension}, ${TILE_DISTINCT_PRECISION}) | LIMIT 1`;
           const result = await client.query({ query }, controller.signal);
           if (controller.signal.aborted) return;
           const countCol = result.columns.findIndex((c) => c.name === "count");
           const count = countCol >= 0 ? Number(result.values[0]?.[countCol] ?? 0) : 0;
           const state: TileCountState = count > 0 ? "visible" : "hidden";
-          const subtext = count > 0 ? `${count.toLocaleString()} logs` : null;
+          const labels = LOGS_DIMENSION_LABELS[dimension];
+          const noun = count === 1 ? labels.singular.toLowerCase() : labels.plural.toLowerCase();
+          const subtext = count > 0 ? `${count.toLocaleString()} ${noun}` : null;
           setCounts((prev) => ({ ...prev, [dimension]: state }));
           setSubtexts((prev) => ({ ...prev, [dimension]: subtext }));
         } catch {
