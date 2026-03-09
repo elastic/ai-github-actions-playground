@@ -19,7 +19,15 @@ interface Props {
 
 export default function PackageBuilderStepper({ currentStep, onStepClick }: Props) {
   return (
-    <Stepper nonLinear activeStep={currentStep - 1} sx={{ pb: 2 }}>
+    <Stepper
+      nonLinear
+      activeStep={currentStep - 1}
+      sx={{
+        pb: 2,
+        overflowX: "auto",
+        flexWrap: { xs: "wrap", sm: "nowrap" },
+      }}
+    >
       {STEPS.map(({ label, step }) => (
         <Step key={step} completed={currentStep > step}>
           <StepButton onClick={() => onStepClick(step)}>{label}</StepButton>
