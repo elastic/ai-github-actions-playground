@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useQueryStates } from "nuqs";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -17,6 +17,7 @@ import DataTable from "./visualizations/DataTable";
 import DiscoverEditorPanel from "./DiscoverEditorPanel";
 import { useDiscoverOrchestrator } from "./useDiscoverOrchestrator";
 import {
+  buildDiscoverShareUrl,
   discoverSearchParsers,
   discoverSearchUrlKeys,
   useDiscoverUrlSync,
@@ -36,15 +37,39 @@ export default function DiscoverPage({ mode = "query-lab" }: DiscoverPageProps) 
     history: "replace",
   });
   const [initialUrlState] = useState(() => urlState);
+  const [runAfterHydration, setRunAfterHydration] = useState(false);
+  const [preserveSelectedFieldsOnHydration, setPreserveSelectedFieldsOnHydration] = useState(false);
+  const hydratedRunQueryRef = useRef(o.runDiscoverQuery);
 
-  const handleUrlHydrated = useCallback(() => {
-    // Schedule auto-execution after URL hydration (only when URL had a query).
-    // We use a microtask so the store is updated before running.
-    if (initialUrlState.q !== null) {
-      queueMicrotask(() => o.handleRunQuery());
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  useEffect(() => {
+    hydratedRunQueryRef.current = o.runDiscoverQuery;
+  }, [o.runDiscoverQuery]);
+
+  const handleUrlHydrated = useCallback(
+    (meta: { hasQuery: boolean; hasExplicitFields: boolean }) => {
+      if (!meta.hasQuery) return;
+      setPreserveSelectedFieldsOnHydration(meta.hasExplicitFields);
+      setRunAfterHydration(true);
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (!runAfterHydration) return;
+    setRunAfterHydration(false);
+    hydratedRunQueryRef.current({
+      preserveSelectedFields: preserveSelectedFieldsOnHydration,
+    });
+  }, [runAfterHydration, preserveSelectedFieldsOnHydration]);
+
+  const handleCopyLink = useCallback(() => {
+    if (typeof window === "undefined") return "";
+    return buildDiscoverShareUrl(window.location.href, {
+      query: o.effectiveQuery,
+      selectedFields: o.selectedFields,
+      timeRange: o.timeRange,
+    });
+  }, [o.effectiveQuery, o.selectedFields, o.timeRange]);
 
   useDiscoverUrlSync({
     initialUrlState,
@@ -116,6 +141,7 @@ export default function DiscoverPage({ mode = "query-lab" }: DiscoverPageProps) 
         historyAnchor={o.historyAnchor}
         setHistoryAnchor={o.setHistoryAnchor}
         handleSelectHistory={o.handleSelectHistory}
+        onCopyLink={handleCopyLink}
       />
 
       {o.error && <Alert severity="error">{o.error}</Alert>}

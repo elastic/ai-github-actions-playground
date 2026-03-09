@@ -30,6 +30,35 @@ export function decodeFields(raw: string | null): Set<string> {
   return new Set(raw.split(",").filter(Boolean));
 }
 
+interface DiscoverShareState {
+  query: string;
+  selectedFields: Set<string>;
+  timeRange: { from: string; to: string };
+}
+
+export interface DiscoverUrlHydrationMeta {
+  hasQuery: boolean;
+  hasExplicitFields: boolean;
+}
+
+/** Build a shareable Discover URL from current in-memory state. */
+export function buildDiscoverShareUrl(baseHref: string, state: DiscoverShareState): string {
+  const url = new URL(baseHref);
+  const isDefault = state.query === DEFAULT_DISCOVER_QUERY && state.selectedFields.size === 0;
+  const qValue = isDefault ? null : state.query || null;
+  const fieldsValue = encodeFields(state.selectedFields);
+
+  if (qValue === null) url.searchParams.delete(discoverSearchUrlKeys.q);
+  else url.searchParams.set(discoverSearchUrlKeys.q, qValue);
+
+  if (fieldsValue === null) url.searchParams.delete(discoverSearchUrlKeys.fields);
+  else url.searchParams.set(discoverSearchUrlKeys.fields, fieldsValue);
+
+  url.searchParams.set(discoverSearchUrlKeys.from, state.timeRange.from);
+  url.searchParams.set(discoverSearchUrlKeys.to, state.timeRange.to);
+  return url.toString();
+}
+
 interface UseDiscoverUrlSyncOptions {
   /** Captured initial URL state (from first render). */
   initialUrlState: {
@@ -53,7 +82,7 @@ interface UseDiscoverUrlSyncOptions {
   /** nuqs state setter for updating URL params. */
   setUrlState: ReturnType<typeof useQueryStates<typeof discoverSearchParsers>>[1];
   /** Callback invoked once after URL hydration so the page can auto-execute. */
-  onHydrated?: () => void;
+  onHydrated?: (meta: DiscoverUrlHydrationMeta) => void;
 }
 
 export function useDiscoverUrlSync({
@@ -94,7 +123,10 @@ export function useDiscoverUrlSync({
     }
 
     hasHydratedFromUrlRef.current = true;
-    onHydrated?.();
+    onHydrated?.({
+      hasQuery: initialUrlState.q !== null,
+      hasExplicitFields: initialUrlState.fields !== null,
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

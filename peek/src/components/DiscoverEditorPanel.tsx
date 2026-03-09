@@ -54,20 +54,27 @@ export interface DiscoverEditorPanelProps {
   historyAnchor: HTMLElement | null;
   setHistoryAnchor: (anchor: HTMLElement | null) => void;
   handleSelectHistory: (query: string) => void;
-  onCopyLink?: () => void;
+  onCopyLink?: () => string | Promise<string>;
 }
 
 export default function DiscoverEditorPanel(p: DiscoverEditorPanelProps) {
+  const onCopyLink = p.onCopyLink;
   const hasQueryHistory = p.queryHistory.length > 0;
   const [explainOpen, setExplainOpen] = useState(false);
-  const [linkCopied, setLinkCopied] = useState(false);
+  const [copyStatus, setCopyStatus] = useState<"idle" | "success" | "error">("idle");
   const explainPanelId = useId();
   const explanation = useQueryExplanation(p.effectiveQuery);
   const collapsedSummary = explanation?.trim() || "AI summary unavailable.";
-  const handleCopyLink = useCallback(() => {
-    if (p.onCopyLink) p.onCopyLink();
-    void navigator.clipboard.writeText(window.location.href).then(() => setLinkCopied(true));
-  }, [p.onCopyLink]);
+  const handleCopyLink = useCallback(async () => {
+    try {
+      const href = (await onCopyLink?.()) ?? window.location.href;
+      await navigator.clipboard.writeText(href);
+      setCopyStatus("success");
+    } catch (err: unknown) {
+      console.error("Failed to copy Discover link:", err);
+      setCopyStatus("error");
+    }
+  }, [onCopyLink]);
   return (
     <Paper variant="outlined" sx={{ p: 1.5 }}>
       <PageHeader
@@ -110,11 +117,11 @@ export default function DiscoverEditorPanel(p: DiscoverEditorPanelProps) {
         actions={
           p.collapsed ? null : (
             <>
-              <Tooltip title={linkCopied ? "Link copied!" : "Copy shareable link"}>
+              <Tooltip title={copyStatus === "success" ? "Link copied!" : "Copy shareable link"}>
                 <IconButton
                   size="small"
                   onClick={handleCopyLink}
-                  aria-label={linkCopied ? "Link copied" : "Copy link"}
+                  aria-label={copyStatus === "success" ? "Link copied" : "Copy link"}
                 >
                   <LinkIcon sx={{ fontSize: 18 }} />
                 </IconButton>
@@ -363,10 +370,14 @@ export default function DiscoverEditorPanel(p: DiscoverEditorPanelProps) {
         />
       </Collapse>
       <Snackbar
-        open={linkCopied}
+        open={copyStatus !== "idle"}
         autoHideDuration={2000}
-        onClose={() => setLinkCopied(false)}
-        message="Link copied to clipboard"
+        onClose={() => setCopyStatus("idle")}
+        message={
+          copyStatus === "success"
+            ? "Link copied to clipboard"
+            : "Clipboard access failed. Copy link manually from the address bar."
+        }
       />
     </Paper>
   );

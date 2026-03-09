@@ -1,6 +1,11 @@
 import { describe, it, expect } from "vitest";
 
-import { encodeFields, decodeFields } from "../../src/components/useDiscoverUrlSync";
+import {
+  buildDiscoverShareUrl,
+  encodeFields,
+  decodeFields,
+} from "../../src/components/useDiscoverUrlSync";
+import { DEFAULT_DISCOVER_QUERY } from "../../src/store/useQueryStore";
 
 describe("encodeFields", () => {
   it("returns null for an empty set", () => {
@@ -49,5 +54,30 @@ describe("encodeFields + decodeFields roundtrip", () => {
     const encoded = encodeFields(fields);
     const decoded = decodeFields(encoded);
     expect(decoded).toEqual(fields);
+  });
+});
+
+describe("buildDiscoverShareUrl", () => {
+  it("builds a share URL from current in-memory state", () => {
+    const href = buildDiscoverShareUrl("https://peek.dev/discover?foo=bar", {
+      query: "FROM logs-* | LIMIT 25",
+      selectedFields: new Set(["@timestamp", "message"]),
+      timeRange: { from: "now-15m", to: "now" },
+    });
+    expect(href).toBe(
+      "https://peek.dev/discover?foo=bar&q=FROM+logs-*+%7C+LIMIT+25&fields=%40timestamp%2Cmessage&from=now-15m&to=now",
+    );
+  });
+
+  it("removes q/fields when at default query with no selected fields", () => {
+    const href = buildDiscoverShareUrl(
+      "https://peek.dev/discover?q=old&fields=message&from=now-1h&to=now",
+      {
+        query: DEFAULT_DISCOVER_QUERY,
+        selectedFields: new Set(),
+        timeRange: { from: "now-30m", to: "now" },
+      },
+    );
+    expect(href).toBe("https://peek.dev/discover?from=now-30m&to=now");
   });
 });

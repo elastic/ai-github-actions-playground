@@ -83,6 +83,50 @@ describe("DiscoverPage", () => {
     ]);
   });
 
+  it("auto-runs the hydrated query from URL params", async () => {
+    const hydratedQuery = "FROM logs-* | LIMIT 7";
+    renderDiscoverPage(`q=${encodeURIComponent(hydratedQuery)}`);
+
+    await waitFor(() => expect(queryMock).toHaveBeenCalledTimes(1));
+    expect(queryMock).toHaveBeenCalledWith(
+      expect.objectContaining({ query: hydratedQuery }),
+      expect.any(AbortSignal),
+    );
+  });
+
+  it("preserves URL-selected fields for the first hydrated execution", async () => {
+    const manyColumns = [
+      "@timestamp",
+      "message",
+      "host.name",
+      "service.name",
+      "log.level",
+      "event.dataset",
+      "agent.name",
+      "field1",
+      "field2",
+      "field3",
+      "field4",
+      "field5",
+    ].map((name) => ({ name, type: "keyword" }));
+    queryMock.mockResolvedValueOnce({
+      columns: manyColumns,
+      values: [manyColumns.map(() => "v")],
+      executionTimeMs: 1,
+    });
+
+    renderDiscoverPage(
+      `q=${encodeURIComponent("FROM logs-* | LIMIT 10")}&fields=${encodeURIComponent("message,field4")}`,
+    );
+
+    await waitFor(() => expect(queryMock).toHaveBeenCalledTimes(1));
+    await waitFor(() =>
+      expect(useQueryStore.getState().discoverSelectedFields).toEqual(
+        new Set(["message", "field4"]),
+      ),
+    );
+  });
+
   it("selects only preferred fields when result has many columns", async () => {
     const manyColumns = [
       "@timestamp",
