@@ -254,35 +254,59 @@ export function parseSpansFromEsql(
     colIndex.set(columns[i]!.name, i);
   }
 
-  const get = (row: unknown[], field: string): unknown => {
-    const idx = colIndex.get(field);
-    return idx !== undefined ? row[idx] : null;
-  };
-
   // Gather all known field names to exclude from attributes
   const knownFields = new Set(Object.values(fieldMapping).filter(Boolean));
   const eventsField = fieldMapping.events ?? "events";
 
-  return values.map((row) => {
+  // Precompute attribute columns (columns that end up in the attributes bag)
+  const attrColumns: Array<[string, number]> = [];
+  for (const [colName, idx] of colIndex) {
+    if (!knownFields.has(colName) && colName !== eventsField && !isSpanLinkColumn(colName)) {
+      attrColumns.push([colName, idx]);
+    }
+  }
+
+  // Precompute field indices once instead of per-row Map.get calls
+  const traceIdIdx = colIndex.get(fieldMapping.traceId);
+  const spanIdIdx = colIndex.get(fieldMapping.spanId);
+  const parentSpanIdIdx = colIndex.get(fieldMapping.parentSpanId);
+  const serviceNameIdx = colIndex.get(fieldMapping.serviceName);
+  const spanNameIdx = colIndex.get(fieldMapping.spanName);
+  const spanKindIdx = colIndex.get(fieldMapping.spanKind);
+  const durationUsIdx = colIndex.get(fieldMapping.durationUs);
+  const durationNsIdx = colIndex.get(fieldMapping.durationNs);
+  const statusCodeIdx = colIndex.get(fieldMapping.statusCode);
+  const timestampIdx = colIndex.get(fieldMapping.timestamp);
+  const timestampUsIdx = colIndex.get(fieldMapping.timestampUs);
+  const eventsIdx = colIndex.get(eventsField);
+
+  // Skip link parsing when link columns are absent
+  const hasLinkColumns = colIndex.has("links.trace.id") && colIndex.has("links.span.id");
+
+  const spans: Span[] = new Array(values.length);
+  for (let rowIndex = 0; rowIndex < values.length; rowIndex++) {
+    const row = values[rowIndex]!;
+
     const attributes: Record<string, unknown> = {};
-    for (const [colName, idx] of colIndex) {
-      if (
-        !knownFields.has(colName) &&
-        colName !== eventsField &&
-        row[idx] != null &&
-        !isSpanLinkColumn(colName)
-      ) {
+    for (let a = 0; a < attrColumns.length; a++) {
+      const [colName, idx] = attrColumns[a]!;
+      if (row[idx] != null) {
         attributes[colName] = row[idx];
       }
     }
 
-    const parsedTimestampUs = Number(get(row, fieldMapping.timestampUs) ?? NaN);
-    const parsedDurationUs = Number(get(row, fieldMapping.durationUs) ?? NaN);
-    const parsedDurationNs = Number(get(row, fieldMapping.durationNs) ?? NaN);
+    const rawTimestampUs = timestampUsIdx !== undefined ? row[timestampUsIdx] : null;
+    const rawDurationUs = durationUsIdx !== undefined ? row[durationUsIdx] : null;
+    const rawDurationNs = durationNsIdx !== undefined ? row[durationNsIdx] : null;
+    const rawTimestamp = timestampIdx !== undefined ? row[timestampIdx] : null;
+
+    const parsedTimestampUs = Number(rawTimestampUs ?? NaN);
+    const parsedDurationUs = Number(rawDurationUs ?? NaN);
+    const parsedDurationNs = Number(rawDurationNs ?? NaN);
     const startTimeUs =
       Number.isFinite(parsedTimestampUs) && parsedTimestampUs > 0
         ? parsedTimestampUs
-        : new Date(String(get(row, fieldMapping.timestamp) ?? "")).getTime() * 1000;
+        : new Date(String(rawTimestamp ?? "")).getTime() * 1000;
     const durationUs =
       Number.isFinite(parsedDurationUs) && parsedDurationUs > 0
         ? parsedDurationUs
@@ -290,24 +314,25 @@ export function parseSpansFromEsql(
           ? parsedDurationNs / 1000
           : 0;
 
-    const rawParentSpanId = get(row, fieldMapping.parentSpanId);
+    const rawParentSpanId = parentSpanIdIdx !== undefined ? row[parentSpanIdIdx] : null;
 
-    return {
-      traceId: String(get(row, fieldMapping.traceId) ?? ""),
-      spanId: String(get(row, fieldMapping.spanId) ?? ""),
+    spans[rowIndex] = {
+      traceId: String((traceIdIdx !== undefined ? row[traceIdIdx] : null) ?? ""),
+      spanId: String((spanIdIdx !== undefined ? row[spanIdIdx] : null) ?? ""),
       parentSpanId: rawParentSpanId ? String(rawParentSpanId) : null,
-      serviceName: String(get(row, fieldMapping.serviceName) ?? "unknown"),
-      name: String(get(row, fieldMapping.spanName) ?? ""),
-      kind: String(get(row, fieldMapping.spanKind) ?? ""),
+      serviceName: String((serviceNameIdx !== undefined ? row[serviceNameIdx] : null) ?? "unknown"),
+      name: String((spanNameIdx !== undefined ? row[spanNameIdx] : null) ?? ""),
+      kind: String((spanKindIdx !== undefined ? row[spanKindIdx] : null) ?? ""),
       durationUs,
-      status: String(get(row, fieldMapping.statusCode) ?? "OK"),
-      timestamp: String(get(row, fieldMapping.timestamp) ?? ""),
+      status: String((statusCodeIdx !== undefined ? row[statusCodeIdx] : null) ?? "OK"),
+      timestamp: String(rawTimestamp ?? ""),
       startTimeUs,
       attributes,
-      events: parseSpanEvents(get(row, eventsField)),
-      links: parseSpanLinks(colIndex, row),
+      events: parseSpanEvents(eventsIdx !== undefined ? row[eventsIdx] : null),
+      links: hasLinkColumns ? parseSpanLinks(colIndex, row) : [],
     };
-  });
+  }
+  return spans;
 }
 
 /** Parse a raw events column value into an array of SpanEvent objects */
@@ -318,7 +343,9 @@ function parseSpanEvents(raw: unknown): SpanEvent[] {
   if (Array.isArray(raw)) {
     items = raw;
   } else if (typeof raw === "string") {
-    const trimmed = raw.trim();
+    if (raw === "[]") return [];
+    const needsTrim = (raw.charCodeAt(0) ?? 0) <= 32 || (raw.charCodeAt(raw.length - 1) ?? 0) <= 32;
+    const trimmed = needsTrim ? raw.trim() : raw;
     if (trimmed === "[]") return [];
     if (!trimmed.startsWith("[") || !trimmed.endsWith("]")) return [];
     try {
