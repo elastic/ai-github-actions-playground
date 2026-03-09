@@ -17,6 +17,13 @@ function makeInitialCounts(): TileCounts {
   return Object.fromEntries(DIMENSIONS.map((d) => [d, "loading"])) as TileCounts;
 }
 
+function makeInitialSubtexts(): Record<LogsFocusDimension, string | null> {
+  return Object.fromEntries(DIMENSIONS.map((d) => [d, null])) as Record<
+    LogsFocusDimension,
+    string | null
+  >;
+}
+
 /**
  * Fetch a distinct entity count per dimension tile for the given time range.
  * Returns "visible" (count > 0), "hidden" (count = 0), "error" (query failed), or "loading".
@@ -28,27 +35,23 @@ export function useLogsTileCounts(
   enabled: boolean = true,
 ): { counts: TileCounts; subtexts: Record<LogsFocusDimension, string | null> } {
   const [counts, setCounts] = useState<TileCounts>(makeInitialCounts);
-  const [subtexts, setSubtexts] = useState<Record<LogsFocusDimension, string | null>>(
-    () =>
-      Object.fromEntries(DIMENSIONS.map((d) => [d, null])) as Record<
-        LogsFocusDimension,
-        string | null
-      >,
-  );
+  const [subtexts, setSubtexts] =
+    useState<Record<LogsFocusDimension, string | null>>(makeInitialSubtexts);
   const abortRef = useRef<AbortController | null>(null);
   const timeRangeRef = useRef(timeRange);
   timeRangeRef.current = timeRange;
 
   const fetchCounts = useCallback(async () => {
     if (!connection || !enabled) {
-      if (!enabled) setCounts(makeInitialCounts());
-      else setCounts(makeInitialCounts());
       return;
     }
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
-    setCounts(makeInitialCounts());
+    const nextCounts = makeInitialCounts();
+    const nextSubtexts = makeInitialSubtexts();
+    setCounts(nextCounts);
+    setSubtexts(nextSubtexts);
 
     const client = new ElasticsearchClient(connection);
     const timeFilter = timeRangeToEsqlFilter(timeRangeRef.current);
@@ -65,14 +68,17 @@ export function useLogsTileCounts(
           const labels = LOGS_DIMENSION_LABELS[dimension];
           const noun = count === 1 ? labels.singular.toLowerCase() : labels.plural.toLowerCase();
           const subtext = count > 0 ? `${count.toLocaleString()} ${noun}` : null;
-          setCounts((prev) => ({ ...prev, [dimension]: state }));
-          setSubtexts((prev) => ({ ...prev, [dimension]: subtext }));
+          nextCounts[dimension] = state;
+          nextSubtexts[dimension] = subtext;
         } catch {
           if (controller.signal.aborted) return;
-          setCounts((prev) => ({ ...prev, [dimension]: "error" }));
+          nextCounts[dimension] = "error";
         }
       }),
     );
+    if (controller.signal.aborted) return;
+    setCounts(nextCounts);
+    setSubtexts(nextSubtexts);
   }, [connection, enabled]);
 
   useEffect(() => {
