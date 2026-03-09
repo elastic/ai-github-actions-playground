@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { ElasticsearchClient, isElasticsearchError } from "../../services/es";
 import { escapeEsqlString } from "../../services/es/esqlUtils";
+import { useAbortableQueryRun } from "../../hooks/useAbortableQueryRun";
 import { useOpenInDiscover } from "../../hooks/useOpenInDiscover";
 import type { ElasticsearchConnection, EsqlResponse } from "../../types";
 import type { ProfilingFilters } from "../../types/pageFilters";
@@ -73,7 +74,7 @@ export function useProfilingData({
   showResults,
 }: UseProfilingDataParams): UseProfilingDataResult {
   const openInDiscover = useOpenInDiscover();
-  const abortRef = useRef<AbortController | null>(null);
+  const { run, cancel } = useAbortableQueryRun();
   const hasRunRef = useRef(false);
 
   const [loading, setLoading] = useState(false);
@@ -104,46 +105,41 @@ export function useProfilingData({
 
   const handleRun = useCallback(async () => {
     if (!connection) return;
-    abortRef.current?.abort();
-    const controller = new AbortController();
-    abortRef.current = controller;
     const client = new ElasticsearchClient(connection);
-    hasRunRef.current = true;
-    setHasRun(true);
-    setLoading(true);
-    setError(null);
-    // Clear stale results from a previous view mode so the empty state
-    // doesn't briefly show while the new query is in flight.
-    setTopFunctionsRows([]);
-    setTimelineResult(null);
-    setStacktraces([]);
-    try {
-      const result = await executeProfilingRun(
-        client,
-        controller.signal,
-        viewMode,
-        filters,
-        effectiveQuery,
-      );
-      setTopFunctionsRows(result.topFunctionsRows);
-      setTimelineResult(result.timelineResult);
-      setStacktraces(result.stacktraces);
-      if (viewMode !== "topFunctions" && viewMode !== "timeline") {
-        setFlamescopeWindow(null);
-      }
-    } catch (err: unknown) {
-      if (controller.signal.aborted) return;
-      setError(isElasticsearchError(err) ? err.message : String(err));
-    } finally {
-      if (!controller.signal.aborted) setLoading(false);
-    }
-  }, [connection, viewMode, filters, effectiveQuery]);
+    await run((signal) => executeProfilingRun(client, signal, viewMode, filters, effectiveQuery), {
+      onStart: () => {
+        hasRunRef.current = true;
+        setHasRun(true);
+        setLoading(true);
+        setError(null);
+        // Clear stale results from a previous view mode so the empty state
+        // doesn't briefly show while the new query is in flight.
+        setTopFunctionsRows([]);
+        setTimelineResult(null);
+        setStacktraces([]);
+      },
+      onSuccess: (result) => {
+        setTopFunctionsRows(result.topFunctionsRows);
+        setTimelineResult(result.timelineResult);
+        setStacktraces(result.stacktraces);
+        if (viewMode !== "topFunctions" && viewMode !== "timeline") {
+          setFlamescopeWindow(null);
+        }
+      },
+      onError: (err) => {
+        setError(isElasticsearchError(err) ? err.message : String(err));
+      },
+      onSettled: () => {
+        setLoading(false);
+      },
+    });
+  }, [connection, run, viewMode, filters, effectiveQuery]);
 
   // Auto-run whenever we are in the results view and dependencies change
   useEffect(() => {
     if (!showResults || !connection) return;
     void handleRun();
-    return () => abortRef.current?.abort();
+    return () => cancel();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showResults, viewMode, filters, connection]);
 
@@ -172,8 +168,7 @@ export function useProfilingData({
   const flamegraphTree = useMemo(() => buildFlamegraphTree(stacktraces), [stacktraces]);
 
   const resetResults = useCallback(() => {
-    abortRef.current?.abort();
-    abortRef.current = null;
+    cancel();
     setLoading(false);
     hasRunRef.current = false;
     setHasRun(false);
@@ -182,7 +177,7 @@ export function useProfilingData({
     setTimelineResult(null);
     setFlamescopeWindow(null);
     setError(null);
-  }, []);
+  }, [cancel]);
 
   return {
     loading,
