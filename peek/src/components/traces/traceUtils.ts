@@ -303,10 +303,12 @@ export function parseSpansFromEsql(
     const parsedTimestampUs = Number(rawTimestampUs ?? NaN);
     const parsedDurationUs = Number(rawDurationUs ?? NaN);
     const parsedDurationNs = Number(rawDurationNs ?? NaN);
-    const startTimeUs =
+    const fallbackTimestampUs = new Date(String(rawTimestamp ?? "")).getTime() * 1000;
+    const startTimeUsCandidate =
       Number.isFinite(parsedTimestampUs) && parsedTimestampUs > 0
         ? parsedTimestampUs
-        : new Date(String(rawTimestamp ?? "")).getTime() * 1000;
+        : fallbackTimestampUs;
+    const startTimeUs = Number.isFinite(startTimeUsCandidate) ? startTimeUsCandidate : 0;
     const durationUs =
       Number.isFinite(parsedDurationUs) && parsedDurationUs > 0
         ? parsedDurationUs
@@ -345,7 +347,7 @@ function parseSpanEvents(raw: unknown): SpanEvent[] {
   } else if (typeof raw === "string") {
     if (raw === "[]") return [];
     // Fast ASCII whitespace check – ES|QL only produces ASCII whitespace padding.
-    const needsTrim = (raw.charCodeAt(0) ?? 0) <= 32 || (raw.charCodeAt(raw.length - 1) ?? 0) <= 32;
+    const needsTrim = raw.charCodeAt(0) <= 32 || raw.charCodeAt(raw.length - 1) <= 32;
     const trimmed = needsTrim ? raw.trim() : raw;
     if (trimmed === "[]") return [];
     if (!trimmed.startsWith("[") || !trimmed.endsWith("]")) return [];

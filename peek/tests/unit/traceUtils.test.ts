@@ -519,6 +519,32 @@ describe("parseSpansFromEsql", () => {
     expect(spans[0]!.durationUs).toBe(0);
   });
 
+  it("coerces missing timestamps to 0 for deterministic sorting", () => {
+    const columns = [
+      { name: "trace.id", type: "keyword" },
+      { name: "span.id", type: "keyword" },
+      { name: "@timestamp", type: "date" },
+      { name: "timestamp_us", type: "long" },
+    ];
+    const values = [
+      ["t1", "missing-ts-1", null, null],
+      ["t1", "valid-ts", "2026-01-01T00:00:00Z", null],
+      ["t1", "missing-ts-2", null, null],
+    ];
+
+    const spans = parseSpansFromEsql(columns, values, fieldMapping);
+    expect(spans[0]!.startTimeUs).toBe(0);
+    expect(spans[2]!.startTimeUs).toBe(0);
+    expect(Number.isFinite(spans[1]!.startTimeUs)).toBe(true);
+
+    const roots = buildSpanTree(spans);
+    expect(roots.map((node) => node.span.spanId)).toEqual([
+      "missing-ts-1",
+      "missing-ts-2",
+      "valid-ts",
+    ]);
+  });
+
   it("parses span links from links.trace.id and links.span.id columns", () => {
     const columns = [
       { name: "trace.id", type: "keyword" },
