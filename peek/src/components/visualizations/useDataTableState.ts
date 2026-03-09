@@ -88,6 +88,10 @@ export function useDataTableState({
     observeRow: observeSummaryRow,
     unobserveRow: unobserveSummaryRow,
   } = useRowSummaries(summaryColumns, summaryPageRows, Boolean(summaryEnabled));
+  const summaryLoading = useMemo(
+    () => Array.from(rowSummaries.values()).some((entry) => entry.loading),
+    [rowSummaries],
+  );
 
   const visibleRowKeys = useMemo(
     () => visibleRows.map((row) => JSON.stringify(row)),
@@ -228,6 +232,7 @@ export function useDataTableState({
     pinnedLeftOffsets,
     visibleRows,
     rowSummaries,
+    summaryLoading,
     observeSummaryRow,
     unobserveSummaryRow,
     selectedRowIndex,
