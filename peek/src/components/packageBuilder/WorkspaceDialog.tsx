@@ -19,9 +19,10 @@ export default function WorkspaceDialog({ open, onClose, onPickDirectory }: Prop
       onClose={onClose}
       maxWidth="xs"
       fullWidth
+      aria-labelledby="workspace-dialog-title"
       aria-describedby="workspace-dialog-description"
     >
-      <DialogTitle>Pick a Package Workspace</DialogTitle>
+      <DialogTitle id="workspace-dialog-title">Pick a Package Workspace</DialogTitle>
       <DialogContent>
         <Typography
           id="workspace-dialog-description"
