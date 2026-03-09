@@ -140,7 +140,7 @@ export function useProfilingData({
     if (!showResults || !connection) return;
     void handleRun();
     return () => cancel();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- handleRun reads latest closure values; including it would create a rerun loop
   }, [showResults, viewMode, filters, connection]);
 
   const handleOpenInQueryLab = useCallback(() => {
