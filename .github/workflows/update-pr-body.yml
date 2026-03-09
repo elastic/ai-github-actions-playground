@@ -11,7 +11,8 @@ permissions:
 jobs:
   run:
     if: >-
-      contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.pull_request.author_association) &&
+      (contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.pull_request.author_association) ||
+      contains(fromJSON('["Copilot","dependabot[bot]","github-actions[bot]"]'), github.event.pull_request.user.login)) &&
       github.event.pull_request.draft == false &&
       !contains(github.event.pull_request.labels.*.name, 'no-update-pr-body')
     uses: elastic/ai-github-actions/.github/workflows/gh-aw-update-pr-body.lock.yml@main
