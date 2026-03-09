@@ -69,7 +69,7 @@ const FOCUS_OPTIONS: FocusOption[] = [
   {
     dimension: "event.dataset",
     label: "Datasets",
-    subtext: "Fallback option when service/host/process fields are sparse",
+    subtext: "Fallback option when service/host/process are unavailable",
     icon: <DatasetIcon fontSize="large" color="primary" />,
   },
   {

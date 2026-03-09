@@ -50,8 +50,8 @@ export function useLogsTileCounts(
     abortRef.current = controller;
     const nextCounts = makeInitialCounts();
     const nextSubtexts = makeInitialSubtexts();
-    setCounts(nextCounts);
-    setSubtexts(nextSubtexts);
+    setCounts({ ...nextCounts });
+    setSubtexts({ ...nextSubtexts });
 
     const client = new ElasticsearchClient(connection);
     const timeFilter = timeRangeToEsqlFilter(timeRangeRef.current);
@@ -77,8 +77,8 @@ export function useLogsTileCounts(
       }),
     );
     if (controller.signal.aborted) return;
-    setCounts(nextCounts);
-    setSubtexts(nextSubtexts);
+    setCounts({ ...nextCounts });
+    setSubtexts({ ...nextSubtexts });
   }, [connection, enabled]);
 
   useEffect(() => {
