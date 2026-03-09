@@ -488,7 +488,7 @@ def phase_summary(attention: int) -> None:
 
 
 def run_once(args: argparse.Namespace) -> int:
-    """Run all phases once. Returns 0 if ok, 1 if PRs need attention."""
+    """Run all phases once. Returns 0 if ok, 1 if action or attention is needed."""
     ctx = Ctx(
         repo_slug=(args.repo or
                    gh_json("repo", "view", "--json", "nameWithOwner")["nameWithOwner"]),
@@ -507,15 +507,18 @@ def run_once(args: argparse.Namespace) -> int:
     prs = fetch_prs(ctx)
     runs = fetch_runs(ctx)
 
+    phase_failures = 0
     if not args.status_only:
-        phase_mark_drafts(prs, ctx)
-        phase_approve_runs(prs, runs, ctx)
-        phase_kick_ci(prs, runs, ctx)
-        phase_update_stale_branches(prs, runs, ctx)
+        phase_failures += phase_mark_drafts(prs, ctx)
+        phase_failures += phase_approve_runs(prs, runs, ctx)
+        phase_failures += phase_kick_ci(prs, runs, ctx)
+        phase_failures += phase_update_stale_branches(prs, runs, ctx)
 
     attention = phase_report(prs, runs, ctx)
+    if phase_failures:
+        print(f"{RED}Operational failures in phases 1-4: {phase_failures}{RESET}\n")
     phase_summary(attention)
-    return 1 if attention > 0 else 0
+    return 1 if phase_failures > 0 or attention > 0 else 0
 
 
 def main() -> None:
