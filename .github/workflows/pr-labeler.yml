@@ -13,7 +13,8 @@ jobs:
   run:
     if: >-
       contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.pull_request.author_association) &&
-      github.event.pull_request.draft == false
+      github.event.pull_request.draft == false &&
+      !contains(github.event.pull_request.labels.*.name, 'no-pr-labeler')
     uses: elastic/ai-github-actions/.github/workflows/gh-aw-pr-labeler.lock.yml@main
     with:
       model: gemini-3-flash
