@@ -188,7 +188,7 @@ export default function ExplorePage() {
   // This decouples editor keystrokes from the query key so typing does not
   // fire network requests until the user clicks "Search Metrics" or presses
   // Cmd/Ctrl+Enter.
-  const [committedRawQuery, setCommittedRawQuery] = useState(rawQuery);
+  const [committedRawQuery, setCommittedRawQuery] = useState(() => rawQuery);
 
   // Sync committedRawQuery when rawQuery is programmatically cleared (e.g.
   // navigating away, metric change, or auto-clear when rawQuery matches the

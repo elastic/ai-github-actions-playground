@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { useExploreQuery } from "../../src/hooks/useExploreQuery";
@@ -90,8 +90,8 @@ describe("useExploreQuery", () => {
     // the CodeMirror editor while ExplorePage holds the committed value)
     rerender({ ...BASE_PROPS, queryOverride: "FROM metrics-* | LIMIT 10" });
 
-    // Give React Query time to settle
-    await new Promise((r) => setTimeout(r, 50));
+    // Flush pending microtasks and give React Query a chance to schedule
+    await act(() => new Promise((r) => setTimeout(r, 0)));
 
     expect(queryMock).toHaveBeenCalledTimes(1);
   });
