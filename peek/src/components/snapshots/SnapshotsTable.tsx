@@ -1,3 +1,4 @@
+import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import Paper from "@mui/material/Paper";
 import Table from "@mui/material/Table";
@@ -10,6 +11,7 @@ import TableSortLabel from "@mui/material/TableSortLabel";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import BackupIcon from "@mui/icons-material/Backup";
+import { Link as RouterLink } from "react-router-dom";
 
 import type { SnapshotRow } from "../../hooks/useSnapshotData";
 import { COMPONENT_HEIGHTS, COMPACT_CHIP_SX } from "../../types/tokens";
@@ -41,6 +43,16 @@ export default function SnapshotsTable({
         icon={<BackupIcon sx={{ fontSize: 40 }} />}
         heading="No snapshots found"
         description="No snapshot repositories are configured, or no snapshots have been taken yet."
+        action={
+          <Button
+            component={RouterLink}
+            to="/docs?section=snapshots"
+            variant="outlined"
+            size="small"
+          >
+            View setup docs
+          </Button>
+        }
       />
     );
   }

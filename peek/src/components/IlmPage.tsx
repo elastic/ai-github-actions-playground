@@ -1,23 +1,18 @@
 import { useCallback, useDeferredValue, useMemo, useState } from "react";
-import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import Switch from "@mui/material/Switch";
-import Tab from "@mui/material/Tab";
-import Tabs from "@mui/material/Tabs";
-import TextField from "@mui/material/TextField";
 import { parseAsBoolean, parseAsString, parseAsStringEnum, useQueryStates } from "nuqs";
 
 import { useIlm } from "../hooks/useIlm";
 import type { IlmPolicyRow } from "../services/es/ilmTypes";
-import { COMPONENT_HEIGHTS } from "../types/tokens";
 
 import DataFetchAlert from "./DataFetchAlert";
+import DocLink from "./DocLink";
 import IlmIndexDetailDrawer from "./IlmIndexDetailDrawer";
 import IlmIndicesTable from "./IlmIndicesTable";
 import IlmKpiCards from "./IlmKpiCards";
 import IlmPoliciesTable from "./IlmPoliciesTable";
 import IlmPolicyDetailDrawer from "./IlmPolicyDetailDrawer";
+import IlmToolbar from "./IlmToolbar";
 import {
   compareIndexRows,
   comparePolicyRows,
@@ -27,9 +22,7 @@ import {
 } from "./ilmSortUtils";
 import PageContainer from "./PageContainer";
 import PageHeaderSection from "./PageHeaderSection";
-import DocLink from "./DocLink";
 
-// Re-export so existing consumers still work
 export { parseDurationToMs, compareIndexRows, comparePolicyRows } from "./ilmSortUtils";
 export type { IndexSortField, PolicySortField, SortDirection } from "./ilmSortUtils";
 
@@ -157,58 +150,18 @@ export default function IlmPage() {
         policyCount={policyRows.length}
         phaseDistribution={phaseDistribution}
       />
-      <Box sx={{ display: "flex", gap: 1, alignItems: "center", flexWrap: "wrap" }}>
-        <Tabs
-          value={activeTab}
-          onChange={(_, v) => void setUrlState({ tab: v as "indices" | "policies" })}
-          sx={{ minHeight: COMPONENT_HEIGHTS.tab }}
-        >
-          <Tab label="Indices" value="indices" sx={{ minHeight: COMPONENT_HEIGHTS.tab, py: 0 }} />
-          <Tab label="Policies" value="policies" sx={{ minHeight: COMPONENT_HEIGHTS.tab, py: 0 }} />
-        </Tabs>
-        <TextField
-          size="small"
-          placeholder={
-            activeTab === "indices" ? "Filter by index or policy..." : "Filter policies..."
-          }
-          value={search}
-          onChange={(e) => void setUrlState({ q: e.target.value })}
-          sx={{ minWidth: 260 }}
-          aria-label="Filter ILM"
-        />
-        {activeTab === "indices" && (
-          <>
-            <TextField
-              size="small"
-              placeholder="Phase (hot/warm/...)"
-              value={phaseFilter}
-              onChange={(e) => void setUrlState({ phase: e.target.value })}
-              sx={{ minWidth: 180 }}
-              aria-label="Filter ILM phase"
-            />
-            <FormControlLabel
-              control={
-                <Switch
-                  size="small"
-                  checked={managedOnly}
-                  onChange={(e) => void setUrlState({ managedOnly: e.target.checked })}
-                />
-              }
-              label="Managed only"
-            />
-            <FormControlLabel
-              control={
-                <Switch
-                  size="small"
-                  checked={onlyErrors}
-                  onChange={(e) => void setUrlState({ onlyErrors: e.target.checked })}
-                />
-              }
-              label="Only errors"
-            />
-          </>
-        )}
-      </Box>
+      <IlmToolbar
+        activeTab={activeTab}
+        search={search}
+        phaseFilter={phaseFilter}
+        managedOnly={managedOnly}
+        onlyErrors={onlyErrors}
+        onTabChange={(tab) => void setUrlState({ tab })}
+        onSearchChange={(value) => void setUrlState({ q: value })}
+        onPhaseFilterChange={(value) => void setUrlState({ phase: value })}
+        onManagedOnlyChange={(value) => void setUrlState({ managedOnly: value })}
+        onOnlyErrorsChange={(value) => void setUrlState({ onlyErrors: value })}
+      />
       {activeTab === "indices" && (
         <IlmIndicesTable
           loading={loading}

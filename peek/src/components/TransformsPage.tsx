@@ -1,14 +1,10 @@
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import FormControlLabel from "@mui/material/FormControlLabel";
 import LinearProgress from "@mui/material/LinearProgress";
-import MenuItem from "@mui/material/MenuItem";
 import Paper from "@mui/material/Paper";
-import Stack from "@mui/material/Stack";
-import Switch from "@mui/material/Switch";
-import TextField from "@mui/material/TextField";
 import TransformIcon from "@mui/icons-material/Transform";
+import { Link as RouterLink } from "react-router-dom";
 
 import { useTransforms } from "../hooks/useTransforms";
 import type { TransformRow } from "../services/es";
@@ -19,6 +15,7 @@ import EmptyState from "./EmptyState";
 import { TransformDetailDrawer } from "./transforms/TransformDetailDrawer";
 import { TransformKpiCards } from "./transforms/TransformKpiCards";
 import { TransformTable } from "./transforms/TransformTable";
+import TransformsToolbar from "./transforms/TransformsToolbar";
 import {
   compareTransformRows,
   type SortDirection,
@@ -118,41 +115,14 @@ export default function TransformsPage() {
 
       <TransformKpiCards {...kpi} />
 
-      <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
-        <TextField
-          size="small"
-          label="Search by transform ID"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          sx={{ minWidth: 220 }}
-        />
-        <TextField
-          select
-          size="small"
-          label="State"
-          value={stateFilter}
-          onChange={(e) => setStateFilter(e.target.value)}
-          sx={{ minWidth: 140 }}
-        >
-          <MenuItem value={ALL_STATES}>All states</MenuItem>
-          <MenuItem value="started">Started</MenuItem>
-          <MenuItem value="indexing">Indexing</MenuItem>
-          <MenuItem value="stopped">Stopped</MenuItem>
-          <MenuItem value="failed">Failed</MenuItem>
-          <MenuItem value="aborting">Aborting</MenuItem>
-          <MenuItem value="stopping">Stopping</MenuItem>
-        </TextField>
-        <FormControlLabel
-          control={
-            <Switch
-              size="small"
-              checked={showOnlyUnhealthy}
-              onChange={(e) => setShowOnlyUnhealthy(e.target.checked)}
-            />
-          }
-          label="Show only unhealthy"
-        />
-      </Stack>
+      <TransformsToolbar
+        search={search}
+        stateFilter={stateFilter}
+        showOnlyUnhealthy={showOnlyUnhealthy}
+        onSearchChange={setSearch}
+        onStateFilterChange={setStateFilter}
+        onShowOnlyUnhealthyChange={setShowOnlyUnhealthy}
+      />
 
       {result.status === "error" && <DataFetchAlert result={result} onRetry={result.refresh} />}
 
@@ -163,6 +133,16 @@ export default function TransformsPage() {
           icon={<TransformIcon sx={{ fontSize: 40 }} />}
           heading="No transforms found"
           description="This cluster does not have any transforms yet."
+          action={
+            <Button
+              component={RouterLink}
+              to="/docs?section=transforms"
+              variant="outlined"
+              size="small"
+            >
+              View setup docs
+            </Button>
+          }
         />
       )}
 

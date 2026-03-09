@@ -6,6 +6,9 @@ import TextField from "@mui/material/TextField";
 
 import { COMPONENT_HEIGHTS } from "../types/tokens";
 
+/** Ensure toolbar toggle buttons match the standard input height (36 px). */
+const toolbarButtonSx = { height: COMPONENT_HEIGHTS.input } as const;
+
 interface IndexTemplatesToolbarProps {
   activeTab: "index" | "component";
   search: string;
@@ -36,7 +39,7 @@ export default function IndexTemplatesToolbar({
   onToggleDataStreamOnly,
 }: IndexTemplatesToolbarProps) {
   return (
-    <Box sx={{ display: "flex", gap: 1, alignItems: "center", flexWrap: "wrap" }}>
+    <Box sx={{ display: "flex", gap: 1.5, alignItems: "center", flexWrap: "wrap" }}>
       <Tabs
         value={activeTab}
         onChange={(_, value) => onSetTab(value as "index" | "component")}
@@ -66,6 +69,7 @@ export default function IndexTemplatesToolbar({
         variant={showSystem ? "contained" : "outlined"}
         onClick={onToggleShowSystem}
         aria-pressed={showSystem}
+        sx={toolbarButtonSx}
       >
         Show system templates
       </Button>
@@ -96,6 +100,7 @@ export default function IndexTemplatesToolbar({
             variant={dataStreamOnly ? "contained" : "outlined"}
             onClick={onToggleDataStreamOnly}
             aria-pressed={dataStreamOnly}
+            sx={toolbarButtonSx}
           >
             Data-stream only
           </Button>
