@@ -379,5 +379,9 @@ jobs:
       - name: Fail if smoke tests or preflight failed
         if: steps.smoke.outcome == 'failure' || steps.preflight.outcome == 'failure'
         run: |
-          echo "::error::Smoke tests or screenshot preflight failed — see PR comment for details."
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "::error::Smoke tests or screenshot preflight failed — see PR comment for details."
+          else
+            echo "::error::Smoke tests or screenshot preflight failed — see workflow run logs/artifacts for details."
+          fi
           exit 1
