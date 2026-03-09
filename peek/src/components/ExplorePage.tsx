@@ -184,6 +184,21 @@ export default function ExplorePage() {
     }
   }, [selectedMetricField, metricType, setSelectedMetric]);
 
+  // Committed override: only updates when the user explicitly triggers Search.
+  // This decouples editor keystrokes from the query key so typing does not
+  // fire network requests until the user clicks "Search Metrics" or presses
+  // Cmd/Ctrl+Enter.
+  const [committedRawQuery, setCommittedRawQuery] = useState(rawQuery);
+
+  // Sync committedRawQuery when rawQuery is programmatically cleared (e.g.
+  // navigating away, metric change, or auto-clear when rawQuery matches the
+  // generated query).
+  useEffect(() => {
+    if (rawQuery === null) {
+      setCommittedRawQuery(null);
+    }
+  }, [rawQuery]);
+
   // Run query via React Query when metric/aggregation/filters/groupBy/timeRange change
   const queryResult = useExploreQuery({
     indexPattern,
@@ -201,12 +216,13 @@ export default function ExplorePage() {
       !metricNotFound &&
       !fieldsLoading,
     ),
-    queryOverride: rawQuery,
+    queryOverride: committedRawQuery,
   });
 
   const handleSearch = useCallback(() => {
+    setCommittedRawQuery(rawQuery);
     void queryClient.invalidateQueries({ queryKey: ["explore-query", connection?.url] });
-  }, [queryClient, connection?.url]);
+  }, [queryClient, connection?.url, rawQuery]);
 
   // Query editor extensions for the CodeMirror editor — ref keeps the
   // closure fresh without recreating the extension array on every render.
