@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -11,6 +10,8 @@ import TableCell from "@mui/material/TableCell";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
+
+import DataFetchAlert from "./DataFetchAlert";
 
 import { useHealthChecks } from "../hooks/useHealthChecks";
 import type { EvaluatedHealthCheck, HealthSeverity } from "../health-checks";
@@ -71,7 +72,7 @@ export default function GlobalHealthPage() {
 
   return (
     <>
-      {error ? <Alert severity="error">{error}</Alert> : null}
+      <DataFetchAlert error={error} />
 
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ mb: 1 }}>
         <Chip

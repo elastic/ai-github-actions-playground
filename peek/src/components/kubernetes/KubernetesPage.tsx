@@ -1,4 +1,3 @@
-import Alert from "@mui/material/Alert";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -14,6 +13,7 @@ import { PAGE_PATHS } from "../../routes/paths";
 import type { KubernetesActiveTab } from "../../types/pageFilters";
 import DateRangePicker from "../DateRangePicker";
 import EmptyState from "../EmptyState";
+import DataFetchAlert from "../DataFetchAlert";
 import PageHeader from "../PageHeader";
 import { toDashboardTimeRange, toTraceTimeRange } from "../timePresets";
 import ToolbarRow from "../ToolbarRow";
@@ -119,7 +119,7 @@ export default function KubernetesPage() {
         </Tabs>
       </Paper>
 
-      {error && <Alert severity="error">{error}</Alert>}
+      <DataFetchAlert error={error} />
 
       {!loading && !searchResult && (
         <Paper variant="outlined" sx={{ flex: 1, minHeight: 200, overflow: "auto" }}>

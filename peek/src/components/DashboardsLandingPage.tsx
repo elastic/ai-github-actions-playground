@@ -35,6 +35,7 @@ import {
 } from "../utils/dashboardImportExport";
 
 import PageHeader from "./PageHeader";
+import DataFetchAlert from "./DataFetchAlert";
 import EmptyState from "./EmptyState";
 import DashboardCard from "./DashboardCard";
 import DashboardCardMenu from "./DashboardCardMenu";
@@ -428,11 +429,7 @@ export default function DashboardsLandingPage() {
         </Stack>
       )}
 
-      {importError && (
-        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setImportError(null)}>
-          {importError}
-        </Alert>
-      )}
+      <DataFetchAlert error={importError} onDismiss={() => setImportError(null)} sx={{ mb: 2 }} />
       {importSuccess && (
         <Alert severity="success" sx={{ mb: 2 }} onClose={() => setImportSuccess(null)}>
           {importSuccess}
