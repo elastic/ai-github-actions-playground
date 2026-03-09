@@ -116,6 +116,7 @@ export function useRowSummaries(columns: EsqlColumn[], visibleRows: unknown[][],
   );
   useEffect(() => {
     generationRef.current += 1;
+    inFlightRef.current = 0;
     // Pre-populate from cache
     const next = new Map<number, RowSummaryEntry>();
     for (let i = 0; i < visibleRows.length; i++) {
@@ -126,7 +127,7 @@ export function useRowSummaries(columns: EsqlColumn[], visibleRows: unknown[][],
       }
     }
     setSummaries(next);
-    setVisibleIndices(new Set());
+    setVisibleIndices(new Set(visibleRows.map((_, idx) => idx)));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rowsFingerprint]);
 
@@ -284,6 +285,7 @@ export function useRowSummaries(columns: EsqlColumn[], visibleRows: unknown[][],
           });
         })
         .finally(() => {
+          if (generation !== generationRef.current) return;
           inFlightRef.current -= 1;
         });
     }

@@ -170,16 +170,22 @@ export function useDataTableState({
       setColumnOrder((prev) => {
         const nextIndices = data.columns.map((_, i) => i);
         const normalized = reconcileColumnOrder(prev, nextIndices);
+        const visible = normalized.filter(
+          (idx) => showEmptyColumns || !emptyColumnIndices.has(idx),
+        );
+        const visibleFrom = visible.indexOf(columnIndex);
+        if (visibleFrom < 0) return prev;
+        const swapWith = visible[direction === "left" ? visibleFrom - 1 : visibleFrom + 1];
+        if (swapWith == null) return prev;
         const from = normalized.indexOf(columnIndex);
-        if (from < 0) return prev;
-        const to = direction === "left" ? from - 1 : from + 1;
-        if (to < 0 || to >= normalized.length) return prev;
+        const to = normalized.indexOf(swapWith);
+        if (from < 0 || to < 0) return prev;
         const next = [...normalized];
         [next[from], next[to]] = [next[to]!, next[from]!];
         return next;
       });
     },
-    [data.columns],
+    [data.columns, emptyColumnIndices, showEmptyColumns],
   );
 
   const closeMenu = useCallback(() => {
