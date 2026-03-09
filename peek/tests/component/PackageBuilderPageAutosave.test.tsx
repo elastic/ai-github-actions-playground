@@ -70,6 +70,8 @@ describe("PackageBuilder autosave accessibility", () => {
 
     const statusEl = screen.getByRole("status");
     expect(statusEl).toHaveTextContent("Saved");
+    expect(statusEl).toHaveAttribute("aria-live", "polite");
+    expect(statusEl).toHaveAttribute("aria-atomic", "true");
   });
 
   it("exposes autosave failure as an alert for screen readers", async () => {
@@ -84,5 +86,7 @@ describe("PackageBuilder autosave accessibility", () => {
 
     const alertEl = screen.getByRole("alert");
     expect(alertEl).toHaveTextContent("Save failed");
+    expect(alertEl).toHaveAttribute("aria-live", "assertive");
+    expect(alertEl).toHaveAttribute("aria-atomic", "true");
   });
 });
