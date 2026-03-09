@@ -8,7 +8,7 @@ describe("ToolbarRow", () => {
   it("has no accessibility violations", async () => {
     await renderWithA11y(
       <ToolbarRow>
-        <button>Action</button>
+        <button type="button">Action</button>
       </ToolbarRow>,
     );
   });
