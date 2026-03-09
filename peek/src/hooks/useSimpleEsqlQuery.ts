@@ -91,6 +91,7 @@ export function useSimpleEsqlQuery({
       if (requestBuildError != null) return requestBuildError.message;
       if (result.error == null) return null;
       const rawError: unknown = result.error;
+      if (rawError instanceof DOMException && rawError.name === "AbortError") return null;
       if (rawError instanceof Error) return rawError.message;
       if (isElasticsearchError(rawError)) return rawError.message;
       return String(rawError);
