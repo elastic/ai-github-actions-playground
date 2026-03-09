@@ -1,8 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { renderWithQueryClient } from "../helpers/renderWithQueryClient";
 import { MemoryRouter } from "react-router-dom";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
+import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 
 import type * as EsService from "../../src/services/es";
 import ExplorePage from "../../src/components/ExplorePage";
@@ -10,6 +12,44 @@ import { useDashboardStore } from "../../src/store/useDashboardStore";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { useExplorerStore } from "../../src/store/useExplorerStore";
 import { resetAllStores } from "../fixtures/test-utils";
+
+const { runQueryShortcutMock } = vi.hoisted(() => ({
+  runQueryShortcutMock: vi.fn<[], void>(),
+}));
+
+vi.mock("../../src/components/queryEditorExtensions", async (importOriginal) => {
+  const actual = await importOriginal<Record<string, unknown>>();
+  return {
+    ...actual,
+    createEsqlQueryEditorExtensions: (runQuery: () => void) => {
+      runQueryShortcutMock.mockImplementation(runQuery);
+      return [];
+    },
+  };
+});
+
+vi.mock("@uiw/react-codemirror", () => ({
+  default: ({
+    value,
+    onChange,
+  }: {
+    value: string;
+    onChange: (value: string) => void;
+    onCreateEditor?: () => void;
+    extensions?: unknown[];
+  }) => (
+    <textarea
+      aria-label="ES|QL query editor"
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+      onKeyDown={(event: ReactKeyboardEvent<HTMLTextAreaElement>) => {
+        if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+          runQueryShortcutMock();
+        }
+      }}
+    />
+  ),
+}));
 
 const RESTORE_URL =
   "/?index=metrics-system*&metric=system.cpu.total.pct&agg=p95&groupBy=host.name&from=now-24h&to=now&filter.host.name=%3D%3D:web-01";
@@ -50,6 +90,7 @@ vi.mock("../../src/services/es", async () => {
 describe("ExplorePage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    runQueryShortcutMock.mockReset();
     listFieldsMock.mockResolvedValue(defaultFields);
     localStorage.clear();
     sessionStorage.clear();
@@ -133,5 +174,43 @@ describe("ExplorePage", () => {
       expect(screen.getByText("Metric not found")).toBeInTheDocument();
     });
     expect(queryMock).not.toHaveBeenCalled();
+  });
+
+  it("keeps typing decoupled from fetches and only queries on explicit commit/reset", async () => {
+    const user = userEvent.setup();
+    renderWithQueryClient(
+      <MemoryRouter initialEntries={[RESTORE_URL]}>
+        <NuqsTestingAdapter searchParams={RESTORE_QS} hasMemory>
+          <ExplorePage />
+        </NuqsTestingAdapter>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(queryMock).toHaveBeenCalledTimes(1);
+    });
+
+    await user.click(screen.getByRole("button", { name: "Expand ES|QL query section" }));
+
+    const queryEditor = screen.getByRole("textbox", { name: "ES|QL query editor" });
+    await user.clear(queryEditor);
+    await user.type(
+      queryEditor,
+      "FROM metrics-system* | STATS avg_cpu = AVG(`system.cpu.total.pct`)",
+    );
+    expect(queryMock).toHaveBeenCalledTimes(1);
+
+    fireEvent.keyDown(queryEditor, { key: "Enter", ctrlKey: true });
+    await waitFor(() => {
+      expect(queryMock).toHaveBeenCalledTimes(2);
+    });
+
+    act(() => {
+      useExplorerStore.getState().setRawQuery(null);
+    });
+
+    await waitFor(() => {
+      expect(queryMock).toHaveBeenCalledTimes(3);
+    });
   });
 });

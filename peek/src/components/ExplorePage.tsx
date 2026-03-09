@@ -221,12 +221,13 @@ export default function ExplorePage() {
   });
 
   const handleSearch = useCallback(() => {
-    if (rawQuery === committedRawQuery) {
+    const nextCommittedRawQuery = rawQuery?.trim() ? rawQuery : null;
+    if (nextCommittedRawQuery === committedRawQuery) {
       void queryClient.invalidateQueries({ queryKey: ["explore-query", connection?.url] });
       return;
     }
     pendingSearchRef.current = true;
-    setCommittedRawQuery(rawQuery);
+    setCommittedRawQuery(nextCommittedRawQuery);
   }, [committedRawQuery, queryClient, connection?.url, rawQuery]);
 
   useEffect(() => {
