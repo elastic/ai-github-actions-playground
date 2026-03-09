@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Alert from "@mui/material/Alert";
@@ -15,43 +15,25 @@ interface Props {
 }
 
 export default function GitHubCatalogSection({ open, onSelect }: Props) {
-  const [catalog, setCatalog] = useState<CatalogEntry[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const retryControllerRef = useRef<AbortController | null>(null);
+  const {
+    data: catalog = [],
+    isFetching: loading,
+    error: queryError,
+    refetch,
+  } = useQuery<CatalogEntry[]>({
+    queryKey: ["package-builder", "input-packages"],
+    queryFn: ({ signal }) => listInputPackages(signal),
+    enabled: open,
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
 
-  const loadCatalog = useCallback(async (signal: AbortSignal) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const entries = await listInputPackages(signal);
-      if (signal.aborted) return;
-      setCatalog(entries);
-    } catch (err) {
-      if (signal.aborted) return;
-      setError(err instanceof Error ? err.message : "Failed to load catalog");
-    } finally {
-      if (!signal.aborted) setLoading(false);
-    }
-  }, []);
-
-  const handleRetry = useCallback(() => {
-    retryControllerRef.current?.abort();
-    const controller = new AbortController();
-    retryControllerRef.current = controller;
-    void loadCatalog(controller.signal);
-  }, [loadCatalog]);
-
-  useEffect(() => {
-    if (!open) return;
-    const controller = new AbortController();
-    void loadCatalog(controller.signal);
-    return () => {
-      controller.abort();
-      retryControllerRef.current?.abort();
-      retryControllerRef.current = null;
-    };
-  }, [open, loadCatalog]);
+  const error = queryError
+    ? queryError instanceof Error
+      ? queryError.message
+      : "Failed to load catalog"
+    : null;
 
   return (
     <Box sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2, p: 2 }}>
@@ -66,7 +48,7 @@ export default function GitHubCatalogSection({ open, onSelect }: Props) {
           severity="warning"
           sx={{ py: 0.5, mb: 1.5 }}
           action={
-            <Button color="inherit" size="small" onClick={handleRetry} disabled={loading}>
+            <Button color="inherit" size="small" onClick={() => void refetch()} disabled={loading}>
               Retry
             </Button>
           }
