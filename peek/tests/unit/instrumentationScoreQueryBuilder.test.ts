@@ -33,7 +33,7 @@ describe("buildInstrumentationScoreQuery", () => {
     expect(query).toContain("has_k8s_context");
     expect(query).toContain("has_k8s_pod_uid");
     expect(query).toContain(
-      'has_instance_id = SUM(CASE(NULLIF(resource.attributes.service\\.instance\\.id, "") IS NOT NULL, 1, 0))',
+      'has_instance_id = SUM(CASE(NULLIF(`resource.attributes.service.instance.id`, "") IS NOT NULL, 1, 0))',
     );
     expect(query).toContain(
       'has_version = SUM(CASE(NULLIF(service.version, "") IS NOT NULL, 1, 0))',
@@ -80,7 +80,9 @@ describe("buildDuplicateInstanceIdQuery", () => {
     const query = buildDuplicateInstanceIdQuery(BASE_FILTERS);
     expect(query).toContain("FROM traces-*");
     expect(query).toContain('service.name == "my-service"');
-    expect(query).toContain("resource.attributes.service\\.instance\\.id IS NOT NULL");
+    expect(query).toContain("`resource.attributes.service.instance.id` IS NOT NULL");
+    expect(query).toContain("BY instance_id = `resource.attributes.service.instance.id`");
+    expect(query).not.toContain("\\.");
     expect(query).toContain("logical_resource");
     expect(query).toContain('CONCAT(COALESCE(k8s.pod.uid, ""), "|", COALESCE(k8s.pod.name, "")');
     expect(query).toContain(
