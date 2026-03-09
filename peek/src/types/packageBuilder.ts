@@ -1,4 +1,4 @@
-/** Types for the OTel Input Package Builder. */
+/** Types for the Live OTel Input Package Editor. */
 
 export type FormatVersion = "3.5.0" | "3.6.0";
 export type OwnerType = "elastic" | "partner" | "community";

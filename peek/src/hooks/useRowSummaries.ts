@@ -6,24 +6,20 @@ import { useShallow } from "zustand/react/shallow";
 import { useLLMStore } from "../store/useLLMStore";
 import type { EsqlColumn } from "../types";
 
-/**
- * Maximum number of concurrent in-flight LLM requests.
- * Kept low (2) to avoid hitting provider rate limits while still
- * allowing the next summary to start before the current one finishes,
- * giving the user a sense of progressive loading.
- */
-const MAX_CONCURRENT = 2;
-
-/** Maximum columns included in the LLM prompt to keep token count reasonable. */
-const MAX_PROMPT_COLUMNS = 30;
-const MAX_PROMPT_VALUE_LENGTH = 500;
+/** Maximum non-null columns included per row in the LLM prompt. */
+const MAX_PROMPT_COLUMNS = 16;
+const SUMMARY_REQUEST_TIMEOUT_MS = 30000;
 
 const ROW_SUMMARY_SYSTEM_PROMPT =
   "You are a concise data summarizer. " +
-  "Given a single row from a query result table (column names and their values), " +
-  "provide a brief 1-sentence plain-text summary capturing the most important information. " +
-  "Focus on identifying entities, key metrics, timestamps, and notable values. " +
-  "Do not use markdown. Do not repeat column names verbatim — paraphrase naturally.";
+  "Given multiple rows from a query result table (column names and values), " +
+  "write a TL;DR in exactly one short sentence (max 18 words). " +
+  "Prioritize the main signal: entity, status, and the most important metric/value. " +
+  "Do not mention timestamps or exact times unless time is the primary anomaly. " +
+  "Do not use markdown. Do not repeat column names verbatim - paraphrase naturally. " +
+  "Return ONLY JSON in this exact format: " +
+  '{"summaries":[{"rowIndex":0,"summary":"string"}]}. ' +
+  "Include exactly one entry for each provided rowIndex.";
 
 export interface RowSummaryEntry {
   summary: string | null;
@@ -31,32 +27,75 @@ export interface RowSummaryEntry {
   error: string | null;
 }
 
-/**
- * Build the user-message context string for a single row.
- */
 function buildRowContext(columns: EsqlColumn[], row: unknown[]): string {
   const lines: string[] = [];
-  const limit = Math.min(columns.length, MAX_PROMPT_COLUMNS);
-  for (let i = 0; i < limit; i++) {
+  let omittedNonNull = 0;
+
+  for (let i = 0; i < columns.length; i++) {
     const col = columns[i]!;
     const value = row[i];
-    const raw = value == null ? "null" : String(value);
-    const formatted =
-      raw.length > MAX_PROMPT_VALUE_LENGTH
-        ? `${raw.slice(0, MAX_PROMPT_VALUE_LENGTH)}…[truncated]`
-        : raw;
-    lines.push(`${col.name} (${col.type}): ${formatted}`);
+    if (value == null) continue;
+    if (typeof value === "string" && value.trim().length === 0) continue;
+
+    if (lines.length >= MAX_PROMPT_COLUMNS) {
+      omittedNonNull += 1;
+      continue;
+    }
+
+    lines.push(`${col.name} (${col.type}): ${String(value)}`);
   }
-  if (columns.length > MAX_PROMPT_COLUMNS) {
-    lines.push(`... and ${columns.length - MAX_PROMPT_COLUMNS} more columns`);
+
+  if (omittedNonNull > 0) {
+    lines.push(`... and ${omittedNonNull} more non-null columns`);
   }
+  if (lines.length === 0) return "No non-null values in this row.";
   return lines.join("\n");
 }
 
-/**
- * Produce a stable cache key for a row based on its content.
- * Uses a simple hash of column names + values.
- */
+function buildPageContext(
+  columns: EsqlColumn[],
+  rows: Array<{ rowIndex: number; row: unknown[] }>,
+): string {
+  return rows
+    .map(({ rowIndex, row }) => `ROW_INDEX: ${rowIndex}\n${buildRowContext(columns, row)}`)
+    .join("\n\n");
+}
+
+function parseJsonObjectFromText(text: string): unknown {
+  const trimmed = text.trim();
+  const withoutFenceStart = trimmed.replace(/^```(?:json)?\s*/i, "");
+  const withoutFences = withoutFenceStart.replace(/\s*```$/, "").trim();
+  const start = withoutFences.indexOf("{");
+  const end = withoutFences.lastIndexOf("}");
+  const jsonSlice =
+    start >= 0 && end >= start ? withoutFences.slice(start, end + 1) : withoutFences;
+  return JSON.parse(jsonSlice);
+}
+
+function parseBatchSummaries(rawText: string): Map<number, string> {
+  const parsed = parseJsonObjectFromText(rawText);
+  if (typeof parsed !== "object" || parsed === null) {
+    console.warn("parseBatchSummaries: parsed response is not an object", { parsed, rawText });
+    return new Map();
+  }
+  const summaries = (parsed as { summaries?: unknown }).summaries;
+  if (!Array.isArray(summaries)) {
+    console.warn("parseBatchSummaries: missing or invalid 'summaries' array", { parsed, rawText });
+    return new Map();
+  }
+
+  const rows = summaries as Array<{ rowIndex?: number; summary?: string }>;
+  const result = new Map<number, string>();
+  for (const entry of rows) {
+    const idx = entry.rowIndex;
+    const summary = entry.summary?.trim();
+    if (typeof idx === "number" && Number.isFinite(idx) && summary) {
+      result.set(idx, summary);
+    }
+  }
+  return result;
+}
+
 function rowCacheKey(columns: EsqlColumn[], row: unknown[]): string {
   const parts: string[] = [];
   for (let i = 0; i < columns.length; i++) {
@@ -65,16 +104,6 @@ function rowCacheKey(columns: EsqlColumn[], row: unknown[]): string {
   return parts.join("\u241F");
 }
 
-/**
- * Hook that manages LLM-powered row summarization for a paginated set of visible rows.
- *
- * Summaries are generated on-demand for rows that enter the viewport (tracked via
- * `IntersectionObserver`). Requests are queued and limited to `MAX_CONCURRENT`
- * in-flight calls to avoid flooding the LLM provider.
- *
- * Results are cached by row content so that re-pagination / re-renders reuse
- * previously generated summaries.
- */
 export function useRowSummaries(columns: EsqlColumn[], visibleRows: unknown[][], enabled: boolean) {
   const {
     apiKey,
@@ -90,34 +119,31 @@ export function useRowSummaries(columns: EsqlColumn[], visibleRows: unknown[][],
   const hasApiKey = Boolean(apiKey?.trim());
   const isActive = enabled && hasApiKey;
 
-  // Global cache: cacheKey → summary text
   const cacheRef = useRef<Map<string, string>>(new Map());
-
-  // Set of row indices (in current page) that are in the viewport.
+  const [summaries, setSummaries] = useState<Map<number, RowSummaryEntry>>(new Map());
   const [visibleIndices, setVisibleIndices] = useState<Set<number>>(new Set());
 
-  // Per-page summaries: rowIndex → RowSummaryEntry
-  const [summaries, setSummaries] = useState<Map<number, RowSummaryEntry>>(new Map());
-
-  // Track in-flight count to enforce concurrency limit.
-  const inFlightRef = useRef(0);
   const generationRef = useRef(0);
+  const inFlightIndicesRef = useRef<Set<number>>(new Set());
+  const observerSettledRef = useRef(false);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const elementMapRef = useRef<Map<number, Element>>(new Map());
 
-  // Ref to the latest provider config so the async callback always reads fresh values.
   const configRef = useRef({ apiKey, provider, llmModel });
   useEffect(() => {
     configRef.current = { apiKey, provider, llmModel };
   }, [apiKey, provider, llmModel]);
 
-  // Reset summaries when the visible rows change (e.g. pagination, new query).
   const rowsFingerprint = useMemo(
     () => visibleRows.map((r) => rowCacheKey(columns, r)).join("|"),
     [columns, visibleRows],
   );
+
   useEffect(() => {
     generationRef.current += 1;
-    inFlightRef.current = 0;
-    // Pre-populate from cache
+    inFlightIndicesRef.current = new Set();
+    observerSettledRef.current = false;
+
     const next = new Map<number, RowSummaryEntry>();
     for (let i = 0; i < visibleRows.length; i++) {
       const key = rowCacheKey(columns, visibleRows[i]!);
@@ -127,24 +153,16 @@ export function useRowSummaries(columns: EsqlColumn[], visibleRows: unknown[][],
       }
     }
     setSummaries(next);
-    setVisibleIndices(new Set(visibleRows.map((_, idx) => idx)));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rowsFingerprint]);
-
-  // ---------------------------------------------------------------------------
-  // IntersectionObserver callback registry.
-  // Each row cell calls `observeRow(index, element)` when mounted and
-  // `unobserveRow(index)` when unmounted.
-  // ---------------------------------------------------------------------------
-  const observerRef = useRef<IntersectionObserver | null>(null);
-  const elementMapRef = useRef<Map<number, Element>>(new Map());
+    setVisibleIndices(new Set());
+  }, [rowsFingerprint, columns, visibleRows]);
 
   useEffect(() => {
     observerRef.current = new IntersectionObserver(
       (entries) => {
+        if (entries.length > 0) observerSettledRef.current = true;
         setVisibleIndices((prev) => {
-          let changed = false;
           const next = new Set(prev);
+          let changed = false;
           for (const entry of entries) {
             const idx = Number((entry.target as HTMLElement).dataset.summaryRow);
             if (Number.isNaN(idx)) continue;
@@ -161,15 +179,141 @@ export function useRowSummaries(columns: EsqlColumn[], visibleRows: unknown[][],
       },
       { threshold: 0.1 },
     );
-    // Re-observe any elements that were registered before the observer was created.
+
     for (const [, el] of elementMapRef.current) {
       observerRef.current.observe(el);
     }
+
     return () => {
       observerRef.current?.disconnect();
       observerRef.current = null;
+      elementMapRef.current.clear();
     };
   }, []);
+
+  const requestBatch = useCallback(
+    (indices: number[]) => {
+      if (!isActive || indices.length === 0) return undefined;
+
+      const generation = generationRef.current;
+      const pending = indices.filter((idx) => {
+        if (inFlightIndicesRef.current.has(idx)) return false;
+        const row = visibleRows[idx];
+        if (!row) return false;
+        const key = rowCacheKey(columns, row);
+        return !cacheRef.current.has(key);
+      });
+      if (pending.length === 0) return undefined;
+
+      pending.forEach((idx) => {
+        inFlightIndicesRef.current.add(idx);
+      });
+
+      const {
+        apiKey: currentApiKey,
+        provider: currentProvider,
+        llmModel: currentModel,
+      } = configRef.current;
+      const openai = createOpenAI({
+        apiKey: currentApiKey,
+        ...(currentProvider === "openrouter" ? { baseURL: "https://openrouter.ai/api/v1" } : {}),
+      });
+      const model =
+        currentProvider === "openrouter" ? openai.chat(currentModel) : openai(currentModel);
+
+      setSummaries((prev) => {
+        const next = new Map(prev);
+        for (const idx of pending) {
+          next.set(idx, { summary: null, loading: true, error: null });
+        }
+        return next;
+      });
+
+      const context = buildPageContext(
+        columns,
+        pending.map((idx) => ({ rowIndex: idx, row: visibleRows[idx]! })),
+      );
+
+      const controller = new AbortController();
+      let timedOut = false;
+      const timeoutId = window.setTimeout(() => {
+        timedOut = true;
+        controller.abort();
+      }, SUMMARY_REQUEST_TIMEOUT_MS);
+      void generateText({
+        model,
+        system: ROW_SUMMARY_SYSTEM_PROMPT,
+        messages: [{ role: "user", content: context }],
+        abortSignal: controller.signal,
+      })
+        .then((result) => {
+          if (generation !== generationRef.current) return;
+
+          const parsedSummaries = parseBatchSummaries(result.text);
+          setSummaries((prev) => {
+            const next = new Map(prev);
+            for (const idx of pending) {
+              const row = visibleRows[idx];
+              if (!row) continue;
+              const summary = parsedSummaries.get(idx)?.trim() ?? "";
+              if (summary) {
+                const key = rowCacheKey(columns, row);
+                cacheRef.current.set(key, summary);
+                next.set(idx, { summary, loading: false, error: null });
+              } else {
+                next.set(idx, { summary: null, loading: false, error: "EMPTY_MODEL_OUTPUT" });
+              }
+            }
+            return next;
+          });
+        })
+        .catch((err: unknown) => {
+          if (generation !== generationRef.current) return;
+          if (err instanceof Error && err.name === "AbortError" && !timedOut) return;
+          const message =
+            err instanceof Error
+              ? err.name === "AbortError"
+                ? "Summary request timed out"
+                : err.message
+              : "Summary failed";
+          setSummaries((prev) => {
+            const next = new Map(prev);
+            for (const idx of pending) {
+              next.set(idx, { summary: null, loading: false, error: message });
+            }
+            return next;
+          });
+        })
+        .finally(() => {
+          pending.forEach((idx) => {
+            inFlightIndicesRef.current.delete(idx);
+          });
+          window.clearTimeout(timeoutId);
+        });
+
+      return () => {
+        controller.abort();
+        window.clearTimeout(timeoutId);
+      };
+    },
+    [isActive, columns, visibleRows],
+  );
+
+  useEffect(() => {
+    const indices = Array.from(visibleIndices)
+      .filter((idx) => idx >= 0 && idx < visibleRows.length)
+      .sort((a, b) => a - b);
+    return requestBatch(indices);
+  }, [requestBatch, visibleIndices, rowsFingerprint, visibleRows.length]);
+
+  useEffect(() => {
+    // Wait for IntersectionObserver entries before backfilling non-visible rows to avoid full-table first-render batches.
+    if (!observerSettledRef.current && elementMapRef.current.size > 0) return;
+    const nonVisible = Array.from({ length: visibleRows.length }, (_, idx) => idx).filter(
+      (idx) => !visibleIndices.has(idx),
+    );
+    return requestBatch(nonVisible);
+  }, [requestBatch, visibleIndices, rowsFingerprint, visibleRows.length]);
 
   const observeRow = useCallback((index: number, element: Element | null) => {
     const prev = elementMapRef.current.get(index);
@@ -191,106 +335,6 @@ export function useRowSummaries(columns: EsqlColumn[], visibleRows: unknown[][],
       elementMapRef.current.delete(index);
     }
   }, []);
-
-  // ---------------------------------------------------------------------------
-  // Process queue: whenever visible indices or summaries change, kick off
-  // LLM requests for rows that are visible but don't have summaries yet.
-  // ---------------------------------------------------------------------------
-  useEffect(() => {
-    if (!isActive) return;
-
-    // Find visible rows that need summaries.
-    const pending: number[] = [];
-    for (const idx of visibleIndices) {
-      const existing = summaries.get(idx);
-      if (!existing || (!existing.summary && !existing.loading && !existing.error)) {
-        // Also skip if already cached
-        const row = visibleRows[idx];
-        if (!row) continue;
-        const key = rowCacheKey(columns, row);
-        if (cacheRef.current.has(key)) continue;
-        pending.push(idx);
-      }
-    }
-
-    if (pending.length === 0) return;
-
-    // Sort so earlier rows get processed first.
-    pending.sort((a, b) => a - b);
-
-    const available = MAX_CONCURRENT - inFlightRef.current;
-    if (available <= 0) return;
-
-    const batch = pending.slice(0, available);
-    const generation = generationRef.current;
-
-    // Create the LLM client once per batch (same config for all rows).
-    const {
-      apiKey: currentApiKey,
-      provider: currentProvider,
-      llmModel: currentModel,
-    } = configRef.current;
-    const openai = createOpenAI({
-      apiKey: currentApiKey,
-      ...(currentProvider === "openrouter" ? { baseURL: "https://openrouter.ai/api/v1" } : {}),
-    });
-    const model =
-      currentProvider === "openrouter" ? openai.chat(currentModel) : openai(currentModel);
-
-    for (const idx of batch) {
-      const row = visibleRows[idx];
-      if (!row) continue;
-
-      const key = rowCacheKey(columns, row);
-
-      // Mark as loading
-      setSummaries((prev) => {
-        const next = new Map(prev);
-        next.set(idx, { summary: null, loading: true, error: null });
-        return next;
-      });
-      inFlightRef.current += 1;
-
-      const context = buildRowContext(columns, row);
-
-      void generateText({
-        model,
-        system: ROW_SUMMARY_SYSTEM_PROMPT,
-        messages: [{ role: "user", content: context }],
-      })
-        .then((result) => {
-          if (generation !== generationRef.current) return;
-          const text = result.text.trim();
-          if (text) {
-            cacheRef.current.set(key, text);
-          }
-          setSummaries((prev) => {
-            const next = new Map(prev);
-            next.set(
-              idx,
-              text
-                ? { summary: text, loading: false, error: null }
-                : { summary: null, loading: false, error: "EMPTY_MODEL_OUTPUT" },
-            );
-            return next;
-          });
-        })
-        .catch((err: unknown) => {
-          if (generation !== generationRef.current) return;
-          const message = err instanceof Error ? err.message : "Summary failed";
-          setSummaries((prev) => {
-            const next = new Map(prev);
-            next.set(idx, { summary: null, loading: false, error: message });
-            return next;
-          });
-        })
-        .finally(() => {
-          if (generation !== generationRef.current) return;
-          inFlightRef.current -= 1;
-        });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isActive, visibleIndices, summaries, columns, visibleRows]);
 
   return { summaries, observeRow, unobserveRow };
 }
