@@ -110,8 +110,12 @@ export default function DiscoverEditorPanel(p: DiscoverEditorPanelProps) {
         actions={
           p.collapsed ? null : (
             <>
-              <Tooltip title="Copy shareable link">
-                <IconButton size="small" onClick={handleCopyLink} aria-label="Copy link">
+              <Tooltip title={linkCopied ? "Link copied!" : "Copy shareable link"}>
+                <IconButton
+                  size="small"
+                  onClick={handleCopyLink}
+                  aria-label={linkCopied ? "Link copied" : "Copy link"}
+                >
                   <LinkIcon sx={{ fontSize: 18 }} />
                 </IconButton>
               </Tooltip>
