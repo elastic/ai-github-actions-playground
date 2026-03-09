@@ -21,28 +21,28 @@ export default function IndexTemplatesOverviewCards({
     <Grid container spacing={2}>
       <Grid item xs={6} sm={3}>
         <OverviewInfoCard title="Index Templates">
-          <Typography variant="h5" component="p">
+          <Typography variant="h3" component="p">
             {visibleIndexTemplatesCount}
           </Typography>
         </OverviewInfoCard>
       </Grid>
       <Grid item xs={6} sm={3}>
         <OverviewInfoCard title="Component Templates">
-          <Typography variant="h5" component="p">
+          <Typography variant="h3" component="p">
             {visibleComponentTemplatesCount}
           </Typography>
         </OverviewInfoCard>
       </Grid>
       <Grid item xs={6} sm={3}>
         <OverviewInfoCard title="Data-Stream Enabled">
-          <Typography variant="h5" component="p">
+          <Typography variant="h3" component="p">
             {dataStreamEnabledCount}
           </Typography>
         </OverviewInfoCard>
       </Grid>
       <Grid item xs={6} sm={3}>
         <OverviewInfoCard title={`High Priority (≥${HIGH_PRIORITY_THRESHOLD})`}>
-          <Typography variant="h5" component="p">
+          <Typography variant="h3" component="p">
             {highPriorityCount}
           </Typography>
         </OverviewInfoCard>
