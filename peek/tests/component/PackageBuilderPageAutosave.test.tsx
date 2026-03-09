@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { render, screen } from "@testing-library/react";
 
 import PackageBuilderPage from "../../src/components/PackageBuilderPage";
 
@@ -56,6 +56,11 @@ vi.mock("../../src/components/packageBuilder/StepExport", () => ({
 describe("PackageBuilder autosave accessibility", () => {
   beforeEach(() => {
     exportPackageToDirectoryMock.mockReset();
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it("exposes autosave success as a status message for screen readers", async () => {
@@ -63,10 +68,8 @@ describe("PackageBuilder autosave accessibility", () => {
 
     render(<PackageBuilderPage />);
 
-    // Wait for debounce (500ms) + async save to complete
-    await waitFor(() => {
-      expect(screen.getByText("Saved")).toBeInTheDocument();
-    });
+    await vi.advanceTimersByTimeAsync(500);
+    await Promise.resolve();
 
     const statusEl = screen.getByRole("status");
     expect(statusEl).toHaveTextContent("Saved");
@@ -79,10 +82,8 @@ describe("PackageBuilder autosave accessibility", () => {
 
     render(<PackageBuilderPage />);
 
-    // Wait for debounce (500ms) + async save to fail
-    await waitFor(() => {
-      expect(screen.getByText("Save failed")).toBeInTheDocument();
-    });
+    await vi.advanceTimersByTimeAsync(500);
+    await Promise.resolve();
 
     const alertEl = screen.getByRole("alert");
     expect(alertEl).toHaveTextContent("Save failed");
