@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback, memo, useRef } from "react";
+import { useMemo, useState, useCallback, memo, useRef, useEffect } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Link from "@mui/material/Link";
@@ -131,6 +131,12 @@ export default memo(function DataTable({
     }
     return null;
   }, [inspectedRowState, visibleRows]);
+
+  useEffect(() => {
+    if (inspectedRowState !== null && selectedRowIndex === null) {
+      setInspectedRowState(null);
+    }
+  }, [inspectedRowState, selectedRowIndex]);
 
   const handleRowClick = useCallback(
     (row: unknown[], rowIndex: number) => {

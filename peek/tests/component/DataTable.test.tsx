@@ -580,6 +580,29 @@ describe("DataTable", () => {
     expect(screen.getByTestId("row-inspector-field-message")).toHaveTextContent("A");
   });
 
+  it("clears selected highlight and inspector when inspected row is filtered out", async () => {
+    const user = userEvent.setup();
+    const initial: EsqlResponse = {
+      columns: [{ name: "message", type: "keyword" }],
+      values: [["A"], ["B"]],
+    };
+
+    const { container, rerender } = render(<DataTable data={initial} />);
+    await user.click(screen.getByText("A"));
+    expect(screen.getByTestId("row-inspector-field-message")).toHaveTextContent("A");
+
+    const filtered: EsqlResponse = {
+      columns: [{ name: "message", type: "keyword" }],
+      values: [["B"]],
+    };
+    rerender(<DataTable data={filtered} />);
+
+    expect(container.querySelector("tr.Mui-selected")).toBeNull();
+    await waitFor(() => {
+      expect(screen.queryByTestId("row-inspector-field-message")).not.toBeInTheDocument();
+    });
+  });
+
   it("preserves duplicate-row occurrence when fallback matching after rerender", async () => {
     const user = userEvent.setup();
     const initial: EsqlResponse = {
