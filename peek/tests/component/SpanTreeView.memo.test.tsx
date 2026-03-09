@@ -3,7 +3,9 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render } from "@testing-library/react";
 
 import type { Span } from "../../src/components/traces/traceUtils";
-import type { SpanTreeGroupRowProps } from "../../src/components/traces/span-tree-plugin/SpanTreeGroupRow";
+import type { SpanTreeGroupRow } from "../../src/components/traces/span-tree-plugin/SpanTreeGroupRow";
+
+type SpanTreeGroupRowProps = React.ComponentProps<typeof SpanTreeGroupRow>;
 
 const rowRenderCounts = new Map<string, number>();
 let groupRowRenderCount = 0;
