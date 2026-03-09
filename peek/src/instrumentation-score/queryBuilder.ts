@@ -58,7 +58,6 @@ export function buildInstrumentationScoreQuery(
       "total_spans = COUNT(*), " +
       "root_span_count = SUM(is_root), " +
       "root_client_span_count = SUM(is_root_client), " +
-      `has_service_name = COUNT_DISTINCT(${fields.serviceName}), ` +
       "has_instance_id = SUM(CASE(resource.attributes.service\\.instance\\.id IS NOT NULL, 1, 0)), " +
       `has_version = SUM(CASE(${fields.serviceVersion} IS NOT NULL, 1, 0)), ` +
       "has_environment = SUM(CASE(COALESCE(service.environment, deployment.environment.name) IS NOT NULL, 1, 0)), " +

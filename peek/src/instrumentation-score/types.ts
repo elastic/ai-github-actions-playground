@@ -106,14 +106,8 @@ export interface InstrumentationScoreRule {
 
 /* ────── Evaluated rule (definition + result) ────── */
 
-export interface EvaluatedInstrumentationRule extends InstrumentationScoreRuleResult {
-  id: string;
-  description: string;
-  rationale: string;
-  target: InstrumentationScoreTarget;
-  impact: InstrumentationScoreImpact;
-  specUrl: string;
-}
+export type EvaluatedInstrumentationRule = InstrumentationScoreRuleResult &
+  Omit<InstrumentationScoreRule, "evaluate">;
 
 /* ────── Aggregate score for a service ────── */
 

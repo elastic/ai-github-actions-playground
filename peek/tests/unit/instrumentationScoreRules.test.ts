@@ -26,6 +26,18 @@ function makeSnapshot(
   };
 }
 
+function getResourceRule(id: string) {
+  const rule = resourceRules.find((candidate) => candidate.id === id);
+  expect(rule).toBeDefined();
+  return rule!;
+}
+
+function getSpanRule(id: string) {
+  const rule = spanRules.find((candidate) => candidate.id === id);
+  expect(rule).toBeDefined();
+  return rule!;
+}
+
 // ---------------------------------------------------------------------------
 // Catalog integrity
 // ---------------------------------------------------------------------------
@@ -58,27 +70,8 @@ describe("INSTRUMENTATION_SCORE_RULES aggregation", () => {
 // Resource rules
 // ---------------------------------------------------------------------------
 
-describe("RES-005: service.name is present", () => {
-  const rule = resourceRules.find((r) => r.id === "RES-005")!;
-
-  it("has critical impact", () => {
-    expect(rule.impact).toBe("critical");
-  });
-
-  it("passes when service.name is present", () => {
-    const result = rule.evaluate(makeSnapshot({ hasServiceName: true }));
-    expect(result.passed).toBe(true);
-  });
-
-  it("fails when service.name is missing", () => {
-    const result = rule.evaluate(makeSnapshot({ hasServiceName: false }));
-    expect(result.passed).toBe(false);
-    expect(result.summary).toContain("missing");
-  });
-});
-
 describe("RES-001: service.instance.id is present", () => {
-  const rule = resourceRules.find((r) => r.id === "RES-001")!;
+  const rule = getResourceRule("RES-001");
 
   it("has normal impact", () => {
     expect(rule.impact).toBe("normal");
@@ -97,7 +90,7 @@ describe("RES-001: service.instance.id is present", () => {
 });
 
 describe("RES-002: service.instance.id is unique across logical resources", () => {
-  const rule = resourceRules.find((r) => r.id === "RES-002")!;
+  const rule = getResourceRule("RES-002");
 
   it("has important impact", () => {
     expect(rule.impact).toBe("important");
@@ -120,7 +113,7 @@ describe("RES-002: service.instance.id is unique across logical resources", () =
 });
 
 describe("RES-003: k8s.pod.uid is present for Kubernetes workloads", () => {
-  const rule = resourceRules.find((r) => r.id === "RES-003")!;
+  const rule = getResourceRule("RES-003");
 
   it("has important impact", () => {
     expect(rule.impact).toBe("important");
@@ -148,7 +141,7 @@ describe("RES-003: k8s.pod.uid is present for Kubernetes workloads", () => {
 // ---------------------------------------------------------------------------
 
 describe("SPA-004: Root spans are not CLIENT spans", () => {
-  const rule = spanRules.find((r) => r.id === "SPA-004")!;
+  const rule = getSpanRule("SPA-004");
 
   it("has important impact", () => {
     expect(rule.impact).toBe("important");
@@ -173,7 +166,7 @@ describe("SPA-004: Root spans are not CLIENT spans", () => {
 });
 
 describe("SPA-001: Limited INTERNAL spans per trace", () => {
-  const rule = spanRules.find((r) => r.id === "SPA-001")!;
+  const rule = getSpanRule("SPA-001");
 
   it("has normal impact", () => {
     expect(rule.impact).toBe("normal");
@@ -198,7 +191,7 @@ describe("SPA-001: Limited INTERNAL spans per trace", () => {
 });
 
 describe("SPA-005: No high number of short INTERNAL spans per trace", () => {
-  const rule = spanRules.find((r) => r.id === "SPA-005")!;
+  const rule = getSpanRule("SPA-005");
 
   it("has important impact", () => {
     expect(rule.impact).toBe("important");

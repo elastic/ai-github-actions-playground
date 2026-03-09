@@ -44,6 +44,8 @@ export default function ServiceInstrumentationScorePanel({
   loading,
   error,
 }: ServiceInstrumentationScorePanelProps) {
+  const formattedScore = score ? score.score.toFixed(2) : null;
+
   return (
     <Paper variant="outlined" sx={{ minHeight: 120, overflow: "auto" }}>
       <Box sx={{ p: 1.5, borderBottom: 1, borderColor: "divider" }}>
@@ -90,7 +92,7 @@ export default function ServiceInstrumentationScorePanel({
             }}
           >
             <Typography variant="h5" component="p" sx={{ fontWeight: 700, minWidth: 56 }}>
-              {Math.round(score.score)}
+              {formattedScore}
             </Typography>
             <Box>
               <Chip

@@ -27,7 +27,6 @@ describe("buildInstrumentationScoreQuery", () => {
     expect(query).toContain("total_spans");
     expect(query).toContain("root_span_count");
     expect(query).toContain("root_client_span_count");
-    expect(query).toContain("has_service_name");
     expect(query).toContain("has_instance_id");
     expect(query).toContain("has_version");
     expect(query).toContain("has_environment");
@@ -90,7 +89,6 @@ describe("parseInstrumentationScoreResult", () => {
   it("returns defaults when main result is null", () => {
     const snapshot = parseInstrumentationScoreResult("svc", null, null, null);
     expect(snapshot.serviceName).toBe("svc");
-    expect(snapshot.hasServiceName).toBe(true);
     expect(snapshot.hasServiceInstanceId).toBe(false);
     expect(snapshot.rootSpanCount).toBe(0);
     expect(snapshot.totalSpanCount).toBe(0);
@@ -112,20 +110,18 @@ describe("parseInstrumentationScoreResult", () => {
         { name: "total_spans", type: "long" },
         { name: "root_span_count", type: "long" },
         { name: "root_client_span_count", type: "long" },
-        { name: "has_service_name", type: "long" },
         { name: "has_instance_id", type: "long" },
         { name: "has_version", type: "long" },
         { name: "has_environment", type: "long" },
         { name: "has_k8s_context", type: "long" },
         { name: "has_k8s_pod_uid", type: "long" },
       ],
-      values: [[500, 100, 5, 1, 120, 120, 0, 300, 0]],
+      values: [[500, 100, 5, 120, 120, 0, 300, 0]],
     };
     const snapshot = parseInstrumentationScoreResult("svc", mainResult, null, null);
     expect(snapshot.totalSpanCount).toBe(500);
     expect(snapshot.rootSpanCount).toBe(100);
     expect(snapshot.rootClientSpanCount).toBe(5);
-    expect(snapshot.hasServiceName).toBe(true);
     expect(snapshot.hasServiceInstanceId).toBe(true);
     expect(snapshot.hasServiceVersion).toBe(true);
     // has_environment = 0 means no span had service/deployment environment
@@ -134,20 +130,42 @@ describe("parseInstrumentationScoreResult", () => {
     expect(snapshot.hasK8sPodUid).toBe(false);
   });
 
-  it("parses internal span result correctly", () => {
+  it("treats single-valued attribute counts as present", () => {
     const mainResult: EsqlResponse = {
       columns: [
         { name: "total_spans", type: "long" },
         { name: "root_span_count", type: "long" },
         { name: "root_client_span_count", type: "long" },
-        { name: "has_service_name", type: "long" },
         { name: "has_instance_id", type: "long" },
         { name: "has_version", type: "long" },
         { name: "has_environment", type: "long" },
         { name: "has_k8s_context", type: "long" },
         { name: "has_k8s_pod_uid", type: "long" },
       ],
-      values: [[500, 100, 0, 1, 2, 2, 2, 1, 1]],
+      values: [[100, 10, 0, 1, 1, 1, 1, 1]],
+    };
+
+    const snapshot = parseInstrumentationScoreResult("svc", mainResult, null, null);
+    expect(snapshot.hasServiceInstanceId).toBe(true);
+    expect(snapshot.hasServiceVersion).toBe(true);
+    expect(snapshot.hasDeploymentEnvironment).toBe(true);
+    expect(snapshot.hasK8sContext).toBe(true);
+    expect(snapshot.hasK8sPodUid).toBe(true);
+  });
+
+  it("parses internal span result correctly", () => {
+    const mainResult: EsqlResponse = {
+      columns: [
+        { name: "total_spans", type: "long" },
+        { name: "root_span_count", type: "long" },
+        { name: "root_client_span_count", type: "long" },
+        { name: "has_instance_id", type: "long" },
+        { name: "has_version", type: "long" },
+        { name: "has_environment", type: "long" },
+        { name: "has_k8s_context", type: "long" },
+        { name: "has_k8s_pod_uid", type: "long" },
+      ],
+      values: [[500, 100, 0, 2, 2, 2, 1, 1]],
     };
     const internalResult: EsqlResponse = {
       columns: [

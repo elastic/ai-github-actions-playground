@@ -169,6 +169,13 @@ export default function ServiceDashboardPage() {
   const hasLoadedResults = Boolean(
     routesResult || tracesResult || deploymentsResult || k8sContextResult,
   );
+  const isDashboardEmpty =
+    !loading &&
+    Boolean(routesResult) &&
+    deployments.length === 0 &&
+    routeRows.length === 0 &&
+    recentTraces.length === 0 &&
+    k8sRows.length === 0;
   const topRouteSignals = useMemo(() => topRouteRows.slice(0, 20), [topRouteRows]);
   const topTraceSignals = useMemo(() => recentTraces.slice(0, 20), [recentTraces]);
   const traceSignals = useMemo(() => summarizeTraceSignals(recentTraces), [recentTraces]);
@@ -428,11 +435,13 @@ export default function ServiceDashboardPage() {
                 </InsightSlot>
               )}
 
-              <ServiceInstrumentationScorePanel
-                score={instrumentationScore}
-                loading={instrumentationScoreLoading}
-                error={instrumentationScoreError}
-              />
+              {!isDashboardEmpty && (
+                <ServiceInstrumentationScorePanel
+                  score={instrumentationScore}
+                  loading={instrumentationScoreLoading}
+                  error={instrumentationScoreError}
+                />
+              )}
             </Stack>
           </Box>
         </Stack>
@@ -452,21 +461,16 @@ export default function ServiceDashboardPage() {
           </Box>
         )}
 
-        {!loading &&
-          routesResult &&
-          deployments.length === 0 &&
-          routeRows.length === 0 &&
-          recentTraces.length === 0 &&
-          k8sRows.length === 0 && (
-            <Paper variant="outlined" sx={{ flex: 1, minHeight: 200, overflow: "auto" }}>
-              <EmptyState
-                heading="No data found"
-                description={`No routes or traces found for ${serviceName} in the selected time range.`}
-                verticalAlign="center"
-                addDataHref={PAGE_PATHS.addData.path}
-              />
-            </Paper>
-          )}
+        {isDashboardEmpty && (
+          <Paper variant="outlined" sx={{ flex: 1, minHeight: 200, overflow: "auto" }}>
+            <EmptyState
+              heading="No data found"
+              description={`No routes or traces found for ${serviceName} in the selected time range.`}
+              verticalAlign="center"
+              addDataHref={PAGE_PATHS.addData.path}
+            />
+          </Paper>
+        )}
       </Box>
     </InsightSlotProvider>
   );

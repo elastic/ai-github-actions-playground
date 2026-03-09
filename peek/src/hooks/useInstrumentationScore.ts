@@ -29,15 +29,25 @@ const QUERY_OPTIONS = {
   refetchOnReconnect: false,
 } as const;
 
+function hashString(value: string): string {
+  let hash = 5381;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash * 33) ^ value.charCodeAt(i);
+  }
+  return (hash >>> 0).toString(36);
+}
+
 function getConnectionFingerprint(connection: ElasticsearchConnection | null): string | null {
   if (!connection) return null;
-  return [
-    connection.url,
-    connection.apiKey ?? "",
-    connection.username ?? "",
-    connection.password ?? "",
-    connection.proxyUrl ?? "",
-  ].join("|");
+  return hashString(
+    [
+      connection.url,
+      connection.apiKey ?? "",
+      connection.username ?? "",
+      connection.password ?? "",
+      connection.proxyUrl ?? "",
+    ].join("|"),
+  );
 }
 
 /**
@@ -76,6 +86,7 @@ export function useInstrumentationScore({
     initialData: null,
     ...QUERY_OPTIONS,
   });
+  const hasMainData = mainQuery.data != null && mainQuery.data.values.length > 0;
 
   const internalSpanQuery = useQuery<EsqlResponse | null>({
     queryKey: [
@@ -90,12 +101,11 @@ export function useInstrumentationScore({
       const query = buildInternalSpanCountQuery(filters);
       return createPersesEsqlDatasource(connection).execute({ query: query.trim() }, signal);
     },
-    enabled: canFetch,
+    enabled: canFetch && hasMainData,
     initialData: null,
     ...QUERY_OPTIONS,
   });
 
-  const hasData = mainQuery.data != null && mainQuery.data.values.length > 0;
   const duplicateInstanceQuery = useQuery<EsqlResponse | null>({
     queryKey: [
       `${KEY_PREFIX}duplicate-instance-id`,
@@ -109,7 +119,7 @@ export function useInstrumentationScore({
       const query = buildDuplicateInstanceIdQuery(filters);
       return createPersesEsqlDatasource(connection).execute({ query: query.trim() }, signal);
     },
-    enabled: canFetch,
+    enabled: canFetch && hasMainData,
     initialData: null,
     ...QUERY_OPTIONS,
   });
@@ -118,7 +128,7 @@ export function useInstrumentationScore({
     mainQuery.isFetching || internalSpanQuery.isFetching || duplicateInstanceQuery.isFetching;
 
   const score: ServiceInstrumentationScore | null = useMemo(() => {
-    if (!hasData) return null;
+    if (!hasMainData) return null;
     const snapshot = parseInstrumentationScoreResult(
       normalizedServiceName,
       mainQuery.data,
@@ -129,7 +139,7 @@ export function useInstrumentationScore({
     return evaluateInstrumentationScore(INSTRUMENTATION_SCORE_RULES, snapshot);
   }, [
     normalizedServiceName,
-    hasData,
+    hasMainData,
     mainQuery.data,
     internalSpanQuery.data,
     duplicateInstanceQuery.data,

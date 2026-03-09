@@ -3,7 +3,6 @@
  *
  * These checks evaluate whether OpenTelemetry resource attributes
  * are present and correct, based on:
- * - RES-005: service.name is present (Critical)
  * - RES-001: service.instance.id is present (Normal)
  * - RES-002: service.instance.id is unique per logical resource (Important)
  * - RES-003: k8s.pod.uid is present for Kubernetes workloads (Important)
@@ -13,31 +12,6 @@ import type { InstrumentationScoreRule } from "../types";
 const SPEC_BASE_URL = "https://github.com/instrumentation-score/spec/blob/main/rules";
 
 export const resourceRules: InstrumentationScoreRule[] = [
-  {
-    id: "RES-005",
-    description: "service.name is present",
-    rationale:
-      "service.name is the logical name of the service and is critical for service identification. " +
-      "It is required by OpenTelemetry Semantic Conventions for Resources.",
-    target: "resource",
-    impact: "critical",
-    specUrl: `${SPEC_BASE_URL}/RES-005.md`,
-    evaluate: (snapshot) => {
-      if (snapshot.hasServiceName) {
-        return {
-          passed: true,
-          summary: "Resource attributes contain a non-empty service.name.",
-        };
-      }
-      return {
-        passed: false,
-        summary:
-          "Resource attributes are missing service.name or it has an empty value. " +
-          "Add service.name to your OTel SDK resource configuration.",
-        observed: { hasServiceName: false },
-      };
-    },
-  },
   {
     id: "RES-001",
     description: "service.instance.id is present",
