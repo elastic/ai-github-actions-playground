@@ -9,6 +9,7 @@ import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import TableChartIcon from "@mui/icons-material/TableChart";
 
 import { useGlobalCollapseShortcut } from "../hooks/useGlobalCollapseShortcut";
+import { useLLMStore } from "../store/useLLMStore";
 import { useSearchPanelUIStore } from "../store/useSearchPanelUIStore";
 import QueryProfilePanel from "./QueryProfilePanel";
 import PartialResultPanel from "./PartialResultPanel";
@@ -26,6 +27,12 @@ interface DiscoverPageProps {
 export default function DiscoverPage({ mode = "query-lab" }: DiscoverPageProps) {
   const o = useDiscoverOrchestrator(mode);
   const { setDiscoverSearchCollapsed } = o;
+
+  const llmConfigured = useLLMStore((s) => s.isConfigured());
+
+  // When the user hasn't manually selected columns and LLM is configured,
+  // show AI row summaries for visible rows in the data table.
+  const showRowSummaries = Boolean(o.result && !o.fieldsManuallySelected && llmConfigured);
 
   // Cmd/Ctrl+[ toggles the query panel collapse
   const toggleDiscoverCollapse = useCallback(
@@ -161,6 +168,9 @@ export default function DiscoverPage({ mode = "query-lab" }: DiscoverPageProps) 
               onRemoveColumn={o.toggleField}
               currentSort={o.currentSort}
               onSortChange={o.handleSortChange}
+              summaryEnabled={showRowSummaries}
+              fullResultColumns={o.result?.columns}
+              fullResultValues={o.result?.values}
             />
           )}
           {o.filteredResult && o.filteredResult.columns.length === 0 && o.result && (
