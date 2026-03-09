@@ -128,7 +128,7 @@ export const shardChecks: HealthCheckDefinition[] = [
         const indices = [...unassignedPrimaryIndices];
         return {
           status: "fail",
-          summary: `${unassignedPrimaryCount} unassigned primary shard${unassignedPrimaryCount === 1 ? "" : "s"} across ${unassignedPrimaryIndices.size} index${unassignedPrimaryIndices.size === 1 ? "" : "es"}.`,
+          summary: `${unassignedPrimaryCount} unassigned primary shard${unassignedPrimaryCount === 1 ? "" : "s"} across ${indices.length} index${indices.length === 1 ? "" : "es"}.`,
           observed: {
             unassigned_primary_count: unassignedPrimaryCount,
             affected_indices: indices.slice(0, 10),
