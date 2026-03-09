@@ -10,7 +10,10 @@ on:
     types: [edited]
 
 concurrency:
-  group: pr-control-panel-${{ github.event.pull_request.number || github.event.issue.number }}
+  # Two separate groups so an issue_comment run (comment→labels) is never
+  # cancelled by the labeled/unlabeled run it triggers (labels→comment).
+  # Within each group, only the latest run matters so stale ones are cancelled.
+  group: pr-control-panel-${{ github.event_name }}-${{ github.event.pull_request.number || github.event.issue.number }}
   cancel-in-progress: true
 
 permissions:
