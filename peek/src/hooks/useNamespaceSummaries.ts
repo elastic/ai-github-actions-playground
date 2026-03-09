@@ -185,9 +185,17 @@ export function useNamespaceSummaries(namespaces: NamespaceInfo[], enabled: bool
           messages: [{ role: "user", content: contextJson }],
           abortSignal: signal,
         });
-        const parsed = namespaceSummariesSchema.safeParse(parseJsonObjectFromText(fallback.text));
+        let fallbackObject: unknown;
+        try {
+          fallbackObject = parseJsonObjectFromText(fallback.text);
+        } catch (parseError) {
+          throw new Error("Failed to parse namespace summaries fallback JSON", {
+            cause: parseError,
+          });
+        }
+        const parsed = namespaceSummariesSchema.safeParse(fallbackObject);
         if (!parsed.success) {
-          throw new Error("Failed to parse namespace summaries response", {
+          throw new Error("Failed to validate namespace summaries fallback JSON", {
             cause: structuredOutputError,
           });
         }
@@ -216,7 +224,7 @@ export function useNamespaceSummaries(namespaces: NamespaceInfo[], enabled: bool
       out[n.namespace] = fallbackSummary(n.sampleMetricNames);
     }
     return out;
-  }, [namespaces]);
+  }, [contextJson]);
 
   return {
     summaries: data ? { ...fallbackSummaries, ...data } : fallbackSummaries,

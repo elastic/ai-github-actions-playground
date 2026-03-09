@@ -42,6 +42,7 @@ export default function DataTableHeader({
       <TableRow>
         {showSummaryColumn && (
           <TableCell
+            aria-busy={summaryLoading || undefined}
             sx={{
               whiteSpace: "nowrap",
               fontWeight: 600,
@@ -60,7 +61,14 @@ export default function DataTableHeader({
               >
                 AI
               </Box>
-              {summaryLoading && <CircularProgress size={12} thickness={6} sx={{ ml: 0.5 }} />}
+              {summaryLoading && (
+                <CircularProgress
+                  size={12}
+                  thickness={6}
+                  aria-label="Loading AI summaries"
+                  sx={{ ml: 0.5 }}
+                />
+              )}
             </Box>
           </TableCell>
         )}

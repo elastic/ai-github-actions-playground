@@ -179,6 +179,7 @@ export function useRowSummaries(columns: EsqlColumn[], visibleRows: unknown[][],
     return () => {
       observerRef.current?.disconnect();
       observerRef.current = null;
+      elementMapRef.current.clear();
     };
   }, []);
 
