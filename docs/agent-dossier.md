@@ -32,7 +32,7 @@ A comprehensive reference of all AI-powered GitHub Actions agents in this reposi
 |---|---|
 | **File** | `pr-review.yml` |
 | **Calls** | `gh-aw-pr-review.lock.yml` |
-| **Triggers** | PR opened, synchronize, reopened, ready_for_review, labeled, unlabeled |
+| **Triggers** | pull_request_target (PR opened, synchronize, reopened, ready_for_review, labeled, unlabeled) |
 | **Schedule** | Event-driven |
 
 **What it does:** Automated code review pipeline. Runs on `pull_request_target` for trusted authors only (`OWNER`, `MEMBER`, `COLLABORATOR`). Reviews every non-draft PR from trusted authors file-by-file, reading full source (not just the patch) for context. Posts inline review comments with severity levels (critical > high > medium > low > nitpick). Actionable feedback is automatically addressed by the **PR Review Feedback Addresser** agent.
@@ -74,7 +74,7 @@ A comprehensive reference of all AI-powered GitHub Actions agents in this reposi
 |---|---|
 | **File** | `update-pr-body.yml` |
 | **Calls** | `gh-aw-update-pr-body.lock.yml` |
-| **Triggers** | PR opened, synchronize, reopened, ready_for_review |
+| **Triggers** | pull_request_target (PR opened, synchronize, reopened, ready_for_review) |
 
 **What it does:** Automatically cleans up and formats PR descriptions. Runs on `pull_request_target` for trusted authors only (`OWNER`, `MEMBER`, `COLLABORATOR`). Strips raw issue prompt text and restructures the body to follow the PR template. Uses `gemini-3-flash` for speed. Skip with the `no-update-pr-body` label.
 
