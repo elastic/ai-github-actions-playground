@@ -35,9 +35,9 @@ A comprehensive reference of all AI-powered GitHub Actions agents in this reposi
 | **Triggers** | PR opened, synchronize, reopened, ready_for_review, labeled, unlabeled |
 | **Schedule** | Event-driven |
 
-**What it does:** Automated code review pipeline. Reviews every non-draft PR file-by-file, reading full source (not just the patch) for context. Posts inline review comments with severity levels (critical > high > medium > low > nitpick). Actionable feedback is automatically addressed by the **PR Review Feedback Addresser** agent.
+**What it does:** Automated code review pipeline. Runs on `pull_request_target` for trusted authors only (`OWNER`, `MEMBER`, `COLLABORATOR`). Reviews every non-draft PR from trusted authors file-by-file, reading full source (not just the patch) for context. Posts inline review comments with severity levels (critical > high > medium > low > nitpick). Actionable feedback is automatically addressed by the **PR Review Feedback Addresser** agent.
 
-**Configuration:** `intensity: aggressive`, `minimum_severity: nitpick`, max 30 comments per run. Skip with the `skip-auto-pr-review` label.
+**Configuration:** `intensity: aggressive`, `minimum_severity: nitpick`, max 30 comments per run. Skip with the `no-pr-review` label.
 
 ---
 
@@ -76,7 +76,7 @@ A comprehensive reference of all AI-powered GitHub Actions agents in this reposi
 | **Calls** | `gh-aw-update-pr-body.lock.yml` |
 | **Triggers** | PR opened, synchronize, reopened, ready_for_review |
 
-**What it does:** Automatically cleans up and formats PR descriptions. Strips raw issue prompt text and restructures the body to follow the PR template. Uses `gpt-5.1-codex-mini` for speed. Skip with the `skip-pr-body-update` label.
+**What it does:** Automatically cleans up and formats PR descriptions. Runs on `pull_request_target` for trusted authors only (`OWNER`, `MEMBER`, `COLLABORATOR`). Strips raw issue prompt text and restructures the body to follow the PR template. Uses `gemini-3-flash` for speed. Skip with the `no-update-pr-body` label.
 
 ---
 
