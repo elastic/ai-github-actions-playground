@@ -17,7 +17,8 @@ interface Props {
 export default function GitHubCatalogSection({ open, onSelect }: Props) {
   const {
     data: catalog = [],
-    isFetching: loading,
+    isLoading: loading,
+    isLoadingError,
     error: queryError,
     refetch,
   } = useQuery<CatalogEntry[]>({
@@ -29,11 +30,12 @@ export default function GitHubCatalogSection({ open, onSelect }: Props) {
     refetchOnReconnect: false,
   });
 
-  const error = queryError
-    ? queryError instanceof Error
-      ? queryError.message
-      : "Failed to load catalog"
-    : null;
+  const error =
+    isLoadingError && queryError
+      ? queryError instanceof Error
+        ? queryError.message
+        : "Failed to load catalog"
+      : null;
 
   return (
     <Box sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2, p: 2 }}>
