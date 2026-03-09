@@ -320,7 +320,7 @@ def phase_kick_ci(prs: list[PRInfo], runs: list[dict], ctx: Ctx) -> int:
     if not bot_prs:
         print("  No bot PRs to check.\n")
         return 0
-    kicked = 0
+    kicked = failed = 0
     for pr in bot_prs:
         if not is_bot_commit(ctx, pr.head_sha):
             continue
@@ -369,14 +369,17 @@ def phase_kick_ci(prs: list[PRInfo], runs: list[dict], ctx: Ctx) -> int:
             kicked += 1
         except subprocess.CalledProcessError:
             print(f"{RED}✗ failed to push empty commit{RESET}")
+            failed += 1
         finally:
             shutil.rmtree(tmpdir, ignore_errors=True)
-    if not kicked:
+    if not kicked and not failed:
         print("  No bot PRs needed a CI kick.")
-    else:
+    if kicked:
         print(f"  Kicked CI for {kicked} PR(s).")
+    if failed:
+        print(f"  {RED}Failed to kick CI for {failed} PR(s).{RESET}")
     print()
-    return 0
+    return failed
 
 
 def phase_update_stale_branches(prs: list[PRInfo], runs: list[dict], ctx: Ctx) -> int:
@@ -488,7 +491,7 @@ def phase_summary(attention: int) -> None:
 
 
 def run_once(args: argparse.Namespace) -> int:
-    """Run all phases once. Returns 0 if ok, 1 if action or attention is needed."""
+    """Run all phases once. Returns 0 on success, 1 if any phase fails or any PR needs attention."""
     ctx = Ctx(
         repo_slug=(args.repo or
                    gh_json("repo", "view", "--json", "nameWithOwner")["nameWithOwner"]),
