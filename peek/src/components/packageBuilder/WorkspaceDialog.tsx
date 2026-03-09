@@ -14,10 +14,21 @@ interface Props {
 
 export default function WorkspaceDialog({ open, onClose, onPickDirectory }: Props) {
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="xs"
+      fullWidth
+      aria-describedby="workspace-dialog-description"
+    >
       <DialogTitle>Pick a Package Workspace</DialogTitle>
       <DialogContent>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        <Typography
+          id="workspace-dialog-description"
+          variant="body2"
+          color="text.secondary"
+          sx={{ mb: 2 }}
+        >
           Choose a directory to use as your <strong>Package Workspace</strong>. All edits you make
           will be live edits within the granted workspace — files are written directly to the folder
           you select, and every change is saved automatically in real time.
