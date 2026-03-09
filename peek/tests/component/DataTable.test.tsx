@@ -601,4 +601,26 @@ describe("DataTable", () => {
     expect(selectedRow).toHaveAttribute("data-row-index", "1");
     expect(screen.getByTestId("row-inspector-field-message")).toHaveTextContent("A");
   });
+
+  it("tracks duplicate-row occurrence when duplicates shift positions after rerender", async () => {
+    const user = userEvent.setup();
+    const initial: EsqlResponse = {
+      columns: [{ name: "message", type: "keyword" }],
+      values: [["A"], ["A"], ["B"]],
+    };
+
+    const { container, rerender } = render(<DataTable data={initial} />);
+    await user.click(screen.getAllByText("A")[1]!);
+
+    const reordered: EsqlResponse = {
+      columns: [{ name: "message", type: "keyword" }],
+      values: [["B"], ["A"], ["A"]],
+    };
+    rerender(<DataTable data={reordered} />);
+
+    const selectedRow = container.querySelector("tr.Mui-selected");
+    expect(selectedRow).not.toBeNull();
+    expect(selectedRow).toHaveAttribute("data-row-index", "2");
+    expect(screen.getByTestId("row-inspector-field-message")).toHaveTextContent("A");
+  });
 });
