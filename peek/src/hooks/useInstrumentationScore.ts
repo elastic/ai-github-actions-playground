@@ -129,6 +129,7 @@ export function useInstrumentationScore({
 
   const score: ServiceInstrumentationScore | null = useMemo(() => {
     if (!hasMainData) return null;
+    if (internalSpanQuery.data == null || duplicateInstanceQuery.data == null) return null;
     const snapshot = parseInstrumentationScoreResult(
       normalizedServiceName,
       mainQuery.data,

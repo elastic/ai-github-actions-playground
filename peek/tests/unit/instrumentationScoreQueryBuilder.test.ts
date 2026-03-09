@@ -33,7 +33,13 @@ describe("buildInstrumentationScoreQuery", () => {
     expect(query).toContain("has_k8s_context");
     expect(query).toContain("has_k8s_pod_uid");
     expect(query).toContain(
-      "has_instance_id = SUM(CASE(resource.attributes.service\\.instance\\.id IS NOT NULL, 1, 0))",
+      'has_instance_id = SUM(CASE(NULLIF(resource.attributes.service\\.instance\\.id, "") IS NOT NULL, 1, 0))',
+    );
+    expect(query).toContain(
+      'has_version = SUM(CASE(NULLIF(service.version, "") IS NOT NULL, 1, 0))',
+    );
+    expect(query).toContain(
+      'has_environment = SUM(CASE(NULLIF(COALESCE(service.environment, deployment.environment.name), "") IS NOT NULL, 1, 0))',
     );
     expect(query).toContain("deployment.environment.name");
     expect(query).toContain("LIMIT 1");
@@ -76,6 +82,12 @@ describe("buildDuplicateInstanceIdQuery", () => {
     expect(query).toContain('service.name == "my-service"');
     expect(query).toContain("resource.attributes.service\\.instance\\.id IS NOT NULL");
     expect(query).toContain("logical_resource");
+    expect(query).toContain('CONCAT(COALESCE(k8s.pod.uid, ""), "|", COALESCE(k8s.pod.name, "")');
+    expect(query).toContain(
+      'EVAL logical_resource = CASE(logical_resource == "|||||", "@@UNVERIFIABLE@@", logical_resource)',
+    );
+    expect(query).toContain("unverifiable_resources");
+    expect(query).toContain("distinct_resources > 1 OR unverifiable_resources > 0");
     expect(query).toContain("duplicate_instance_id_count");
     expect(query).toContain("LIMIT 1");
   });

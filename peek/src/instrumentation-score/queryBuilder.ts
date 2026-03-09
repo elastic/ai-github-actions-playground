@@ -58,9 +58,9 @@ export function buildInstrumentationScoreQuery(
       "total_spans = COUNT(*), " +
       "root_span_count = SUM(is_root), " +
       "root_client_span_count = SUM(is_root_client), " +
-      "has_instance_id = SUM(CASE(resource.attributes.service\\.instance\\.id IS NOT NULL, 1, 0)), " +
-      `has_version = SUM(CASE(${fields.serviceVersion} IS NOT NULL, 1, 0)), ` +
-      "has_environment = SUM(CASE(COALESCE(service.environment, deployment.environment.name) IS NOT NULL, 1, 0)), " +
+      'has_instance_id = SUM(CASE(NULLIF(resource.attributes.service\\.instance\\.id, "") IS NOT NULL, 1, 0)), ' +
+      `has_version = SUM(CASE(NULLIF(${fields.serviceVersion}, "") IS NOT NULL, 1, 0)), ` +
+      'has_environment = SUM(CASE(NULLIF(COALESCE(service.environment, deployment.environment.name), "") IS NOT NULL, 1, 0)), ' +
       "has_k8s_context = SUM(CASE(COALESCE(k8s.pod.uid, k8s.pod.name, k8s.namespace.name, k8s.node.name) IS NOT NULL, 1, 0)), " +
       "has_k8s_pod_uid = SUM(CASE(k8s.pod.uid IS NOT NULL, 1, 0))",
     `LIMIT 1`,
@@ -119,9 +119,10 @@ export function buildDuplicateInstanceIdQuery(
   return buildPipeline([
     `FROM ${fields.index}`,
     buildWherePipe(whereClauses),
-    'EVAL logical_resource = COALESCE(k8s.pod.uid, k8s.pod.name, host.id, host.name, container.id, service.node.name, "@@UNKNOWN@@")',
-    "STATS distinct_resources = COUNT_DISTINCT(logical_resource) BY instance_id = resource.attributes.service\\.instance\\.id",
-    "STATS duplicate_instance_id_count = COUNT(*) WHERE distinct_resources > 1",
+    'EVAL logical_resource = CONCAT(COALESCE(k8s.pod.uid, ""), "|", COALESCE(k8s.pod.name, ""), "|", COALESCE(host.id, ""), "|", COALESCE(host.name, ""), "|", COALESCE(container.id, ""), "|", COALESCE(service.node.name, ""))',
+    'EVAL logical_resource = CASE(logical_resource == "|||||", "@@UNVERIFIABLE@@", logical_resource)',
+    'STATS distinct_resources = COUNT_DISTINCT(logical_resource), unverifiable_resources = SUM(CASE(logical_resource == "@@UNVERIFIABLE@@", 1, 0)) BY instance_id = resource.attributes.service\\.instance\\.id',
+    "STATS duplicate_instance_id_count = COUNT(*) WHERE distinct_resources > 1 OR unverifiable_resources > 0",
     "LIMIT 1",
   ]);
 }
