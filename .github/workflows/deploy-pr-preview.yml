@@ -1,7 +1,7 @@
 name: Deploy PR previews
 
 on:
-  pull_request:
+  pull_request_target:
     types:
       - opened
       - reopened
@@ -18,9 +18,13 @@ concurrency:
 
 jobs:
   deploy-preview:
+    if: >-
+      contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.pull_request.author_association)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - uses: actions/setup-node@v5
         if: github.event.action != 'closed'
