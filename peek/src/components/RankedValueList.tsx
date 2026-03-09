@@ -11,6 +11,8 @@ interface RankedValueListProps {
   rows: RankedValueRow[];
   /** Label appended after the count, e.g. "logs" or "samples". */
   metricLabel: string;
+  /** Optional fixed maximum used to preserve scale when rendering filtered subsets. */
+  maxMetric?: number;
   onSelect: (value: string) => void;
 }
 
@@ -18,14 +20,19 @@ interface RankedValueListProps {
  * Presentational list of ranked values with per-row proportional progress
  * bars. Shared between Logs and Profiling value pickers.
  */
-export default function RankedValueList({ rows, metricLabel, onSelect }: RankedValueListProps) {
-  const maxMetric = rows[0]?.metric || 1;
+export default function RankedValueList({
+  rows,
+  metricLabel,
+  maxMetric: maxMetricProp,
+  onSelect,
+}: RankedValueListProps) {
+  const maxMetric = maxMetricProp ?? rows[0]?.metric ?? 1;
 
   return (
     <List disablePadding>
-      {rows.map((row) => (
+      {rows.map((row, index) => (
         <ListItemButton
-          key={row.value}
+          key={`${row.value}-${row.metric}-${index}`}
           onClick={() => onSelect(row.value)}
           sx={{ mb: 0.5, borderRadius: 1 }}
         >

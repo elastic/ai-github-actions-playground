@@ -527,7 +527,7 @@ export default function ExplorePage() {
                     onSearch={handleSearch}
                     searchResultCount={chartData ? chartData.values.length : null}
                     collapsed={metricsSearchCollapsed}
-                    onToggleCollapsed={() => setMetricsSearchCollapsed(!metricsSearchCollapsed)}
+                    onToggleCollapsed={toggleMetricsCollapse}
                   />
                 </Box>
               </InsightSlot>

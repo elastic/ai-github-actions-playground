@@ -143,7 +143,12 @@ export default function ProfilingValuePicker({
       )}
 
       {!loading && !error && filtered.length > 0 && (
-        <RankedValueList rows={filtered} metricLabel="samples" onSelect={onSelect} />
+        <RankedValueList
+          rows={filtered}
+          metricLabel="samples"
+          maxMetric={rows[0]?.metric}
+          onSelect={onSelect}
+        />
       )}
     </Paper>
   );

@@ -41,7 +41,11 @@ export default function LogsDimensionListPage({
     let query = `FROM logs-* | WHERE ${timeFilter} | WHERE ${dimension} IS NOT NULL`;
     const trimmedSearch = search.trim();
     if (trimmedSearch) {
-      const escaped = trimmedSearch.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+      const escaped = trimmedSearch
+        .replace(/\\/g, "\\\\")
+        .replace(/"/g, '\\"')
+        .replace(/\*/g, "\\*")
+        .replace(/\?/g, "\\?");
       query += ` | WHERE ${dimension} LIKE "*${escaped}*"`;
     }
     query += ` | STATS count = COUNT(*) BY ${dimension} | SORT count DESC | LIMIT 200`;

@@ -9,6 +9,7 @@ import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import TableChartIcon from "@mui/icons-material/TableChart";
 
 import { useGlobalCollapseShortcut } from "../hooks/useGlobalCollapseShortcut";
+import { useSearchPanelUIStore } from "../store/useSearchPanelUIStore";
 import QueryProfilePanel from "./QueryProfilePanel";
 import PartialResultPanel from "./PartialResultPanel";
 import EmptyState from "./EmptyState";
@@ -23,12 +24,12 @@ interface DiscoverPageProps {
 
 export default function DiscoverPage({ mode = "query-lab" }: DiscoverPageProps) {
   const o = useDiscoverOrchestrator(mode);
-  const { discoverSearchCollapsed, setDiscoverSearchCollapsed } = o;
+  const { setDiscoverSearchCollapsed } = o;
 
   // Cmd/Ctrl+[ toggles the query panel collapse
   const toggleDiscoverCollapse = useCallback(
-    () => setDiscoverSearchCollapsed(!discoverSearchCollapsed),
-    [setDiscoverSearchCollapsed, discoverSearchCollapsed],
+    () => setDiscoverSearchCollapsed(!useSearchPanelUIStore.getState().discoverSearchCollapsed),
+    [setDiscoverSearchCollapsed],
   );
   useGlobalCollapseShortcut(toggleDiscoverCollapse);
 
