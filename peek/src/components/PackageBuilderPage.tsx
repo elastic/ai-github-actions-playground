@@ -2,9 +2,12 @@ import { useCallback, useState, useEffect } from "react";
 import { useShallow } from "zustand/react/shallow";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import CircularProgress from "@mui/material/CircularProgress";
+import Chip from "@mui/material/Chip";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
+import FolderOpenIcon from "@mui/icons-material/FolderOpen";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
+import SyncIcon from "@mui/icons-material/Sync";
 
 import { usePackageBuilderStore } from "../store/usePackageBuilderStore";
 import type { WizardStep } from "../types/packageBuilder";
@@ -97,21 +100,37 @@ export default function PackageBuilderPage() {
           <Typography variant="h5" fontWeight={600}>
             {packageData.identity.name || "Unnamed Package"}
           </Typography>
-          <Typography variant="body2" color="text.secondary">
-            in {linkedDir?.name || "Local Memory"}
-          </Typography>
+          {linkedDir ? (
+            <Tooltip
+              title={`All changes are automatically saved to the "${linkedDir.name}" folder on disk.`}
+              arrow
+            >
+              <Chip
+                icon={<FolderOpenIcon />}
+                label={linkedDir.name}
+                size="small"
+                variant="outlined"
+                color="success"
+              />
+            </Tooltip>
+          ) : (
+            <Tooltip
+              title="This package is stored in browser memory only. Use the Export step to save it."
+              arrow
+            >
+              <Chip label="In-memory only" size="small" variant="outlined" color="warning" />
+            </Tooltip>
+          )}
         </Box>
         <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-          {saveStatus === "saving" && <CircularProgress size={14} />}
+          {saveStatus === "saving" && (
+            <Chip icon={<SyncIcon />} label="Saving…" size="small" variant="outlined" />
+          )}
           {saveStatus === "saved" && (
-            <Typography variant="caption" color="success.main">
-              Saved
-            </Typography>
+            <Chip label="Saved" size="small" variant="outlined" color="success" />
           )}
           {saveStatus === "error" && (
-            <Typography variant="caption" color="error.main">
-              Save failed
-            </Typography>
+            <Chip label="Save failed" size="small" variant="outlined" color="error" />
           )}
           <Button size="small" startIcon={<RestartAltIcon />} onClick={handleReset} color="warning">
             Close Package
