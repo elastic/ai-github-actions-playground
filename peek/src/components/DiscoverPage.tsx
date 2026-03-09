@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Alert from "@mui/material/Alert";
 import Paper from "@mui/material/Paper";
 import Skeleton from "@mui/material/Skeleton";
 import Chip from "@mui/material/Chip";
@@ -10,6 +9,7 @@ import TableChartIcon from "@mui/icons-material/TableChart";
 
 import QueryProfilePanel from "./QueryProfilePanel";
 import PartialResultPanel from "./PartialResultPanel";
+import DataFetchAlert from "./DataFetchAlert";
 import EmptyState from "./EmptyState";
 import FieldPickerSidebar from "./FieldPickerSidebar";
 import DataTable from "./visualizations/DataTable";
@@ -84,7 +84,7 @@ export default function DiscoverPage({ mode = "query-lab" }: DiscoverPageProps) 
         handleSelectHistory={o.handleSelectHistory}
       />
 
-      {o.error && <Alert severity="error">{o.error}</Alert>}
+      <DataFetchAlert error={o.error} />
       {o.result && o.lastRunDurationMs !== null && (
         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center" }}>
           <Chip size="small" label={`took ${o.lastRunDurationMs} ms`} />

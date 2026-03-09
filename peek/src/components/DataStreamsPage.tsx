@@ -21,6 +21,8 @@ import IconButton from "@mui/material/IconButton";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import StorageIcon from "@mui/icons-material/Storage";
+
+import DataFetchAlert from "./DataFetchAlert";
 import { useSearchParam } from "../hooks/useSearchParam";
 
 import type { DataStreamInfo } from "../services/es";
@@ -487,7 +489,7 @@ export default function DataStreamsPage() {
           </Stack>
         )}
 
-        {error && <Alert severity="error">{error}</Alert>}
+        <DataFetchAlert error={error} />
         {indicesMetricsError && (
           <Alert severity="warning">
             Index metrics unavailable: {indicesMetricsError}. Docs/Size values may be incomplete.

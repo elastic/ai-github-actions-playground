@@ -1,7 +1,6 @@
 import { useCallback, useState } from "react";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
-import Alert from "@mui/material/Alert";
 import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 
@@ -10,6 +9,7 @@ import InsightSlot from "../InsightSlot";
 
 import LogsFocusPicker, { type LogsFocusDimension } from "./LogsFocusPicker";
 import LogsSearchPanel from "./LogsSearchPanel";
+import DataFetchAlert from "../DataFetchAlert";
 import { LOGS_INSIGHT_SLOT_IDS } from "./logsInsightSlots";
 import type { LogsViewMode } from "./logsUtils";
 import { useLogsPageState } from "./useLogsPageState";
@@ -124,7 +124,7 @@ export default function LogsPage() {
           </ToggleButtonGroup>
         </Stack>
 
-        {state.error && <Alert severity="error">{state.error}</Alert>}
+        <DataFetchAlert error={state.error} />
 
         {showFocusPicker && <LogsFocusPicker onSelect={handleFocusSelect} />}
 

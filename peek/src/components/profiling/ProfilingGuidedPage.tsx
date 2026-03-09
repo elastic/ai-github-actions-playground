@@ -1,7 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useShallow } from "zustand/react/shallow";
-import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import LinearProgress from "@mui/material/LinearProgress";
 import Paper from "@mui/material/Paper";
@@ -11,6 +10,7 @@ import { PAGE_PATHS } from "../../routes/paths";
 import { useConnectionStore } from "../../store/useConnectionStore";
 import { useProfilingFiltersStore } from "../../store/useProfilingFiltersStore";
 import { EMPTY_PROFILING_FILTERS } from "../../types/pageFilters";
+import DataFetchAlert from "../DataFetchAlert";
 import EmptyState from "../EmptyState";
 import PageInsightBanner from "../PageInsightBanner";
 import { INSIGHT_GUARDRAIL } from "../../hooks/insightPromptUtils";
@@ -228,7 +228,7 @@ export default function ProfilingGuidedPage() {
 
       {loading && <LinearProgress />}
 
-      {error && !isMissingProfilingIndex(error) && <Alert severity="error">{error}</Alert>}
+      {!isMissingProfilingIndex(error ?? "") && <DataFetchAlert error={error} />}
       {error && isMissingProfilingIndex(error) && (
         <Paper variant="outlined" sx={{ flex: 1, minHeight: 320, overflow: "auto" }}>
           <EmptyState

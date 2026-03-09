@@ -20,6 +20,7 @@ import {
 import { fetchPackageFiles, type CatalogEntry } from "../../services/packageBuilder/githubCatalog";
 import GitHubCatalogSection from "./GitHubCatalogSection";
 import ImportUploadSection from "./ImportUploadSection";
+import DataFetchAlert from "../DataFetchAlert";
 
 interface Props {
   open: boolean;
@@ -125,11 +126,7 @@ export default function ImportPackageDialog({ open, onClose, onImportComplete }:
           </Stack>
         )}
 
-        {error && (
-          <Alert severity="error" sx={{ mt: 2 }}>
-            {error}
-          </Alert>
-        )}
+        <DataFetchAlert error={error} sx={{ mt: 2 }} />
 
         {warnings.length > 0 && (
           <Stack spacing={1} sx={{ mt: 2 }}>

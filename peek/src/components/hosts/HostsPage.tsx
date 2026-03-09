@@ -1,6 +1,5 @@
 import { useCallback, useMemo } from "react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
-import Alert from "@mui/material/Alert";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import Box from "@mui/material/Box";
@@ -10,6 +9,8 @@ import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+
+import DataFetchAlert from "../DataFetchAlert";
 
 import { PAGE_PATHS } from "../../routes/paths";
 import DateRangePicker from "../DateRangePicker";
@@ -117,7 +118,7 @@ export default function HostsPage({ osType }: HostsPageProps) {
         </Box>
       </Paper>
 
-      {error && <Alert severity="error">{error}</Alert>}
+      <DataFetchAlert error={error} />
 
       {!loading && !hasData && (
         <Paper variant="outlined" sx={{ flex: 1, minHeight: 200, overflow: "auto" }}>

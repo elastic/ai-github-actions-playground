@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import InputAdornment from "@mui/material/InputAdornment";
 import LinearProgress from "@mui/material/LinearProgress";
@@ -14,6 +13,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import Button from "@mui/material/Button";
 
 import ContentSkeleton from "../ContentSkeleton";
+import DataFetchAlert from "../DataFetchAlert";
 import EmptyState from "../EmptyState";
 import DateRangePicker from "../DateRangePicker";
 import { toDashboardTimeRange, toTraceTimeRange } from "../timePresets";
@@ -168,7 +168,7 @@ export default function ProfilingValuePicker({
           size="small"
         />
       )}
-      {error && !missingIndex && <Alert severity="error">{error}</Alert>}
+      {!missingIndex && <DataFetchAlert error={error} />}
 
       {!loading && !error && filtered.length === 0 && (
         <EmptyState heading={emptyHeading} description={emptyDescription} size="small" />

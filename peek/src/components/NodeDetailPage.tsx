@@ -17,6 +17,8 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import MemoryIcon from "@mui/icons-material/Memory";
 
+import DataFetchAlert from "./DataFetchAlert";
+
 import { NODE_PERMISSION_HEADING, NODE_PERMISSION_DESCRIPTION } from "../constants/nodePermissions";
 import { useClusterOverview } from "../hooks/useClusterOverview";
 import { formatBytes } from "../utils/formatBytes";
@@ -294,7 +296,7 @@ export default function NodeDetailPage() {
         )}
       </Paper>
 
-      {error && <Alert severity="error">{error}</Alert>}
+      <DataFetchAlert error={error} />
       {!error && partialErrors.length > 0 && (
         <Alert severity="warning">
           Partial data loaded. Unavailable: {partialErrors.join(", ")}.

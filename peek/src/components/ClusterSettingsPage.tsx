@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import LoadingButton from "./LoadingButton";
 import Chip from "@mui/material/Chip";
@@ -16,6 +15,8 @@ import TableRow from "@mui/material/TableRow";
 import TableSortLabel from "@mui/material/TableSortLabel";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+
+import DataFetchAlert from "./DataFetchAlert";
 
 import { useClusterSettings } from "../hooks/useClusterSettings";
 import { useTableSort } from "../hooks/useTableSort";
@@ -144,7 +145,7 @@ export default function ClusterSettingsPage() {
         </Stack>
       </Paper>
 
-      {error && <Alert severity="error">{error}</Alert>}
+      <DataFetchAlert error={error} />
 
       <Paper
         variant="outlined"

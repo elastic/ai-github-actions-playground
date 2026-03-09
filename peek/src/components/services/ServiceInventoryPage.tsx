@@ -7,6 +7,8 @@ import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
+import DataFetchAlert from "../DataFetchAlert";
+
 import { INSIGHT_GUARDRAIL, INSIGHT_SPECIFICITY_POLICY } from "../../hooks/insightPromptUtils";
 import { usePageSlotInsights } from "../../hooks/usePageSlotInsights";
 import { PAGE_PATHS } from "../../routes/paths";
@@ -227,7 +229,7 @@ export default function ServiceInventoryPage() {
           </Paper>
         </InsightSlot>
 
-        {error && <Alert severity="error">{error}</Alert>}
+        <DataFetchAlert error={error} />
         {!error && sparklineError && (
           <Alert severity="warning">
             Trend sparkline query failed. Showing table data without full trend history.

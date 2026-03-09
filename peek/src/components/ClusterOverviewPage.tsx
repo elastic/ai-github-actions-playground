@@ -8,6 +8,8 @@ import LoadingButton from "./LoadingButton";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
+import DataFetchAlert from "./DataFetchAlert";
+
 import { useClusterOverview } from "../hooks/useClusterOverview";
 import { useHealthChecks } from "../hooks/useHealthChecks";
 import { usePageContextStore } from "../store/usePageContextStore";
@@ -177,7 +179,7 @@ export default function ClusterOverviewPage() {
         />
       )}
 
-      {error && <Alert severity="error">{error}</Alert>}
+      <DataFetchAlert error={error} />
       {!error && partialErrors.length > 0 && dismissedPartialErrorsKey !== partialErrorsKey && (
         <Alert severity="warning" onClose={() => setDismissedPartialErrorsKey(partialErrorsKey)}>
           Partial data loaded. Unavailable: {partialErrors.join(", ")}.

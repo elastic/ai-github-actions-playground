@@ -1,5 +1,4 @@
 import { Fragment, useMemo } from "react";
-import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
@@ -12,6 +11,8 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+
+import DataFetchAlert from "../DataFetchAlert";
 
 import { INSIGHT_GUARDRAIL } from "../../hooks/insightPromptUtils";
 import type { ProfilingFilters } from "../../types/pageFilters";
@@ -265,7 +266,7 @@ export default function ProfilingAdvancedView({
         </Box>
       </Paper>
 
-      {error && !isMissingProfilingIndex(error) && <Alert severity="error">{error}</Alert>}
+      {!isMissingProfilingIndex(error ?? "") && <DataFetchAlert error={error} />}
       {error && isMissingProfilingIndex(error) && (
         <Paper variant="outlined" sx={{ flex: 1, minHeight: 320, overflow: "auto" }}>
           <EmptyState

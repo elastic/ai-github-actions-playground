@@ -9,6 +9,8 @@ import { useHealthChecks } from "../hooks/useHealthChecks";
 import { usePageContextStore } from "../store/usePageContextStore";
 
 import CapacityPressureView from "./cluster-health/CapacityPressureView";
+import DataFetchAlert from "./DataFetchAlert";
+
 import {
   CLUSTER_HEALTH_REFRESH_OPTIONS,
   TABS,
@@ -112,14 +114,16 @@ export default function ClusterHealthPage({ defaultTab = "rules" }: ClusterHealt
         }
       />
 
-      {error ? <Alert severity="error">{error}</Alert> : null}
+      <DataFetchAlert error={error} />
       {!error && partialErrors.length > 0 && !partialDismissed ? (
         <Alert severity="warning" onClose={() => setPartialDismissed(true)}>
           Partial data loaded. Unavailable: {partialErrors.join(", ")}.
         </Alert>
       ) : null}
-      {activeTab !== "rules" && localChecksError ? (
-        <Alert severity="error">Snapshot checks unavailable: {localChecksError}</Alert>
+      {activeTab !== "rules" ? (
+        <DataFetchAlert
+          error={localChecksError ? `Snapshot checks unavailable: ${localChecksError}` : null}
+        />
       ) : null}
       {activeTab !== "rules" && !localChecksError && localChecksLoading ? (
         <Alert severity="info">Health checks running...</Alert>

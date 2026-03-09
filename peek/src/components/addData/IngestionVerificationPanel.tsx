@@ -13,6 +13,7 @@ import type { IngestionVerificationState } from "../../hooks/useRichIngestionVer
 import type { TelemetrySignal } from "../../utils/addDataUtils";
 import type { PerSignalDelta } from "../../services/addData/ingestionQueries";
 import AskAiButton from "../AskAiButton";
+import DataFetchAlert from "../DataFetchAlert";
 
 import SignalVerificationCard from "./SignalVerificationCard";
 import { PULSE_KEYFRAMES } from "./guides/sharedStyles";
@@ -144,9 +145,7 @@ export default function IngestionVerificationPanel({
 
       {/* Overall status alert */}
       {status === "error" && (
-        <Alert severity="error">
-          {error ?? "An error occurred while verifying data ingestion."}
-        </Alert>
+        <DataFetchAlert error={error ?? "An error occurred while verifying data ingestion."} />
       )}
 
       {status === "polling" && !overallDetected && (
