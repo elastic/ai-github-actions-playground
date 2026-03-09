@@ -52,18 +52,18 @@ export function buildInstrumentationScoreQuery(
       `${fields.spanKind} IN ("Internal", "SPAN_KIND_INTERNAL"), 1, 0)`,
     // Aggregate across all spans for this service.
     // Note: resource.attributes.service.instance.id, service.environment, and
-    // deployment.environment are instrumentation-specific fields not present in
+    // deployment.environment.name are instrumentation-specific fields not present in
     // the shared TraceFieldMapping (which covers core trace query fields).
     "STATS " +
       "total_spans = COUNT(*), " +
       "root_span_count = SUM(is_root), " +
       "root_client_span_count = SUM(is_root_client), " +
       `has_service_name = COUNT_DISTINCT(${fields.serviceName}), ` +
-      'has_instance_id = COUNT_DISTINCT(COALESCE(resource.attributes.service\\.instance\\.id, "@@MISSING@@")), ' +
-      `has_version = COUNT_DISTINCT(COALESCE(${fields.serviceVersion}, "@@MISSING@@")), ` +
-      'has_environment = COUNT_DISTINCT(COALESCE(service.environment, deployment.environment, "@@MISSING@@")), ' +
-      'has_k8s_context = COUNT_DISTINCT(COALESCE(k8s.pod.uid, k8s.pod.name, k8s.namespace.name, k8s.node.name, "@@MISSING@@")), ' +
-      'has_k8s_pod_uid = COUNT_DISTINCT(COALESCE(k8s.pod.uid, "@@MISSING@@"))',
+      "has_instance_id = SUM(CASE(resource.attributes.service\\.instance\\.id IS NOT NULL, 1, 0)), " +
+      `has_version = SUM(CASE(${fields.serviceVersion} IS NOT NULL, 1, 0)), ` +
+      "has_environment = SUM(CASE(COALESCE(service.environment, deployment.environment.name) IS NOT NULL, 1, 0)), " +
+      "has_k8s_context = SUM(CASE(COALESCE(k8s.pod.uid, k8s.pod.name, k8s.namespace.name, k8s.node.name) IS NOT NULL, 1, 0)), " +
+      "has_k8s_pod_uid = SUM(CASE(k8s.pod.uid IS NOT NULL, 1, 0))",
     `LIMIT 1`,
   ]);
 }

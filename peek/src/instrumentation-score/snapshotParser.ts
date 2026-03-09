@@ -41,23 +41,19 @@ export function parseInstrumentationScoreResult(
   const rootSpanCount = toFiniteNumber(get(row, "root_span_count"));
   const rootClientSpanCount = toFiniteNumber(get(row, "root_client_span_count"));
 
-  // COUNT_DISTINCT returns 1 even for "@@MISSING@@"; a value > 1 means
-  // at least one real value existed alongside the sentinel.
-  // If exactly 1, it is either the sentinel alone OR a single real value
-  // that happened to be the only distinct value — we conservatively treat
-  // <= 1 as "attribute absent" since the sentinel dominates that case.
+  // Query builder emits count-of-present values for each optional attribute.
+  // Any positive count means the attribute was present in at least one span.
   const hasInstanceIdDistinct = toFiniteNumber(get(row, "has_instance_id"));
   const hasVersionDistinct = toFiniteNumber(get(row, "has_version"));
   const hasEnvironmentDistinct = toFiniteNumber(get(row, "has_environment"));
   const hasK8sContextDistinct = toFiniteNumber(get(row, "has_k8s_context"));
   const hasK8sPodUidDistinct = toFiniteNumber(get(row, "has_k8s_pod_uid"));
 
-  // > 1 means at least one non-sentinel value was found
-  const hasServiceInstanceId = hasInstanceIdDistinct > 1;
-  const hasServiceVersion = hasVersionDistinct > 1;
-  const hasDeploymentEnvironment = hasEnvironmentDistinct > 1;
-  const hasK8sContext = hasK8sContextDistinct > 1;
-  const hasK8sPodUid = hasK8sPodUidDistinct > 1;
+  const hasServiceInstanceId = hasInstanceIdDistinct > 0;
+  const hasServiceVersion = hasVersionDistinct > 0;
+  const hasDeploymentEnvironment = hasEnvironmentDistinct > 0;
+  const hasK8sContext = hasK8sContextDistinct > 0;
+  const hasK8sPodUid = hasK8sPodUidDistinct > 0;
 
   // Parse internal span count from the second query
   let maxInternalSpansPerTrace = 0;

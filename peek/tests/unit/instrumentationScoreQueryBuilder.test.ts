@@ -33,6 +33,10 @@ describe("buildInstrumentationScoreQuery", () => {
     expect(query).toContain("has_environment");
     expect(query).toContain("has_k8s_context");
     expect(query).toContain("has_k8s_pod_uid");
+    expect(query).toContain(
+      "has_instance_id = SUM(CASE(resource.attributes.service\\.instance\\.id IS NOT NULL, 1, 0))",
+    );
+    expect(query).toContain("deployment.environment.name");
     expect(query).toContain("LIMIT 1");
   });
 
@@ -115,17 +119,16 @@ describe("parseInstrumentationScoreResult", () => {
         { name: "has_k8s_context", type: "long" },
         { name: "has_k8s_pod_uid", type: "long" },
       ],
-      values: [[500, 100, 5, 1, 2, 2, 1, 2, 1]],
+      values: [[500, 100, 5, 1, 120, 120, 0, 300, 0]],
     };
     const snapshot = parseInstrumentationScoreResult("svc", mainResult, null, null);
     expect(snapshot.totalSpanCount).toBe(500);
     expect(snapshot.rootSpanCount).toBe(100);
     expect(snapshot.rootClientSpanCount).toBe(5);
     expect(snapshot.hasServiceName).toBe(true);
-    // has_instance_id = 2 means > 1 distinct values (real + sentinel), so present
     expect(snapshot.hasServiceInstanceId).toBe(true);
     expect(snapshot.hasServiceVersion).toBe(true);
-    // has_environment = 1 means only sentinel, so absent
+    // has_environment = 0 means no span had service/deployment environment
     expect(snapshot.hasDeploymentEnvironment).toBe(false);
     expect(snapshot.hasK8sContext).toBe(true);
     expect(snapshot.hasK8sPodUid).toBe(false);

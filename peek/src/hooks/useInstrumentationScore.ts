@@ -95,7 +95,7 @@ export function useInstrumentationScore({
     ...QUERY_OPTIONS,
   });
 
-  const hasData = mainQuery.data != null;
+  const hasData = mainQuery.data != null && mainQuery.data.values.length > 0;
   const duplicateInstanceQuery = useQuery<EsqlResponse | null>({
     queryKey: [
       `${KEY_PREFIX}duplicate-instance-id`,
@@ -125,6 +125,7 @@ export function useInstrumentationScore({
       internalSpanQuery.data,
       duplicateInstanceQuery.data,
     );
+    if (snapshot.totalSpanCount === 0) return null;
     return evaluateInstrumentationScore(INSTRUMENTATION_SCORE_RULES, snapshot);
   }, [
     normalizedServiceName,
