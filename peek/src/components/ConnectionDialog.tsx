@@ -151,7 +151,7 @@ export default function ConnectionDialog() {
         <Button
           onClick={() => void actions.handleTest()}
           disabled={!actions.canAttemptConnection}
-          aria-label="Test"
+          aria-label={actions.testing ? "Test" : undefined}
         >
           {actions.testing ? <CircularProgress size={20} /> : "Test"}
         </Button>
@@ -166,7 +166,7 @@ export default function ConnectionDialog() {
           variant="contained"
           onClick={() => void actions.handleConnect()}
           disabled={!actions.canAttemptConnection}
-          aria-label="Connect"
+          aria-label={actions.testing ? "Connect" : undefined}
         >
           {actions.testing ? <CircularProgress size={20} /> : "Connect"}
         </Button>
