@@ -228,7 +228,7 @@ export default function ProfilingGuidedPage() {
 
       {loading && <LinearProgress />}
 
-      {!isMissingProfilingIndex(error ?? "") && <DataFetchAlert error={error} />}
+      {error && !isMissingProfilingIndex(error) && <DataFetchAlert error={error} />}
       {error && isMissingProfilingIndex(error) && (
         <Paper variant="outlined" sx={{ flex: 1, minHeight: 320, overflow: "auto" }}>
           <EmptyState

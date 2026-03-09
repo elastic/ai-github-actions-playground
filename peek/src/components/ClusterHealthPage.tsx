@@ -120,11 +120,11 @@ export default function ClusterHealthPage({ defaultTab = "rules" }: ClusterHealt
           Partial data loaded. Unavailable: {partialErrors.join(", ")}.
         </Alert>
       ) : null}
-      {activeTab !== "rules" ? (
+      {activeTab !== "rules" && (
         <DataFetchAlert
           error={localChecksError ? `Snapshot checks unavailable: ${localChecksError}` : null}
         />
-      ) : null}
+      )}
       {activeTab !== "rules" && !localChecksError && localChecksLoading ? (
         <Alert severity="info">Health checks running...</Alert>
       ) : null}
