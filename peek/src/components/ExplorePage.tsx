@@ -585,7 +585,7 @@ export default function ExplorePage() {
                   <Box sx={{ position: "relative" }}>
                     <CodeMirror
                       value={displayQuery}
-                      onChange={(v) => setRawQuery(v || null)}
+                      onChange={(v) => setRawQuery(v)}
                       onCreateEditor={setQueryContextView}
                       extensions={metricsQueryEditorExtensions}
                       theme={themeMode}
