@@ -102,6 +102,18 @@ describe("DataFetchAlert", () => {
       expect(onDismiss).toHaveBeenCalledOnce();
     });
 
+    it("shows both Retry and close buttons when onRetry and onDismiss are provided", async () => {
+      const onRetry = vi.fn();
+      const onDismiss = vi.fn();
+      render(<DataFetchAlert error="Dismissable" onRetry={onRetry} onDismiss={onDismiss} />);
+      const retryBtn = screen.getByRole("button", { name: /retry/i });
+      const closeBtn = screen.getByRole("button", { name: /close/i });
+      await userEvent.click(retryBtn);
+      await userEvent.click(closeBtn);
+      expect(onRetry).toHaveBeenCalledOnce();
+      expect(onDismiss).toHaveBeenCalledOnce();
+    });
+
     it("forwards sx prop to the Alert", () => {
       render(<DataFetchAlert error="styled" sx={{ marginBottom: "17px" }} />);
       const alert = screen.getByRole("alert");

@@ -214,7 +214,7 @@ export default function WatcherGetWatchPage() {
         }
       />
 
-      <DataFetchAlert result={watchResult} onRetry={watchResult.refresh} />
+      {!selectedWatchId && <DataFetchAlert result={watchResult} onRetry={watchResult.refresh} />}
       {listResult.status === "error" && <Alert severity="warning">{listResult.error}</Alert>}
 
       <Paper variant="outlined" sx={{ display: "flex", flex: 1, minHeight: 0, overflow: "hidden" }}>
@@ -376,7 +376,7 @@ export default function WatcherGetWatchPage() {
               description="Fetching watch definition..."
             />
           ) : watchResult.status === "error" ? (
-            <DataFetchAlert result={watchResult} onRetry={watchResult.refresh} />
+            <DataFetchAlert error={watchResult.error} onRetry={watchResult.refresh} />
           ) : watchData ? (
             <Stack spacing={1}>
               {(() => {

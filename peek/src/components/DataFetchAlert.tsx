@@ -1,8 +1,10 @@
 import type { ReactNode } from "react";
+import CloseIcon from "@mui/icons-material/Close";
 import Alert, { type AlertColor } from "@mui/material/Alert";
 import type { SxProps, Theme } from "@mui/material/styles";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
 
 import type { DataFetchResult } from "../types/query";
 
@@ -74,12 +76,19 @@ export default function DataFetchAlert<T>(props: DataFetchAlertProps<T>): ReactN
     <Alert
       severity={severity}
       sx={sx}
-      onClose={onDismiss}
+      onClose={onRetry ? undefined : onDismiss}
       action={
         onRetry ? (
-          <Button color="inherit" size="small" onClick={onRetry}>
-            Retry
-          </Button>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+            <Button color="inherit" size="small" onClick={onRetry}>
+              Retry
+            </Button>
+            {onDismiss ? (
+              <IconButton color="inherit" size="small" aria-label="Close" onClick={onDismiss}>
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            ) : null}
+          </Box>
         ) : undefined
       }
     >
