@@ -139,7 +139,7 @@ export default function ProfilingFlamegraph({ tree, onFrameClick }: Props) {
   const [hideSmallFrames, setHideSmallFrames] = useState(false);
   const [hideUnknownFrames, setHideUnknownFrames] = useState(false);
   useEffect(() => {
-    setZoomPath([]);
+    setZoomPath((prev) => (prev.length === 0 ? prev : []));
   }, [tree]);
 
   const visibleTree = useMemo(() => findSubtreeByPath(tree, zoomPath), [tree, zoomPath]);

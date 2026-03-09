@@ -87,13 +87,16 @@ export function useBatchedOverviewQueries<T extends { name: string }>({
 
   // Discovery state: tracks which items returned data after the first pass.
   const [knownWithData, setKnownWithData] = useState<Set<string> | null>(null);
+  const scopeRef = useRef(scopeKey);
+  const effectiveKnownWithData = scopeRef.current === scopeKey ? knownWithData : null;
 
   // Reset the known-with-data cache when the data scope changes.
   useEffect(() => {
+    scopeRef.current = scopeKey;
     setKnownWithData(null);
   }, [scopeKey]);
 
-  const isRefresh = (knownWithData?.size ?? 0) > 0;
+  const isRefresh = (effectiveKnownWithData?.size ?? 0) > 0;
 
   const queries = useQueries({
     queries: items.map((item) => ({
@@ -109,7 +112,7 @@ export function useBatchedOverviewQueries<T extends { name: string }>({
         );
         return result as EsqlResponse;
       },
-      enabled: Boolean(client) && (!isRefresh || knownWithData!.has(item.name)),
+      enabled: Boolean(client) && (!isRefresh || effectiveKnownWithData!.has(item.name)),
       retry: false,
       refetchOnWindowFocus: false,
       refetchOnReconnect: false,
