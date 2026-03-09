@@ -30,29 +30,20 @@ jobs:
           settle-seconds: "60"
           exclude-labels: "no-address-merge-conflicts"
 
-  address-conflicts:
+  dispatch-conflict-fixers:
     needs: detect-conflicted-prs
     if: needs.detect-conflicted-prs.outputs.count != '0'
-    permissions:
-      actions: read
-      contents: write
-      discussions: write
-      issues: write
-      pull-requests: write
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      max-parallel: 5
+      max-parallel: 10
       matrix:
         pr: ${{ fromJson(needs.detect-conflicted-prs.outputs.prs) }}
-    uses: elastic/ai-github-actions/.github/workflows/gh-aw-mention-in-pr-by-id.lock.yml@main
-    with:
-      target-pr-number: ${{ matrix.pr.number }}
-      prompt: |
-        Resolve merge conflicts with the current base branch.
-      additional-instructions: |
-        This run was started by the Address Merge Conflicts workflow.
-        Work only on PR #${{ matrix.pr.number }}.
-        If the PR has merge conflicts, resolve them by merging the latest origin/main into the PR branch and push.
-        If there are no merge conflicts anymore, post a short note and make no code changes.
-    secrets:
-      COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
+    steps:
+      - name: Dispatch conflict resolution for PR #${{ matrix.pr.number }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run address-merge-conflict.yml \
+            --repo "${{ github.repository }}" \
+            --field pr-number="${{ matrix.pr.number }}"
