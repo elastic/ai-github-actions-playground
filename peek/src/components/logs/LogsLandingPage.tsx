@@ -15,7 +15,9 @@ import AppsIcon from "@mui/icons-material/Apps";
 import ComputerIcon from "@mui/icons-material/Computer";
 import DescriptionIcon from "@mui/icons-material/Description";
 import LayersIcon from "@mui/icons-material/Layers";
+import PersonIcon from "@mui/icons-material/Person";
 import TerminalIcon from "@mui/icons-material/Terminal";
+import DatasetIcon from "@mui/icons-material/Dataset";
 
 import { useConnectionStore } from "../../store/useConnectionStore";
 import { useDashboardEditorStore } from "../../store/useDashboardEditorStore";
@@ -51,6 +53,18 @@ const FOCUS_OPTIONS: FocusOption[] = [
     label: "Processes",
     subtext: "Browse log volume by process name",
     icon: <TerminalIcon fontSize="large" color="primary" />,
+  },
+  {
+    dimension: "user.name",
+    label: "Users",
+    subtext: "Browse log volume by user name",
+    icon: <PersonIcon fontSize="large" color="primary" />,
+  },
+  {
+    dimension: "event.dataset",
+    label: "Datasets",
+    subtext: "Fallback option when service/host/process fields are sparse",
+    icon: <DatasetIcon fontSize="large" color="primary" />,
   },
   {
     dimension: "log.file.path",
