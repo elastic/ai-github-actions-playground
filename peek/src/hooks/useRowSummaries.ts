@@ -73,10 +73,18 @@ function parseJsonObjectFromText(text: string): unknown {
 }
 
 function parseBatchSummaries(rawText: string): Map<number, string> {
-  const parsed = parseJsonObjectFromText(rawText) as {
-    summaries?: Array<{ rowIndex?: number; summary?: string }>;
-  };
-  const rows = Array.isArray(parsed.summaries) ? parsed.summaries : [];
+  const parsed = parseJsonObjectFromText(rawText);
+  if (typeof parsed !== "object" || parsed === null) {
+    console.warn("parseBatchSummaries: parsed response is not an object", { parsed, rawText });
+    return new Map();
+  }
+  const summaries = (parsed as { summaries?: unknown }).summaries;
+  if (!Array.isArray(summaries)) {
+    console.warn("parseBatchSummaries: missing or invalid 'summaries' array", { parsed, rawText });
+    return new Map();
+  }
+
+  const rows = summaries as Array<{ rowIndex?: number; summary?: string }>;
   const result = new Map<number, string>();
   for (const entry of rows) {
     const idx = entry.rowIndex;
@@ -299,6 +307,7 @@ export function useRowSummaries(columns: EsqlColumn[], visibleRows: unknown[][],
   }, [requestBatch, visibleIndices, rowsFingerprint, visibleRows.length]);
 
   useEffect(() => {
+    // Wait for IntersectionObserver entries before backfilling non-visible rows to avoid full-table first-render batches.
     if (!observerSettledRef.current && elementMapRef.current.size > 0) return;
     const nonVisible = Array.from({ length: visibleRows.length }, (_, idx) => idx).filter(
       (idx) => !visibleIndices.has(idx),
