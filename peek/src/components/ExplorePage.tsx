@@ -26,6 +26,7 @@ import type { FieldInfo, ExplorerFilter } from "../services/es";
 import type { EsqlResponse } from "../types";
 import { useExploreFields } from "../hooks/useExploreFields";
 import { useExploreQuery } from "../hooks/useExploreQuery";
+import { useGlobalCollapseShortcut } from "../hooks/useGlobalCollapseShortcut";
 import { INSIGHT_GUARDRAIL } from "../hooks/insightPromptUtils";
 import { usePageSlotInsights } from "../hooks/usePageSlotInsights";
 import { formatEsqlQuery } from "../services/es/queryText";
@@ -280,25 +281,11 @@ export default function ExplorePage() {
   }, [effectiveQuery, rawQuery, setRawQuery]);
 
   // Cmd/Ctrl+[ toggles the search panel collapse
-  useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      const target = e.target as HTMLElement | null;
-      if (
-        target &&
-        (target.closest("input, textarea, select, [contenteditable='true'], .cm-editor") ||
-          target.getAttribute("role") === "textbox" ||
-          target.isContentEditable)
-      ) {
-        return;
-      }
-      if ((e.metaKey || e.ctrlKey) && e.key === "[" && !e.repeat) {
-        e.preventDefault();
-        setMetricsSearchCollapsed(!useSearchPanelUIStore.getState().metricsSearchCollapsed);
-      }
-    }
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [setMetricsSearchCollapsed]);
+  const toggleMetricsCollapse = useCallback(
+    () => setMetricsSearchCollapsed(!useSearchPanelUIStore.getState().metricsSearchCollapsed),
+    [setMetricsSearchCollapsed],
+  );
+  useGlobalCollapseShortcut(toggleMetricsCollapse);
 
   if (
     dismissedError !== null &&
