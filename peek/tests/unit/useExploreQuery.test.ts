@@ -5,6 +5,7 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { useExploreQuery } from "../../src/hooks/useExploreQuery";
+import type { ExplorerFilter } from "../../src/services/es";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
 import type { ElasticsearchConnection } from "../../src/types";
 import { resetAllStores } from "../fixtures/test-utils";
@@ -50,7 +51,7 @@ const BASE_PROPS = {
   selectedMetric: "system.cpu.total.pct",
   metricType: "gauge" as const,
   aggregation: "avg" as const,
-  filters: [] as never[],
+  filters: [] as ExplorerFilter[],
   groupBy: null,
   timeRange: { from: "now-1h", to: "now" },
   enabled: true,
