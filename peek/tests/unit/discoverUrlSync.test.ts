@@ -46,6 +46,12 @@ describe("decodeFields", () => {
   it("filters out empty segments from trailing commas", () => {
     expect(decodeFields("a,,b,")).toEqual(new Set(["a", "b"]));
   });
+
+  it("trims field tokens and removes whitespace-only entries", () => {
+    expect(decodeFields("message, field4 ,   ,\t,host.name")).toEqual(
+      new Set(["message", "field4", "host.name"]),
+    );
+  });
 });
 
 describe("encodeFields + decodeFields roundtrip", () => {
@@ -79,5 +85,14 @@ describe("buildDiscoverShareUrl", () => {
       },
     );
     expect(href).toBe("https://peek.dev/discover?from=now-30m&to=now");
+  });
+
+  it("removes q when query is whitespace-only", () => {
+    const href = buildDiscoverShareUrl("https://peek.dev/discover?q=old&from=now-1h&to=now", {
+      query: "   ",
+      selectedFields: new Set(["message"]),
+      timeRange: { from: "now-15m", to: "now" },
+    });
+    expect(href).toBe("https://peek.dev/discover?from=now-15m&to=now&fields=message");
   });
 });

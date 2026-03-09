@@ -27,7 +27,12 @@ export function encodeFields(fields: Set<string>): string | null {
 /** Deserialize a comma-separated field string back to a Set. */
 export function decodeFields(raw: string | null): Set<string> {
   if (!raw) return new Set();
-  return new Set(raw.split(",").filter(Boolean));
+  return new Set(
+    raw
+      .split(",")
+      .map((field) => field.trim())
+      .filter(Boolean),
+  );
 }
 
 interface DiscoverShareState {
@@ -45,7 +50,8 @@ export interface DiscoverUrlHydrationMeta {
 export function buildDiscoverShareUrl(baseHref: string, state: DiscoverShareState): string {
   const url = new URL(baseHref);
   const isDefault = state.query === DEFAULT_DISCOVER_QUERY && state.selectedFields.size === 0;
-  const qValue = isDefault ? null : state.query || null;
+  const trimmedQuery = state.query.trim();
+  const qValue = isDefault || trimmedQuery.length === 0 ? null : state.query;
   const fieldsValue = encodeFields(state.selectedFields);
 
   if (qValue === null) url.searchParams.delete(discoverSearchUrlKeys.q);
@@ -117,8 +123,11 @@ export function useDiscoverUrlSync({
     const decodedFields = decodeFields(initialUrlState.fields);
     const hasExplicitFields = initialUrlState.fields !== null && decodedFields.size > 0;
 
-    if (initialUrlState.q !== null) {
-      setQuery(initialUrlState.q);
+    const hydratedQuery =
+      initialUrlState.q !== null && initialUrlState.q.trim().length > 0 ? initialUrlState.q : null;
+
+    if (hydratedQuery !== null) {
+      setQuery(hydratedQuery);
     }
     if (hasExplicitFields) {
       setSelectedFields(decodedFields);
@@ -129,7 +138,7 @@ export function useDiscoverUrlSync({
 
     hasHydratedFromUrlRef.current = true;
     onHydrated?.({
-      hasQuery: initialUrlState.q !== null,
+      hasQuery: hydratedQuery !== null,
       hasExplicitFields,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -147,10 +156,11 @@ export function useDiscoverUrlSync({
     const timer = setTimeout(() => {
       if (cancelled) return;
       const isDefault = query === DEFAULT_DISCOVER_QUERY && selectedFields.size === 0;
+      const trimmedQuery = query.trim();
       void (async () => {
         try {
           await setUrlState({
-            q: isDefault ? null : query || null,
+            q: isDefault || trimmedQuery.length === 0 ? null : query,
             fields: encodeFields(selectedFields),
             from: timeRange.from,
             to: timeRange.to,

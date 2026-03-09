@@ -94,6 +94,12 @@ describe("DiscoverPage", () => {
     );
   });
 
+  it("does not auto-run when URL q is whitespace-only", async () => {
+    renderDiscoverPage(`q=${encodeURIComponent("   ")}`);
+
+    await waitFor(() => expect(queryMock).not.toHaveBeenCalled());
+  });
+
   it("preserves URL-selected fields for the first hydrated execution", async () => {
     const manyColumns = [
       "@timestamp",
