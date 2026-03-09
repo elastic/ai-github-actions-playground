@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import type { EsqlResponse, ElasticsearchConnection } from "../types";
+import { isElasticsearchError } from "../services/es";
 import { createPersesEsqlDatasource } from "../services/perses/esqlDatasource";
 
 import {
@@ -28,6 +29,7 @@ const QUERY_OPTIONS = {
   refetchOnWindowFocus: false,
   refetchOnReconnect: false,
 } as const;
+const RULES_REQUIRING_DUPLICATE_INSTANCE_QUERY = new Set(["RES-002"]);
 
 function hashString(value: string): string {
   let hash = 5381;
@@ -67,6 +69,9 @@ export function useInstrumentationScore({
   const filters = useMemo(
     () => ({ serviceName: normalizedServiceName, timeFrom, timeTo }),
     [normalizedServiceName, timeFrom, timeTo],
+  );
+  const needsDuplicateInstanceQuery = INSTRUMENTATION_SCORE_RULES.some((rule) =>
+    RULES_REQUIRING_DUPLICATE_INSTANCE_QUERY.has(rule.id),
   );
 
   const mainQuery = useQuery<EsqlResponse | null>({
@@ -119,7 +124,7 @@ export function useInstrumentationScore({
       const query = buildDuplicateInstanceIdQuery(filters);
       return createPersesEsqlDatasource(connection).execute({ query: query.trim() }, signal);
     },
-    enabled: canFetch && hasMainData,
+    enabled: canFetch && hasMainData && needsDuplicateInstanceQuery,
     initialData: null,
     ...QUERY_OPTIONS,
   });
@@ -129,12 +134,13 @@ export function useInstrumentationScore({
 
   const score: ServiceInstrumentationScore | null = useMemo(() => {
     if (!hasMainData) return null;
-    if (internalSpanQuery.data == null || duplicateInstanceQuery.data == null) return null;
+    if (internalSpanQuery.data == null) return null;
+    if (needsDuplicateInstanceQuery && duplicateInstanceQuery.data == null) return null;
     const snapshot = parseInstrumentationScoreResult(
       normalizedServiceName,
       mainQuery.data,
       internalSpanQuery.data,
-      duplicateInstanceQuery.data,
+      needsDuplicateInstanceQuery ? duplicateInstanceQuery.data : null,
     );
     if (snapshot.totalSpanCount === 0) return null;
     return evaluateInstrumentationScore(INSTRUMENTATION_SCORE_RULES, snapshot);
@@ -144,12 +150,13 @@ export function useInstrumentationScore({
     mainQuery.data,
     internalSpanQuery.data,
     duplicateInstanceQuery.data,
+    needsDuplicateInstanceQuery,
   ]);
 
   const error = useMemo(() => {
     const first = mainQuery.error ?? internalSpanQuery.error ?? duplicateInstanceQuery.error;
     if (!first) return null;
-    return first instanceof Error ? first.message : String(first);
+    return formatUnknownError(first);
   }, [mainQuery.error, internalSpanQuery.error, duplicateInstanceQuery.error]);
 
   return {
@@ -157,4 +164,30 @@ export function useInstrumentationScore({
     loading,
     error,
   };
+}
+
+function formatUnknownError(error: unknown): string {
+  if (isElasticsearchError(error)) return error.message;
+  if (error instanceof Error) return error.message;
+  if (typeof error === "object" && error !== null) {
+    const topLevel = error as Record<string, unknown>;
+    if (typeof topLevel.message === "string" && topLevel.message.length > 0) {
+      return topLevel.message;
+    }
+    const nestedError = topLevel.error;
+    if (typeof nestedError === "object" && nestedError !== null) {
+      const nested = nestedError as Record<string, unknown>;
+      if (typeof nested.reason === "string" && nested.reason.length > 0) return nested.reason;
+      if (Array.isArray(nested.root_cause) && nested.root_cause.length > 0) {
+        const firstRootCause = nested.root_cause[0];
+        if (typeof firstRootCause === "object" && firstRootCause !== null) {
+          const firstRootCauseReason = (firstRootCause as Record<string, unknown>).reason;
+          if (typeof firstRootCauseReason === "string" && firstRootCauseReason.length > 0) {
+            return firstRootCauseReason;
+          }
+        }
+      }
+    }
+  }
+  return String(error);
 }
