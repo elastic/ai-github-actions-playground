@@ -276,6 +276,8 @@ describe("useSimpleEsqlQuery", () => {
       expect(result.current.loading).toBe(false);
     });
 
+    expect(mockExecute).toHaveBeenCalledTimes(1);
+    expect(result.current.data).toBeNull();
     expect(result.current.error).toBeNull();
   });
 
