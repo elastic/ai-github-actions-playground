@@ -24,11 +24,11 @@ jobs:
     steps:
       - name: Detect open PRs with merge conflicts
         id: detect
-        uses: elastic/ai-github-actions/.github/actions/get-prs-with-merge-conflicts@8ffdaf1660a1df05770b974f1893355e45c80083
+        uses: elastic/ai-github-actions/.github/actions/get-prs-with-merge-conflicts@46127f22f5181c27e5cdb55beefedae0877cc196
         with:
           github-token: ${{ github.token }}
           settle-seconds: "60"
-          opt-out-label: "no-address-merge-conflicts"
+          exclude-labels: "no-address-merge-conflicts"
 
   address-conflicts:
     needs: detect-conflicted-prs
