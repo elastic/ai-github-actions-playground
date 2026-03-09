@@ -114,6 +114,9 @@ describe("useTracesStore", () => {
 
       const { tags } = useTracesStore.getState().filters;
       expect(tags).toHaveLength(3);
+      expect(tags).toContainEqual({ key: "service.name", value: "checkout", exclude: false });
+      expect(tags).toContainEqual({ key: "service.name", value: "checkout", exclude: true });
+      expect(tags).toContainEqual({ key: "service.name", value: "api", exclude: false });
     });
 
     it("removeTagFilter removes by index", () => {
