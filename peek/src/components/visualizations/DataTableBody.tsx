@@ -1,4 +1,3 @@
-import { useCallback } from "react";
 import TableBody from "@mui/material/TableBody";
 import ButtonBase from "@mui/material/ButtonBase";
 import TableCell from "@mui/material/TableCell";
@@ -51,15 +50,6 @@ export default function DataTableBody({
   observeSummaryRow,
   unobserveSummaryRow,
 }: DataTableBodyProps) {
-  const stableObserve = useCallback(
-    (index: number, element: Element | null) => observeSummaryRow?.(index, element),
-    [observeSummaryRow],
-  );
-  const stableUnobserve = useCallback(
-    (index: number) => unobserveSummaryRow?.(index),
-    [unobserveSummaryRow],
-  );
-
   return (
     <TableBody>
       {[...visibleRows.entries()].map(([rowIdx, row]) => {
@@ -89,8 +79,8 @@ export default function DataTableBody({
                 <SummaryCell
                   rowIdx={rowIdx}
                   entry={rowSummaries.get(rowIdx)}
-                  observeRow={stableObserve}
-                  unobserveRow={stableUnobserve}
+                  observeRow={observeSummaryRow}
+                  unobserveRow={unobserveSummaryRow}
                 />
               )}
               {orderedVisibleColumnIndices.map((colIdx) => {

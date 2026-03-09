@@ -6,7 +6,12 @@ import { useShallow } from "zustand/react/shallow";
 import { useLLMStore } from "../store/useLLMStore";
 import type { EsqlColumn } from "../types";
 
-/** Maximum number of concurrent in-flight LLM requests. */
+/**
+ * Maximum number of concurrent in-flight LLM requests.
+ * Kept low (2) to avoid hitting provider rate limits while still
+ * allowing the next summary to start before the current one finishes,
+ * giving the user a sense of progressive loading.
+ */
 const MAX_CONCURRENT = 2;
 
 /** Maximum columns included in the LLM prompt to keep token count reasonable. */
@@ -210,6 +215,19 @@ export function useRowSummaries(columns: EsqlColumn[], visibleRows: unknown[][],
 
     const batch = pending.slice(0, available);
 
+    // Create the LLM client once per batch (same config for all rows).
+    const {
+      apiKey: currentApiKey,
+      provider: currentProvider,
+      llmModel: currentModel,
+    } = configRef.current;
+    const openai = createOpenAI({
+      apiKey: currentApiKey,
+      ...(currentProvider === "openrouter" ? { baseURL: "https://openrouter.ai/api/v1" } : {}),
+    });
+    const model =
+      currentProvider === "openrouter" ? openai.chat(currentModel) : openai(currentModel);
+
     for (const idx of batch) {
       const row = visibleRows[idx];
       if (!row) continue;
@@ -225,18 +243,6 @@ export function useRowSummaries(columns: EsqlColumn[], visibleRows: unknown[][],
       inFlightRef.current += 1;
 
       const context = buildRowContext(columns, row);
-      const {
-        apiKey: currentApiKey,
-        provider: currentProvider,
-        llmModel: currentModel,
-      } = configRef.current;
-
-      const openai = createOpenAI({
-        apiKey: currentApiKey,
-        ...(currentProvider === "openrouter" ? { baseURL: "https://openrouter.ai/api/v1" } : {}),
-      });
-      const model =
-        currentProvider === "openrouter" ? openai.chat(currentModel) : openai(currentModel);
 
       void generateText({
         model,

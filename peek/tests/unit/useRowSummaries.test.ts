@@ -78,7 +78,7 @@ describe("useRowSummaries", () => {
     expect(result.current.summaries.size).toBe(0);
   });
 
-  it("generates summaries for rows reported as visible", async () => {
+  it("exposes observeRow callback for IntersectionObserver integration", async () => {
     useLLMStore.getState().setApiKey("sk-test-key");
 
     vi.mocked(generateText).mockResolvedValue({
