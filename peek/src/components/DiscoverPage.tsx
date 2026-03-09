@@ -1,4 +1,5 @@
-import { useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useQueryStates } from "nuqs";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Alert from "@mui/material/Alert";
@@ -15,6 +16,11 @@ import FieldPickerSidebar from "./FieldPickerSidebar";
 import DataTable from "./visualizations/DataTable";
 import DiscoverEditorPanel from "./DiscoverEditorPanel";
 import { useDiscoverOrchestrator } from "./useDiscoverOrchestrator";
+import {
+  discoverSearchParsers,
+  discoverSearchUrlKeys,
+  useDiscoverUrlSync,
+} from "./useDiscoverUrlSync";
 
 interface DiscoverPageProps {
   mode?: "query-lab" | "logs";
@@ -23,6 +29,34 @@ interface DiscoverPageProps {
 export default function DiscoverPage({ mode = "query-lab" }: DiscoverPageProps) {
   const o = useDiscoverOrchestrator(mode);
   const setDiscoverSearchCollapsed = o.setDiscoverSearchCollapsed;
+
+  // URL state synchronization
+  const [urlState, setUrlState] = useQueryStates(discoverSearchParsers, {
+    urlKeys: discoverSearchUrlKeys,
+    history: "replace",
+  });
+  const [initialUrlState] = useState(() => urlState);
+
+  const handleUrlHydrated = useCallback(() => {
+    // Schedule auto-execution after URL hydration (only when URL had a query).
+    // We use a microtask so the store is updated before running.
+    if (initialUrlState.q !== null) {
+      queueMicrotask(() => o.handleRunQuery());
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useDiscoverUrlSync({
+    initialUrlState,
+    query: o.effectiveQuery,
+    selectedFields: o.selectedFields,
+    timeRange: o.timeRange,
+    setQuery: o.handleQueryChange,
+    setSelectedFields: o.setSelectedFields,
+    setTimeRange: o.setTimeRange,
+    setUrlState,
+    onHydrated: handleUrlHydrated,
+  });
 
   // Cmd/Ctrl+[ toggles the query panel collapse
   useEffect(() => {

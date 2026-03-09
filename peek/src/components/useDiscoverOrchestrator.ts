@@ -35,14 +35,16 @@ export function useDiscoverOrchestrator(mode: "query-lab" | "logs") {
   const panelTitle = isLogsExplorer ? "Logs Panel" : "Query Lab Panel";
   const connection = useConnectionStore((s) => s.connection);
   const themeMode = useThemeStore((s) => s.themeMode);
-  const { addPanel, refreshInterval, timeRange, parameters } = useDashboardEditorStore(
-    useShallow((s) => ({
-      addPanel: s.addPanel,
-      refreshInterval: s.dashboard.refreshInterval ?? DEFAULT_REFRESH_INTERVAL,
-      timeRange: s.dashboard.timeRange,
-      parameters: s.dashboard.parameters,
-    })),
-  );
+  const { addPanel, refreshInterval, timeRange, parameters, setTimeRange } =
+    useDashboardEditorStore(
+      useShallow((s) => ({
+        addPanel: s.addPanel,
+        refreshInterval: s.dashboard.refreshInterval ?? DEFAULT_REFRESH_INTERVAL,
+        timeRange: s.dashboard.timeRange,
+        parameters: s.dashboard.parameters,
+        setTimeRange: s.setTimeRange,
+      })),
+    );
   const activeDashboardId = useDashboardCatalogStore((s) => s.activeDashboardId);
   const setEditingPanelId = useUIStore((s) => s.setEditingPanelId);
   const {
@@ -423,12 +425,17 @@ export function useDiscoverOrchestrator(mode: "query-lab" | "logs") {
     // Field picker
     columns,
     selectedFields,
+    setSelectedFields,
     toggleField,
     fieldFilter,
     setFieldFilter,
     selectVisibleFields,
     deselectVisibleFields,
     visibleColumns,
+
+    // Time range
+    timeRange,
+    setTimeRange,
 
     // Insights
     expandedInsight,

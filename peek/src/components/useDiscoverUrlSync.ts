@@ -1,0 +1,131 @@
+import { useEffect, useRef } from "react";
+import type { useQueryStates } from "nuqs";
+import { parseAsString } from "nuqs";
+
+import { DEFAULT_DISCOVER_QUERY } from "../store/useQueryStore";
+
+export const discoverSearchParsers = {
+  q: parseAsString,
+  fields: parseAsString,
+  from: parseAsString,
+  to: parseAsString,
+};
+
+export const discoverSearchUrlKeys = {
+  q: "q",
+  fields: "fields",
+  from: "from",
+  to: "to",
+};
+
+/** Serialize a field set to a comma-separated URL value, or null when empty. */
+export function encodeFields(fields: Set<string>): string | null {
+  if (fields.size === 0) return null;
+  return Array.from(fields).join(",");
+}
+
+/** Deserialize a comma-separated field string back to a Set. */
+export function decodeFields(raw: string | null): Set<string> {
+  if (!raw) return new Set();
+  return new Set(raw.split(",").filter(Boolean));
+}
+
+interface UseDiscoverUrlSyncOptions {
+  /** Captured initial URL state (from first render). */
+  initialUrlState: {
+    q: string | null;
+    fields: string | null;
+    from: string | null;
+    to: string | null;
+  };
+  /** Current session query (the last executed or edited query). */
+  query: string;
+  /** Current selected fields in the result table. */
+  selectedFields: Set<string>;
+  /** Current dashboard time range. */
+  timeRange: { from: string; to: string };
+  /** Set the session query in the store. */
+  setQuery: (query: string) => void;
+  /** Set selected fields in the store. */
+  setSelectedFields: (fields: Set<string>) => void;
+  /** Set the global time range. */
+  setTimeRange: (range: { from: string; to: string }) => void;
+  /** nuqs state setter for updating URL params. */
+  setUrlState: ReturnType<typeof useQueryStates<typeof discoverSearchParsers>>[1];
+  /** Callback invoked once after URL hydration so the page can auto-execute. */
+  onHydrated?: () => void;
+}
+
+export function useDiscoverUrlSync({
+  initialUrlState,
+  query,
+  selectedFields,
+  timeRange,
+  setQuery,
+  setSelectedFields,
+  setTimeRange,
+  setUrlState,
+  onHydrated,
+}: UseDiscoverUrlSyncOptions): void {
+  const hasHydratedFromUrlRef = useRef(false);
+  const skipInitialUrlSyncRef = useRef(true);
+
+  // Restore discover state from URL on first mount
+  useEffect(() => {
+    const hasUrlParams =
+      initialUrlState.q !== null ||
+      initialUrlState.fields !== null ||
+      initialUrlState.from !== null ||
+      initialUrlState.to !== null;
+
+    if (!hasUrlParams) {
+      hasHydratedFromUrlRef.current = true;
+      return;
+    }
+
+    if (initialUrlState.q !== null) {
+      setQuery(initialUrlState.q);
+    }
+    if (initialUrlState.fields !== null) {
+      setSelectedFields(decodeFields(initialUrlState.fields));
+    }
+    if (initialUrlState.from && initialUrlState.to) {
+      setTimeRange({ from: initialUrlState.from, to: initialUrlState.to });
+    }
+
+    hasHydratedFromUrlRef.current = true;
+    onHydrated?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Sync app state → URL. Debounced to avoid pushing one history entry per
+  // keystroke when the user types in the editor.
+  useEffect(() => {
+    if (!hasHydratedFromUrlRef.current) return;
+    if (skipInitialUrlSyncRef.current) {
+      skipInitialUrlSyncRef.current = false;
+      return;
+    }
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      if (cancelled) return;
+      const isDefault = query === DEFAULT_DISCOVER_QUERY && selectedFields.size === 0;
+      void (async () => {
+        try {
+          await setUrlState({
+            q: isDefault ? null : query || null,
+            fields: encodeFields(selectedFields),
+            from: timeRange.from,
+            to: timeRange.to,
+          });
+        } catch (err: unknown) {
+          if (!cancelled) console.error("Discover URL sync failed:", err);
+        }
+      })();
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [query, selectedFields, timeRange, setUrlState]);
+}

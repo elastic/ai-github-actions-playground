@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
+import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 
 import DiscoverPage from "../../src/components/DiscoverPage";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
@@ -45,10 +46,12 @@ vi.mock("../../src/components/QueryPipelineSteps", () => ({
   ),
 }));
 
-function renderDiscoverPage() {
+function renderDiscoverPage(searchParams = "") {
   return renderWithQueryClient(
     <MemoryRouter>
-      <DiscoverPage />
+      <NuqsTestingAdapter searchParams={searchParams} hasMemory>
+        <DiscoverPage />
+      </NuqsTestingAdapter>
     </MemoryRouter>,
   );
 }
@@ -103,7 +106,9 @@ describe("DiscoverPage", () => {
     const user = userEvent.setup();
     renderWithQueryClient(
       <MemoryRouter>
-        <DiscoverPage />
+        <NuqsTestingAdapter searchParams="" hasMemory>
+          <DiscoverPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -136,7 +141,9 @@ describe("DiscoverPage", () => {
     const user = userEvent.setup();
     renderWithQueryClient(
       <MemoryRouter>
-        <DiscoverPage />
+        <NuqsTestingAdapter searchParams="" hasMemory>
+          <DiscoverPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -165,7 +172,9 @@ describe("DiscoverPage", () => {
     const user = userEvent.setup();
     renderWithQueryClient(
       <MemoryRouter>
-        <DiscoverPage />
+        <NuqsTestingAdapter searchParams="" hasMemory>
+          <DiscoverPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 

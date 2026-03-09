@@ -1,4 +1,4 @@
-import { useId, useState } from "react";
+import { useId, useState, useCallback } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
@@ -9,6 +9,7 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import IconButton from "@mui/material/IconButton";
 import Collapse from "@mui/material/Collapse";
+import Snackbar from "@mui/material/Snackbar";
 import { alpha } from "@mui/material/styles";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
@@ -16,6 +17,7 @@ import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
 import SpeedIcon from "@mui/icons-material/Speed";
 import BarChartIcon from "@mui/icons-material/BarChart";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import LinkIcon from "@mui/icons-material/Link";
 import CodeMirror from "@uiw/react-codemirror";
 import type { EditorView } from "@codemirror/view";
 import type { Extension } from "@codemirror/state";
@@ -52,14 +54,20 @@ export interface DiscoverEditorPanelProps {
   historyAnchor: HTMLElement | null;
   setHistoryAnchor: (anchor: HTMLElement | null) => void;
   handleSelectHistory: (query: string) => void;
+  onCopyLink?: () => void;
 }
 
 export default function DiscoverEditorPanel(p: DiscoverEditorPanelProps) {
   const hasQueryHistory = p.queryHistory.length > 0;
   const [explainOpen, setExplainOpen] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
   const explainPanelId = useId();
   const explanation = useQueryExplanation(p.effectiveQuery);
   const collapsedSummary = explanation?.trim() || "AI summary unavailable.";
+  const handleCopyLink = useCallback(() => {
+    if (p.onCopyLink) p.onCopyLink();
+    void navigator.clipboard.writeText(window.location.href).then(() => setLinkCopied(true));
+  }, [p.onCopyLink]);
   return (
     <Paper variant="outlined" sx={{ p: 1.5 }}>
       <PageHeader
@@ -102,6 +110,11 @@ export default function DiscoverEditorPanel(p: DiscoverEditorPanelProps) {
         actions={
           p.collapsed ? null : (
             <>
+              <Tooltip title="Copy shareable link">
+                <IconButton size="small" onClick={handleCopyLink} aria-label="Copy link">
+                  <LinkIcon sx={{ fontSize: 18 }} />
+                </IconButton>
+              </Tooltip>
               <Tooltip
                 title={hasQueryHistory ? "View previously executed queries" : "Run a query first"}
               >
@@ -345,6 +358,12 @@ export default function DiscoverEditorPanel(p: DiscoverEditorPanelProps) {
           onRunStep={p.handleRunStep}
         />
       </Collapse>
+      <Snackbar
+        open={linkCopied}
+        autoHideDuration={2000}
+        onClose={() => setLinkCopied(false)}
+        message="Link copied to clipboard"
+      />
     </Paper>
   );
 }
