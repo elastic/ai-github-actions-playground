@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import LoadingButton from "./LoadingButton";
@@ -58,6 +58,7 @@ function sourceColor(source: SettingsSource): "warning" | "success" | "default" 
 
 export default function ClusterSettingsPage() {
   const [search, setSearch] = useState("");
+  const deferredSearch = useDeferredValue(search);
   const [showDefaults, setShowDefaults] = useState(false);
   const { sortField, sortDirection, getSortLabelProps } = useTableSort<"key" | "value">("key");
   const result = useClusterSettings();
@@ -74,7 +75,7 @@ export default function ClusterSettingsPage() {
   }, [data]);
 
   const filteredRows = useMemo(() => {
-    const term = search.trim().toLowerCase();
+    const term = deferredSearch.trim().toLowerCase();
     const sourceFilteredRows = showDefaults
       ? allRows
       : allRows.filter((row) => row.source !== "default");
@@ -93,7 +94,7 @@ export default function ClusterSettingsPage() {
       if (bySource !== 0) return bySource;
       return a.key.localeCompare(b.key);
     });
-  }, [allRows, search, showDefaults, sortField, sortDirection]);
+  }, [allRows, deferredSearch, showDefaults, sortField, sortDirection]);
   const hasAnySettings = allRows.length > 0;
   const hasFilteredRows = filteredRows.length > 0;
   const emptySettingsHeading = hasAnySettings ? "No matching settings" : "No cluster settings";

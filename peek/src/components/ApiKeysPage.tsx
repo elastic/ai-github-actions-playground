@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -30,6 +30,7 @@ export default function ApiKeysPage() {
   const { keys, loading, error, accessNotice, refresh } = useApiKeys();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
+  const deferredSearch = useDeferredValue(search);
   const [selectedKeyId, setSelectedKeyId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const scheduleCopyFeedbackReset = useCopyFeedbackTimeout(() => setCopied(false));
@@ -57,12 +58,12 @@ export default function ApiKeysPage() {
   );
 
   const filteredKeys = useMemo(() => {
-    const term = search.trim().toLowerCase();
+    const term = deferredSearch.trim().toLowerCase();
     if (!term) return keys;
     return keys.filter(
       (k) => k.name.toLowerCase().includes(term) || k.username.toLowerCase().includes(term),
     );
-  }, [search, keys]);
+  }, [deferredSearch, keys]);
 
   // When filtered results don't include the selected key (e.g. search
   // excludes it), hide the detail panel while keeping the selection so it
