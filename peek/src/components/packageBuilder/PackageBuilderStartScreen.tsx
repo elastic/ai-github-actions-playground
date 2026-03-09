@@ -27,7 +27,7 @@ function ActionCard(props: {
     <Card
       variant="outlined"
       sx={{
-        width: 220,
+        width: { xs: "100%", sm: 220 },
         "&:hover": { borderColor: "primary.main" },
         transition: "border-color 0.15s",
       }}

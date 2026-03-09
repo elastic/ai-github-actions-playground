@@ -15,7 +15,15 @@ export default function StepDocs() {
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2, height: "100%" }}>
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: 1,
+        }}
+      >
         <Box>
           <Typography variant="h6">Documentation</Typography>
           <Typography variant="body2" color="text.secondary">
@@ -32,7 +40,15 @@ export default function StepDocs() {
         </Button>
       </Box>
 
-      <Box sx={{ display: "flex", gap: 2, flex: 1, minHeight: 300 }}>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: { xs: "column", md: "row" },
+          gap: 2,
+          flex: 1,
+          minHeight: 300,
+        }}
+      >
         {/* Markdown editor */}
         <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
           <Typography variant="caption" color="text.secondary" gutterBottom>
