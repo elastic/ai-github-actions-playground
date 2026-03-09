@@ -22,61 +22,13 @@ jobs:
       prs: ${{ steps.detect.outputs.prs }}
       count: ${{ steps.detect.outputs.count }}
     steps:
-      - name: Wait for PR mergeability state to settle
-        run: sleep 60
-
       - name: Detect open PRs with merge conflicts
         id: detect
-        uses: actions/github-script@v7
+        uses: elastic/ai-github-actions/.github/actions/get-prs-with-merge-conflicts@8ffdaf1660a1df05770b974f1893355e45c80083
         with:
-          script: |
-            const LABEL = "no-address-merge-conflicts";
-            const owner = context.repo.owner;
-            const repo = context.repo.repo;
-
-            const prs = [];
-            let cursor = null;
-
-            while (true) {
-              const result = await github.graphql(
-                `query($owner: String!, $repo: String!, $cursor: String) {
-                  repository(owner: $owner, name: $repo) {
-                    pullRequests(first: 50, states: OPEN, after: $cursor, orderBy: { field: UPDATED_AT, direction: DESC }) {
-                      nodes {
-                        number
-                        isDraft
-                        mergeStateStatus
-                        labels(first: 50) {
-                          nodes { name }
-                        }
-                      }
-                      pageInfo {
-                        hasNextPage
-                        endCursor
-                      }
-                    }
-                  }
-                }`,
-                { owner, repo, cursor },
-              );
-
-              const connection = result.repository.pullRequests;
-              for (const pr of connection.nodes) {
-                const labels = new Set((pr.labels?.nodes ?? []).map((l) => l.name));
-                const optedIn = !labels.has(LABEL);
-                const conflicted = pr.mergeStateStatus === "DIRTY";
-                if (!pr.isDraft && optedIn && conflicted) {
-                  prs.push({ number: pr.number });
-                }
-              }
-
-              if (!connection.pageInfo.hasNextPage) break;
-              cursor = connection.pageInfo.endCursor;
-            }
-
-            core.info(`Found ${prs.length} conflicted PR(s) without opt-out label '${LABEL}'.`);
-            core.setOutput("prs", JSON.stringify(prs));
-            core.setOutput("count", String(prs.length));
+          github-token: ${{ github.token }}
+          settle-seconds: "60"
+          opt-out-label: "no-address-merge-conflicts"
 
   address-conflicts:
     needs: detect-conflicted-prs
