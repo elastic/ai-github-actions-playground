@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useCallback } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Alert from "@mui/material/Alert";
@@ -8,6 +8,8 @@ import Chip from "@mui/material/Chip";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import TableChartIcon from "@mui/icons-material/TableChart";
 
+import { useGlobalCollapseShortcut } from "../hooks/useGlobalCollapseShortcut";
+import { useSearchPanelUIStore } from "../store/useSearchPanelUIStore";
 import QueryProfilePanel from "./QueryProfilePanel";
 import PartialResultPanel from "./PartialResultPanel";
 import EmptyState from "./EmptyState";
@@ -23,28 +25,14 @@ interface DiscoverPageProps {
 
 export default function DiscoverPage({ mode = "query-lab" }: DiscoverPageProps) {
   const o = useDiscoverOrchestrator(mode);
-  const setDiscoverSearchCollapsed = o.setDiscoverSearchCollapsed;
+  const { setDiscoverSearchCollapsed } = o;
 
   // Cmd/Ctrl+[ toggles the query panel collapse
-  useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      const target = e.target as HTMLElement | null;
-      if (
-        target &&
-        (target.closest("input, textarea, select, [contenteditable='true'], .cm-editor") ||
-          target.getAttribute("role") === "textbox" ||
-          target.isContentEditable)
-      ) {
-        return;
-      }
-      if ((e.metaKey || e.ctrlKey) && e.key === "[" && !e.repeat) {
-        e.preventDefault();
-        setDiscoverSearchCollapsed(!o.discoverSearchCollapsed);
-      }
-    }
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [setDiscoverSearchCollapsed, o.discoverSearchCollapsed]);
+  const toggleDiscoverCollapse = useCallback(
+    () => setDiscoverSearchCollapsed(!useSearchPanelUIStore.getState().discoverSearchCollapsed),
+    [setDiscoverSearchCollapsed],
+  );
+  useGlobalCollapseShortcut(toggleDiscoverCollapse);
 
   return (
     <Box
