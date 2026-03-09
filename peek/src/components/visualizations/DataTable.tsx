@@ -338,7 +338,7 @@ export default memo(function DataTable({
         )}
       </Box>
       <RowInspectorFlyout
-        open={inspectedRowState !== null}
+        open={inspectedRowState !== null && selectedRowIndex !== null}
         onClose={handleCloseInspector}
         columns={data.columns}
         row={inspectedRowState?.row ?? null}
