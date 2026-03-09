@@ -13,6 +13,7 @@ const makeVar = (
   type: PackageVariable["type"] = "text",
   defaultVal = "",
 ): PackageVariable => ({
+  id: crypto.randomUUID(),
   name,
   type,
   title: name,
