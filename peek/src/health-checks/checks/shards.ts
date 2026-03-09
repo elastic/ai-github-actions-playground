@@ -3,7 +3,8 @@ import type { HealthCheckDefinition } from "../types";
 
 interface ShardSummary {
   unassignedCount: number;
-  unassignedPrimaries: CatShardRecord[];
+  unassignedPrimaryCount: number;
+  unassignedPrimaryIndices: Set<string>;
   initializingCount: number;
   relocatingCount: number;
   allocationFailedCount: number;
@@ -20,7 +21,8 @@ function getShardSummary(shards: CatShardRecord[]): ShardSummary {
 
   const summary: ShardSummary = {
     unassignedCount: 0,
-    unassignedPrimaries: [],
+    unassignedPrimaryCount: 0,
+    unassignedPrimaryIndices: new Set<string>(),
     initializingCount: 0,
     relocatingCount: 0,
     allocationFailedCount: 0,
@@ -33,7 +35,10 @@ function getShardSummary(shards: CatShardRecord[]): ShardSummary {
     switch (s.state) {
       case "UNASSIGNED": {
         summary.unassignedCount++;
-        if (s.prirep === "p") summary.unassignedPrimaries.push(s);
+        if (s.prirep === "p") {
+          summary.unassignedPrimaryCount++;
+          if (s.index) summary.unassignedPrimaryIndices.add(s.index);
+        }
         const reason = s["unassigned.reason"] ?? "";
         if (reason.includes("ALLOCATION_FAILED")) summary.allocationFailedCount++;
         if (reason.includes("PRIMARY_FAILED")) summary.primaryFailedCount++;
@@ -118,14 +123,14 @@ export const shardChecks: HealthCheckDefinition[] = [
     evaluate: (snapshot) => {
       const shards = snapshot.data.shards?.catShards;
       if (!shards) return unknownShardsDataResult();
-      const { unassignedPrimaries } = getShardSummary(shards);
-      if (unassignedPrimaries.length > 0) {
-        const indices = [...new Set(unassignedPrimaries.map((s) => s.index).filter(Boolean))];
+      const { unassignedPrimaryCount, unassignedPrimaryIndices } = getShardSummary(shards);
+      if (unassignedPrimaryCount > 0) {
+        const indices = [...unassignedPrimaryIndices];
         return {
           status: "fail",
-          summary: `${unassignedPrimaries.length} unassigned primary shard${unassignedPrimaries.length === 1 ? "" : "s"} across ${indices.length} index${indices.length === 1 ? "" : "es"}.`,
+          summary: `${unassignedPrimaryCount} unassigned primary shard${unassignedPrimaryCount === 1 ? "" : "s"} across ${unassignedPrimaryIndices.size} index${unassignedPrimaryIndices.size === 1 ? "" : "es"}.`,
           observed: {
-            unassigned_primary_count: unassignedPrimaries.length,
+            unassigned_primary_count: unassignedPrimaryCount,
             affected_indices: indices.slice(0, 10),
           },
           recommendation:
