@@ -5,6 +5,8 @@ import Button from "@mui/material/Button";
 import Paper from "@mui/material/Paper";
 import StorageIcon from "@mui/icons-material/Storage";
 
+import DataFetchAlert from "./DataFetchAlert";
+
 import { useStorageExplorerData } from "../hooks/useStorageExplorerData";
 
 import DocLink from "./DocLink";
@@ -173,7 +175,7 @@ export default function StorageExplorerPage() {
           Partial data loaded: failed to fetch {partialErrors.join(", ")}.
         </Alert>
       )}
-      {error && <Alert severity="error">{error}</Alert>}
+      <DataFetchAlert error={error} />
 
       {!loading && summary.shardCopies > 0 && (
         <StorageExplorerSummaryCards

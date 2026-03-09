@@ -26,6 +26,8 @@ import ExpandLess from "@mui/icons-material/ExpandLess";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 
+import DataFetchAlert from "../DataFetchAlert";
+
 import type { ElasticsearchConnection, NodesStatsResponse } from "../../services/es";
 import { useCopyFeedbackTimeout } from "../../hooks/useCopyFeedbackTimeout";
 import { usePipelineSimulate } from "../../hooks/usePipelineSimulate";
@@ -821,7 +823,7 @@ export default function PipelineDetailPanel({
               }
             />
           </Stack>
-          {simulateError && <Alert severity="error">{simulateError}</Alert>}
+          <DataFetchAlert error={simulateError} />
           {simulateResult && <SimulateResults simulateResult={simulateResult} />}
         </Box>
       </Box>

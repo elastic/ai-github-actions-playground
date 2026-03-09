@@ -5,7 +5,6 @@ import CardActionArea from "@mui/material/CardActionArea";
 import LinearProgress from "@mui/material/LinearProgress";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import Alert from "@mui/material/Alert";
 import AddIcon from "@mui/icons-material/Add";
 import FolderOpenIcon from "@mui/icons-material/FolderOpen";
 import GitHubIcon from "@mui/icons-material/GitHub";
@@ -13,6 +12,7 @@ import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 
 import { supportsDirectoryExport } from "../../services/packageBuilder/exportPackage";
+import DataFetchAlert from "../DataFetchAlert";
 import ImportPackageDialog from "./ImportPackageDialog";
 import { useStartScreenHandlers } from "./useStartScreenHandlers";
 
@@ -100,11 +100,7 @@ export default function PackageBuilderStartScreen() {
       </Typography>
 
       {h.starting && <LinearProgress sx={{ maxWidth: 300, width: "100%" }} />}
-      {h.error && (
-        <Alert severity="error" sx={{ maxWidth: 500 }}>
-          {h.error}
-        </Alert>
-      )}
+      <DataFetchAlert error={h.error} sx={{ maxWidth: 500 }} />
 
       <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", justifyContent: "center", mt: 1 }}>
         {supportsDirectoryExport() ? (

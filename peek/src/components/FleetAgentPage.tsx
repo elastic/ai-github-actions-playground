@@ -10,6 +10,8 @@ import Stack from "@mui/material/Stack";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 import Typography from "@mui/material/Typography";
+
+import DataFetchAlert from "./DataFetchAlert";
 import { EChart } from "@perses-dev/components";
 import { parseAsStringEnum, useQueryState } from "nuqs";
 
@@ -144,7 +146,7 @@ export default function FleetAgentPage() {
         />
       )}
 
-      {error && <Alert severity="error">{error}</Alert>}
+      <DataFetchAlert error={error} />
 
       {loading && !agentInfo ? (
         <ContentSkeleton variant="cards" />
