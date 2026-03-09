@@ -54,7 +54,10 @@ export default function DataTableHeader({
               <Box component="span" sx={{ fontWeight: 600, fontSize: "0.75rem" }}>
                 Summary
               </Box>
-              <Box component="span" sx={{ opacity: 0.5, fontSize: "0.75rem" }}>
+              <Box
+                component="span"
+                sx={{ color: "text.secondary", fontSize: "0.75rem", fontWeight: 500 }}
+              >
                 AI
               </Box>
               {summaryLoading && <CircularProgress size={12} thickness={6} sx={{ ml: 0.5 }} />}

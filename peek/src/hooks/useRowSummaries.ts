@@ -117,6 +117,7 @@ export function useRowSummaries(columns: EsqlColumn[], visibleRows: unknown[][],
 
   const generationRef = useRef(0);
   const inFlightIndicesRef = useRef<Set<number>>(new Set());
+  const observerSettledRef = useRef(false);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const elementMapRef = useRef<Map<number, Element>>(new Map());
 
@@ -133,6 +134,7 @@ export function useRowSummaries(columns: EsqlColumn[], visibleRows: unknown[][],
   useEffect(() => {
     generationRef.current += 1;
     inFlightIndicesRef.current = new Set();
+    observerSettledRef.current = false;
 
     const next = new Map<number, RowSummaryEntry>();
     for (let i = 0; i < visibleRows.length; i++) {
@@ -149,6 +151,7 @@ export function useRowSummaries(columns: EsqlColumn[], visibleRows: unknown[][],
   useEffect(() => {
     observerRef.current = new IntersectionObserver(
       (entries) => {
+        if (entries.length > 0) observerSettledRef.current = true;
         setVisibleIndices((prev) => {
           const next = new Set(prev);
           let changed = false;
@@ -193,7 +196,9 @@ export function useRowSummaries(columns: EsqlColumn[], visibleRows: unknown[][],
       });
       if (pending.length === 0) return undefined;
 
-      pending.forEach((idx) => inFlightIndicesRef.current.add(idx));
+      pending.forEach((idx) => {
+        inFlightIndicesRef.current.add(idx);
+      });
 
       const {
         apiKey: currentApiKey,
@@ -221,7 +226,11 @@ export function useRowSummaries(columns: EsqlColumn[], visibleRows: unknown[][],
       );
 
       const controller = new AbortController();
-      const timeoutId = window.setTimeout(() => controller.abort(), SUMMARY_REQUEST_TIMEOUT_MS);
+      let timedOut = false;
+      const timeoutId = window.setTimeout(() => {
+        timedOut = true;
+        controller.abort();
+      }, SUMMARY_REQUEST_TIMEOUT_MS);
       void generateText({
         model,
         system: ROW_SUMMARY_SYSTEM_PROMPT,
@@ -251,6 +260,7 @@ export function useRowSummaries(columns: EsqlColumn[], visibleRows: unknown[][],
         })
         .catch((err: unknown) => {
           if (generation !== generationRef.current) return;
+          if (err instanceof Error && err.name === "AbortError" && !timedOut) return;
           const message =
             err instanceof Error
               ? err.name === "AbortError"
@@ -266,7 +276,9 @@ export function useRowSummaries(columns: EsqlColumn[], visibleRows: unknown[][],
           });
         })
         .finally(() => {
-          pending.forEach((idx) => inFlightIndicesRef.current.delete(idx));
+          pending.forEach((idx) => {
+            inFlightIndicesRef.current.delete(idx);
+          });
           window.clearTimeout(timeoutId);
         });
 
@@ -286,6 +298,7 @@ export function useRowSummaries(columns: EsqlColumn[], visibleRows: unknown[][],
   }, [requestBatch, visibleIndices, rowsFingerprint, visibleRows.length]);
 
   useEffect(() => {
+    if (!observerSettledRef.current && elementMapRef.current.size > 0) return;
     const nonVisible = Array.from({ length: visibleRows.length }, (_, idx) => idx).filter(
       (idx) => !visibleIndices.has(idx),
     );

@@ -166,7 +166,14 @@ export function useNamespaceSummaries(namespaces: NamespaceInfo[], enabled: bool
           abortSignal: signal,
         });
         resultObject = result.object;
-      } catch {
+      } catch (structuredOutputError) {
+        if (signal.aborted) throw structuredOutputError;
+        console.debug("Structured namespace summary failed; using text fallback", {
+          provider,
+          model: llmModel,
+          namespaceCount: namespaces.length,
+          error: structuredOutputError,
+        });
         // Some provider/model combos reject structured output; fall back to text and parse strict JSON.
         const fallback = await generateText({
           model,
@@ -180,7 +187,7 @@ export function useNamespaceSummaries(namespaces: NamespaceInfo[], enabled: bool
         });
         const parsed = namespaceSummariesSchema.safeParse(parseJsonObjectFromText(fallback.text));
         if (!parsed.success) {
-          throw new Error("Failed to parse namespace summaries response");
+          throw new Error("Failed to parse namespace summaries response", { cause: structuredOutputError });
         }
         resultObject = parsed.data;
       }
