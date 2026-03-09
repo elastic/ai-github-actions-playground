@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useDeferredValue, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
@@ -29,6 +29,7 @@ export default function StorageExplorerPage() {
   const navigate = useNavigate();
   const { result, partialErrors, refresh } = useStorageExplorerData();
   const [search, setSearch] = useState("");
+  const deferredSearch = useDeferredValue(search);
   const [showReplicas, setShowReplicas] = useState(true);
   const [showSystemIndices, setShowSystemIndices] = useState(false);
   const [groupBy, setGroupBy] = useState<GroupBy | null>(null);
@@ -41,7 +42,7 @@ export default function StorageExplorerPage() {
   const hasShards = data.shards.length > 0;
 
   const filteredShards = useMemo(() => {
-    const term = search.trim().toLowerCase();
+    const term = deferredSearch.trim().toLowerCase();
     const dataStreamsUnavailable = partialErrors.includes("data streams");
 
     return data.shards.filter((shard) => {
@@ -61,7 +62,7 @@ export default function StorageExplorerPage() {
         `${shard.node} ${shard.signal} ${shard.dataset} ${shard.namespace} ${shard.index} ${shard.shard}`.toLowerCase();
       return text.includes(term);
     });
-  }, [data.shards, partialErrors, search, showReplicas, showSystemIndices]);
+  }, [data.shards, partialErrors, deferredSearch, showReplicas, showSystemIndices]);
 
   const tree = useMemo(
     () => (groupBy ? aggregateTree(filteredShards, groupBy) : new Map<string, TreeNode>()),
