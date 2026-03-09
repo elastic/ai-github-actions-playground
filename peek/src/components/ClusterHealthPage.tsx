@@ -123,6 +123,7 @@ export default function ClusterHealthPage({ defaultTab = "rules" }: ClusterHealt
       {activeTab !== "rules" && (
         <DataFetchAlert
           error={localChecksError ? `Snapshot checks unavailable: ${localChecksError}` : null}
+          severity="warning"
         />
       )}
       {activeTab !== "rules" && !localChecksError && localChecksLoading ? (

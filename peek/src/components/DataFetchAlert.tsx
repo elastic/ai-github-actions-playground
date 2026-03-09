@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import Alert from "@mui/material/Alert";
+import Alert, { type AlertColor } from "@mui/material/Alert";
 import type { SxProps, Theme } from "@mui/material/styles";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -7,6 +7,8 @@ import Button from "@mui/material/Button";
 import type { DataFetchResult } from "../types/query";
 
 interface DataFetchAlertBaseProps {
+  /** Alert severity level. Defaults to `"error"`. */
+  severity?: AlertColor;
   /** Optional callback wired to the "Retry" button. */
   onRetry?: () => void;
   /** Optional callback wired to the Alert close button. */
@@ -52,7 +54,7 @@ type DataFetchAlertProps<T> = DataFetchAlertResultProps<T> | DataFetchAlertError
  * ```
  */
 export default function DataFetchAlert<T>(props: DataFetchAlertProps<T>): ReactNode {
-  const { onRetry, onDismiss, sx } = props;
+  const { severity = "error", onRetry, onDismiss, sx } = props;
 
   let errorMessage: string | undefined;
   let wrapped = false;
@@ -70,7 +72,7 @@ export default function DataFetchAlert<T>(props: DataFetchAlertProps<T>): ReactN
 
   const alert = (
     <Alert
-      severity="error"
+      severity={severity}
       sx={sx}
       onClose={onDismiss}
       action={

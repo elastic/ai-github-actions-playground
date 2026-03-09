@@ -51,9 +51,10 @@ describe("DataFetchAlert", () => {
     it("wraps in a padded Box when using result prop", () => {
       const result: DataFetchResult<string> = { status: "error", error: "fail" };
       const { container } = render(<DataFetchAlert result={result} />);
-      const box = container.firstElementChild;
+      const box = container.firstElementChild as HTMLElement | null;
       expect(box?.tagName).toBe("DIV");
       expect(box?.querySelector("[role='alert']")).toBeInTheDocument();
+      expect(box ? getComputedStyle(box).padding : "").toBe("16px");
     });
   });
 
@@ -102,8 +103,9 @@ describe("DataFetchAlert", () => {
     });
 
     it("forwards sx prop to the Alert", () => {
-      render(<DataFetchAlert error="styled" sx={{ mb: 2 }} />);
-      expect(screen.getByRole("alert")).toBeInTheDocument();
+      render(<DataFetchAlert error="styled" sx={{ marginBottom: "17px" }} />);
+      const alert = screen.getByRole("alert");
+      expect(getComputedStyle(alert).marginBottom).toBe("17px");
     });
   });
 });

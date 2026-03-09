@@ -344,7 +344,7 @@ function DiskUsageContent({
         </Stack>
       )}
       {diskUsageLoading && <LinearProgress sx={{ my: 2 }} />}
-      <DataFetchAlert error={diskUsageError} />
+      <DataFetchAlert error={diskUsageError} onRetry={onAnalyzeDiskUsage} />
       {diskUsage && (
         <Stack spacing={1.5}>
           <MetaGrid>
