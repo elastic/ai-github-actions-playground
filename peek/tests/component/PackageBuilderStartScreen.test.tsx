@@ -61,7 +61,10 @@ describe("PackageBuilderStartScreen", () => {
     render(<PackageBuilderStartScreen />);
 
     await user.click(screen.getByRole("button", { name: /open folder/i }));
-    expect(screen.getByRole("dialog", { name: /pick a package workspace/i })).toBeInTheDocument();
+    const dialog = screen.getByRole("dialog", { name: /pick a package workspace/i });
+    expect(dialog).toBeInTheDocument();
+    expect(within(dialog).getByText(/choose a directory to use as your/i)).toBeInTheDocument();
+    expect(within(dialog).getByText(/saved automatically/i)).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /choose directory/i }));
 
