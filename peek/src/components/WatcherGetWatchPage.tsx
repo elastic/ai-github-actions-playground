@@ -23,6 +23,8 @@ import { useTableSort } from "../hooks/useTableSort";
 import { useWatcherQueryWatches } from "../hooks/useWatcherQueryWatches";
 import { useWatcherWatch } from "../hooks/useWatcherWatch";
 
+import DataFetchAlert from "./DataFetchAlert";
+
 import EmptyState from "./EmptyState";
 import PageContainer from "./PageContainer";
 import PageHeaderSection from "./PageHeaderSection";
@@ -212,7 +214,7 @@ export default function WatcherGetWatchPage() {
         }
       />
 
-      {watchResult.status === "error" && <Alert severity="error">{watchResult.error}</Alert>}
+      {!selectedWatchId && <DataFetchAlert result={watchResult} onRetry={watchResult.refresh} />}
       {listResult.status === "error" && <Alert severity="warning">{listResult.error}</Alert>}
 
       <Paper variant="outlined" sx={{ display: "flex", flex: 1, minHeight: 0, overflow: "hidden" }}>
@@ -374,7 +376,7 @@ export default function WatcherGetWatchPage() {
               description="Fetching watch definition..."
             />
           ) : watchResult.status === "error" ? (
-            <Alert severity="error">{watchResult.error}</Alert>
+            <DataFetchAlert error={watchResult.error} onRetry={watchResult.refresh} />
           ) : watchData ? (
             <Stack spacing={1}>
               {(() => {

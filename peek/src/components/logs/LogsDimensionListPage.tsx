@@ -1,5 +1,4 @@
 import { useCallback, useState } from "react";
-import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import InputAdornment from "@mui/material/InputAdornment";
@@ -9,6 +8,7 @@ import Typography from "@mui/material/Typography";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import SearchIcon from "@mui/icons-material/Search";
 
+import DataFetchAlert from "../DataFetchAlert";
 import type { ElasticsearchConnection } from "../../services/es";
 import { useDashboardEditorStore } from "../../store/useDashboardEditorStore";
 import { useOpenInDiscover } from "../../hooks/useOpenInDiscover";
@@ -115,7 +115,7 @@ export default function LogsDimensionListPage({
 
       {loading && <ContentSkeleton variant="list" />}
 
-      {error && <Alert severity="error">{error}</Alert>}
+      <DataFetchAlert error={error} />
 
       {!loading && !error && rows.length === 0 && (
         <EmptyState heading={emptyHeading} description={emptyDescription} size="small" />

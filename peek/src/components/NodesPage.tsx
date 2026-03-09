@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
+
+import DataFetchAlert from "./DataFetchAlert";
 import LoadingButton from "./LoadingButton";
 
 import { useClusterOverview } from "../hooks/useClusterOverview";
@@ -105,7 +107,7 @@ export default function NodesPage() {
         }
       />
 
-      {error && <Alert severity="error">{error}</Alert>}
+      <DataFetchAlert error={error} />
       {!error && partialErrors.length > 0 && (
         <Alert severity="warning">
           Partial data loaded. Unavailable: {partialErrors.join(", ")}.
