@@ -9,6 +9,7 @@ import type { InstrumentationScoreRule } from "../types";
 
 const SPEC_BASE_URL = "https://github.com/instrumentation-score/spec/blob/main/rules";
 
+/** Per the spec, no more than 10 INTERNAL spans per trace per service. */
 const MAX_INTERNAL_SPANS_PER_TRACE = 10;
 
 export const spanRules: InstrumentationScoreRule[] = [

@@ -38,8 +38,9 @@ export function parseInstrumentationScoreResult(
 
   // COUNT_DISTINCT returns 1 even for "@@MISSING@@"; a value > 1 means
   // at least one real value existed alongside the sentinel.
-  // If exactly 1, it could be either the sentinel OR a real value;
-  // we treat > 1 as "has real value" and == 1 as "check the sentinel".
+  // If exactly 1, it is either the sentinel alone OR a single real value
+  // that happened to be the only distinct value — we conservatively treat
+  // <= 1 as "attribute absent" since the sentinel dominates that case.
   const hasInstanceIdDistinct = toFiniteNumber(get(row, "has_instance_id"));
   const hasVersionDistinct = toFiniteNumber(get(row, "has_version"));
   const hasEnvironmentDistinct = toFiniteNumber(get(row, "has_environment"));

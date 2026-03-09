@@ -50,7 +50,10 @@ export function buildInstrumentationScoreQuery(
       `is_root_client = CASE(${fields.parentSpanId} IS NULL AND ${fields.spanKind} IN ("Client", "SPAN_KIND_CLIENT"), 1, 0), ` +
       "is_internal = CASE(" +
       `${fields.spanKind} IN ("Internal", "SPAN_KIND_INTERNAL"), 1, 0)`,
-    // Aggregate across all spans for this service
+    // Aggregate across all spans for this service.
+    // Note: resource.attributes.service.instance.id, service.environment, and
+    // deployment.environment are instrumentation-specific fields not present in
+    // the shared TraceFieldMapping (which covers core trace query fields).
     "STATS " +
       "total_spans = COUNT(*), " +
       "root_span_count = SUM(is_root), " +
