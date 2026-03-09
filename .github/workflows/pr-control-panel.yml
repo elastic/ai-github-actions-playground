@@ -37,9 +37,15 @@ jobs:
           CONTROL_PANEL_ITEMS: |
             no-pr-actions-detective|Investigate CI Failures|Posts a quick diagnosis and suggested fixes when PR checks fail, so recovery is faster.|fbca04|Disable PR Actions Detective workflow
             no-pr-review|Run an extra, in-depth, PR Review|Runs the automated PR reviewer to surface bugs, risks, and maintainability issues earlier.|0e8a16|Disable PR Review workflow
+            no-pr-labeler|Auto-label pull requests|Applies one size/risk classification label to help triage and route reviews.|2f855a|Disable PR Labeler workflow
             no-update-pr-body|Keep the body of the PR updated|Keeps the PR description aligned with the latest commits so reviewers have accurate context.|1d76db|Disable Update PR Body workflow
             no-address-pr-feedback|Address review feedback|Applies straightforward bot review suggestions automatically to reduce manual cleanup.|5319e7|Disable Address PR Review Feedback workflow
             no-address-merge-conflicts|Address merge conflicts|Automatically resolves simple main-branch merge conflicts so the PR stays mergeable.|d73a4a|Disable Address Merge Conflicts workflow
+          CONTROL_PANEL_ITEMS_FORK: |
+            no-pr-actions-detective|Investigate CI Failures|Posts a quick diagnosis and suggested fixes when PR checks fail, so recovery is faster.|fbca04|Disable PR Actions Detective workflow
+            no-pr-review|Run an extra, in-depth, PR Review|Runs the automated PR reviewer to surface bugs, risks, and maintainability issues earlier.|0e8a16|Disable PR Review workflow
+            no-pr-labeler|Auto-label pull requests|Applies one size/risk classification label to help triage and route reviews.|2f855a|Disable PR Labeler workflow
+            no-update-pr-body|Keep the body of the PR updated|Keeps the PR description aligned with the latest commits so reviewers have accurate context.|1d76db|Disable Update PR Body workflow
           CONTROL_PANEL_ADVANCED_ITEMS: |
             no-pr-preview|Enable PR Preview deployment|Opt out of this to skip PR preview deployment when preview workflows are configured to honor the label.|0366d6|Disable PR Preview deployment
         with:
@@ -50,6 +56,10 @@ jobs:
             const MARKER = "<!-- pr-control-panel -->";
             const KEY_PREFIX = "label";
             const CONFIG_DELIMITER = "|";
+            const FORK_FORCED_DISABLED_LABELS = [
+              "no-address-pr-feedback",
+              "no-address-merge-conflicts",
+            ];
 
             const owner = context.repo.owner;
             const repo = context.repo.repo;
@@ -92,13 +102,29 @@ jobs:
               process.env.CONTROL_PANEL_ITEMS ?? "",
               "CONTROL_PANEL_ITEMS",
             );
+            const FORK_PRIMARY_ITEMS = parseItemsConfig(
+              process.env.CONTROL_PANEL_ITEMS_FORK ?? "",
+              "CONTROL_PANEL_ITEMS_FORK",
+            );
             const ADVANCED_ITEMS = parseItemsConfig(
               process.env.CONTROL_PANEL_ADVANCED_ITEMS ?? "",
               "CONTROL_PANEL_ADVANCED_ITEMS",
             );
             const ITEMS = [...PRIMARY_ITEMS, ...ADVANCED_ITEMS];
+            const FORK_ITEMS = [...FORK_PRIMARY_ITEMS, ...ADVANCED_ITEMS];
+            const ALL_ITEMS = [
+              ...new Map([...ITEMS, ...FORK_ITEMS].map((item) => [item.label, item])).values(),
+            ];
             if (PRIMARY_ITEMS.length === 0) {
               throw new Error("CONTROL_PANEL_ITEMS must include at least one item.");
+            }
+            if (FORK_PRIMARY_ITEMS.length === 0) {
+              throw new Error("CONTROL_PANEL_ITEMS_FORK must include at least one item.");
+            }
+
+            function isForkPullRequest(pr) {
+              const baseRepoFullName = `${owner}/${repo}`;
+              return pr?.head?.repo?.full_name !== baseRepoFullName;
             }
 
             function readCheckboxByKey(body, key) {
@@ -114,22 +140,28 @@ jobs:
               return null;
             }
 
-            function buildControlPanelBody(state) {
+            function buildControlPanelBody(primaryItems, advancedItems, state, isForkPr) {
               return [
                 MARKER,
-                "Automatically handle the following tasks using AI:",
+                "🤖 AI Assistant: I will handle the following tasks for you:",
                 "",
-                ...PRIMARY_ITEMS.map(
+                ...(isForkPr
+                  ? [
+                      "_Fork PR detected: controls that require pushing commits are disabled._",
+                      "",
+                    ]
+                  : []),
+                ...primaryItems.map(
                   (item) =>
                     `- [${state[item.label] ? "x" : " "}] ${item.displayLabel} <!-- ${KEY_PREFIX}:${item.label} -->`,
                 ),
                 "",
-                ...(ADVANCED_ITEMS.length > 0
+                ...(advancedItems.length > 0
                   ? [
                       "<details>",
                       "<summary>Advanced controls</summary>",
                       "",
-                      ...ADVANCED_ITEMS.map(
+                      ...advancedItems.map(
                         (item) =>
                           `- [${state[item.label] ? "x" : " "}] ${item.displayLabel} <!-- ${KEY_PREFIX}:${item.label} -->`,
                       ),
@@ -166,7 +198,7 @@ jobs:
 
             async function ensureControlLabels() {
               await Promise.all(
-                ITEMS.map((item) => ensureLabel(item.label, item.color, item.description)),
+                ALL_ITEMS.map((item) => ensureLabel(item.label, item.color, item.description)),
               );
             }
 
@@ -184,8 +216,13 @@ jobs:
               return comments.find((comment) => comment.body?.includes(MARKER)) ?? null;
             }
 
-            async function upsertControlPanel(issueNumber, state) {
-              const body = buildControlPanelBody(state);
+            async function upsertControlPanel(issueNumber, panelConfig, state) {
+              const body = buildControlPanelBody(
+                panelConfig.primaryItems,
+                panelConfig.advancedItems,
+                state,
+                panelConfig.isForkPr,
+              );
               const existing = await findControlPanelComment(issueNumber);
               if (existing) {
                 if ((existing.body ?? "") === body) {
@@ -220,7 +257,27 @@ jobs:
               return response.data;
             }
 
-            async function syncLabelsFromState(issueNumber, labelSet, state) {
+            function getPanelConfig(pr) {
+              const isForkPr = isForkPullRequest(pr);
+              if (!isForkPr) {
+                return {
+                  isForkPr,
+                  primaryItems: PRIMARY_ITEMS,
+                  advancedItems: ADVANCED_ITEMS,
+                  managedItems: ITEMS,
+                  forcedDisabledLabels: [],
+                };
+              }
+              return {
+                isForkPr,
+                primaryItems: FORK_PRIMARY_ITEMS,
+                advancedItems: ADVANCED_ITEMS,
+                managedItems: FORK_ITEMS,
+                forcedDisabledLabels: FORK_FORCED_DISABLED_LABELS,
+              };
+            }
+
+            async function syncLabelsFromState(issueNumber, labelSet, state, panelConfig) {
               async function addLabel(name) {
                 if (labelSet.has(name)) return;
                 await github.rest.issues.addLabels({
@@ -249,24 +306,36 @@ jobs:
                 core.info(`Removed label: ${name}`);
               }
 
-              for (const item of ITEMS) {
+              for (const item of panelConfig.managedItems) {
                 if (state[item.label]) await removeLabel(item.label);
                 else await addLabel(item.label);
+              }
+
+              for (const label of panelConfig.forcedDisabledLabels) {
+                await addLabel(label);
               }
             }
 
             if (context.eventName === "pull_request_target") {
-              const prNumber = context.payload.pull_request.number;
+              const pr = context.payload.pull_request;
+              const panelConfig = getPanelConfig(pr);
+              const prNumber = pr.number;
               await ensureControlLabels();
               const existing = await findControlPanelComment(prNumber);
-              const labels = new Set((context.payload.pull_request.labels || []).map((l) => l.name));
-              const hasAnyOptOutLabel = ITEMS.some((item) => labels.has(item.label));
+              const labels = new Set((pr.labels || []).map((l) => l.name));
+              const relevantLabels = [
+                ...panelConfig.managedItems.map((item) => item.label),
+                ...panelConfig.forcedDisabledLabels,
+              ];
+              const hasAnyOptOutLabel = relevantLabels.some((label) => labels.has(label));
               const state =
                 existing || hasAnyOptOutLabel
-                  ? Object.fromEntries(ITEMS.map((item) => [item.label, !labels.has(item.label)]))
-                  : Object.fromEntries(ITEMS.map((item) => [item.label, true]));
-              await syncLabelsFromState(prNumber, labels, state);
-              await upsertControlPanel(prNumber, state);
+                  ? Object.fromEntries(
+                      panelConfig.managedItems.map((item) => [item.label, !labels.has(item.label)]),
+                    )
+                  : Object.fromEntries(panelConfig.managedItems.map((item) => [item.label, true]));
+              await syncLabelsFromState(prNumber, labels, state, panelConfig);
+              await upsertControlPanel(prNumber, panelConfig, state);
               return;
             }
 
@@ -285,16 +354,17 @@ jobs:
 
             await ensureControlLabels();
             const pr = await getPullRequest(issueNumber);
+            const panelConfig = getPanelConfig(pr);
             const labels = new Set((pr.labels || []).map((l) => l.name));
             const currentState = Object.fromEntries(
-              ITEMS.map((item) => [item.label, !labels.has(item.label)]),
+              panelConfig.managedItems.map((item) => [item.label, !labels.has(item.label)]),
             );
             const desiredState = Object.fromEntries(
-              ITEMS.map((item) => [
+              panelConfig.managedItems.map((item) => [
                 item.label,
                 readCheckboxByKey(commentBody, item.label) ?? currentState[item.label],
               ]),
             );
 
-            await syncLabelsFromState(issueNumber, labels, desiredState);
-            await upsertControlPanel(issueNumber, desiredState);
+            await syncLabelsFromState(issueNumber, labels, desiredState, panelConfig);
+            await upsertControlPanel(issueNumber, panelConfig, desiredState);
