@@ -187,7 +187,9 @@ export function useNamespaceSummaries(namespaces: NamespaceInfo[], enabled: bool
         });
         const parsed = namespaceSummariesSchema.safeParse(parseJsonObjectFromText(fallback.text));
         if (!parsed.success) {
-          throw new Error("Failed to parse namespace summaries response", { cause: structuredOutputError });
+          throw new Error("Failed to parse namespace summaries response", {
+            cause: structuredOutputError,
+          });
         }
         resultObject = parsed.data;
       }
