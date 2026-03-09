@@ -170,7 +170,10 @@ async function captureThemeScreenshots(browser, opts, pages, themeMode, outDir) 
         continue;
       }
 
-      await page.getByRole("button", { name: navButton, exact: true }).click();
+      await page
+        .getByRole("navigation", { name: /main navigation/i })
+        .getByRole("button", { name: navButton, exact: true })
+        .click();
       // Wait for client-side route change to take effect. Some pages (e.g.
       // profiling focus picker) don't trigger network requests, so networkidle
       // alone resolves instantly. A brief wait lets React render the new route
