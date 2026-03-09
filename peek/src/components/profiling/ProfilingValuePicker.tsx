@@ -55,7 +55,6 @@ export default function ProfilingValuePicker({
     buildQuery,
     dimensionColumn: dimension,
     metricColumn: "samples",
-    deps: [buildQuery],
   });
 
   const filtered = useMemo(() => {

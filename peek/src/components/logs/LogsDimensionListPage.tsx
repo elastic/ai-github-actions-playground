@@ -53,7 +53,6 @@ export default function LogsDimensionListPage({
     buildQuery,
     dimensionColumn: dimension,
     metricColumn: "count",
-    deps: [buildQuery],
   });
 
   const handleOpenInQueryLab = useCallback(

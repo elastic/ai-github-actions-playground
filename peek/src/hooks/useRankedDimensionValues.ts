@@ -17,8 +17,6 @@ interface UseRankedDimensionValuesOptions {
   dimensionColumn: string;
   /** Column name for the metric value (e.g. "count" or "samples"). */
   metricColumn: string;
-  /** Reactive dependencies that should trigger a re-fetch when they change. */
-  deps: readonly unknown[];
 }
 
 interface UseRankedDimensionValuesResult {
@@ -39,7 +37,6 @@ export function useRankedDimensionValues({
   buildQuery,
   dimensionColumn,
   metricColumn,
-  deps,
 }: UseRankedDimensionValuesOptions): UseRankedDimensionValuesResult {
   const [rows, setRows] = useState<RankedValueRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -76,8 +73,7 @@ export function useRankedDimensionValues({
     } finally {
       if (!controller.signal.aborted && abortRef.current === controller) setLoading(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [connection, dimensionColumn, metricColumn, ...deps]);
+  }, [connection, dimensionColumn, metricColumn, buildQuery]);
 
   useEffect(() => {
     void fetchValues();
