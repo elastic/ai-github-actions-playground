@@ -159,7 +159,7 @@ def gh_post(endpoint: str, repo_slug: str) -> bool:
 
 def compute_ci_status(runs: list[dict], head_sha: str) -> CIStatus:
     pr_runs = [r for r in runs
-               if r.get("event") == "pull_request" and r.get("headSha") == head_sha]
+               if r.get("event") in ("pull_request", "pull_request_target") and r.get("headSha") == head_sha]
     if not pr_runs:
         return CIStatus.NO_RUNS
     if any(r.get("status") == "action_required" or r.get("conclusion") == "action_required"
@@ -283,7 +283,7 @@ def phase_approve_runs(prs: list[PRInfo], runs: list[dict], ctx: Ctx) -> int:
         if not pr.is_bot or pr.is_wip:
             continue
         blocked = [r for r in runs
-                   if r.get("event") == "pull_request"
+                   if r.get("event") in ("pull_request", "pull_request_target")
                    and r.get("headSha") == pr.head_sha
                    and (r.get("status") == "action_required"
                         or r.get("conclusion") == "action_required")]
