@@ -31,6 +31,7 @@ import EmptyState from "./EmptyState";
 import OverviewFailedItemsSection from "./OverviewFailedItemsSection";
 import type { FailedItem } from "./OverviewFailedItemsSection";
 import { classifyFieldVisual, getFieldVisualIcon } from "./explore/fieldVisuals";
+import ToolbarRow from "./ToolbarRow";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -199,7 +200,7 @@ export default function MetricOverviewGrid({
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%", overflow: "auto", p: 1 }}>
       {/* Header */}
-      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center", mb: 1 }}>
+      <ToolbarRow sx={{ mb: 1 }}>
         <Typography variant="body2" component="div">
           {namespace} namespace
         </Typography>
@@ -226,7 +227,7 @@ export default function MetricOverviewGrid({
             )}
           </>
         )}
-      </Box>
+      </ToolbarRow>
 
       {/* Grid of mini charts */}
       <Box

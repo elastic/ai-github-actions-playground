@@ -16,6 +16,7 @@ import DateRangePicker from "../DateRangePicker";
 import EmptyState from "../EmptyState";
 import PageHeader from "../PageHeader";
 import { toDashboardTimeRange, toTraceTimeRange } from "../timePresets";
+import ToolbarRow from "../ToolbarRow";
 
 import K8sInsightsPanel from "./K8sInsightsPanel";
 import K8sInventoryTable from "./K8sInventoryTable";
@@ -73,7 +74,7 @@ export default function KubernetesPage() {
         description="Inventory and health overview of your Kubernetes clusters, namespaces, workloads, and pods."
       />
       <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center" }}>
+        <ToolbarRow>
           <DateRangePicker
             value={toDashboardTimeRange({ from: filters.timeFrom, to: filters.timeTo })}
             onChange={(range) => {
@@ -102,7 +103,7 @@ export default function KubernetesPage() {
               {activeRows.length === 1 ? tabSingularLabel : tabLabel.toLowerCase()} found
             </Typography>
           )}
-        </Box>
+        </ToolbarRow>
       </Paper>
 
       <Paper variant="outlined">

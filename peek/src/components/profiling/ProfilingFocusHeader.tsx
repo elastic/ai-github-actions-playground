@@ -1,4 +1,3 @@
-import Box from "@mui/material/Box";
 import Breadcrumbs from "@mui/material/Breadcrumbs";
 import Button from "@mui/material/Button";
 import Link from "@mui/material/Link";
@@ -7,6 +6,8 @@ import SpeedIcon from "@mui/icons-material/Speed";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 
 import { PROFILING_DIMENSION_LABELS, type ProfilingFocusDimension } from "./profilingQueryBuilder";
+
+import ToolbarRow from "../ToolbarRow";
 
 interface ProfilingFocusHeaderProps {
   dimension: ProfilingFocusDimension | null;
@@ -22,13 +23,9 @@ export default function ProfilingFocusHeader({
   const dimensionLabel = dimension ? PROFILING_DIMENSION_LABELS[dimension] : null;
 
   return (
-    <Box
+    <ToolbarRow
       sx={{
-        display: "flex",
-        flexWrap: "wrap",
-        gap: 1,
         justifyContent: "space-between",
-        alignItems: "center",
         mb: 2,
       }}
     >
@@ -65,6 +62,6 @@ export default function ProfilingFocusHeader({
       <Button size="small" variant="outlined" startIcon={<SwapHorizIcon />} onClick={onChangeFocus}>
         Change focus
       </Button>
-    </Box>
+    </ToolbarRow>
   );
 }

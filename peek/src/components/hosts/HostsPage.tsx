@@ -16,6 +16,7 @@ import DateRangePicker from "../DateRangePicker";
 import EmptyState from "../EmptyState";
 import PageHeader from "../PageHeader";
 import { toDashboardTimeRange, toTraceTimeRange } from "../timePresets";
+import ToolbarRow from "../ToolbarRow";
 
 import HostHoneycombChart from "./HostHoneycombChart";
 import HostInventoryTable from "./HostInventoryTable";
@@ -89,7 +90,7 @@ export default function HostsPage({ osType }: HostsPageProps) {
 
       {/* Toolbar */}
       <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center" }}>
+        <ToolbarRow>
           <TextField
             size="small"
             label="Search hosts"
@@ -114,7 +115,7 @@ export default function HostsPage({ osType }: HostsPageProps) {
               {hostRows.length} {hostRows.length === 1 ? "host" : "hosts"} found
             </Typography>
           )}
-        </Box>
+        </ToolbarRow>
       </Paper>
 
       {error && <Alert severity="error">{error}</Alert>}
