@@ -96,9 +96,16 @@ describe("useRowSummaries", () => {
 
   it("resets summaries when rows change", async () => {
     useLLMStore.getState().setApiKey("sk-test-key");
-    vi.mocked(generateText).mockResolvedValue({
-      text: "Summary",
-    } as Awaited<ReturnType<typeof generateText>>);
+    const oldSummary = "Old rows summary";
+    const newSummary = "New row summary";
+    vi.mocked(generateText).mockImplementation(async ({ messages }) => {
+      const userMessage =
+        messages.find((message) => message.role === "user" && typeof message.content === "string")
+          ?.content ?? "";
+      return {
+        text: userMessage.includes("server-4") ? newSummary : oldSummary,
+      } as Awaited<ReturnType<typeof generateText>>;
+    });
 
     const { result, rerender } = renderHook(
       ({ rows }) => useRowSummaries(TEST_COLUMNS, rows, true),
@@ -111,6 +118,7 @@ describe("useRowSummaries", () => {
     await waitFor(() => {
       expect(vi.mocked(generateText)).toHaveBeenCalled();
       expect(result.current.summaries.size).toBeGreaterThan(0);
+      expect(result.current.summaries.get(0)?.summary).toBe(oldSummary);
     });
 
     // Change the rows
@@ -120,6 +128,8 @@ describe("useRowSummaries", () => {
     await waitFor(() => {
       expect(result.current.summaries.size).toBeLessThanOrEqual(1);
       expect([...result.current.summaries.keys()].every((k) => k === 0)).toBe(true);
+      expect(result.current.summaries.get(0)?.summary).toBe(newSummary);
+      expect(result.current.summaries.get(0)?.summary).not.toBe(oldSummary);
     });
   });
 
