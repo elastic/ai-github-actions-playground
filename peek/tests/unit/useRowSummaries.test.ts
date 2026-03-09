@@ -2,7 +2,7 @@
 
 import React from "react";
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { renderHook } from "@testing-library/react";
+import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { generateText } from "ai";
 
@@ -76,7 +76,7 @@ describe("useRowSummaries", () => {
     expect(result.current.summaries.size).toBe(0);
   });
 
-  it("exposes observeRow callback for IntersectionObserver integration", async () => {
+  it("exposes observeRow callback and keeps summaries bounded", () => {
     useLLMStore.getState().setApiKey("sk-test-key");
 
     vi.mocked(generateText).mockResolvedValue({
@@ -95,19 +95,32 @@ describe("useRowSummaries", () => {
   });
 
   it("resets summaries when rows change", async () => {
+    useLLMStore.getState().setApiKey("sk-test-key");
+    vi.mocked(generateText).mockResolvedValue({
+      text: "Summary",
+    } as Awaited<ReturnType<typeof generateText>>);
+
     const { result, rerender } = renderHook(
-      ({ rows }) => useRowSummaries(TEST_COLUMNS, rows, false),
+      ({ rows }) => useRowSummaries(TEST_COLUMNS, rows, true),
       {
         wrapper: createWrapper(),
         initialProps: { rows: TEST_ROWS },
       },
     );
 
+    await waitFor(() => {
+      expect(vi.mocked(generateText)).toHaveBeenCalled();
+      expect(result.current.summaries.size).toBeGreaterThan(0);
+    });
+
     // Change the rows
     rerender({ rows: [["server-4", 55.0, "New row"]] });
 
-    // Summaries should reset
-    expect(result.current.summaries.size).toBe(0);
+    // Previous summaries should be cleared after row-set change.
+    await waitFor(() => {
+      expect(result.current.summaries.size).toBeLessThanOrEqual(1);
+      expect([...result.current.summaries.keys()].every((k) => k === 0)).toBe(true);
+    });
   });
 
   it("provides stable observeRow and unobserveRow callbacks", () => {
