@@ -66,6 +66,17 @@ export const NAV_GROUPS: NavGroup[] = [
   { label: "Security", sectionIds: ["users-roles", "api-keys"] },
 ];
 
+if (import.meta.env.DEV) {
+  const knownIds = new Set(sections.map((s) => s.id));
+  for (const group of NAV_GROUPS) {
+    for (const id of group.sectionIds) {
+      if (!knownIds.has(id)) {
+        console.warn(`DocsNavSidebar: unknown sectionId "${id}" in group "${group.label}"`);
+      }
+    }
+  }
+}
+
 interface DocsNavSidebarProps {
   filteredSections: DocSection[];
   activeSection: string;
@@ -91,16 +102,6 @@ export default function DocsNavSidebar({
     for (const s of sections) map.set(s.id, s);
     return map;
   }, []);
-  if (import.meta.env.DEV) {
-    const knownIds = new Set(sections.map((s) => s.id));
-    for (const group of NAV_GROUPS) {
-      for (const id of group.sectionIds) {
-        if (!knownIds.has(id)) {
-          console.warn(`DocsNavSidebar: unknown sectionId "${id}" in group "${group.label}"`);
-        }
-      }
-    }
-  }
 
   const toggleGroup = useCallback((label: string) => {
     setCollapsedGroups((prev) => ({ ...prev, [label]: !prev[label] }));
