@@ -124,6 +124,7 @@ export function useDiscoverOrchestrator(mode: "query-lab" | "logs") {
   const {
     runQuery,
     loading,
+    abort,
     error,
     activeStep,
     stepDurationsMs,
@@ -417,6 +418,7 @@ export function useDiscoverOrchestrator(mode: "query-lab" | "logs") {
     activeStep,
     stepDurationsMs,
     handleRunQuery,
+    handleCancelQuery: abort,
     runDiscoverQuery,
     handleRunStep,
     profileMode,
