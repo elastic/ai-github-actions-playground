@@ -17,6 +17,8 @@ import TableSortLabel from "@mui/material/TableSortLabel";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import StorageIcon from "@mui/icons-material/Storage";
+
+import DataFetchAlert from "./DataFetchAlert";
 import { parseAsString, parseAsStringEnum, useQueryState } from "nuqs";
 
 import { useApiConsoleStore } from "../store/useApiConsoleStore";
@@ -347,7 +349,7 @@ export default function IndicesPage() {
           </Stack>
         )}
 
-        {error && <Alert severity="error">{error}</Alert>}
+        <DataFetchAlert error={error} />
         {slotInsights.error && (
           <Alert severity="warning">AI insights unavailable: {slotInsights.error}</Alert>
         )}

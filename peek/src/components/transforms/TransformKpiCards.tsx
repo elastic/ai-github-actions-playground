@@ -24,33 +24,35 @@ export function TransformKpiCards({
     <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
       <Box sx={{ minWidth: 150 }}>
         <OverviewInfoCard title="Total Transforms">
-          <Typography variant="h6">{total}</Typography>
+          <Typography variant="h3" component="div">
+            {total}
+          </Typography>
         </OverviewInfoCard>
       </Box>
       <Box sx={{ minWidth: 150 }}>
         <OverviewInfoCard title="Running">
-          <Typography variant="h6">
+          <Typography variant="h3" component="div">
             {running > 0 ? <Chip label={running} color="success" size="small" /> : running}
           </Typography>
         </OverviewInfoCard>
       </Box>
       <Box sx={{ minWidth: 150 }}>
         <OverviewInfoCard title="Failed">
-          <Typography variant="h6">
+          <Typography variant="h3" component="div">
             {failed > 0 ? <Chip label={failed} color="error" size="small" /> : failed}
           </Typography>
         </OverviewInfoCard>
       </Box>
       <Box sx={{ minWidth: 150 }}>
         <OverviewInfoCard title="Stopped">
-          <Typography variant="h6">
+          <Typography variant="h3" component="div">
             {stopped > 0 ? <Chip label={stopped} size="small" /> : stopped}
           </Typography>
         </OverviewInfoCard>
       </Box>
       <Box sx={{ minWidth: 170 }}>
         <OverviewInfoCard title="Health Issues">
-          <Typography variant="h6">
+          <Typography variant="h3" component="div">
             {healthIssues > 0 ? (
               <Chip label={healthIssues} color="warning" size="small" />
             ) : (

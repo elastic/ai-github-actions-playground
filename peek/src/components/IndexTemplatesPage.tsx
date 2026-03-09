@@ -1,5 +1,4 @@
 import { useCallback, useDeferredValue, useMemo, useState } from "react";
-import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import { parseAsBoolean, parseAsString, parseAsStringEnum, useQueryStates } from "nuqs";
@@ -7,6 +6,7 @@ import { parseAsBoolean, parseAsString, parseAsStringEnum, useQueryStates } from
 import { useSimulatedIndexTemplate, useTemplates } from "../hooks/useTemplates";
 
 import ComponentTemplatesTable from "./ComponentTemplatesTable";
+import DataFetchAlert from "./DataFetchAlert";
 import DocLink from "./DocLink";
 import IndexTemplatesOverviewCards from "./IndexTemplatesOverviewCards";
 import IndexTemplatesTable from "./IndexTemplatesTable";
@@ -162,11 +162,7 @@ export default function IndexTemplatesPage() {
   );
 
   if (result.status === "error") {
-    return (
-      <Box sx={{ p: 2 }}>
-        <Alert severity="error">{result.error}</Alert>
-      </Box>
-    );
+    return <DataFetchAlert result={result} />;
   }
 
   return (

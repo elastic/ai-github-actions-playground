@@ -6,7 +6,6 @@ import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
 import IconButton from "@mui/material/IconButton";
 import Button from "@mui/material/Button";
-import Alert from "@mui/material/Alert";
 import CircularProgress from "@mui/material/CircularProgress";
 import SendIcon from "@mui/icons-material/Send";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
@@ -21,6 +20,7 @@ import { useConnectionStore } from "../store/useConnectionStore";
 import { buildChatRuntime, getChatRequestTimeoutMs } from "../services/chatRuntime";
 
 import ChatMessageContent from "./ChatMessageContent";
+import DataFetchAlert from "./DataFetchAlert";
 import { formatToolResult, type ToolActivity } from "./chatUtils";
 
 export default function ChatPage({ hideHeader = false }: { hideHeader?: boolean }) {
@@ -224,11 +224,7 @@ export default function ChatPage({ hideHeader = false }: { hideHeader?: boolean 
         </Box>
       )}
 
-      {error && (
-        <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 1 }}>
-          {error}
-        </Alert>
-      )}
+      <DataFetchAlert error={error} onDismiss={() => setError(null)} sx={{ mb: 1 }} />
 
       <Paper
         variant="outlined"

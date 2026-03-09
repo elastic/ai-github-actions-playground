@@ -135,10 +135,11 @@ describe("TransformsPage", () => {
     expect(screen.getByText("Failed")).toBeInTheDocument();
     expect(screen.getByText("Stopped")).toBeInTheDocument();
     expect(screen.getByText("Health Issues")).toBeInTheDocument();
-    const headings = screen.getAllByRole("heading", { level: 6 });
-    expect(headings.map((h) => h.textContent?.trim())).toEqual(
-      expect.arrayContaining(["2", "1", "1", "0"]),
-    );
+    // KPI card values are rendered as <div> tags styled with the h3 typography variant.
+    // Verify the expected numeric values appear within the KPI cards.
+    const kpiValues = document.querySelectorAll(".MuiTypography-h3");
+    const texts = Array.from(kpiValues).map((el) => el.textContent?.trim());
+    expect(texts).toEqual(expect.arrayContaining(["2", "1", "1", "0"]));
   });
 
   it("distinguishes continuous and batch transforms", async () => {

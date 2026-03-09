@@ -27,6 +27,7 @@ import {
 } from "../../services/packageBuilder/generateManifest";
 import { renderTemplate, findUndefinedVars } from "../../services/packageBuilder/renderTemplate";
 import { exportPackageZip, downloadBlob } from "../../services/packageBuilder/exportPackage";
+import DataFetchAlert from "../DataFetchAlert";
 
 type PackageBuilderState = Parameters<typeof usePackageBuilderStore>[0] extends (
   state: infer T,
@@ -262,11 +263,7 @@ export default function StepExport() {
           Files are being auto-saved to {linkedDir.name}.
         </Alert>
       )}
-      {exportError && (
-        <Alert severity="error" sx={{ py: 0.5 }}>
-          {exportError}
-        </Alert>
-      )}
+      <DataFetchAlert error={exportError} sx={{ py: 0.5 }} />
 
       <Box
         sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, gap: 2, minHeight: 400 }}
