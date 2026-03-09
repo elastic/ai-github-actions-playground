@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -35,11 +35,22 @@ export default function LogsDimensionListPage({
   const openInDiscover = useOpenInDiscover();
   const timeRange = useDashboardEditorStore((s) => s.dashboard.timeRange);
   const [search, setSearch] = useState("");
+  const trimmedSearch = search.trim();
 
   const buildQuery = useCallback(() => {
     const timeFilter = timeRangeToEsqlFilter(timeRange);
-    return `FROM logs-* | WHERE ${timeFilter} | WHERE ${dimension} IS NOT NULL | STATS count = COUNT(*) BY ${dimension} | SORT count DESC | LIMIT 200`;
-  }, [dimension, timeRange]);
+    let query = `FROM logs-* | WHERE ${timeFilter} | WHERE ${dimension} IS NOT NULL`;
+    if (trimmedSearch) {
+      const escapedSearch = trimmedSearch
+        .replace(/\\/g, "\\\\")
+        .replace(/"/g, '\\"')
+        .replace(/\*/g, "\\*")
+        .replace(/\?/g, "\\?");
+      query += ` | WHERE ${dimension} LIKE "*${escapedSearch}*"`;
+    }
+    query += ` | STATS count = COUNT(*) BY ${dimension} | SORT count DESC | LIMIT 200`;
+    return query;
+  }, [dimension, timeRange, trimmedSearch]);
 
   const { rows, loading, error } = useRankedDimensionValues({
     connection,
@@ -47,11 +58,6 @@ export default function LogsDimensionListPage({
     dimensionColumn: dimension,
     metricColumn: "count",
   });
-  const filtered = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    return term ? rows.filter((row) => row.value.toLowerCase().includes(term)) : rows;
-  }, [rows, search]);
-
   const handleOpenInQueryLab = useCallback(
     (value: string) => {
       const escaped = escapeEsqlString(value);
@@ -64,10 +70,10 @@ export default function LogsDimensionListPage({
 
   const { singular: dimensionLabel, plural: dimensionPluralLabel } =
     LOGS_DIMENSION_LABELS[dimension];
-  const noData = rows.length === 0;
+  const noData = rows.length === 0 && !trimmedSearch;
   const emptyHeading = noData
     ? `No ${dimensionLabel.toLowerCase()} data found`
-    : `No results match "${search}"`;
+    : `No results match "${trimmedSearch}"`;
   const emptyDescription = noData
     ? `No values for ${dimension} were found in logs-* for the current time range.`
     : "Try a different search term.";
@@ -111,13 +117,13 @@ export default function LogsDimensionListPage({
 
       {error && <Alert severity="error">{error}</Alert>}
 
-      {!loading && !error && filtered.length === 0 && (
+      {!loading && !error && rows.length === 0 && (
         <EmptyState heading={emptyHeading} description={emptyDescription} size="small" />
       )}
 
-      {!loading && !error && filtered.length > 0 && (
+      {!loading && !error && rows.length > 0 && (
         <RankedValueList
-          rows={filtered}
+          rows={rows}
           metricLabel="logs"
           maxMetric={rows[0]?.metric}
           onSelect={handleOpenInQueryLab}
