@@ -1,5 +1,4 @@
 import { useMemo } from "react";
-import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
 import Tooltip from "@mui/material/Tooltip";
@@ -9,6 +8,8 @@ import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import { splitEsqlPipeline } from "../services/es/queryText";
 
 import { formatDuration } from "../utils/formatDuration";
+
+import ToolbarRow from "./ToolbarRow";
 
 interface QueryPipelineStepsProps {
   query: string;
@@ -37,7 +38,7 @@ export default function QueryPipelineSteps({
   if (steps.length <= 1) return null;
 
   return (
-    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center", mt: 0.5 }}>
+    <ToolbarRow sx={{ mt: 0.5 }}>
       <Typography variant="caption" color="text.secondary" sx={{ flexShrink: 0 }}>
         Run to step:
       </Typography>
@@ -86,6 +87,6 @@ export default function QueryPipelineSteps({
           </Tooltip>
         );
       })}
-    </Box>
+    </ToolbarRow>
   );
 }
