@@ -125,13 +125,18 @@ export const shardChecks: HealthCheckDefinition[] = [
       if (!shards) return unknownShardsDataResult();
       const { unassignedPrimaryCount, unassignedPrimaryIndices } = getShardSummary(shards);
       if (unassignedPrimaryCount > 0) {
-        const indices = [...unassignedPrimaryIndices];
+        const affectedIndices: string[] = [];
+        for (const index of unassignedPrimaryIndices) {
+          if (affectedIndices.length === 10) break;
+          affectedIndices.push(index);
+        }
+        const indexCount = unassignedPrimaryIndices.size;
         return {
           status: "fail",
-          summary: `${unassignedPrimaryCount} unassigned primary shard${unassignedPrimaryCount === 1 ? "" : "s"} across ${indices.length} index${indices.length === 1 ? "" : "es"}.`,
+          summary: `${unassignedPrimaryCount} unassigned primary shard${unassignedPrimaryCount === 1 ? "" : "s"} across ${indexCount} index${indexCount === 1 ? "" : "es"}.`,
           observed: {
             unassigned_primary_count: unassignedPrimaryCount,
-            affected_indices: indices.slice(0, 10),
+            affected_indices: affectedIndices,
           },
           recommendation:
             "Unassigned primaries mean data loss risk. Check allocation explain for details.",
