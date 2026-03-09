@@ -80,6 +80,7 @@ vi.mock("../../src/components/traces/span-tree-plugin/SpanTreeToolbar", () => ({
 
 import SpanTreeView from "../../src/components/traces/span-tree-plugin/SpanTreeView";
 
+let nextStartTimeUs = 1;
 function buildSpan(spanId: string): Span {
   return {
     traceId: "trace-1",
@@ -91,7 +92,7 @@ function buildSpan(spanId: string): Span {
     durationUs: 100,
     status: "OK",
     timestamp: "2026-01-01T00:00:00.000Z",
-    startTimeUs: spanId === "span-1" ? 1 : 2,
+    startTimeUs: nextStartTimeUs++,
     attributes: {},
   };
 }
@@ -100,6 +101,7 @@ describe("SpanTreeView memo", () => {
   beforeEach(() => {
     rowRenderCounts.clear();
     flatRowCache.clear();
+    nextStartTimeUs = 1;
   });
 
   it("does not re-render unaffected rows when only selectedSpanId changes", () => {
