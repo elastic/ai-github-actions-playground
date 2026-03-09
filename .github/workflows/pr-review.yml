@@ -12,7 +12,6 @@ permissions:
 jobs:
   run:
     if: >-
-      github.event.pull_request.head.repo.full_name == github.repository &&
       contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.pull_request.author_association) &&
       github.event.pull_request.draft == false &&
       !contains(github.event.pull_request.labels.*.name, 'no-pr-review')
