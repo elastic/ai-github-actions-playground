@@ -141,38 +141,49 @@ jobs:
             }
 
             function buildControlPanelBody(primaryItems, advancedItems, state, isForkPr) {
+              const managedItems = [...primaryItems, ...advancedItems];
+              const enabledItems = managedItems.filter((item) => state[item.label]);
+              const disabledItems = managedItems.filter((item) => !state[item.label]);
               return [
                 MARKER,
-                "🤖 AI Assistant: I will handle the following tasks for you:",
+                "🤖 AI Assistant 🤖",
                 "",
-                ...(isForkPr
-                  ? [
-                      "_Fork PR detected: controls that require pushing commits are disabled._",
-                      "",
-                    ]
-                  : []),
-                ...primaryItems.map(
-                  (item) =>
-                    `- [${state[item.label] ? "x" : " "}] ${item.displayLabel} <!-- ${KEY_PREFIX}:${item.label} -->`,
-                ),
+                "<details>",
+                `<summary>${enabledItems.length} Enabled Automations • ${disabledItems.length} Disabled Automations</summary>`,
                 "",
-                ...(advancedItems.length > 0
+                ...(enabledItems.length > 0
                   ? [
-                      "<details>",
-                      "<summary>Advanced controls</summary>",
+                      "**Enabled automations**",
                       "",
-                      ...advancedItems.map(
+                      ...enabledItems.map(
                         (item) =>
                           `- [${state[item.label] ? "x" : " "}] ${item.displayLabel} <!-- ${KEY_PREFIX}:${item.label} -->`,
                       ),
                       "",
-                      "</details>",
+                    ]
+                  : []),
+                ...(disabledItems.length > 0
+                  ? [
+                      "**Disabled automations**",
+                      "",
+                      ...disabledItems.map(
+                        (item) =>
+                          `- [${state[item.label] ? "x" : " "}] ${item.displayLabel} <!-- ${KEY_PREFIX}:${item.label} -->`,
+                      ),
                       "",
                     ]
                   : []),
+                "</details>",
+                "",
                 "<details>",
                 "<summary>Troubleshooting</summary>",
                 "",
+                ...(isForkPr
+                  ? [
+                      "Fork PR detected: controls that require pushing commits are intentionally disabled.",
+                      "",
+                    ]
+                  : []),
                 "This control panel only adds or removes labels on the PR.",
                 "It does not directly start workflows.",
                 "If you toggle an option, related automation may not run until its next normal trigger event.",
