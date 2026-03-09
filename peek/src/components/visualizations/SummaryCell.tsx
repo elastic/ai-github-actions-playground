@@ -44,13 +44,27 @@ export default function SummaryCell({
       {entry?.loading ? (
         <Skeleton variant="text" width="80%" />
       ) : entry?.error ? (
-        <Typography component="span" variant="caption" sx={{ opacity: 0.4 }}>
+        <Typography
+          component="span"
+          variant="caption"
+          role="status"
+          aria-live="polite"
+          aria-label="Summary unavailable"
+          sx={{ opacity: 0.4 }}
+        >
           —
         </Typography>
       ) : entry?.summary ? (
         entry.summary
       ) : (
-        <Typography component="span" variant="caption" sx={{ opacity: 0.3 }}>
+        <Typography
+          component="span"
+          variant="caption"
+          role="status"
+          aria-live="polite"
+          aria-label="No summary available"
+          sx={{ opacity: 0.3 }}
+        >
           …
         </Typography>
       )}

@@ -28,7 +28,7 @@ export default function DiscoverPage({ mode = "query-lab" }: DiscoverPageProps) 
   const o = useDiscoverOrchestrator(mode);
   const { setDiscoverSearchCollapsed } = o;
 
-  const llmConfigured = useLLMStore((s) => s.isConfigured());
+  const llmConfigured = useLLMStore((s) => s.config.apiKey.trim().length > 0);
 
   // When the user hasn't manually selected columns and LLM is configured,
   // show AI row summaries for visible rows in the data table.

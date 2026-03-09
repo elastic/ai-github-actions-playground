@@ -16,6 +16,7 @@ const MAX_CONCURRENT = 2;
 
 /** Maximum columns included in the LLM prompt to keep token count reasonable. */
 const MAX_PROMPT_COLUMNS = 30;
+const MAX_PROMPT_VALUE_LENGTH = 500;
 
 const ROW_SUMMARY_SYSTEM_PROMPT =
   "You are a concise data summarizer. " +
@@ -39,7 +40,11 @@ function buildRowContext(columns: EsqlColumn[], row: unknown[]): string {
   for (let i = 0; i < limit; i++) {
     const col = columns[i]!;
     const value = row[i];
-    const formatted = value == null ? "null" : String(value);
+    const raw = value == null ? "null" : String(value);
+    const formatted =
+      raw.length > MAX_PROMPT_VALUE_LENGTH
+        ? `${raw.slice(0, MAX_PROMPT_VALUE_LENGTH)}…[truncated]`
+        : raw;
     lines.push(`${col.name} (${col.type}): ${formatted}`);
   }
   if (columns.length > MAX_PROMPT_COLUMNS) {
@@ -96,6 +101,7 @@ export function useRowSummaries(columns: EsqlColumn[], visibleRows: unknown[][],
 
   // Track in-flight count to enforce concurrency limit.
   const inFlightRef = useRef(0);
+  const generationRef = useRef(0);
 
   // Ref to the latest provider config so the async callback always reads fresh values.
   const configRef = useRef({ apiKey, provider, llmModel });
@@ -109,6 +115,7 @@ export function useRowSummaries(columns: EsqlColumn[], visibleRows: unknown[][],
     [columns, visibleRows],
   );
   useEffect(() => {
+    generationRef.current += 1;
     // Pre-populate from cache
     const next = new Map<number, RowSummaryEntry>();
     for (let i = 0; i < visibleRows.length; i++) {
@@ -214,6 +221,7 @@ export function useRowSummaries(columns: EsqlColumn[], visibleRows: unknown[][],
     if (available <= 0) return;
 
     const batch = pending.slice(0, available);
+    const generation = generationRef.current;
 
     // Create the LLM client once per batch (same config for all rows).
     const {
@@ -250,15 +258,24 @@ export function useRowSummaries(columns: EsqlColumn[], visibleRows: unknown[][],
         messages: [{ role: "user", content: context }],
       })
         .then((result) => {
+          if (generation !== generationRef.current) return;
           const text = result.text.trim();
-          if (text) cacheRef.current.set(key, text);
+          if (text) {
+            cacheRef.current.set(key, text);
+          }
           setSummaries((prev) => {
             const next = new Map(prev);
-            next.set(idx, { summary: text || null, loading: false, error: null });
+            next.set(
+              idx,
+              text
+                ? { summary: text, loading: false, error: null }
+                : { summary: null, loading: false, error: "EMPTY_MODEL_OUTPUT" },
+            );
             return next;
           });
         })
         .catch((err: unknown) => {
+          if (generation !== generationRef.current) return;
           const message = err instanceof Error ? err.message : "Summary failed";
           setSummaries((prev) => {
             const next = new Map(prev);

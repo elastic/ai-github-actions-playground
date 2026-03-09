@@ -19,11 +19,9 @@ vi.mock("@ai-sdk/openai", () => ({
 }));
 
 // IntersectionObserver is not available in jsdom; provide a minimal mock.
-let _ioCallback: IntersectionObserverCallback | null = null;
 vi.stubGlobal(
   "IntersectionObserver",
-  vi.fn((cb: IntersectionObserverCallback) => {
-    _ioCallback = cb;
+  vi.fn((_cb: IntersectionObserverCallback) => {
     return {
       observe: vi.fn(),
       unobserve: vi.fn(),
@@ -107,13 +105,11 @@ describe("useRowSummaries", () => {
       },
     );
 
-    const initialSize = result.current.summaries.size;
-
     // Change the rows
     rerender({ rows: [["server-4", 55.0, "New row"]] });
 
     // Summaries should reset
-    expect(result.current.summaries.size).toBeLessThanOrEqual(initialSize);
+    expect(result.current.summaries.size).toBe(0);
   });
 
   it("provides stable observeRow and unobserveRow callbacks", () => {

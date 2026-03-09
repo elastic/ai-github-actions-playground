@@ -41,6 +41,9 @@ export function useDataTableState({
   const [pinnedColumns, setPinnedColumns] = useState<Set<number>>(new Set());
 
   const allColumnIndices = useMemo(() => data.columns.map((_, i) => i), [data.columns]);
+  useEffect(() => {
+    setColumnOrder(data.columns.map((_, i) => i));
+  }, [data.columns]);
   const resolvedColumnOrder = useMemo(
     () => reconcileColumnOrder(columnOrder, allColumnIndices),
     [columnOrder, allColumnIndices],
@@ -86,20 +89,24 @@ export function useDataTableState({
     unobserveRow: unobserveSummaryRow,
   } = useRowSummaries(summaryColumns, summaryPageRows, Boolean(summaryEnabled));
 
+  const visibleRowKeys = useMemo(
+    () => visibleRows.map((row) => JSON.stringify(row)),
+    [visibleRows],
+  );
+
   const selectedRowIndex = useMemo(() => {
     if (inspectedRowState === null) return null;
     const refIdx = visibleRows.indexOf(inspectedRowState.row);
     if (refIdx >= 0) return refIdx;
     let matchedOccurrence = 0;
-    for (let idx = 0; idx < visibleRows.length; idx += 1) {
-      const row = visibleRows[idx];
-      if (row && JSON.stringify(row) === inspectedRowState.key) {
+    for (let idx = 0; idx < visibleRowKeys.length; idx += 1) {
+      if (visibleRowKeys[idx] === inspectedRowState.key) {
         if (matchedOccurrence === inspectedRowState.occurrence) return idx;
         matchedOccurrence += 1;
       }
     }
     return null;
-  }, [inspectedRowState, visibleRows]);
+  }, [inspectedRowState, visibleRows, visibleRowKeys]);
 
   useEffect(() => {
     if (inspectedRowState !== null && selectedRowIndex === null) setInspectedRowState(null);
