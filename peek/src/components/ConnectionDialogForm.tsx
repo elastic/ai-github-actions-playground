@@ -267,6 +267,7 @@ export default function ConnectionDialogForm({
               variant="contained"
               onClick={() => void onConfirmConnectAndSave()}
               disabled={!canConfirmConnectAndSave}
+              aria-label="Confirm Connect & Save"
             >
               {testing ? <CircularProgress size={18} /> : "Confirm Connect & Save"}
             </Button>

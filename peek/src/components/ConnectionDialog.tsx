@@ -148,7 +148,11 @@ export default function ConnectionDialog() {
         )}
         <Box sx={{ flex: 1 }} />
         <Button onClick={() => setOpen(false)}>Cancel</Button>
-        <Button onClick={() => void actions.handleTest()} disabled={!actions.canAttemptConnection}>
+        <Button
+          onClick={() => void actions.handleTest()}
+          disabled={!actions.canAttemptConnection}
+          aria-label="Test"
+        >
           {actions.testing ? <CircularProgress size={20} /> : "Test"}
         </Button>
         <Button
@@ -162,6 +166,7 @@ export default function ConnectionDialog() {
           variant="contained"
           onClick={() => void actions.handleConnect()}
           disabled={!actions.canAttemptConnection}
+          aria-label="Connect"
         >
           {actions.testing ? <CircularProgress size={20} /> : "Connect"}
         </Button>
