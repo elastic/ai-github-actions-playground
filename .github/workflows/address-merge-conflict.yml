@@ -24,11 +24,18 @@ jobs:
     with:
       target-pr-number: ${{ inputs.pr-number }}
       prompt: |
-        Resolve merge conflicts with the current base branch.
+        Resolve merge conflicts on PR #${{ inputs.pr-number }}.
+
+        Follow these steps exactly:
+        1. Run: git fetch origin main
+        2. Run: git checkout origin/$PR_BRANCH (get the PR branch name from the GitHub API or pr.json)
+        3. Run: git merge origin/main
+        4. If the merge has conflicts, resolve every conflict, then commit and push.
+        5. If the merge succeeds with no conflicts, post a short comment and make no code changes.
+
+        Do NOT skip the git merge step. You must actually attempt the merge to discover conflicts.
       additional-instructions: |
         This run was started by the Address Merge Conflicts workflow.
         Work only on PR #${{ inputs.pr-number }}.
-        If the PR has merge conflicts, resolve them by merging the latest origin/main into the PR branch and push.
-        If there are no merge conflicts anymore, post a short note and make no code changes.
     secrets:
       COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
