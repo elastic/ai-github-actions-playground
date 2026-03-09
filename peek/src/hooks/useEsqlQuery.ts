@@ -157,6 +157,8 @@ export function useEsqlQuery({
   const abort = useCallback(() => {
     abortRef.current?.abort();
     requestIdRef.current += 1;
+    setLoading(false);
+    setActiveStep(null);
   }, []);
 
   return {

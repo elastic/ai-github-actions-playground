@@ -363,7 +363,11 @@ async function connectToMockedCluster(page: Page) {
   await page.goto("");
   await page.getByRole("button", { name: "Connect to Elasticsearch" }).click();
   await page.getByRole("textbox", { name: "Elasticsearch URL" }).fill(DEFAULT_ES_URL);
+  await page.getByRole("textbox", { name: "API Key" }).fill("test-api-key");
   await page.getByRole("button", { name: "Connect", exact: true }).click();
+
+  // Wait for connection dialog to close
+  await expect(page.getByRole("dialog", { name: "Elasticsearch Connection" })).toBeHidden();
 
   // On mobile the sidebar is behind a drawer; verify connection via the menu toggle
   const viewport = page.viewportSize();

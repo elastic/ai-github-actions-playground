@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import ConnectionDialog from "../../src/components/ConnectionDialog";
+import ConnectionDialogForm from "../../src/components/ConnectionDialogForm";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { useUIStore } from "../../src/store/useUIStore";
 import { resetAllStores } from "../fixtures/test-utils";
@@ -245,5 +246,65 @@ describe("ConnectionDialog", () => {
 
     await user.click(screen.getByRole("button", { name: /^confirm delete$/i }));
     expect(useConnectionStore.getState().connectionProfiles).toHaveLength(0);
+  });
+
+  it("retains accessible names on Test and Connect buttons while loading", async () => {
+    const user = userEvent.setup();
+    fetchCapabilitiesForConnectionMock.mockReturnValue(new Promise(() => {})); // never resolves
+    render(<ConnectionDialog />);
+
+    await user.type(screen.getByLabelText(/elasticsearch url/i), "https://localhost:9200");
+    await user.type(screen.getByLabelText(/^api key$/i), "test-api-key");
+    await user.click(screen.getByRole("button", { name: /^test$/i }));
+
+    expect(screen.getByRole("button", { name: /^test$/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^connect$/i })).toBeInTheDocument();
+  });
+});
+
+describe("ConnectionDialogForm loading button a11y", () => {
+  it("keeps an accessible name on confirm button while loading", () => {
+    render(
+      <ConnectionDialogForm
+        authType="apiKey"
+        url="https://localhost:9200"
+        apiKey="k"
+        username=""
+        password=""
+        proxyUrl=""
+        ingestUrl=""
+        showAdvanced={false}
+        showSecret={false}
+        likelyServerless={false}
+        connectionProfiles={[]}
+        activeProfileId={null}
+        result={null}
+        savePromptOpen={true}
+        profileName="prod"
+        savePin=""
+        testing={true}
+        isDuplicateProfileName={false}
+        canConfirmConnectAndSave={true}
+        onLoadProfile={() => {}}
+        onDeleteProfile={() => {}}
+        onRenameProfile={() => {}}
+        onUnlockProfile={async () => true}
+        onUrlChange={() => {}}
+        onAuthTypeChange={() => {}}
+        onApiKeyChange={() => {}}
+        onUsernameChange={() => {}}
+        onPasswordChange={() => {}}
+        onProxyUrlChange={() => {}}
+        onIngestUrlChange={() => {}}
+        onToggleShowSecret={() => {}}
+        onToggleAdvanced={() => {}}
+        onProfileNameChange={() => {}}
+        onSavePinChange={() => {}}
+        onCancelSave={() => {}}
+        onConfirmConnectAndSave={async () => {}}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: /confirm connect & save/i })).toBeInTheDocument();
   });
 });

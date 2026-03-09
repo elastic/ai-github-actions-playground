@@ -284,7 +284,13 @@ def phase_approve_runs(prs: list[PRInfo], runs: list[dict], ctx: Ctx) -> int:
             continue
         blocked = [r for r in runs
                    if r.get("event") in ("pull_request", "pull_request_target")
-                   and r.get("headSha") == pr.head_sha
+                   and (
+                       # pull_request: match by sha (sha is meaningful — run uses PR branch)
+                       (r.get("event") == "pull_request" and r.get("headSha") == pr.head_sha)
+                       # pull_request_target: match by branch (runs off main, sha drifts as
+                       # new commits are pushed without re-triggering a new run)
+                       or (r.get("event") == "pull_request_target" and r.get("headBranch") == pr.branch)
+                   )
                    and (r.get("status") == "action_required"
                         or r.get("conclusion") == "action_required")]
         if not blocked:
