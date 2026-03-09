@@ -70,4 +70,22 @@ describe("PackageBuilderStartScreen", () => {
       ).not.toBeInTheDocument();
     });
   });
+
+  it("closes the dialog without dispatching when Cancel is clicked", async () => {
+    const user = userEvent.setup();
+    render(<PackageBuilderStartScreen />);
+
+    await user.click(screen.getByRole("button", { name: /new package/i }));
+    expect(screen.getByRole("dialog", { name: /pick a package workspace/i })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /cancel/i }));
+
+    expect(handlersMock.handleNew).not.toHaveBeenCalled();
+    expect(handlersMock.handleOpenDisk).not.toHaveBeenCalled();
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("dialog", { name: /pick a package workspace/i }),
+      ).not.toBeInTheDocument();
+    });
+  });
 });
