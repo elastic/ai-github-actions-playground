@@ -346,8 +346,14 @@ function parseSpanEvents(raw: unknown): SpanEvent[] {
     items = raw;
   } else if (typeof raw === "string") {
     if (raw === "[]") return [];
-    // Fast ASCII whitespace check – ES|QL only produces ASCII whitespace padding.
-    const needsTrim = raw.charCodeAt(0) <= 32 || raw.charCodeAt(raw.length - 1) <= 32;
+    // Fast boundary whitespace check with Unicode fallback for pasted/padded payloads.
+    const firstChar = raw.at(0) ?? "";
+    const lastChar = raw.at(-1) ?? "";
+    const needsTrim =
+      raw.charCodeAt(0) <= 32 ||
+      raw.charCodeAt(raw.length - 1) <= 32 ||
+      /\s/u.test(firstChar) ||
+      /\s/u.test(lastChar);
     const trimmed = needsTrim ? raw.trim() : raw;
     if (trimmed === "[]") return [];
     if (!trimmed.startsWith("[") || !trimmed.endsWith("]")) return [];

@@ -442,6 +442,31 @@ describe("parseSpansFromEsql", () => {
     expect(spans[0]!.events[0]!.timestamp).toBe("2026-01-01T00:00:01Z");
   });
 
+  it("parses span events from JSON strings padded with unicode whitespace", () => {
+    const columns = [
+      { name: "trace.id", type: "keyword" },
+      { name: "span.id", type: "keyword" },
+      { name: "parent.id", type: "keyword" },
+      { name: "service.name", type: "keyword" },
+      { name: "name", type: "keyword" },
+      { name: "kind", type: "keyword" },
+      { name: "duration", type: "long" },
+      { name: "status", type: "keyword" },
+      { name: "@timestamp", type: "date" },
+      { name: "events", type: "keyword" },
+    ];
+    const eventsJson =
+      "\u00A0" + JSON.stringify([{ name: "ev", timestamp: "2026-01-01T00:00:01Z" }]) + "\u00A0";
+    const values = [
+      ["t1", "s1", null, "svc", "op", "SERVER", 1000, "OK", "2026-01-01T00:00:00Z", eventsJson],
+    ];
+
+    const spans = parseSpansFromEsql(columns, values, fieldMapping);
+    expect(spans[0]!.events).toHaveLength(1);
+    expect(spans[0]!.events[0]!.name).toBe("ev");
+    expect(spans[0]!.events[0]!.timestamp).toBe("2026-01-01T00:00:01Z");
+  });
+
   it("returns empty events when events column is null", () => {
     const columns = [
       { name: "trace.id", type: "keyword" },
