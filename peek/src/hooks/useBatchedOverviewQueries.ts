@@ -87,15 +87,11 @@ export function useBatchedOverviewQueries<T extends { name: string }>({
 
   // Discovery state: tracks which items returned data after the first pass.
   const [knownWithData, setKnownWithData] = useState<Set<string> | null>(null);
-  const prevScopeRef = useRef<string | null>(null);
 
   // Reset the known-with-data cache when the data scope changes.
-  if (scopeKey !== prevScopeRef.current) {
-    prevScopeRef.current = scopeKey;
-    if (knownWithData !== null) {
-      setKnownWithData(null);
-    }
-  }
+  useEffect(() => {
+    setKnownWithData(null);
+  }, [scopeKey]);
 
   const isRefresh = (knownWithData?.size ?? 0) > 0;
 
