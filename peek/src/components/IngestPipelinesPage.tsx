@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -35,6 +35,7 @@ export default function IngestPipelinesPage() {
   const pipelines = useMemo(() => pipelinesData ?? [], [pipelinesData]);
 
   const [search, setSearch] = useState("");
+  const deferredSearch = useDeferredValue(search);
   const [showRawError, setShowRawError] = useState(false);
   const [showSystemPipelines, setShowSystemPipelines] = useState(false);
   const [selectedName, setSelectedName] = useState<string | null>(null);
@@ -59,12 +60,12 @@ export default function IngestPipelinesPage() {
   );
 
   const filteredPipelines = useMemo(() => {
-    const term = search.trim().toLowerCase();
+    const term = deferredSearch.trim().toLowerCase();
     return visiblePipelines.filter((p) => {
       if (!term) return true;
       return p.name.toLowerCase().includes(term);
     });
-  }, [search, visiblePipelines]);
+  }, [deferredSearch, visiblePipelines]);
 
   const runtimeByPipelineName = useMemo(() => {
     if (ingestNodeStatsResult.status !== "success") return {};
