@@ -1,10 +1,11 @@
-import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 import TextField from "@mui/material/TextField";
 
 import { COMPONENT_HEIGHTS } from "../types/tokens";
+
+import ToolbarRow from "./ToolbarRow";
 
 interface IndexTemplatesToolbarProps {
   activeTab: "index" | "component";
@@ -36,7 +37,7 @@ export default function IndexTemplatesToolbar({
   onToggleDataStreamOnly,
 }: IndexTemplatesToolbarProps) {
   return (
-    <Box sx={{ display: "flex", gap: 1, alignItems: "center", flexWrap: "wrap" }}>
+    <ToolbarRow>
       <Tabs
         value={activeTab}
         onChange={(_, value) => onSetTab(value as "index" | "component")}
@@ -101,6 +102,6 @@ export default function IndexTemplatesToolbar({
           </Button>
         </>
       )}
-    </Box>
+    </ToolbarRow>
   );
 }
