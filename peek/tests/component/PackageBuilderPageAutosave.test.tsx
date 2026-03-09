@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 
 import PackageBuilderPage from "../../src/components/PackageBuilderPage";
 
@@ -68,8 +68,10 @@ describe("PackageBuilder autosave accessibility", () => {
 
     render(<PackageBuilderPage />);
 
-    await vi.advanceTimersByTimeAsync(500);
-    await Promise.resolve();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(500);
+      await Promise.resolve();
+    });
 
     const statusEl = screen.getByRole("status");
     expect(statusEl).toHaveTextContent("Saved");
@@ -82,8 +84,10 @@ describe("PackageBuilder autosave accessibility", () => {
 
     render(<PackageBuilderPage />);
 
-    await vi.advanceTimersByTimeAsync(500);
-    await Promise.resolve();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(500);
+      await Promise.resolve();
+    });
 
     const alertEl = screen.getByRole("alert");
     expect(alertEl).toHaveTextContent("Save failed");
