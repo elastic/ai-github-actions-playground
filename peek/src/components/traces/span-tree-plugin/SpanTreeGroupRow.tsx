@@ -16,7 +16,7 @@ import InsightSlot from "../../InsightSlot";
 
 import type { GroupStats } from "./spanTreeTypes";
 
-interface SpanTreeGroupRowProps {
+export interface SpanTreeGroupRowProps {
   groupKey: string;
   representativeSpanId: string;
   isTraceRootGroup: boolean;

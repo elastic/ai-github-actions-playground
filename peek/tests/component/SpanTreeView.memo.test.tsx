@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render } from "@testing-library/react";
 
 import type { Span } from "../../src/components/traces/traceUtils";
+import type { SpanTreeGroupRowProps } from "../../src/components/traces/span-tree-plugin/SpanTreeGroupRow";
 
 const rowRenderCounts = new Map<string, number>();
 let groupRowRenderCount = 0;
@@ -28,6 +29,28 @@ vi.mock("react-virtuoso", () => ({
 // useSpanTree's useMemo behaviour.
 const flatRowCache = new Map<Span[], ReturnType<typeof buildFlatRows>>();
 function buildFlatRows(spans: Span[]) {
+  const representativeSpan = spans[1];
+  const groupRows = representativeSpan
+    ? [
+        {
+          type: "group" as const,
+          groupKey: "svc:op",
+          parentId: "__roots__",
+          spans: [{ span: representativeSpan, children: [] as never[], depth: 0 }],
+          depth: 0,
+          expanded: false,
+          stats: {
+            count: 1,
+            totalDurationUs: representativeSpan.durationUs,
+            minDurationUs: representativeSpan.durationUs,
+            maxDurationUs: representativeSpan.durationUs,
+            errorCount: 0,
+            serviceName: representativeSpan.serviceName,
+            operationName: representativeSpan.name,
+          },
+        },
+      ]
+    : [];
   return [
     ...spans.map((span) => ({
       type: "span" as const,
@@ -35,23 +58,7 @@ function buildFlatRows(spans: Span[]) {
       expanded: false,
       hasChildren: false,
     })),
-    {
-      type: "group" as const,
-      groupKey: "svc:op",
-      parentId: "__roots__",
-      spans: [{ span: spans[1]!, children: [] as never[], depth: 0 }],
-      depth: 0,
-      expanded: false,
-      stats: {
-        count: 1,
-        totalDurationUs: spans[1]!.durationUs,
-        minDurationUs: spans[1]!.durationUs,
-        maxDurationUs: spans[1]!.durationUs,
-        errorCount: 0,
-        serviceName: spans[1]!.serviceName,
-        operationName: spans[1]!.name,
-      },
-    },
+    ...groupRows,
   ];
 }
 const stableToggleExpand = vi.fn();
@@ -91,7 +98,7 @@ vi.mock("../../src/components/traces/span-tree-plugin/SpanTreeRow", () => ({
 }));
 
 vi.mock("../../src/components/traces/span-tree-plugin/SpanTreeGroupRow", () => ({
-  SpanTreeGroupRow: React.memo(() => {
+  SpanTreeGroupRow: React.memo((_props: SpanTreeGroupRowProps) => {
     groupRowRenderCount += 1;
     return <div data-testid="group-row" />;
   }),
