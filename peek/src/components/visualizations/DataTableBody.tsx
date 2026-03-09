@@ -6,10 +6,12 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 
 import type { EsqlResponse, TablePanelOptions } from "../../types";
+import type { RowSummaryEntry } from "../../hooks/useRowSummaries";
 
 import { isNumericType } from "./chartUtils";
 import { resolveThresholdColor, THRESHOLD_PALETTE } from "./thresholdUtils";
 import TruncatedCell from "./TruncatedCell";
+import SummaryCell from "./SummaryCell";
 import { PINNED_COLUMN_MIN_WIDTH } from "./dataTableUtils";
 
 interface DataTableBodyProps {
@@ -21,9 +23,15 @@ interface DataTableBodyProps {
   pinnedLeftOffsets: Map<number, number>;
   page: number;
   rowsPerPage: number;
-  onRowClick: (row: unknown[]) => void;
+  onRowClick: (row: unknown[], rowIndex: number) => void;
   selectedRowIndex?: number | null;
   onCellClick?: (params: { columnName: string; value: string }) => void;
+  /** Row summary entries keyed by row index (within the current page). */
+  rowSummaries?: Map<number, RowSummaryEntry>;
+  /** Callback to register/unregister an element for IntersectionObserver tracking. */
+  observeSummaryRow?: (index: number, element: Element | null) => void;
+  /** Callback to unobserve a row element. */
+  unobserveSummaryRow?: (index: number) => void;
 }
 
 export default function DataTableBody({
@@ -38,6 +46,9 @@ export default function DataTableBody({
   onRowClick,
   selectedRowIndex,
   onCellClick,
+  rowSummaries,
+  observeSummaryRow,
+  unobserveSummaryRow,
 }: DataTableBodyProps) {
   return (
     <TableBody>
@@ -55,15 +66,23 @@ export default function DataTableBody({
               tabIndex={0}
               data-row-index={rowIdx}
               selected={selectedRowIndex === rowIdx}
-              onClick={() => onRowClick(row)}
+              onClick={() => onRowClick(row, rowIdx)}
               onKeyDown={(event) => {
                 if (event.key === "Enter" || event.key === " ") {
                   event.preventDefault();
-                  onRowClick(row);
+                  onRowClick(row, rowIdx);
                 }
               }}
               sx={{ cursor: "pointer" }}
             >
+              {rowSummaries && (
+                <SummaryCell
+                  rowIdx={rowIdx}
+                  entry={rowSummaries.get(rowIdx)}
+                  observeRow={observeSummaryRow}
+                  unobserveRow={unobserveSummaryRow}
+                />
+              )}
               {orderedVisibleColumnIndices.map((colIdx) => {
                 const col = data.columns[colIdx];
                 if (!col) return null;

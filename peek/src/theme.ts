@@ -10,7 +10,7 @@ const MOBILE_ICON_BUTTON_VISUAL_SIZE = 20;
 const MOBILE_BUTTON_VERTICAL_PADDING_SPACE: SpaceToken = 1.5;
 const MOBILE_ICON_BUTTON_PADDING =
   (COMPONENT_HEIGHTS.touchTarget - MOBILE_ICON_BUTTON_VISUAL_SIZE) / 2;
-const LIGHT_PRIMARY = "#0070C5";
+const LIGHT_PRIMARY = "#006AB7";
 const DARK_PRIMARY = "#3BAAFF";
 const LIGHT_TEXT = { primary: "#1A1C21", secondary: "#676F7B" };
 const DARK_TEXT = { primary: "#DFE5EF", secondary: "#AEB6C1" };

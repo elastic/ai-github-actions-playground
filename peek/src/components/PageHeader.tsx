@@ -1,6 +1,8 @@
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 
+import ToolbarRow from "./ToolbarRow";
+
 export interface PageHeaderProps {
   title: string;
   leading?: React.ReactNode;
@@ -32,11 +34,7 @@ export default function PageHeader({
           </Typography>
         )}
       </Box>
-      {actions && (
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center" }}>
-          {actions}
-        </Box>
-      )}
+      {actions && <ToolbarRow>{actions}</ToolbarRow>}
     </Box>
   );
 }

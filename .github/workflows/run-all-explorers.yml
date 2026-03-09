@@ -11,18 +11,11 @@ jobs:
     strategy:
       matrix:
         workflow:
-          - explore-add-data.yml
-          - explore-add-data-alex.yml
-          - explore-add-data-jordan.yml
-          - explore-add-data-morgan.yml
-          - explore-add-data-riley.yml
-          - explore-add-data-sam.yml
           - explore-cluster-overview.yml
           - explore-connection.yml
           - explore-customer-feedback.yml
           - explore-dashboards.yml
           - explore-data-management.yml
-          - explore-fleet-add-data.yml
           - explore-kubernetes.yml
           - explore-live-es.yml
           - explore-logs.yml
@@ -40,4 +33,4 @@ jobs:
       - name: Dispatch ${{ matrix.workflow }}
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh workflow run "${{ matrix.workflow }}" --repo "${{ github.repository }}"
+        run: gh workflow run "${{ matrix.workflow }}" --repo "${{ github.repository }}" --ref "${{ github.ref_name }}"

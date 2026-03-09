@@ -15,6 +15,7 @@ import { useThemeStore } from "../../store/useThemeStore";
 import { useSearchPanelUIStore } from "../../store/useSearchPanelUIStore";
 import { useLogsStore } from "../../store/useLogsStore";
 import { useEsqlQuery } from "../../hooks/useEsqlQuery";
+import { useGlobalCollapseShortcut } from "../../hooks/useGlobalCollapseShortcut";
 import { useOpenInDiscover } from "../../hooks/useOpenInDiscover";
 import { INSIGHT_GUARDRAIL } from "../../hooks/insightPromptUtils";
 import { usePageSlotInsights } from "../../hooks/usePageSlotInsights";
@@ -199,6 +200,7 @@ export function useLogsPageState() {
     return Array.from(groups.values()).sort((a, b) => b.count - a.count);
   }, [result]);
 
+  // Reset rawQuery when the generated query changes (e.g. filters updated).
   useEffect(() => {
     setRawQuery(null);
   }, [generatedQuery, setRawQuery]);
@@ -237,25 +239,11 @@ export function useLogsPageState() {
   const logsQueryExplanation = useQueryExplanation(effectiveQuery);
 
   // Cmd/Ctrl+[ toggles the search panel collapse
-  useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      const target = e.target as HTMLElement | null;
-      if (
-        target &&
-        (target.closest("input, textarea, select, [contenteditable='true'], .cm-editor") ||
-          target.getAttribute("role") === "textbox" ||
-          target.isContentEditable)
-      ) {
-        return;
-      }
-      if ((e.metaKey || e.ctrlKey) && e.key === "[" && !e.repeat) {
-        e.preventDefault();
-        setLogsSearchCollapsed(!useSearchPanelUIStore.getState().logsSearchCollapsed);
-      }
-    }
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [setLogsSearchCollapsed]);
+  const toggleLogsCollapse = useCallback(
+    () => setLogsSearchCollapsed(!useSearchPanelUIStore.getState().logsSearchCollapsed),
+    [setLogsSearchCollapsed],
+  );
+  useGlobalCollapseShortcut(toggleLogsCollapse);
 
   const activeProfileId = useConnectionStore((s) => s.activeProfileId);
   const fieldValueQueries = useQueries({

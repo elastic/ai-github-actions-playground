@@ -47,6 +47,7 @@ export function usePanelData(
   const abortRef = useRef<AbortController | null>(null);
   const supportsCSVExport = panel.visualization === "table";
 
+  // Clear export image callback when the panel no longer supports image export.
   useEffect(() => {
     if (!supportsImageExport) {
       setExportImage(null);

@@ -33,7 +33,9 @@ jobs:
           - react-accessibility.yml
           - react-component-best-practices.yml
           - react-performance.yml
+          - react-performance-sweeper.yml
           - react-state-bug-hunter.yml
+          - react-ui-boilerplate-sweeper.yml
           - refactor-opportunist.yml
           - security-ideas-man.yml
           - stale-issues.yml
@@ -47,4 +49,4 @@ jobs:
       - name: Dispatch ${{ matrix.workflow }}
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh workflow run "${{ matrix.workflow }}" --repo "${{ github.repository }}"
+        run: gh workflow run "${{ matrix.workflow }}" --repo "${{ github.repository }}" --ref "${{ github.ref_name }}"

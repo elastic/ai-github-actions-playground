@@ -82,6 +82,7 @@ export default function LogsSearchPanel({
   const [hostFilterInput, setHostFilterInput] = useState("");
   const [levelFilterInput, setLevelFilterInput] = useState("");
 
+  // Reset guided input when the parent searchText prop changes.
   useEffect(() => {
     setGuidedInput(searchText);
   }, [searchText]);

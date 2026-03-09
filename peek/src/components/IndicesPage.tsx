@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -40,6 +40,7 @@ import AskAiButton from "./AskAiButton";
 import DocLink from "./DocLink";
 import InsightSlot from "./InsightSlot";
 import { InsightSlotProvider } from "./InsightSlotContext";
+import { InventoryHealthSummaryCards } from "./InventoryHealthSummaryCards";
 import { OverviewInfoCard } from "./OverviewInfoCard";
 import { type IndexTab, parseIntOrNull, healthColor, INDEX_TABS } from "./indicesUtils";
 import { INDICES_INSIGHT_SLOT_IDS, INDICES_INSIGHT_SLOTS } from "./indicesInsightSlots";
@@ -89,12 +90,8 @@ export default function IndicesPage() {
   const navigate = useNavigate();
 
   const [search, setSearch] = useSearchParam();
-  const [isFilterPending, startTransition] = useTransition();
-  const [deferredSearch, setDeferredSearch] = useState(search);
-
-  useEffect(() => {
-    startTransition(() => setDeferredSearch(search));
-  }, [search, startTransition]);
+  const deferredSearch = useDeferredValue(search);
+  const isFilterPending = search !== deferredSearch;
 
   const [showSystemIndices, setShowSystemIndices] = useState(false);
   const { sortField, sortDirection, getSortLabelProps } = useTableSort<IndexSortField>("index");
@@ -310,64 +307,17 @@ export default function IndicesPage() {
 
         {!loadingIndices && indices.length > 0 && (
           <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
-            <Box sx={{ flex: 1, minWidth: 100 }}>
-              <InsightSlot slotId={INDICES_INSIGHT_SLOT_IDS.totalIndicesCard}>
-                <OverviewInfoCard title="Total Indices">
-                  <Typography
-                    variant="h5"
-                    component="p"
-                    sx={{ fontVariantNumeric: "tabular-nums" }}
-                  >
-                    {indexMetrics.total}
-                  </Typography>
-                </OverviewInfoCard>
-              </InsightSlot>
-            </Box>
-            <Box sx={{ flex: 1, minWidth: 100 }}>
-              <InsightSlot slotId={INDICES_INSIGHT_SLOT_IDS.healthyCard}>
-                <OverviewInfoCard title="Healthy">
-                  <Typography
-                    variant="h5"
-                    component="p"
-                    sx={{ color: "success.main", fontVariantNumeric: "tabular-nums" }}
-                  >
-                    {indexMetrics.green}
-                  </Typography>
-                </OverviewInfoCard>
-              </InsightSlot>
-            </Box>
-            <Box sx={{ flex: 1, minWidth: 100 }}>
-              <InsightSlot slotId={INDICES_INSIGHT_SLOT_IDS.degradedCard}>
-                <OverviewInfoCard title="Degraded">
-                  <Typography
-                    variant="h5"
-                    component="p"
-                    sx={{
-                      color: indexMetrics.yellow > 0 ? "warning.main" : "text.primary",
-                      fontVariantNumeric: "tabular-nums",
-                    }}
-                  >
-                    {indexMetrics.yellow}
-                  </Typography>
-                </OverviewInfoCard>
-              </InsightSlot>
-            </Box>
-            <Box sx={{ flex: 1, minWidth: 100 }}>
-              <InsightSlot slotId={INDICES_INSIGHT_SLOT_IDS.unhealthyCard}>
-                <OverviewInfoCard title="Unhealthy">
-                  <Typography
-                    variant="h5"
-                    component="p"
-                    sx={{
-                      color: indexMetrics.red > 0 ? "error.main" : "text.primary",
-                      fontVariantNumeric: "tabular-nums",
-                    }}
-                  >
-                    {indexMetrics.red}
-                  </Typography>
-                </OverviewInfoCard>
-              </InsightSlot>
-            </Box>
+            <InventoryHealthSummaryCards
+              totalTitle="Total Indices"
+              totalSlotId={INDICES_INSIGHT_SLOT_IDS.totalIndicesCard}
+              total={indexMetrics.total}
+              healthySlotId={INDICES_INSIGHT_SLOT_IDS.healthyCard}
+              healthy={indexMetrics.green}
+              degradedSlotId={INDICES_INSIGHT_SLOT_IDS.degradedCard}
+              degraded={indexMetrics.yellow}
+              unhealthySlotId={INDICES_INSIGHT_SLOT_IDS.unhealthyCard}
+              unhealthy={indexMetrics.red}
+            />
             <Box sx={{ flex: 1, minWidth: 100 }}>
               <InsightSlot slotId={INDICES_INSIGHT_SLOT_IDS.totalDocsCard}>
                 <OverviewInfoCard title="Total Docs">

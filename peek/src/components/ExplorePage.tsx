@@ -26,6 +26,7 @@ import type { FieldInfo, ExplorerFilter } from "../services/es";
 import type { EsqlResponse } from "../types";
 import { useExploreFields } from "../hooks/useExploreFields";
 import { useExploreQuery } from "../hooks/useExploreQuery";
+import { useGlobalCollapseShortcut } from "../hooks/useGlobalCollapseShortcut";
 import { INSIGHT_GUARDRAIL } from "../hooks/insightPromptUtils";
 import { usePageSlotInsights } from "../hooks/usePageSlotInsights";
 import { formatEsqlQuery } from "../services/es/queryText";
@@ -55,13 +56,17 @@ const EXPLORE_SYSTEM_PROMPT =
   " Prefer dimensions that split the metric meaningfully (e.g. host.name for system metrics, service.name for app metrics)." +
   INSIGHT_GUARDRAIL;
 
+function normalizeCommittedRawQuery(rawQuery: string | null): string | null {
+  return rawQuery?.trim() ? rawQuery : null;
+}
+
 export default function ExplorePage() {
   const queryClient = useQueryClient();
   const [selectedNamespace, setSelectedNamespace] = useState<string | null>(null);
   const [dismissedError, setDismissedError] = useState<string | null>(null);
-  const { dashboard, setTimeRange } = useDashboardEditorStore(
+  const { timeRange, setTimeRange } = useDashboardEditorStore(
     useShallow((s) => ({
-      dashboard: s.dashboard,
+      timeRange: s.dashboard.timeRange,
       setTimeRange: s.setTimeRange,
     })),
   );
@@ -128,7 +133,7 @@ export default function ExplorePage() {
     aggregation,
     filters,
     groupBy,
-    timeRange: dashboard.timeRange,
+    timeRange,
     setIndexPattern,
     setSelectedMetric,
     setSelectedNamespace,
@@ -184,6 +189,24 @@ export default function ExplorePage() {
     }
   }, [selectedMetricField, metricType, setSelectedMetric]);
 
+  // Committed override: only updates when the user explicitly triggers Search.
+  // This decouples editor keystrokes from the query key so typing does not
+  // fire network requests until the user clicks "Search Metrics" or presses
+  // Cmd/Ctrl+Enter.
+  const [committedRawQuery, setCommittedRawQuery] = useState(() =>
+    normalizeCommittedRawQuery(rawQuery),
+  );
+  const pendingSearchRef = useRef(false);
+
+  // Sync committedRawQuery when rawQuery is programmatically cleared (e.g.
+  // navigating away, metric change, or auto-clear when rawQuery matches the
+  // generated query).
+  useEffect(() => {
+    if (rawQuery === null) {
+      setCommittedRawQuery(null);
+    }
+  }, [rawQuery]);
+
   // Run query via React Query when metric/aggregation/filters/groupBy/timeRange change
   const queryResult = useExploreQuery({
     indexPattern,
@@ -192,7 +215,7 @@ export default function ExplorePage() {
     aggregation,
     filters,
     groupBy,
-    timeRange: dashboard.timeRange,
+    timeRange,
     enabled: Boolean(
       connection &&
       selectedMetric &&
@@ -201,12 +224,24 @@ export default function ExplorePage() {
       !metricNotFound &&
       !fieldsLoading,
     ),
-    queryOverride: rawQuery,
+    queryOverride: committedRawQuery,
   });
 
   const handleSearch = useCallback(() => {
+    const nextCommittedRawQuery = normalizeCommittedRawQuery(rawQuery);
+    if (nextCommittedRawQuery === committedRawQuery) {
+      void queryClient.invalidateQueries({ queryKey: ["explore-query", connection?.url] });
+      return;
+    }
+    pendingSearchRef.current = true;
+    setCommittedRawQuery(nextCommittedRawQuery);
+  }, [committedRawQuery, queryClient, connection?.url, rawQuery]);
+
+  useEffect(() => {
+    if (!pendingSearchRef.current) return;
+    pendingSearchRef.current = false;
     void queryClient.invalidateQueries({ queryKey: ["explore-query", connection?.url] });
-  }, [queryClient, connection?.url]);
+  }, [committedRawQuery, queryClient, connection?.url]);
 
   // Query editor extensions for the CodeMirror editor — ref keeps the
   // closure fresh without recreating the extension array on every render.
@@ -232,18 +267,10 @@ export default function ExplorePage() {
       aggregation,
       filters,
       groupBy: groupBy ?? undefined,
-      timeRange: dashboard.timeRange,
+      timeRange,
     });
     return result.esql;
-  }, [
-    indexPattern,
-    selectedMetric,
-    metricType,
-    aggregation,
-    filters,
-    groupBy,
-    dashboard.timeRange,
-  ]);
+  }, [indexPattern, selectedMetric, metricType, aggregation, filters, groupBy, timeRange]);
   const displayQuery = useMemo(() => {
     const raw = rawQuery ?? effectiveQuery;
     if (!raw.trim()) return raw;
@@ -280,25 +307,11 @@ export default function ExplorePage() {
   }, [effectiveQuery, rawQuery, setRawQuery]);
 
   // Cmd/Ctrl+[ toggles the search panel collapse
-  useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      const target = e.target as HTMLElement | null;
-      if (
-        target &&
-        (target.closest("input, textarea, select, [contenteditable='true'], .cm-editor") ||
-          target.getAttribute("role") === "textbox" ||
-          target.isContentEditable)
-      ) {
-        return;
-      }
-      if ((e.metaKey || e.ctrlKey) && e.key === "[" && !e.repeat) {
-        e.preventDefault();
-        setMetricsSearchCollapsed(!useSearchPanelUIStore.getState().metricsSearchCollapsed);
-      }
-    }
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [setMetricsSearchCollapsed]);
+  const toggleMetricsCollapse = useCallback(
+    () => setMetricsSearchCollapsed(!useSearchPanelUIStore.getState().metricsSearchCollapsed),
+    [setMetricsSearchCollapsed],
+  );
+  useGlobalCollapseShortcut(toggleMetricsCollapse);
 
   if (
     dismissedError !== null &&
@@ -480,7 +493,7 @@ export default function ExplorePage() {
                     filters={filters}
                     groupBy={groupBy}
                     rawQuery={rawQuery}
-                    timeRange={dashboard.timeRange}
+                    timeRange={timeRange}
                     onIndexPatternChange={setIndexPattern}
                     onNamespaceChange={(namespace) => {
                       setSelectedNamespace(namespace);
@@ -506,7 +519,7 @@ export default function ExplorePage() {
                     onSearch={handleSearch}
                     searchResultCount={chartData ? chartData.values.length : null}
                     collapsed={metricsSearchCollapsed}
-                    onToggleCollapsed={() => setMetricsSearchCollapsed(!metricsSearchCollapsed)}
+                    onToggleCollapsed={toggleMetricsCollapse}
                   />
                 </Box>
               </InsightSlot>
@@ -569,7 +582,7 @@ export default function ExplorePage() {
                   <Box sx={{ position: "relative" }}>
                     <CodeMirror
                       value={displayQuery}
-                      onChange={(v) => setRawQuery(v || null)}
+                      onChange={(v) => setRawQuery(v)}
                       onCreateEditor={setQueryContextView}
                       extensions={metricsQueryEditorExtensions}
                       theme={themeMode}
@@ -678,7 +691,7 @@ export default function ExplorePage() {
                     metricNotFound={metricNotFound}
                     chartData={chartData}
                     queryStatus={queryResult.status}
-                    timeRange={dashboard.timeRange}
+                    timeRange={timeRange}
                     onMetricSelect={handleMetricSelect}
                     onDimensionSelect={handleDimensionSelect}
                     onBackToOverview={handleBackToOverview}

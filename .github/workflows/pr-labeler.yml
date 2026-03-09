@@ -1,6 +1,6 @@
 name: PR Labeler
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, synchronize, reopened, ready_for_review]
 
 permissions:
@@ -11,7 +11,11 @@ permissions:
 
 jobs:
   run:
-    if: github.event.pull_request.draft == false
+    if: >-
+      (contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.pull_request.author_association) ||
+      contains(fromJSON('["Copilot","dependabot[bot]","github-actions[bot]"]'), github.event.pull_request.user.login)) &&
+      github.event.pull_request.draft == false &&
+      !contains(github.event.pull_request.labels.*.name, 'no-pr-labeler')
     uses: elastic/ai-github-actions/.github/workflows/gh-aw-pr-labeler.lock.yml@main
     with:
       model: gemini-3-flash
