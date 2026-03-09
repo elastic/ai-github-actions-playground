@@ -8,6 +8,7 @@ import Stack from "@mui/material/Stack";
 import { useShallow } from "zustand/react/shallow";
 
 import { INSIGHT_GUARDRAIL, INSIGHT_SPECIFICITY_POLICY } from "../../hooks/insightPromptUtils";
+import { useInstrumentationScore } from "../../hooks/useInstrumentationScore";
 import { usePageSlotInsights } from "../../hooks/usePageSlotInsights";
 import { useTableSort } from "../../hooks/useTableSort";
 import { PAGE_PATHS } from "../../routes/paths";
@@ -22,6 +23,7 @@ import { EMPTY_FILTERS } from "../traces/traceQueryBuilder";
 import { buildServiceMapData } from "../traces/traceUtils";
 
 import ServiceDashboardControls from "./ServiceDashboardControls";
+import ServiceInstrumentationScorePanel from "./ServiceInstrumentationScorePanel";
 import {
   type RouteSortField,
   type TraceSortField,
@@ -87,6 +89,11 @@ export default function ServiceDashboardPage() {
     timeFrom,
     timeTo,
   });
+  const {
+    score: instrumentationScore,
+    loading: instrumentationScoreLoading,
+    error: instrumentationScoreError,
+  } = useInstrumentationScore({ connection, serviceName, timeFrom, timeTo });
   const {
     sortField: routeSortField,
     sortDirection: routeSortDirection,
@@ -420,6 +427,12 @@ export default function ServiceDashboardPage() {
                   <ServiceK8sInfoPanel rows={k8sRows} />
                 </InsightSlot>
               )}
+
+              <ServiceInstrumentationScorePanel
+                score={instrumentationScore}
+                loading={instrumentationScoreLoading}
+                error={instrumentationScoreError}
+              />
             </Stack>
           </Box>
         </Stack>
