@@ -5,6 +5,7 @@ import { render } from "@testing-library/react";
 import type { Span } from "../../src/components/traces/traceUtils";
 
 const rowRenderCounts = new Map<string, number>();
+let groupRowRenderCount = 0;
 
 vi.mock("react-virtuoso", () => ({
   Virtuoso: ({
@@ -27,12 +28,31 @@ vi.mock("react-virtuoso", () => ({
 // useSpanTree's useMemo behaviour.
 const flatRowCache = new Map<Span[], ReturnType<typeof buildFlatRows>>();
 function buildFlatRows(spans: Span[]) {
-  return spans.map((span) => ({
-    type: "span" as const,
-    node: { span, children: [] as never[], depth: 0 },
-    expanded: false,
-    hasChildren: false,
-  }));
+  return [
+    ...spans.map((span) => ({
+      type: "span" as const,
+      node: { span, children: [] as never[], depth: 0 },
+      expanded: false,
+      hasChildren: false,
+    })),
+    {
+      type: "group" as const,
+      groupKey: "svc:op",
+      parentId: "__roots__",
+      spans: [{ span: spans[1]!, children: [] as never[], depth: 0 }],
+      depth: 0,
+      expanded: false,
+      stats: {
+        count: 1,
+        totalDurationUs: spans[1]!.durationUs,
+        minDurationUs: spans[1]!.durationUs,
+        maxDurationUs: spans[1]!.durationUs,
+        errorCount: 0,
+        serviceName: spans[1]!.serviceName,
+        operationName: spans[1]!.name,
+      },
+    },
+  ];
 }
 const stableToggleExpand = vi.fn();
 const stableToggleGroup = vi.fn();
@@ -71,7 +91,10 @@ vi.mock("../../src/components/traces/span-tree-plugin/SpanTreeRow", () => ({
 }));
 
 vi.mock("../../src/components/traces/span-tree-plugin/SpanTreeGroupRow", () => ({
-  SpanTreeGroupRow: React.memo(() => <div data-testid="group-row" />),
+  SpanTreeGroupRow: React.memo(() => {
+    groupRowRenderCount += 1;
+    return <div data-testid="group-row" />;
+  }),
 }));
 
 vi.mock("../../src/components/traces/span-tree-plugin/SpanTreeToolbar", () => ({
@@ -100,6 +123,7 @@ function buildSpan(spanId: string): Span {
 describe("SpanTreeView memo", () => {
   beforeEach(() => {
     rowRenderCounts.clear();
+    groupRowRenderCount = 0;
     flatRowCache.clear();
     nextStartTimeUs = 1;
   });
@@ -114,6 +138,7 @@ describe("SpanTreeView memo", () => {
     expect(rowRenderCounts.get("span-1")).toBe(1);
     expect(rowRenderCounts.get("span-2")).toBe(1);
     expect(rowRenderCounts.get("span-3")).toBe(1);
+    expect(groupRowRenderCount).toBe(1);
 
     rerender(<SpanTreeView spans={spans} showToolbar={false} selectedSpanId={"span-3"} />);
 
@@ -124,5 +149,6 @@ describe("SpanTreeView memo", () => {
     // span-2 is unaffected: selected stayed false, all other props stable.
     // Without stable onClick callbacks, React.memo cannot skip this row.
     expect(rowRenderCounts.get("span-2")).toBe(1);
+    expect(groupRowRenderCount).toBe(1);
   });
 });
