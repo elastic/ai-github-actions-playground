@@ -21,10 +21,14 @@ permissions:
 jobs:
   sync-control-panel:
     if: >-
-      github.event_name == 'pull_request_target' ||
+      (github.event_name == 'pull_request_target' &&
+       (github.event.pull_request.author_association == 'OWNER' ||
+        github.event.pull_request.author_association == 'MEMBER' ||
+        github.event.pull_request.author_association == 'COLLABORATOR')) ||
       (github.event_name == 'issue_comment' &&
        github.event.issue.pull_request != null &&
-       github.event.sender.login != 'github-actions[bot]')
+       github.event.sender.login != 'github-actions[bot]' &&
+       contains(github.event.comment.body, '<!-- pr-control-panel -->'))
     runs-on: ubuntu-latest
     steps:
       - name: Sync control panel via GitHub API only (no checkout)
@@ -271,6 +275,11 @@ jobs:
             const commentBody = context.payload.comment.body || "";
             if (!commentBody.includes(MARKER)) {
               core.info("Edited comment is not the control panel comment; skipping.");
+              return;
+            }
+            const commentAuthor = context.payload.comment?.user?.login ?? "";
+            if (commentAuthor !== "github-actions[bot]") {
+              core.warning(`Ignoring control-panel edit from non-bot comment (author: ${commentAuthor})`);
               return;
             }
 
