@@ -555,4 +555,28 @@ describe("DataTable", () => {
       expect(screen.getByTestId("row-inspector-field-message")).toHaveTextContent("row-25");
     });
   });
+
+  it("keeps selected highlight aligned with inspected row after data reorder", async () => {
+    const user = userEvent.setup();
+    const initial: EsqlResponse = {
+      columns: [{ name: "message", type: "keyword" }],
+      values: [["A"], ["B"]],
+    };
+
+    const { container, rerender } = render(<DataTable data={initial} />);
+    await user.click(screen.getByText("A"));
+
+    expect(screen.getByTestId("row-inspector-field-message")).toHaveTextContent("A");
+
+    const reordered: EsqlResponse = {
+      columns: [{ name: "message", type: "keyword" }],
+      values: [["B"], ["A"]],
+    };
+    rerender(<DataTable data={reordered} />);
+
+    const selectedRow = container.querySelector("tr.Mui-selected");
+    expect(selectedRow).not.toBeNull();
+    expect(selectedRow).toHaveTextContent("A");
+    expect(screen.getByTestId("row-inspector-field-message")).toHaveTextContent("A");
+  });
 });

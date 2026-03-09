@@ -44,7 +44,6 @@ export default memo(function DataTable({
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [inspectedRow, setInspectedRow] = useState<unknown[] | null>(null);
-  const [selectedRowIndex, setSelectedRowIndex] = useState<number | null>(null);
   const [showEmptyColumns, setShowEmptyColumns] = useState(false);
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const [columnOrder, setColumnOrder] = useState<number[]>(() => data.columns.map((_, i) => i));
@@ -86,18 +85,21 @@ export default memo(function DataTable({
     [data.values, page, rowsPerPage],
   );
 
-  const handleRowClick = useCallback(
-    (row: unknown[]) => {
-      setInspectedRow(row);
-      const idx = visibleRows.indexOf(row);
-      setSelectedRowIndex(idx >= 0 ? idx : null);
-    },
-    [visibleRows],
-  );
+  const selectedRowIndex = useMemo(() => {
+    if (inspectedRow === null) return null;
+    const refIdx = visibleRows.indexOf(inspectedRow);
+    if (refIdx >= 0) return refIdx;
+    const key = JSON.stringify(inspectedRow);
+    const idx = visibleRows.findIndex((r) => JSON.stringify(r) === key);
+    return idx >= 0 ? idx : null;
+  }, [inspectedRow, visibleRows]);
+
+  const handleRowClick = useCallback((row: unknown[]) => {
+    setInspectedRow(row);
+  }, []);
 
   const handleCloseInspector = useCallback(() => {
     setInspectedRow(null);
-    setSelectedRowIndex(null);
   }, []);
 
   const handleKeyDown = useCallback(
@@ -120,7 +122,6 @@ export default memo(function DataTable({
 
       const nextRow = visibleRows[nextIndex];
       if (nextRow) {
-        setSelectedRowIndex(nextIndex);
         setInspectedRow(nextRow);
 
         const rowEl = tableContainerRef.current?.querySelector(`[data-row-index="${nextIndex}"]`);
