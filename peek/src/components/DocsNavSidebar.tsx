@@ -119,6 +119,7 @@ export default function DocsNavSidebar({
             key={section.id}
             size="small"
             variant={activeSection === section.id ? "contained" : "text"}
+            aria-current={activeSection === section.id ? "location" : undefined}
             onClick={() => onJumpToSection(section.id)}
             sx={{
               justifyContent: "flex-start",
@@ -156,6 +157,9 @@ export default function DocsNavSidebar({
                 px: 1,
                 borderRadius: 1,
                 "&:hover": { bgcolor: "action.hover" },
+                "&.Mui-focusVisible": {
+                  boxShadow: (theme) => `0 0 0 2px ${theme.palette.primary.main}`,
+                },
               }}
             >
               <Typography
@@ -188,6 +192,7 @@ export default function DocsNavSidebar({
                       key={id}
                       size="small"
                       variant={activeSection === id ? "contained" : "text"}
+                      aria-current={activeSection === id ? "location" : undefined}
                       onClick={() => onJumpToSection(id)}
                       sx={{
                         justifyContent: "flex-start",
