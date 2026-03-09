@@ -55,6 +55,10 @@ const EXPLORE_SYSTEM_PROMPT =
   " Prefer dimensions that split the metric meaningfully (e.g. host.name for system metrics, service.name for app metrics)." +
   INSIGHT_GUARDRAIL;
 
+function normalizeCommittedRawQuery(rawQuery: string | null): string | null {
+  return rawQuery?.trim() ? rawQuery : null;
+}
+
 export default function ExplorePage() {
   const queryClient = useQueryClient();
   const [selectedNamespace, setSelectedNamespace] = useState<string | null>(null);
@@ -188,7 +192,9 @@ export default function ExplorePage() {
   // This decouples editor keystrokes from the query key so typing does not
   // fire network requests until the user clicks "Search Metrics" or presses
   // Cmd/Ctrl+Enter.
-  const [committedRawQuery, setCommittedRawQuery] = useState(() => rawQuery);
+  const [committedRawQuery, setCommittedRawQuery] = useState(() =>
+    normalizeCommittedRawQuery(rawQuery),
+  );
   const pendingSearchRef = useRef(false);
 
   // Sync committedRawQuery when rawQuery is programmatically cleared (e.g.
@@ -221,7 +227,7 @@ export default function ExplorePage() {
   });
 
   const handleSearch = useCallback(() => {
-    const nextCommittedRawQuery = rawQuery?.trim() ? rawQuery : null;
+    const nextCommittedRawQuery = normalizeCommittedRawQuery(rawQuery);
     if (nextCommittedRawQuery === committedRawQuery) {
       void queryClient.invalidateQueries({ queryKey: ["explore-query", connection?.url] });
       return;
