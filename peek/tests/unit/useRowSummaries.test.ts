@@ -2,7 +2,7 @@
 
 import React from "react";
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { generateText } from "ai";
 
@@ -18,10 +18,13 @@ vi.mock("@ai-sdk/openai", () => ({
   createOpenAI: vi.fn(() => vi.fn(() => ({ id: "test-model" }))),
 }));
 
+let ioCallback: IntersectionObserverCallback | null = null;
+
 // IntersectionObserver is not available in jsdom; provide a minimal mock.
 vi.stubGlobal(
   "IntersectionObserver",
-  vi.fn((_cb: IntersectionObserverCallback) => {
+  vi.fn((cb: IntersectionObserverCallback) => {
+    ioCallback = cb;
     return {
       observe: vi.fn(),
       unobserve: vi.fn(),
@@ -29,6 +32,12 @@ vi.stubGlobal(
     };
   }),
 );
+
+function triggerIntersection(target: Element, isIntersecting: boolean) {
+  if (!ioCallback) throw new Error("IntersectionObserver callback not registered");
+  const entry = { target, isIntersecting } as IntersectionObserverEntry;
+  ioCallback([entry], {} as IntersectionObserver);
+}
 
 function createWrapper() {
   const queryClient = new QueryClient({
@@ -56,6 +65,7 @@ describe("useRowSummaries", () => {
     sessionStorage.clear();
     resetAllStores();
     vi.mocked(generateText).mockReset();
+    ioCallback = null;
   });
 
   it("returns empty summaries when disabled", () => {
@@ -111,9 +121,19 @@ describe("useRowSummaries", () => {
       ({ rows }) => useRowSummaries(TEST_COLUMNS, rows, true),
       {
         wrapper: createWrapper(),
-        initialProps: { rows: TEST_ROWS },
+        initialProps: { rows: [TEST_ROWS[0]!] },
       },
     );
+
+    await waitFor(() => {
+      expect(ioCallback).not.toBeNull();
+    });
+
+    const oldRowElement = document.createElement("div");
+    act(() => {
+      result.current.observeRow(0, oldRowElement);
+      triggerIntersection(oldRowElement, true);
+    });
 
     await waitFor(() => {
       expect(vi.mocked(generateText)).toHaveBeenCalled();
@@ -124,7 +144,17 @@ describe("useRowSummaries", () => {
     // Change the rows
     rerender({ rows: [["server-4", 55.0, "New row"]] });
 
-    // Previous summaries should be cleared after row-set change.
+    // Previous summaries should be cleared immediately after row-set change.
+    await waitFor(() => {
+      expect(result.current.summaries.get(0)?.summary).not.toBe(oldSummary);
+    });
+
+    const newRowElement = document.createElement("div");
+    act(() => {
+      result.current.observeRow(0, newRowElement);
+      triggerIntersection(newRowElement, true);
+    });
+
     await waitFor(() => {
       expect(result.current.summaries.size).toBeLessThanOrEqual(1);
       expect([...result.current.summaries.keys()].every((k) => k === 0)).toBe(true);
