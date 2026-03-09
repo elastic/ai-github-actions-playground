@@ -21,7 +21,7 @@ interface DataTableBodyProps {
   pinnedLeftOffsets: Map<number, number>;
   page: number;
   rowsPerPage: number;
-  onRowClick: (row: unknown[]) => void;
+  onRowClick: (row: unknown[], rowIndex: number) => void;
   selectedRowIndex?: number | null;
   onCellClick?: (params: { columnName: string; value: string }) => void;
 }
@@ -55,11 +55,11 @@ export default function DataTableBody({
               tabIndex={0}
               data-row-index={rowIdx}
               selected={selectedRowIndex === rowIdx}
-              onClick={() => onRowClick(row)}
+              onClick={() => onRowClick(row, rowIdx)}
               onKeyDown={(event) => {
                 if (event.key === "Enter" || event.key === " ") {
                   event.preventDefault();
-                  onRowClick(row);
+                  onRowClick(row, rowIdx);
                 }
               }}
               sx={{ cursor: "pointer" }}
