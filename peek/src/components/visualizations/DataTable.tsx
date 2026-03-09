@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback, memo, useRef } from "react";
+import { useMemo, useState, useCallback, memo, useRef, useEffect } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Link from "@mui/material/Link";
@@ -32,6 +32,36 @@ interface Props {
   onCellClick?: (params: { columnName: string; value: string }) => void;
 }
 
+interface InspectedRowState {
+  row: unknown[];
+  key: string;
+  occurrence: number;
+}
+
+function getRowOccurrence(rows: unknown[][], targetKey: string, targetIndex: number): number {
+  let occurrence = 0;
+  for (let i = 0; i <= targetIndex; i += 1) {
+    const row = rows[i];
+    if (row && JSON.stringify(row) === targetKey) {
+      occurrence += 1;
+    }
+  }
+  return Math.max(occurrence - 1, 0);
+}
+
+function createInspectedRowState(
+  rows: unknown[][],
+  row: unknown[],
+  rowIndex: number,
+): InspectedRowState {
+  const key = JSON.stringify(row);
+  return {
+    row,
+    key,
+    occurrence: getRowOccurrence(rows, key, rowIndex),
+  };
+}
+
 export default memo(function DataTable({
   data,
   options,
@@ -43,8 +73,7 @@ export default memo(function DataTable({
 }: Props) {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
-  const [inspectedRow, setInspectedRow] = useState<unknown[] | null>(null);
-  const [selectedRowIndex, setSelectedRowIndex] = useState<number | null>(null);
+  const [inspectedRowState, setInspectedRowState] = useState<InspectedRowState | null>(null);
   const [showEmptyColumns, setShowEmptyColumns] = useState(false);
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const [columnOrder, setColumnOrder] = useState<number[]>(() => data.columns.map((_, i) => i));
@@ -86,23 +115,43 @@ export default memo(function DataTable({
     [data.values, page, rowsPerPage],
   );
 
+  const selectedRowIndex = useMemo(() => {
+    if (inspectedRowState === null) return null;
+    const refIdx = visibleRows.indexOf(inspectedRowState.row);
+    if (refIdx >= 0) return refIdx;
+    let matchedOccurrence = 0;
+    for (let idx = 0; idx < visibleRows.length; idx += 1) {
+      const row = visibleRows[idx];
+      if (row && JSON.stringify(row) === inspectedRowState.key) {
+        if (matchedOccurrence === inspectedRowState.occurrence) {
+          return idx;
+        }
+        matchedOccurrence += 1;
+      }
+    }
+    return null;
+  }, [inspectedRowState, visibleRows]);
+
+  useEffect(() => {
+    if (inspectedRowState !== null && selectedRowIndex === null) {
+      setInspectedRowState(null);
+    }
+  }, [inspectedRowState, selectedRowIndex]);
+
   const handleRowClick = useCallback(
-    (row: unknown[]) => {
-      setInspectedRow(row);
-      const idx = visibleRows.indexOf(row);
-      setSelectedRowIndex(idx >= 0 ? idx : null);
+    (row: unknown[], rowIndex: number) => {
+      setInspectedRowState(createInspectedRowState(visibleRows, row, rowIndex));
     },
     [visibleRows],
   );
 
   const handleCloseInspector = useCallback(() => {
-    setInspectedRow(null);
-    setSelectedRowIndex(null);
+    setInspectedRowState(null);
   }, []);
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent) => {
-      if (inspectedRow === null || selectedRowIndex === null) return;
+      if (inspectedRowState === null || selectedRowIndex === null) return;
       if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
       const target = event.target as HTMLElement | null;
       if (!target?.closest("tr[data-row-index]")) return;
@@ -120,8 +169,7 @@ export default memo(function DataTable({
 
       const nextRow = visibleRows[nextIndex];
       if (nextRow) {
-        setSelectedRowIndex(nextIndex);
-        setInspectedRow(nextRow);
+        setInspectedRowState(createInspectedRowState(visibleRows, nextRow, nextIndex));
 
         const rowEl = tableContainerRef.current?.querySelector(`[data-row-index="${nextIndex}"]`);
         if (rowEl && typeof rowEl.scrollIntoView === "function") {
@@ -129,7 +177,7 @@ export default memo(function DataTable({
         }
       }
     },
-    [inspectedRow, selectedRowIndex, visibleRows],
+    [inspectedRowState, selectedRowIndex, visibleRows],
   );
 
   const handleSortToggle = useCallback(
@@ -290,10 +338,10 @@ export default memo(function DataTable({
         )}
       </Box>
       <RowInspectorFlyout
-        open={inspectedRow !== null}
+        open={inspectedRowState !== null && selectedRowIndex !== null}
         onClose={handleCloseInspector}
         columns={data.columns}
-        row={inspectedRow}
+        row={inspectedRowState?.row ?? null}
       />
       <DataTableColumnMenu
         data={data}
