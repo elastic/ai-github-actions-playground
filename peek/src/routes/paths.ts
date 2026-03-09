@@ -416,7 +416,7 @@ export const PAGE_PATHS = {
     showTimeControls: false,
     skeletonVariant: "list",
     nav: {
-      label: "Package Builder",
+      label: "Package Editor",
       group: "System",
       order: 17,
       showInSidebar: false,
