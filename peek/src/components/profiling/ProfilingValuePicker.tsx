@@ -1,11 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import InputAdornment from "@mui/material/InputAdornment";
-import LinearProgress from "@mui/material/LinearProgress";
-import List from "@mui/material/List";
-import ListItemButton from "@mui/material/ListItemButton";
-import ListItemText from "@mui/material/ListItemText";
 import Paper from "@mui/material/Paper";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
@@ -15,10 +11,11 @@ import Button from "@mui/material/Button";
 
 import ContentSkeleton from "../ContentSkeleton";
 import EmptyState from "../EmptyState";
+import RankedValueList from "../RankedValueList";
 import DateRangePicker from "../DateRangePicker";
 import { toDashboardTimeRange, toTraceTimeRange } from "../timePresets";
-import { ElasticsearchClient, isElasticsearchError } from "../../services/es";
 import type { ElasticsearchConnection } from "../../services/es";
+import { useRankedDimensionValues } from "../../hooks/useRankedDimensionValues";
 
 import {
   buildDistinctValuesQuery,
@@ -26,11 +23,6 @@ import {
   type ProfilingFocusDimension,
 } from "./profilingQueryBuilder";
 import { isMissingProfilingIndex } from "./profilingUtils";
-
-interface ValueRow {
-  value: string;
-  samples: number;
-}
 
 interface ProfilingValuePickerProps {
   dimension: ProfilingFocusDimension;
@@ -51,48 +43,24 @@ export default function ProfilingValuePicker({
   onSelect,
   onBack,
 }: ProfilingValuePickerProps) {
-  const [rows, setRows] = useState<ValueRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const abortRef = useRef<AbortController | null>(null);
 
-  const fetchValues = useCallback(async () => {
-    abortRef.current?.abort();
-    const controller = new AbortController();
-    abortRef.current = controller;
-    setLoading(true);
-    setError(null);
-    try {
-      const client = new ElasticsearchClient(connection);
-      const query = buildDistinctValuesQuery(dimension, timeFrom, timeTo);
-      const result = await client.query({ query }, controller.signal);
-      const dimCol = result.columns.findIndex((c) => c.name === dimension);
-      const samplesCol = result.columns.findIndex((c) => c.name === "samples");
-      const parsed: ValueRow[] = result.values
-        .map((row) => ({
-          value: String(row[dimCol] ?? ""),
-          samples: Number(row[samplesCol] ?? 0),
-        }))
-        .filter((r) => r.value.length > 0);
-      setRows(parsed);
-    } catch (err: unknown) {
-      if (controller.signal.aborted) return;
-      setError(isElasticsearchError(err) ? err.message : String(err));
-    } finally {
-      if (!controller.signal.aborted && abortRef.current === controller) setLoading(false);
-    }
-  }, [connection, dimension, timeFrom, timeTo]);
+  const buildQuery = useCallback(
+    () => buildDistinctValuesQuery(dimension, timeFrom, timeTo),
+    [dimension, timeFrom, timeTo],
+  );
 
-  useEffect(() => {
-    void fetchValues();
-    return () => abortRef.current?.abort();
-  }, [fetchValues]);
+  const { rows, loading, error } = useRankedDimensionValues({
+    connection,
+    buildQuery,
+    dimensionColumn: dimension,
+    metricColumn: "samples",
+  });
 
-  const maxSamples = rows[0]?.samples || 1;
-  const filtered = search.trim()
-    ? rows.filter((r) => r.value.toLowerCase().includes(search.trim().toLowerCase()))
-    : rows;
+  const filtered = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    return term ? rows.filter((r) => r.value.toLowerCase().includes(term)) : rows;
+  }, [rows, search]);
 
   const dimensionLabel = PROFILING_DIMENSION_LABELS[dimension];
   const noData = rows.length === 0;
@@ -175,40 +143,12 @@ export default function ProfilingValuePicker({
       )}
 
       {!loading && !error && filtered.length > 0 && (
-        <List disablePadding>
-          {filtered.map((row) => (
-            <ListItemButton
-              key={row.value}
-              onClick={() => onSelect(row.value)}
-              sx={{ mb: 0.5, borderRadius: 1 }}
-            >
-              <ListItemText
-                primary={row.value}
-                secondary={
-                  <Box
-                    component="span"
-                    sx={{ display: "flex", gap: 1, alignItems: "center", mt: 0.5 }}
-                  >
-                    <LinearProgress
-                      variant="determinate"
-                      value={(row.samples / maxSamples) * 100}
-                      sx={{ flex: 1, height: 4, borderRadius: 2 }}
-                    />
-                    <Typography
-                      component="span"
-                      variant="caption"
-                      color="text.secondary"
-                      sx={{ whiteSpace: "nowrap" }}
-                    >
-                      {row.samples.toLocaleString()} samples
-                    </Typography>
-                  </Box>
-                }
-                slotProps={{ secondary: { component: "div" } }}
-              />
-            </ListItemButton>
-          ))}
-        </List>
+        <RankedValueList
+          rows={filtered}
+          metricLabel="samples"
+          maxMetric={rows[0]?.metric}
+          onSelect={onSelect}
+        />
       )}
     </Paper>
   );
