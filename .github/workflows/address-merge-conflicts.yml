@@ -31,6 +31,51 @@ jobs:
             const owner = context.repo.owner;
             const repo = context.repo.repo;
 
+            const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+            async function getConflictState(prNumber, graphMergeStateStatus) {
+              let last = null;
+
+              for (let attempt = 1; attempt <= 3; attempt++) {
+                const { data } = await github.rest.pulls.get({
+                  owner,
+                  repo,
+                  pull_number: prNumber,
+                });
+                last = data;
+
+                const mergeable = data.mergeable; // true, false, or null while GitHub computes
+                const mergeableState = data.mergeable_state; // e.g. clean, dirty, blocked, unstable
+                core.info(
+                  `PR #${prNumber}: attempt ${attempt}, mergeable=${mergeable}, mergeable_state=${mergeableState}, graph_mergeStateStatus=${graphMergeStateStatus}`,
+                );
+
+                if (mergeable !== null) {
+                  return {
+                    conflicted: mergeable === false || mergeableState === "dirty",
+                    mergeable,
+                    mergeableState,
+                    source: "rest",
+                  };
+                }
+
+                if (attempt < 3) {
+                  await sleep(1500 * attempt);
+                }
+              }
+
+              // If GitHub still hasn't computed mergeability, fall back to GraphQL DIRTY.
+              return {
+                conflicted:
+                  last?.mergeable === false ||
+                  last?.mergeable_state === "dirty" ||
+                  graphMergeStateStatus === "DIRTY",
+                mergeable: last?.mergeable ?? null,
+                mergeableState: last?.mergeable_state ?? null,
+                source: "fallback",
+              };
+            }
+
             const prs = [];
             let cursor = null;
 
@@ -61,7 +106,8 @@ jobs:
               for (const pr of connection.nodes) {
                 const labels = new Set((pr.labels?.nodes ?? []).map((l) => l.name));
                 const optedIn = !labels.has(LABEL);
-                const conflicted = pr.mergeStateStatus === "DIRTY";
+                const conflictState = await getConflictState(pr.number, pr.mergeStateStatus);
+                const conflicted = conflictState.conflicted;
                 if (!pr.isDraft && optedIn && conflicted) {
                   prs.push({ number: pr.number });
                 }
