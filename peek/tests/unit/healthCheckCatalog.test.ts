@@ -9,7 +9,6 @@ import { nodeChecks } from "../../src/health-checks/checks/nodes";
 import { recoveryChecks } from "../../src/health-checks/checks/recovery";
 import { securityChecks } from "../../src/health-checks/checks/security";
 import { shardChecks } from "../../src/health-checks/checks/shards";
-import { snapshotChecks } from "../../src/health-checks/checks/snapshots";
 import { taskChecks } from "../../src/health-checks/checks/tasks";
 import { transformChecks } from "../../src/health-checks/checks/transforms";
 import { INITIAL_HEALTH_CHECKS } from "../../src/health-checks/checks/index";
@@ -66,19 +65,25 @@ describe("INITIAL_HEALTH_CHECKS aggregation", () => {
   });
 
   it("includes all domain checks", () => {
-    const total =
-      clusterChecks.length +
-      healthReportChecks.length +
-      shardChecks.length +
-      nodeChecks.length +
-      taskChecks.length +
-      ilmChecks.length +
-      indicesChecks.length +
-      ingestChecks.length +
-      recoveryChecks.length +
-      securityChecks.length +
-      transformChecks.length +
-      snapshotChecks.length;
+    // Auto-discover and count all checks from modules to avoid manual maintenance
+    const checkModules = import.meta.glob("../../src/health-checks/checks/*.ts", {
+      eager: true,
+    });
+    const moduleFiles = Object.keys(checkModules).filter((k) => !k.endsWith("/index.ts"));
+    let total = 0;
+    for (const file of moduleFiles) {
+      const mod = checkModules[file] as Record<string, unknown>;
+      for (const val of Object.values(mod)) {
+        if (
+          Array.isArray(val) &&
+          val.length > 0 &&
+          typeof (val[0] as Record<string, unknown>).id === "string" &&
+          typeof (val[0] as Record<string, unknown>).evaluate === "function"
+        ) {
+          total += val.length;
+        }
+      }
+    }
     expect(INITIAL_HEALTH_CHECKS).toHaveLength(total);
   });
 
