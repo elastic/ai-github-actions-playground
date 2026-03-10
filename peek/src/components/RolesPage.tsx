@@ -163,13 +163,15 @@ export default function RolesPage() {
                 </ListItem>
               ))}
               {!loading && filteredRoles.length === 0 && (
-                <EmptyState
-                  icon={<SearchIcon sx={{ fontSize: 28 }} />}
-                  heading="No roles found"
-                  description="Try adjusting your search or check that roles exist in the cluster."
-                  size="small"
-                  verticalAlign="start"
-                />
+                <ListItem disablePadding>
+                  <EmptyState
+                    icon={<SearchIcon sx={{ fontSize: 28 }} />}
+                    heading="No roles found"
+                    description="Try adjusting your search or check that roles exist in the cluster."
+                    size="small"
+                    verticalAlign="start"
+                  />
+                </ListItem>
               )}
             </List>
           </>

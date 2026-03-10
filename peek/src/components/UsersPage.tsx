@@ -154,13 +154,15 @@ export default function UsersPage() {
                 </ListItem>
               ))}
               {!loading && filteredUsers.length === 0 && (
-                <EmptyState
-                  icon={<PersonSearchIcon sx={{ fontSize: 28 }} />}
-                  heading="No users found"
-                  description="Try adjusting your search or check that users exist in the cluster."
-                  size="small"
-                  verticalAlign="start"
-                />
+                <ListItem disablePadding>
+                  <EmptyState
+                    icon={<PersonSearchIcon sx={{ fontSize: 28 }} />}
+                    heading="No users found"
+                    description="Try adjusting your search or check that users exist in the cluster."
+                    size="small"
+                    verticalAlign="start"
+                  />
+                </ListItem>
               )}
             </List>
           </>

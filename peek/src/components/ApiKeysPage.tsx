@@ -166,13 +166,15 @@ export default function ApiKeysPage() {
               </ListItem>
             ))}
             {!loading && filteredKeys.length === 0 && (
-              <EmptyState
-                icon={<SearchIcon sx={{ fontSize: 28 }} />}
-                heading="No API keys found"
-                description="Try adjusting your search or check that API keys exist in the cluster."
-                size="small"
-                verticalAlign="start"
-              />
+              <ListItem disablePadding>
+                <EmptyState
+                  icon={<SearchIcon sx={{ fontSize: 28 }} />}
+                  heading="No API keys found"
+                  description="Try adjusting your search or check that API keys exist in the cluster."
+                  size="small"
+                  verticalAlign="start"
+                />
+              </ListItem>
             )}
           </List>
         </>
