@@ -15,5 +15,6 @@ export {
   buildDuplicateInstanceIdQuery,
   buildInstrumentationScoreQuery,
   buildInternalSpanCountQuery,
+  buildSpanNameCardinalityQuery,
 } from "./queryBuilder";
 export type { InstrumentationScoreFilters } from "./queryBuilder";

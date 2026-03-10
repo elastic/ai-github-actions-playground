@@ -53,16 +53,16 @@ export function buildInstrumentationScoreQuery(
       "is_internal = CASE(" +
       `${fields.spanKind} IN ("Internal", "SPAN_KIND_INTERNAL"), 1, 0)`,
     // Aggregate across all spans for this service.
-    // Note: resource.attributes.service.instance.id, service.environment, and
-    // deployment.environment.name are instrumentation-specific fields not present in
+    // Note: resource.attributes.service.instance.id and service.environment are
+    // instrumentation-specific fields not present in
     // the shared TraceFieldMapping (which covers core trace query fields).
     "STATS " +
       "total_spans = COUNT(*), " +
       "root_span_count = SUM(is_root), " +
       "root_client_span_count = SUM(is_root_client), " +
-      `has_instance_id = SUM(CASE(NULLIF(${RESOURCE_SERVICE_INSTANCE_ID_FIELD}, "") IS NOT NULL, 1, 0)), ` +
-      `has_version = SUM(CASE(NULLIF(${fields.serviceVersion}, "") IS NOT NULL, 1, 0)), ` +
-      'has_environment = SUM(CASE(NULLIF(COALESCE(service.environment, deployment.environment.name), "") IS NOT NULL, 1, 0)), ' +
+      `has_instance_id = SUM(CASE(${RESOURCE_SERVICE_INSTANCE_ID_FIELD} IS NOT NULL AND ${RESOURCE_SERVICE_INSTANCE_ID_FIELD} != "", 1, 0)), ` +
+      `has_version = SUM(CASE(${fields.serviceVersion} IS NOT NULL AND ${fields.serviceVersion} != "", 1, 0)), ` +
+      'has_environment = SUM(CASE(service.environment IS NOT NULL AND service.environment != "", 1, 0)), ' +
       "has_k8s_context = SUM(CASE(COALESCE(k8s.pod.uid, k8s.pod.name, k8s.namespace.name, k8s.node.name) IS NOT NULL, 1, 0)), " +
       "has_k8s_pod_uid = SUM(CASE(k8s.pod.uid IS NOT NULL, 1, 0))",
     `LIMIT 1`,
@@ -99,6 +99,32 @@ export function buildInternalSpanCountQuery(
 }
 
 /**
+ * Builds an ES|QL query that measures span-name cardinality for a service.
+ * Used for SPA-003 heuristic evaluation.
+ */
+export function buildSpanNameCardinalityQuery(
+  filters: InstrumentationScoreFilters,
+  fields: TraceFieldMapping = DEFAULT_FIELD_MAPPING,
+): string {
+  const safeTimeFrom = toSafeRelativeTimeExpression(filters.timeFrom);
+  const safeTimeTo = toSafeRelativeTimeExpression(filters.timeTo);
+  const safeServiceName = escapeEsqlString(filters.serviceName);
+
+  const whereClauses: string[] = [
+    `${fields.serviceName} == "${safeServiceName}"`,
+    `${fields.timestamp} >= ${safeTimeFrom}`,
+    `${fields.timestamp} <= ${safeTimeTo}`,
+  ];
+
+  return buildPipeline([
+    `FROM ${fields.index}`,
+    buildWherePipe(whereClauses),
+    `STATS total_spans = COUNT(*), distinct_span_names = COUNT_DISTINCT(${fields.spanName})`,
+    "LIMIT 1",
+  ]);
+}
+
+/**
  * Builds an ES|QL query that finds duplicate service.instance.id usage across
  * logical resources (e.g. pod/host/container). Used for RES-002 evaluation.
  */
@@ -124,7 +150,7 @@ export function buildDuplicateInstanceIdQuery(
     'EVAL logical_resource = CONCAT(COALESCE(k8s.pod.uid, ""), "|", COALESCE(k8s.pod.name, ""), "|", COALESCE(host.id, ""), "|", COALESCE(host.name, ""), "|", COALESCE(container.id, ""), "|", COALESCE(service.node.name, ""))',
     'EVAL logical_resource = CASE(logical_resource == "|||||", "@@UNVERIFIABLE@@", logical_resource)',
     `STATS distinct_resources = COUNT_DISTINCT(logical_resource), unverifiable_resources = SUM(CASE(logical_resource == "@@UNVERIFIABLE@@", 1, 0)) BY instance_id = ${RESOURCE_SERVICE_INSTANCE_ID_FIELD}`,
-    "STATS duplicate_instance_id_count = COUNT(*) WHERE distinct_resources > 1 OR unverifiable_resources > 0",
+    "STATS duplicate_instance_id_count = COUNT(*) WHERE distinct_resources > 1 AND (distinct_resources - unverifiable_resources) > 1",
     "LIMIT 1",
   ]);
 }

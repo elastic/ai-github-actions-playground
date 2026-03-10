@@ -10,6 +10,7 @@ import {
   INSTRUMENTATION_SCORE_RULES,
   buildInstrumentationScoreQuery,
   buildInternalSpanCountQuery,
+  buildSpanNameCardinalityQuery,
   buildDuplicateInstanceIdQuery,
   evaluateInstrumentationScore,
 } from "../instrumentation-score";
@@ -30,7 +31,9 @@ const QUERY_OPTIONS = {
   refetchOnWindowFocus: false,
   refetchOnReconnect: false,
 } as const;
+const RULES_REQUIRING_INTERNAL_SPAN_QUERY = new Set(["SPA-001", "SPA-005"]);
 const RULES_REQUIRING_DUPLICATE_INSTANCE_QUERY = new Set(["RES-002"]);
+const RULES_REQUIRING_SPAN_NAME_CARDINALITY_QUERY = new Set(["SPA-003"]);
 
 function hashString(value: string): string {
   let hash = 5381;
@@ -75,6 +78,12 @@ export function useInstrumentationScore({
   const needsDuplicateInstanceQuery = INSTRUMENTATION_SCORE_RULES.some((rule) =>
     RULES_REQUIRING_DUPLICATE_INSTANCE_QUERY.has(rule.id),
   );
+  const needsInternalSpanQuery = INSTRUMENTATION_SCORE_RULES.some((rule) =>
+    RULES_REQUIRING_INTERNAL_SPAN_QUERY.has(rule.id),
+  );
+  const needsSpanNameCardinalityQuery = INSTRUMENTATION_SCORE_RULES.some((rule) =>
+    RULES_REQUIRING_SPAN_NAME_CARDINALITY_QUERY.has(rule.id),
+  );
 
   const mainQuery = useQuery<EsqlResponse | null>({
     queryKey: [
@@ -108,7 +117,7 @@ export function useInstrumentationScore({
       const query = buildInternalSpanCountQuery(filters);
       return createPersesEsqlDatasource(connection).execute({ query: query.trim() }, signal);
     },
-    enabled: canFetch && hasMainData,
+    enabled: canFetch && hasMainData && needsInternalSpanQuery,
     initialData: null,
     ...QUERY_OPTIONS,
   });
@@ -131,17 +140,40 @@ export function useInstrumentationScore({
     ...QUERY_OPTIONS,
   });
 
+  const spanNameCardinalityQuery = useQuery<EsqlResponse | null>({
+    queryKey: [
+      `${KEY_PREFIX}span-name-cardinality`,
+      connectionFingerprint,
+      normalizedServiceName,
+      timeFrom,
+      timeTo,
+    ] as const,
+    queryFn: async ({ signal }) => {
+      if (!connection) return null;
+      const query = buildSpanNameCardinalityQuery(filters);
+      return createPersesEsqlDatasource(connection).execute({ query: query.trim() }, signal);
+    },
+    enabled: canFetch && hasMainData && needsSpanNameCardinalityQuery,
+    initialData: null,
+    ...QUERY_OPTIONS,
+  });
+
   const loading =
-    mainQuery.isFetching || internalSpanQuery.isFetching || duplicateInstanceQuery.isFetching;
+    mainQuery.isFetching ||
+    (needsInternalSpanQuery && internalSpanQuery.isFetching) ||
+    duplicateInstanceQuery.isFetching ||
+    spanNameCardinalityQuery.isFetching;
 
   const score: ServiceInstrumentationScore | null = useMemo(() => {
     if (!hasMainData) return null;
-    if (internalSpanQuery.data == null) return null;
-    if (needsDuplicateInstanceQuery && duplicateInstanceQuery.data == null) return null;
+    if (needsInternalSpanQuery && internalSpanQuery.isFetching) return null;
+    if (needsDuplicateInstanceQuery && duplicateInstanceQuery.isFetching) return null;
+    if (needsSpanNameCardinalityQuery && spanNameCardinalityQuery.isFetching) return null;
     const snapshot = parseInstrumentationScoreResult(
       normalizedServiceName,
       mainQuery.data,
-      internalSpanQuery.data,
+      needsInternalSpanQuery ? internalSpanQuery.data : null,
+      needsSpanNameCardinalityQuery ? spanNameCardinalityQuery.data : null,
       needsDuplicateInstanceQuery ? duplicateInstanceQuery.data : null,
     );
     if (snapshot.totalSpanCount === 0) return null;
@@ -151,15 +183,30 @@ export function useInstrumentationScore({
     hasMainData,
     mainQuery.data,
     internalSpanQuery.data,
+    internalSpanQuery.isFetching,
+    needsInternalSpanQuery,
     duplicateInstanceQuery.data,
+    duplicateInstanceQuery.isFetching,
+    spanNameCardinalityQuery.data,
+    spanNameCardinalityQuery.isFetching,
+    needsSpanNameCardinalityQuery,
     needsDuplicateInstanceQuery,
   ]);
 
   const error = useMemo(() => {
-    const first = mainQuery.error ?? internalSpanQuery.error ?? duplicateInstanceQuery.error;
+    const first =
+      mainQuery.error ??
+      internalSpanQuery.error ??
+      duplicateInstanceQuery.error ??
+      spanNameCardinalityQuery.error;
     if (!first) return null;
     return formatUnknownError(first);
-  }, [mainQuery.error, internalSpanQuery.error, duplicateInstanceQuery.error]);
+  }, [
+    mainQuery.error,
+    internalSpanQuery.error,
+    duplicateInstanceQuery.error,
+    spanNameCardinalityQuery.error,
+  ]);
 
   return {
     score,

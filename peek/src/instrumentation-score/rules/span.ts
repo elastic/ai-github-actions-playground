@@ -4,6 +4,7 @@
  * These checks evaluate trace span quality:
  * - SPA-004: Root spans are not CLIENT spans (Important)
  * - SPA-001: Limited number of INTERNAL spans per trace per service (Normal)
+ * - SPA-003: Span names have bound cardinality (Important)
  * - SPA-005: No high number of short INTERNAL spans per trace (Important)
  */
 import type { InstrumentationScoreRule } from "../types";
@@ -13,6 +14,9 @@ const SPEC_BASE_URL = "https://github.com/instrumentation-score/spec/blob/main/r
 /** Per the spec, no more than 10 INTERNAL spans per trace per service. */
 const MAX_INTERNAL_SPANS_PER_TRACE = 10;
 const MAX_SHORT_INTERNAL_SPANS_PER_TRACE = 20;
+const MIN_SPAN_SAMPLES_FOR_CARDINALITY_CHECK = 50;
+const MAX_DISTINCT_SPAN_NAMES = 200;
+const MAX_DISTINCT_SPAN_NAME_RATIO = 0.3;
 
 export const spanRules: InstrumentationScoreRule[] = [
   {
@@ -72,6 +76,15 @@ export const spanRules: InstrumentationScoreRule[] = [
           observed: { totalSpanCount: 0 },
         };
       }
+      if (!snapshot.internalSpanMetricsAvailable) {
+        return {
+          passed: false,
+          summary:
+            "Could not evaluate INTERNAL span density because span metrics were unavailable. " +
+            "Check query compatibility and retry.",
+          observed: { internalSpanMetricsAvailable: false },
+        };
+      }
       if (snapshot.maxInternalSpansPerTrace <= MAX_INTERNAL_SPANS_PER_TRACE) {
         return {
           passed: true,
@@ -95,6 +108,72 @@ export const spanRules: InstrumentationScoreRule[] = [
     },
   },
   {
+    id: "SPA-003",
+    description: "Span names have bound cardinality",
+    rationale:
+      "High-cardinality span names reduce aggregation quality and can inflate index/storage costs. " +
+      "Prefer stable operation names over request-specific literals.",
+    target: "span",
+    impact: "important",
+    specUrl: `${SPEC_BASE_URL}/SPA-003.md`,
+    evaluate: (snapshot) => {
+      if (snapshot.totalSpanCount === 0) {
+        return {
+          passed: true,
+          summary: "No spans observed to evaluate.",
+          observed: { totalSpanCount: 0 },
+        };
+      }
+      if (!snapshot.spanNameCardinalityMetricsAvailable) {
+        return {
+          passed: false,
+          summary:
+            "Could not evaluate span-name cardinality because cardinality metrics were unavailable. " +
+            "Check query compatibility and retry.",
+          observed: { spanNameCardinalityMetricsAvailable: false },
+        };
+      }
+      if (snapshot.totalSpanCount < MIN_SPAN_SAMPLES_FOR_CARDINALITY_CHECK) {
+        return {
+          passed: true,
+          summary: `Span-name cardinality check skipped for low sample size (${snapshot.totalSpanCount} spans).`,
+          observed: {
+            totalSpanCount: snapshot.totalSpanCount,
+            minimumSampleSize: MIN_SPAN_SAMPLES_FOR_CARDINALITY_CHECK,
+          },
+        };
+      }
+      const ratio = snapshot.distinctSpanNameCount / snapshot.totalSpanCount;
+      if (
+        snapshot.distinctSpanNameCount <= MAX_DISTINCT_SPAN_NAMES ||
+        ratio <= MAX_DISTINCT_SPAN_NAME_RATIO
+      ) {
+        return {
+          passed: true,
+          summary: `Observed ${snapshot.distinctSpanNameCount} distinct span names across ${snapshot.totalSpanCount} spans.`,
+          observed: {
+            distinctSpanNameCount: snapshot.distinctSpanNameCount,
+            totalSpanCount: snapshot.totalSpanCount,
+            ratio: Number(ratio.toFixed(3)),
+          },
+        };
+      }
+      return {
+        passed: false,
+        summary:
+          `High span-name cardinality detected: ${snapshot.distinctSpanNameCount} distinct names across ${snapshot.totalSpanCount} spans. ` +
+          "Avoid embedding IDs or raw paths in span names.",
+        observed: {
+          distinctSpanNameCount: snapshot.distinctSpanNameCount,
+          totalSpanCount: snapshot.totalSpanCount,
+          ratio: Number(ratio.toFixed(3)),
+          maxDistinctSpanNames: MAX_DISTINCT_SPAN_NAMES,
+          maxRatio: MAX_DISTINCT_SPAN_NAME_RATIO,
+        },
+      };
+    },
+  },
+  {
     id: "SPA-005",
     description: "Traces do not contain a high number of short INTERNAL spans",
     rationale:
@@ -109,6 +188,15 @@ export const spanRules: InstrumentationScoreRule[] = [
           passed: true,
           summary: "No spans observed to evaluate.",
           observed: { totalSpanCount: 0 },
+        };
+      }
+      if (!snapshot.internalSpanMetricsAvailable) {
+        return {
+          passed: false,
+          summary:
+            "Could not evaluate short INTERNAL span volume because span metrics were unavailable. " +
+            "Check query compatibility and retry.",
+          observed: { internalSpanMetricsAvailable: false },
         };
       }
       if (snapshot.maxShortInternalSpansPerTrace <= MAX_SHORT_INTERNAL_SPANS_PER_TRACE) {

@@ -78,6 +78,14 @@ export default function ServiceInstrumentationScorePanel({
         </Box>
       )}
 
+      {error && score && (
+        <Box sx={{ px: 2, pt: 1 }}>
+          <Typography variant="caption" color="warning.main">
+            Some checks may be incomplete: {error}
+          </Typography>
+        </Box>
+      )}
+
       {score && (
         <>
           <Box

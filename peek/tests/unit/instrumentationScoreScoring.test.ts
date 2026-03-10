@@ -130,7 +130,11 @@ const GOOD_SNAPSHOT: InstrumentationScoreSnapshot = {
   rootSpanCount: 100,
   maxInternalSpansPerTrace: 5,
   maxShortInternalSpansPerTrace: 5,
+  internalSpanMetricsAvailable: true,
+  distinctSpanNameCount: 12,
+  spanNameCardinalityMetricsAvailable: true,
   duplicateInstanceIdCount: 0,
+  duplicateInstanceMetricsAvailable: true,
   totalSpanCount: 500,
 };
 
@@ -146,7 +150,11 @@ const POOR_SNAPSHOT: InstrumentationScoreSnapshot = {
   rootSpanCount: 100,
   maxInternalSpansPerTrace: 25,
   maxShortInternalSpansPerTrace: 30,
+  internalSpanMetricsAvailable: true,
+  distinctSpanNameCount: 320,
+  spanNameCardinalityMetricsAvailable: true,
   duplicateInstanceIdCount: 2,
+  duplicateInstanceMetricsAvailable: true,
   totalSpanCount: 500,
 };
 

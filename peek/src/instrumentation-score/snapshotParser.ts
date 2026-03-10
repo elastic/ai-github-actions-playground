@@ -14,6 +14,7 @@ export function parseInstrumentationScoreResult(
   serviceName: string,
   mainResult: EsqlResponse | null,
   internalSpanResult: EsqlResponse | null,
+  spanNameCardinalityResult: EsqlResponse | null,
   duplicateInstanceResult: EsqlResponse | null,
 ): InstrumentationScoreSnapshot {
   const defaults: InstrumentationScoreSnapshot = {
@@ -28,7 +29,11 @@ export function parseInstrumentationScoreResult(
     rootSpanCount: 0,
     maxInternalSpansPerTrace: 0,
     maxShortInternalSpansPerTrace: 0,
+    internalSpanMetricsAvailable: false,
+    distinctSpanNameCount: 0,
+    spanNameCardinalityMetricsAvailable: false,
     duplicateInstanceIdCount: 0,
+    duplicateInstanceMetricsAvailable: false,
     totalSpanCount: 0,
   };
 
@@ -58,6 +63,7 @@ export function parseInstrumentationScoreResult(
   // Parse internal span count from the second query
   let maxInternalSpansPerTrace = 0;
   let maxShortInternalSpansPerTrace = 0;
+  const internalSpanMetricsAvailable = internalSpanResult != null;
   if (internalSpanResult && internalSpanResult.values.length > 0) {
     const internalGet = buildColumnAccessor(internalSpanResult.columns);
     const internalRow = internalSpanResult.values[0]!;
@@ -67,8 +73,18 @@ export function parseInstrumentationScoreResult(
     );
   }
 
-  // Parse duplicate instance-id result from the third query
+  // Parse span-name cardinality result from the optional query
+  let distinctSpanNameCount = 0;
+  const spanNameCardinalityMetricsAvailable = spanNameCardinalityResult != null;
+  if (spanNameCardinalityResult && spanNameCardinalityResult.values.length > 0) {
+    const cardinalityGet = buildColumnAccessor(spanNameCardinalityResult.columns);
+    const cardinalityRow = spanNameCardinalityResult.values[0]!;
+    distinctSpanNameCount = toFiniteNumber(cardinalityGet(cardinalityRow, "distinct_span_names"));
+  }
+
+  // Parse duplicate instance-id result from the optional query
   let duplicateInstanceIdCount = 0;
+  const duplicateInstanceMetricsAvailable = duplicateInstanceResult != null;
   if (duplicateInstanceResult && duplicateInstanceResult.values.length > 0) {
     const duplicateGet = buildColumnAccessor(duplicateInstanceResult.columns);
     const duplicateRow = duplicateInstanceResult.values[0]!;
@@ -89,7 +105,11 @@ export function parseInstrumentationScoreResult(
     rootSpanCount,
     maxInternalSpansPerTrace,
     maxShortInternalSpansPerTrace,
+    internalSpanMetricsAvailable,
+    distinctSpanNameCount,
+    spanNameCardinalityMetricsAvailable,
     duplicateInstanceIdCount,
+    duplicateInstanceMetricsAvailable,
     totalSpanCount: totalSpans,
   };
 }

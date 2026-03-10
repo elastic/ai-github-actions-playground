@@ -4,6 +4,7 @@ import {
   buildDuplicateInstanceIdQuery,
   buildInstrumentationScoreQuery,
   buildInternalSpanCountQuery,
+  buildSpanNameCardinalityQuery,
 } from "../../src/instrumentation-score/queryBuilder";
 import { parseInstrumentationScoreResult } from "../../src/instrumentation-score/snapshotParser";
 import type { EsqlResponse } from "../../src/types";
@@ -33,15 +34,16 @@ describe("buildInstrumentationScoreQuery", () => {
     expect(query).toContain("has_k8s_context");
     expect(query).toContain("has_k8s_pod_uid");
     expect(query).toContain(
-      'has_instance_id = SUM(CASE(NULLIF(`resource.attributes.service.instance.id`, "") IS NOT NULL, 1, 0))',
+      'has_instance_id = SUM(CASE(`resource.attributes.service.instance.id` IS NOT NULL AND `resource.attributes.service.instance.id` != "", 1, 0))',
     );
     expect(query).toContain(
-      'has_version = SUM(CASE(NULLIF(service.version, "") IS NOT NULL, 1, 0))',
+      'has_version = SUM(CASE(service.version IS NOT NULL AND service.version != "", 1, 0))',
     );
     expect(query).toContain(
-      'has_environment = SUM(CASE(NULLIF(COALESCE(service.environment, deployment.environment.name), "") IS NOT NULL, 1, 0))',
+      'has_environment = SUM(CASE(service.environment IS NOT NULL AND service.environment != "", 1, 0))',
     );
-    expect(query).toContain("deployment.environment.name");
+    expect(query).not.toContain("NULLIF(");
+    expect(query).not.toContain("deployment.environment.name");
     expect(query).toContain("LIMIT 1");
   });
 
@@ -89,8 +91,22 @@ describe("buildDuplicateInstanceIdQuery", () => {
       'EVAL logical_resource = CASE(logical_resource == "|||||", "@@UNVERIFIABLE@@", logical_resource)',
     );
     expect(query).toContain("unverifiable_resources");
-    expect(query).toContain("distinct_resources > 1 OR unverifiable_resources > 0");
+    expect(query).toContain(
+      "distinct_resources > 1 AND (distinct_resources - unverifiable_resources) > 1",
+    );
     expect(query).toContain("duplicate_instance_id_count");
+    expect(query).toContain("LIMIT 1");
+  });
+});
+
+describe("buildSpanNameCardinalityQuery", () => {
+  it("produces valid ES|QL for span-name cardinality", () => {
+    const query = buildSpanNameCardinalityQuery(BASE_FILTERS);
+    expect(query).toContain("FROM traces-*");
+    expect(query).toContain('service.name == "my-service"');
+    expect(query).toContain("distinct_span_names");
+    expect(query).toContain("COUNT_DISTINCT(name)");
+    expect(query).toContain("total_spans = COUNT(*)");
     expect(query).toContain("LIMIT 1");
   });
 });
@@ -101,7 +117,7 @@ describe("buildDuplicateInstanceIdQuery", () => {
 
 describe("parseInstrumentationScoreResult", () => {
   it("returns defaults when main result is null", () => {
-    const snapshot = parseInstrumentationScoreResult("svc", null, null, null);
+    const snapshot = parseInstrumentationScoreResult("svc", null, null, null, null);
     expect(snapshot.serviceName).toBe("svc");
     expect(snapshot.hasServiceInstanceId).toBe(false);
     expect(snapshot.rootSpanCount).toBe(0);
@@ -114,7 +130,7 @@ describe("parseInstrumentationScoreResult", () => {
       columns: [{ name: "total_spans", type: "long" }],
       values: [],
     };
-    const snapshot = parseInstrumentationScoreResult("svc", emptyResult, null, null);
+    const snapshot = parseInstrumentationScoreResult("svc", emptyResult, null, null, null);
     expect(snapshot.totalSpanCount).toBe(0);
   });
 
@@ -132,7 +148,7 @@ describe("parseInstrumentationScoreResult", () => {
       ],
       values: [[500, 100, 5, 120, 120, 0, 300, 0]],
     };
-    const snapshot = parseInstrumentationScoreResult("svc", mainResult, null, null);
+    const snapshot = parseInstrumentationScoreResult("svc", mainResult, null, null, null);
     expect(snapshot.totalSpanCount).toBe(500);
     expect(snapshot.rootSpanCount).toBe(100);
     expect(snapshot.rootClientSpanCount).toBe(5);
@@ -159,7 +175,7 @@ describe("parseInstrumentationScoreResult", () => {
       values: [[100, 10, 0, 1, 1, 1, 1, 1]],
     };
 
-    const snapshot = parseInstrumentationScoreResult("svc", mainResult, null, null);
+    const snapshot = parseInstrumentationScoreResult("svc", mainResult, null, null, null);
     expect(snapshot.hasServiceInstanceId).toBe(true);
     expect(snapshot.hasServiceVersion).toBe(true);
     expect(snapshot.hasDeploymentEnvironment).toBe(true);
@@ -192,14 +208,23 @@ describe("parseInstrumentationScoreResult", () => {
       columns: [{ name: "duplicate_instance_id_count", type: "long" }],
       values: [[3]],
     };
+    const cardinalityResult: EsqlResponse = {
+      columns: [{ name: "distinct_span_names", type: "long" }],
+      values: [[40]],
+    };
     const snapshot = parseInstrumentationScoreResult(
       "svc",
       mainResult,
       internalResult,
+      cardinalityResult,
       duplicateResult,
     );
     expect(snapshot.maxInternalSpansPerTrace).toBe(15);
     expect(snapshot.maxShortInternalSpansPerTrace).toBe(12);
+    expect(snapshot.distinctSpanNameCount).toBe(40);
     expect(snapshot.duplicateInstanceIdCount).toBe(3);
+    expect(snapshot.internalSpanMetricsAvailable).toBe(true);
+    expect(snapshot.spanNameCardinalityMetricsAvailable).toBe(true);
+    expect(snapshot.duplicateInstanceMetricsAvailable).toBe(true);
   });
 });

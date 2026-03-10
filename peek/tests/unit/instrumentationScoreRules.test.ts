@@ -20,7 +20,11 @@ function makeSnapshot(
     rootSpanCount: 100,
     maxInternalSpansPerTrace: 5,
     maxShortInternalSpansPerTrace: 5,
+    internalSpanMetricsAvailable: true,
+    distinctSpanNameCount: 10,
+    spanNameCardinalityMetricsAvailable: true,
     duplicateInstanceIdCount: 0,
+    duplicateInstanceMetricsAvailable: true,
     totalSpanCount: 500,
     ...overrides,
   };
@@ -110,6 +114,14 @@ describe("RES-002: service.instance.id is unique across logical resources", () =
     expect(result.passed).toBe(false);
     expect(result.summary).toContain("2");
   });
+
+  it("fails when duplicate-instance metrics are unavailable", () => {
+    const result = rule.evaluate(
+      makeSnapshot({ duplicateInstanceMetricsAvailable: false, hasServiceInstanceId: true }),
+    );
+    expect(result.passed).toBe(false);
+    expect(result.summary).toContain("unavailable");
+  });
 });
 
 describe("RES-003: k8s.pod.uid is present for Kubernetes workloads", () => {
@@ -188,6 +200,12 @@ describe("SPA-001: Limited INTERNAL spans per trace", () => {
     expect(result.summary).toContain("15");
     expect(result.observed?.maxInternalSpansPerTrace).toBe(15);
   });
+
+  it("fails when internal span metrics are unavailable", () => {
+    const result = rule.evaluate(makeSnapshot({ internalSpanMetricsAvailable: false }));
+    expect(result.passed).toBe(false);
+    expect(result.summary).toContain("unavailable");
+  });
 });
 
 describe("SPA-005: No high number of short INTERNAL spans per trace", () => {
@@ -211,5 +229,42 @@ describe("SPA-005: No high number of short INTERNAL spans per trace", () => {
     const result = rule.evaluate(makeSnapshot({ maxShortInternalSpansPerTrace: 35 }));
     expect(result.passed).toBe(false);
     expect(result.summary).toContain("35");
+  });
+
+  it("fails when short internal metrics are unavailable", () => {
+    const result = rule.evaluate(makeSnapshot({ internalSpanMetricsAvailable: false }));
+    expect(result.passed).toBe(false);
+    expect(result.summary).toContain("unavailable");
+  });
+});
+
+describe("SPA-003: Span names have bound cardinality", () => {
+  const rule = getSpanRule("SPA-003");
+
+  it("has important impact", () => {
+    expect(rule.impact).toBe("important");
+  });
+
+  it("passes for low sample sizes", () => {
+    const result = rule.evaluate(makeSnapshot({ totalSpanCount: 25, distinctSpanNameCount: 20 }));
+    expect(result.passed).toBe(true);
+    expect(result.summary).toContain("skipped");
+  });
+
+  it("passes when cardinality is bounded", () => {
+    const result = rule.evaluate(makeSnapshot({ totalSpanCount: 500, distinctSpanNameCount: 80 }));
+    expect(result.passed).toBe(true);
+  });
+
+  it("fails when cardinality is too high", () => {
+    const result = rule.evaluate(makeSnapshot({ totalSpanCount: 500, distinctSpanNameCount: 260 }));
+    expect(result.passed).toBe(false);
+    expect(result.summary).toContain("High span-name cardinality");
+  });
+
+  it("fails when cardinality metrics are unavailable", () => {
+    const result = rule.evaluate(makeSnapshot({ spanNameCardinalityMetricsAvailable: false }));
+    expect(result.passed).toBe(false);
+    expect(result.summary).toContain("unavailable");
   });
 });

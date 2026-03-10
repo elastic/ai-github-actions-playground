@@ -46,7 +46,7 @@ export interface InstrumentationScoreSnapshot {
   /** Whether any span carries a service.version value. */
   hasServiceVersion: boolean;
 
-  /** Whether any span carries a deployment.environment.name or service.environment value. */
+  /** Whether any span carries a non-empty service.environment value. */
   hasDeploymentEnvironment: boolean;
 
   /** Whether any Kubernetes resource attributes are present for this service. */
@@ -67,8 +67,20 @@ export interface InstrumentationScoreSnapshot {
   /** Maximum number of short (<5ms) INTERNAL spans observed in any single trace. */
   maxShortInternalSpansPerTrace: number;
 
+  /** Whether INTERNAL span metric query data was available for SPA rules. */
+  internalSpanMetricsAvailable: boolean;
+
+  /** Number of distinct span names observed for this service in the selected window. */
+  distinctSpanNameCount: number;
+
+  /** Whether span-name cardinality query data was available for SPA-003. */
+  spanNameCardinalityMetricsAvailable: boolean;
+
   /** Number of service.instance.id values reused across multiple logical resources. */
   duplicateInstanceIdCount: number;
+
+  /** Whether duplicate instance-id query data was available for RES-002. */
+  duplicateInstanceMetricsAvailable: boolean;
 
   /** Total number of spans sampled. */
   totalSpanCount: number;

@@ -55,6 +55,15 @@ export const resourceRules: InstrumentationScoreRule[] = [
             "Add service.instance.id first (RES-001).",
         };
       }
+      if (!snapshot.duplicateInstanceMetricsAvailable) {
+        return {
+          passed: false,
+          summary:
+            "Cannot verify uniqueness because duplicate instance-id metrics were unavailable. " +
+            "Check query compatibility and retry.",
+          observed: { duplicateInstanceMetricsAvailable: false },
+        };
+      }
       if (snapshot.duplicateInstanceIdCount === 0) {
         return {
           passed: true,
