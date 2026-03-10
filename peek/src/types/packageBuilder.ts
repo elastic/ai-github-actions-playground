@@ -24,6 +24,7 @@ export interface SelectOption {
 }
 
 export interface PackageVariable {
+  id: string;
   name: string;
   type: VariableType;
   title: string;
@@ -127,6 +128,7 @@ export function shouldAutoSecret(name: string): boolean {
 
 export function createDefaultVariable(): PackageVariable {
   return {
+    id: crypto.randomUUID(),
     name: "",
     type: "text",
     title: "",
