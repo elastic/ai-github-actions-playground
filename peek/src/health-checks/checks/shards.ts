@@ -1,5 +1,5 @@
 import type { CatShardRecord } from "../../services/es/clusterTypes";
-import type { HealthCheckDefinition } from "../types";
+import type { HealthCheckDefinition, HealthSeverity, HealthStatus } from "../types";
 
 interface ShardSummary {
   unassignedCount: number;
@@ -78,6 +78,47 @@ function unknownAllocationDataResult() {
 
 const INITIALIZING_SHARDS_HIGH = 10;
 const RELOCATING_SHARDS_HIGH = 10;
+
+interface UnassignedReasonRuleConfig {
+  id: string;
+  title: string;
+  description: string;
+  severityOnFail: HealthSeverity;
+  countKey: keyof ShardSummary;
+  failStatus: HealthStatus;
+  reasonLabel: string;
+  recommendation: string;
+  passSummary: string;
+}
+
+function makeUnassignedReasonRule(config: UnassignedReasonRuleConfig): HealthCheckDefinition {
+  return {
+    id: config.id,
+    domain: "shards",
+    title: config.title,
+    description: config.description,
+    severityOnFail: config.severityOnFail,
+    surfaces: ["global"],
+    dependsOn: ["shards"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/cat-shards",
+    recommendation: config.recommendation,
+    evaluate: (snapshot) => {
+      const shards = snapshot.data.shards?.catShards;
+      if (!shards) return unknownShardsDataResult();
+      const summary = getShardSummary(shards);
+      const count = summary[config.countKey] as number;
+      if (count > 0) {
+        return {
+          status: config.failStatus,
+          summary: `${count} shard${count === 1 ? "" : "s"} unassigned due to ${config.reasonLabel}.`,
+          observed: { count },
+          recommendation: config.recommendation,
+        };
+      }
+      return { status: "pass", summary: config.passSummary };
+    },
+  };
+}
 
 export const shardChecks: HealthCheckDefinition[] = [
   // #15
@@ -357,116 +398,54 @@ export const shardChecks: HealthCheckDefinition[] = [
     },
   },
   // #19
-  {
+  makeUnassignedReasonRule({
     id: "shards.unassigned.reason.allocation_failed",
-    domain: "shards",
     title: "Unassigned shards: allocation failed",
     description: "Warns when unassigned shards have ALLOCATION_FAILED reason.",
     severityOnFail: "high",
-    surfaces: ["global"],
-    dependsOn: ["shards"],
-    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/cat-shards",
-    recommendation:
-      "Allocation failures may be caused by disk space, filters, or corrupted shards.",
-    evaluate: (snapshot) => {
-      const shards = snapshot.data.shards?.catShards;
-      if (!shards) return unknownShardsDataResult();
-      const { allocationFailedCount } = getShardSummary(shards);
-      if (allocationFailedCount > 0) {
-        return {
-          status: "warn",
-          summary: `${allocationFailedCount} shard${allocationFailedCount === 1 ? "" : "s"} unassigned due to ALLOCATION_FAILED.`,
-          observed: { count: allocationFailedCount },
-          recommendation:
-            "Check node disk space, allocation filters, and shard allocation settings.",
-        };
-      }
-      return { status: "pass", summary: "No shards unassigned due to allocation failure." };
-    },
-  },
+    countKey: "allocationFailedCount",
+    failStatus: "warn",
+    reasonLabel: "ALLOCATION_FAILED",
+    recommendation: "Check node disk space, allocation filters, and shard allocation settings.",
+    passSummary: "No shards unassigned due to allocation failure.",
+  }),
   // #20
-  {
+  makeUnassignedReasonRule({
     id: "shards.unassigned.reason.primary_failed",
-    domain: "shards",
     title: "Unassigned shards: primary failed",
     description: "Fails when unassigned shards have PRIMARY_FAILED reason.",
     severityOnFail: "critical",
-    surfaces: ["global"],
-    dependsOn: ["shards"],
-    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/cat-shards",
-    recommendation:
-      "Primary shard failures indicate potential data loss. Investigate the cause immediately.",
-    evaluate: (snapshot) => {
-      const shards = snapshot.data.shards?.catShards;
-      if (!shards) return unknownShardsDataResult();
-      const { primaryFailedCount } = getShardSummary(shards);
-      if (primaryFailedCount > 0) {
-        return {
-          status: "fail",
-          summary: `${primaryFailedCount} shard${primaryFailedCount === 1 ? "" : "s"} unassigned due to PRIMARY_FAILED.`,
-          observed: { count: primaryFailedCount },
-          recommendation:
-            "Primary shard failures indicate potential data loss. Investigate immediately.",
-        };
-      }
-      return { status: "pass", summary: "No shards unassigned due to primary failure." };
-    },
-  },
+    countKey: "primaryFailedCount",
+    failStatus: "fail",
+    reasonLabel: "PRIMARY_FAILED",
+    recommendation: "Primary shard failures indicate potential data loss. Investigate immediately.",
+    passSummary: "No shards unassigned due to primary failure.",
+  }),
   // #21
-  {
+  makeUnassignedReasonRule({
     id: "shards.unassigned.reason.node_left",
-    domain: "shards",
     title: "Unassigned shards: node left",
     description: "Warns when unassigned shards are due to NODE_LEFT or NODE_RESTARTING.",
     severityOnFail: "high",
-    surfaces: ["global"],
-    dependsOn: ["shards"],
-    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/cat-shards",
-    recommendation:
-      "Shards became unassigned when nodes departed. Check if nodes will return or need replacement.",
-    evaluate: (snapshot) => {
-      const shards = snapshot.data.shards?.catShards;
-      if (!shards) return unknownShardsDataResult();
-      const { nodeLeftCount } = getShardSummary(shards);
-      if (nodeLeftCount > 0) {
-        return {
-          status: "warn",
-          summary: `${nodeLeftCount} shard${nodeLeftCount === 1 ? "" : "s"} unassigned due to node departure.`,
-          observed: { count: nodeLeftCount },
-          recommendation: "Check for nodes that have recently left the cluster.",
-        };
-      }
-      return { status: "pass", summary: "No shards unassigned due to node departure." };
-    },
-  },
+    countKey: "nodeLeftCount",
+    failStatus: "warn",
+    reasonLabel: "node departure",
+    recommendation: "Check for nodes that have recently left the cluster.",
+    passSummary: "No shards unassigned due to node departure.",
+  }),
   // #22
-  {
+  makeUnassignedReasonRule({
     id: "shards.unassigned.reason.index_closed",
-    domain: "shards",
     title: "Unassigned shards: index closed",
     description: "Warns when unassigned shards are due to INDEX_CLOSED.",
     severityOnFail: "low",
-    surfaces: ["global"],
-    dependsOn: ["shards"],
-    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/cat-shards",
+    countKey: "indexClosedCount",
+    failStatus: "warn",
+    reasonLabel: "INDEX_CLOSED",
     recommendation:
-      "Closed indices have unassigned shards by design. Reopen or delete if no longer needed.",
-    evaluate: (snapshot) => {
-      const shards = snapshot.data.shards?.catShards;
-      if (!shards) return unknownShardsDataResult();
-      const { indexClosedCount } = getShardSummary(shards);
-      if (indexClosedCount > 0) {
-        return {
-          status: "warn",
-          summary: `${indexClosedCount} shard${indexClosedCount === 1 ? "" : "s"} unassigned due to INDEX_CLOSED.`,
-          observed: { count: indexClosedCount },
-          recommendation:
-            "Closed indices have unassigned shards by design. Reopen or delete if unneeded.",
-        };
-      }
-      return { status: "pass", summary: "No shards unassigned due to closed indices." };
-    },
-  },
+      "Closed indices have unassigned shards by design. Reopen or delete if unneeded.",
+    passSummary: "No shards unassigned due to closed indices.",
+  }),
   // #26
   {
     id: "allocation.explain.awareness_constraints",
