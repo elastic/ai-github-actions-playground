@@ -33,6 +33,7 @@ import { syncActiveState, replaceActiveDashboard } from "./dashboardStoreUtils";
 
 export { createDefaultDashboard };
 export type { HistoryEntry } from "./dashboardStoreUtils";
+import { registerResetter } from "./resetRegistry";
 
 interface DashboardImportExportSlice {
   exportDashboard: () => string;
@@ -154,3 +155,5 @@ export const useDashboardStore = create<DashboardState>()(
     { name: "DashboardStore", enabled: import.meta.env.DEV },
   ),
 );
+
+registerResetter("dashboard", () => useDashboardStore.getState().resetDashboardState());

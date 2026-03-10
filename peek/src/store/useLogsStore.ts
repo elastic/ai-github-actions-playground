@@ -7,6 +7,7 @@ import {
   type LogsFilterChip,
   type LogsQueryState,
 } from "../components/logs/logsQueryBuilder";
+import { registerResetter } from "./resetRegistry";
 
 interface LogsState extends LogsQueryState {
   rawQuery: string | null;
@@ -67,3 +68,5 @@ export const useLogsStore = create<LogsState>()(
     { name: "LogsStore", enabled: import.meta.env.DEV },
   ),
 );
+
+registerResetter("logs", () => useLogsStore.getState().reset());

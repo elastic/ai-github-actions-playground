@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
+import { registerResetter } from "./resetRegistry";
 
 /**
  * Global insight status store.
@@ -92,3 +93,5 @@ export const useInsightStatusStore = create<InsightStatusState>()(
     { name: "InsightStatusStore", enabled: import.meta.env.DEV },
   ),
 );
+
+registerResetter("insightStatus", () => useInsightStatusStore.getState().resetInsightStatus());
