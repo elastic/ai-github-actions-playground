@@ -15,7 +15,11 @@ import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 
+import SecurityIcon from "@mui/icons-material/Security";
+import SearchIcon from "@mui/icons-material/Search";
+
 import DataFetchAlert from "./DataFetchAlert";
+import EmptyState from "./EmptyState";
 import { parseAsString, useQueryState } from "nuqs";
 
 import { useCopyFeedbackTimeout } from "../hooks/useCopyFeedbackTimeout";
@@ -110,10 +114,10 @@ export default function RolesPage() {
         title="Roles"
         actions={
           <>
-            <LoadingButton size="small" variant="outlined" onClick={refresh} loading={loading}>
+            <LoadingButton variant="outlined" onClick={refresh} loading={loading}>
               {loading ? "Refreshing..." : "Refresh"}
             </LoadingButton>
-            <Button size="small" variant="contained" onClick={() => void copyQuery()}>
+            <Button variant="contained" onClick={() => void copyQuery()}>
               {copied ? "Copied" : "Copy API call"}
             </Button>
           </>
@@ -158,9 +162,13 @@ export default function RolesPage() {
                 </ListItem>
               ))}
               {!loading && filteredRoles.length === 0 && (
-                <Typography variant="body2" color="text.secondary" sx={{ p: 2 }}>
-                  No roles found.
-                </Typography>
+                <EmptyState
+                  icon={<SearchIcon sx={{ fontSize: 28 }} />}
+                  heading="No roles found"
+                  description="Try adjusting your search or check that roles exist in the cluster."
+                  size="small"
+                  verticalAlign="start"
+                />
               )}
             </List>
           </>
@@ -219,9 +227,12 @@ export default function RolesPage() {
               </Stack>
             </>
           ) : (
-            <Typography variant="body2" color="text.secondary">
-              Select a role.
-            </Typography>
+            <EmptyState
+              icon={<SecurityIcon sx={{ fontSize: 28 }} />}
+              heading="Select a role"
+              description="Choose a role from the list to view its privileges and assigned users."
+              size="small"
+            />
           )
         }
       />

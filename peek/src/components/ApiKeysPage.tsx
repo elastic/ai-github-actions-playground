@@ -15,7 +15,11 @@ import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 
+import VpnKeyIcon from "@mui/icons-material/VpnKey";
+import SearchIcon from "@mui/icons-material/Search";
+
 import DataFetchAlert from "./DataFetchAlert";
+import EmptyState from "./EmptyState";
 
 import { useApiKeys } from "../hooks/useApiKeys";
 import { useCopyFeedbackTimeout } from "../hooks/useCopyFeedbackTimeout";
@@ -110,10 +114,10 @@ export default function ApiKeysPage() {
       title="API Keys"
       actions={
         <>
-          <LoadingButton size="small" variant="outlined" onClick={refresh} loading={loading}>
+          <LoadingButton variant="outlined" onClick={refresh} loading={loading}>
             Refresh
           </LoadingButton>
-          <Button size="small" variant="contained" onClick={() => void copyQuery()}>
+          <Button variant="contained" onClick={() => void copyQuery()}>
             {copied ? "Copied" : "Copy API call"}
           </Button>
         </>
@@ -161,9 +165,13 @@ export default function ApiKeysPage() {
               </ListItem>
             ))}
             {!loading && filteredKeys.length === 0 && (
-              <Typography variant="body2" color="text.secondary" sx={{ p: 2 }}>
-                No API keys found.
-              </Typography>
+              <EmptyState
+                icon={<SearchIcon sx={{ fontSize: 28 }} />}
+                heading="No API keys found"
+                description="Try adjusting your search or check that API keys exist in the cluster."
+                size="small"
+                verticalAlign="start"
+              />
             )}
           </List>
         </>
@@ -231,9 +239,12 @@ export default function ApiKeysPage() {
             </Typography>
           </>
         ) : (
-          <Typography variant="body2" color="text.secondary">
-            Select an API key.
-          </Typography>
+          <EmptyState
+            icon={<VpnKeyIcon sx={{ fontSize: 28 }} />}
+            heading="Select an API key"
+            description="Choose an API key from the list to view its details and risk assessment."
+            size="small"
+          />
         )
       }
     />

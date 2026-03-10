@@ -165,7 +165,7 @@ describe("UsersPage", () => {
     await screen.findByRole("list");
     await user.type(screen.getByPlaceholderText("Search users"), "nonexistent");
 
-    await screen.findByText("No users found.");
+    await screen.findByText("No users found");
   });
 
   it("shows access warning when canReadSecurityUsers is false", async () => {
@@ -200,7 +200,7 @@ describe("UsersPage", () => {
     );
 
     await screen.findByText("Your credentials cannot read all user data.");
-    expect(screen.getByText("Select a user.")).toBeInTheDocument();
+    expect(screen.getByText("Select a user")).toBeInTheDocument();
   });
 
   it("shows error alert on non-auth failure", async () => {
