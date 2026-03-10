@@ -319,7 +319,7 @@ export default function AppSidebar({
                   <Typography
                     variant="caption"
                     sx={{
-                      color: "text.secondary",
+                      color: "text.primary",
                       letterSpacing: "0.02em",
                       textTransform: "uppercase",
                       fontWeight: 600,
