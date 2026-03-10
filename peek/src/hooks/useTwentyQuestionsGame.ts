@@ -8,6 +8,7 @@ import { ElasticsearchClient } from "../services/es";
 
 export const MAX_QUESTIONS = 20;
 const LOG_POOL_SIZE = 50;
+const MIN_LOGS_REQUIRED = 2;
 const GAME_TIMEOUT_MS = 30_000;
 
 export interface GameMessage {
@@ -111,11 +112,13 @@ async function streamLLMResponse(
   return text;
 }
 
-/** Count the number of questions asked in a response. */
+/** Count the number of questions asked in a response (lines ending with ?). */
 function countQuestions(text: string): number {
   const numbered = text.match(/\bquestion\s+\d+/gi);
   if (numbered && numbered.length > 0) return numbered.length;
-  return (text.match(/\?/g) ?? []).length;
+  // Count lines that end with a question mark (not all ? characters).
+  const lines = text.split("\n").filter((l) => l.trim().endsWith("?"));
+  return lines.length;
 }
 
 export function useTwentyQuestionsGame(
@@ -187,8 +190,12 @@ export function useTwentyQuestionsGame(
       );
 
       const { columns, values } = response;
-      if (!values || values.length === 0) {
-        setError("No logs found. Make sure you have log data in your Elasticsearch cluster.");
+      if (!values || values.length < MIN_LOGS_REQUIRED) {
+        setError(
+          values && values.length === 1
+            ? "Only 1 log found — need at least 2 to play. Add more log data and try again."
+            : "No logs found. Make sure you have log data in your Elasticsearch cluster.",
+        );
         setStatus("idle");
         return;
       }
@@ -220,8 +227,8 @@ export function useTwentyQuestionsGame(
       setMessages(updatedMessages);
 
       if (status === "guessing") {
-        const isCorrect =
-          answer.toLowerCase().includes("correct") || answer.toLowerCase() === "yes";
+        const lower = answer.toLowerCase().trim();
+        const isCorrect = lower === "yes" || lower === "yes, that's correct!";
         setStatus(isCorrect ? "won" : "lost");
         setMessages((prev) => [
           ...prev,
@@ -237,15 +244,13 @@ export function useTwentyQuestionsGame(
       }
 
       if (questionCount >= MAX_QUESTIONS) {
-        setStatus("lost");
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: crypto.randomUUID(),
-            role: "system",
-            content: `The AI used all ${MAX_QUESTIONS} questions without guessing correctly. Game over!`,
-          },
-        ]);
+        // Allow one final turn so the LLM can make a guess before game over.
+        const { fieldSummary, totalLogs } = gameContextRef.current;
+        const guessPrompt =
+          buildSystemPrompt(fieldSummary, totalLogs) +
+          "\n\nYou have used all your questions. Make your final guess now.";
+        await sendToLLM(guessPrompt, updatedMessages);
+        if (status === "playing") setStatus("guessing");
         return;
       }
 

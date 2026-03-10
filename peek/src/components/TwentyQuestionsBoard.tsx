@@ -17,7 +17,6 @@ interface GameState {
   status: GameStatus;
   messages: GameMessage[];
   secretLog: string | null;
-  questionCount: number;
   loading: boolean;
   error: string | null;
   messagesEndRef: React.RefObject<HTMLDivElement>;
@@ -35,7 +34,6 @@ function GameMessageBubble({ msg }: { msg: GameMessage }) {
         ? "action.selected"
         : "action.hover";
   const color = msg.role === "user" ? "primary.contrastText" : "text.primary";
-
   return (
     <Box sx={{ display: "flex", justifyContent: justify }}>
       <Paper
@@ -118,6 +116,28 @@ function AnswerButtons({
   );
 }
 
+function SecretLogReveal({ secretLog }: { secretLog: string }) {
+  return (
+    <Accordion defaultExpanded={false} sx={{ flexShrink: 0 }}>
+      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+        <Typography variant="subtitle1">🔒 Your Secret Log (click to reveal)</Typography>
+      </AccordionSummary>
+      <AccordionDetails>
+        <Box
+          sx={{
+            typography: "body2",
+            whiteSpace: "pre-wrap",
+            fontFamily: "monospace",
+            fontSize: "0.8rem",
+          }}
+        >
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{secretLog}</ReactMarkdown>
+        </Box>
+      </AccordionDetails>
+    </Accordion>
+  );
+}
+
 export default function TwentyQuestionsBoard({ game }: { game: GameState }) {
   const { status, messages, secretLog, loading, error, messagesEndRef, startGame, handleAnswer } =
     game;
@@ -127,7 +147,7 @@ export default function TwentyQuestionsBoard({ game }: { game: GameState }) {
     return (
       <Paper
         variant="outlined"
-        sx={{ p: 2, borderColor: "error.main", bgcolor: "error.main", color: "error.contrastText" }}
+        sx={{ p: 2, borderColor: "error.dark", bgcolor: "error.main", color: "error.contrastText" }}
       >
         <Typography variant="body2">{error}</Typography>
       </Paper>
@@ -178,26 +198,7 @@ export default function TwentyQuestionsBoard({ game }: { game: GameState }) {
 
   return (
     <Box sx={{ display: "flex", flex: 1, flexDirection: "column", minHeight: 0, gap: 1 }}>
-      {secretLog && (
-        <Accordion defaultExpanded={false} sx={{ flexShrink: 0 }}>
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography variant="subtitle1">🔒 Your Secret Log (click to reveal)</Typography>
-          </AccordionSummary>
-          <AccordionDetails>
-            <Box
-              sx={{
-                typography: "body2",
-                whiteSpace: "pre-wrap",
-                fontFamily: "monospace",
-                fontSize: "0.8rem",
-              }}
-            >
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{secretLog}</ReactMarkdown>
-            </Box>
-          </AccordionDetails>
-        </Accordion>
-      )}
-
+      {secretLog && <SecretLogReveal secretLog={secretLog} />}
       <Paper
         variant="outlined"
         sx={{
@@ -215,7 +216,6 @@ export default function TwentyQuestionsBoard({ game }: { game: GameState }) {
         ))}
         <div ref={messagesEndRef} />
       </Paper>
-
       {!gameOver && !loading && (
         <AnswerButtons status={status} loading={loading} onAnswer={handleAnswer} />
       )}
