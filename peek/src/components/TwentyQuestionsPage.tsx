@@ -70,7 +70,6 @@ export default function TwentyQuestionsPage() {
             {(game.status === "playing" || game.status === "guessing") && (
               <Chip
                 label={`${game.questionCount} / ${MAX_QUESTIONS} questions`}
-                size="small"
                 color={game.questionCount >= MAX_QUESTIONS - 5 ? "warning" : "default"}
               />
             )}

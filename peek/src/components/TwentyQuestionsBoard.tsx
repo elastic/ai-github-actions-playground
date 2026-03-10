@@ -14,6 +14,19 @@ import type { GameMessage, GameStatus } from "../hooks/useTwentyQuestionsGame";
 import { MAX_QUESTIONS } from "../hooks/useTwentyQuestionsGame";
 import { formatToolLabel, type ToolActivity } from "./chatUtils";
 
+const SAFE_MARKDOWN_ELEMENTS: string[] = [
+  "p",
+  "br",
+  "strong",
+  "em",
+  "code",
+  "pre",
+  "ul",
+  "ol",
+  "li",
+  "blockquote",
+];
+
 interface GameState {
   status: GameStatus;
   messages: GameMessage[];
@@ -71,7 +84,13 @@ function GameMessageBubble({ msg, isActive }: { msg: GameMessage; isActive: bool
         {msg.role === "assistant" ? (
           msg.content ? (
             <Box sx={{ typography: "body2" }}>
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                allowedElements={SAFE_MARKDOWN_ELEMENTS}
+                skipHtml
+              >
+                {msg.content}
+              </ReactMarkdown>
             </Box>
           ) : isActive && toolCalls.length === 0 ? (
             <Typography variant="body2" color="text.secondary">
@@ -135,6 +154,7 @@ function GameInput({ status, onAnswer }: { status: GameStatus; onAnswer: (a: str
         <TextField
           fullWidth
           size="small"
+          aria-label="Your answer"
           placeholder="Or type a more detailed answer…"
           value={text}
           onChange={(e) => setText(e.target.value)}

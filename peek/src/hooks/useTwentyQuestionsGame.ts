@@ -12,6 +12,7 @@ export const MAX_QUESTIONS = 20;
 const GAME_TIMEOUT_MS = 60_000;
 /** Allow enough steps for the LLM to run queries between questions. */
 const GAME_MAX_STEPS = 10;
+const STRICT_GUESS_RE = /^\s*my guess:\s*/im;
 
 export interface GameMessage {
   id: string;
@@ -50,6 +51,9 @@ function buildSystemPrompt(questionCount: number): string {
     "medium (service name, log level, host) → specific (field values, message content, error details).\n\n" +
     "## Question Guidelines\n" +
     '- Ask exactly **one** question per turn. Number it (e.g. "**Question 3:**").\n' +
+    (remaining === 1
+      ? '- You have only one question left: ask exactly one numbered yes/no question OR provide your final guess now using "My guess:".\n'
+      : "") +
     "- Questions must be answerable with yes/no or a very short answer.\n" +
     "- ALWAYS run at least one query per turn — use real cluster data to inform your questions.\n" +
     "- Do NOT repeat a question you already asked.\n\n" +
@@ -100,8 +104,11 @@ export function useTwentyQuestionsGame(
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesRef = useRef<GameMessage[]>([]);
+  const inFlightRef = useRef(false);
 
   useEffect(() => {
+    messagesRef.current = messages;
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
@@ -125,7 +132,8 @@ export function useTwentyQuestionsGame(
 
   const sendToLLM = useCallback(
     async (conversationMessages: GameMessage[]) => {
-      if (!connection) return;
+      if (!connection || inFlightRef.current) return false;
+      inFlightRef.current = true;
       setLoading(true);
       const assistantId = crypto.randomUUID();
       setMessages((prev) => [
@@ -179,10 +187,13 @@ export function useTwentyQuestionsGame(
 
         const newQuestions = countQuestions(text);
         if (newQuestions > 0) {
-          questionCountRef.current += newQuestions;
+          const remainingQuestions = Math.max(0, MAX_QUESTIONS - questionCountRef.current);
+          questionCountRef.current += Math.min(newQuestions, remainingQuestions);
           setQuestionCount(questionCountRef.current);
         }
-        if (/my guess[:\s]/i.test(text)) setStatus("guessing");
+        const hasGuess = STRICT_GUESS_RE.test(text);
+        if (hasGuess) setStatus("guessing");
+        return hasGuess;
       } catch (e: unknown) {
         const msg =
           e instanceof DOMException && (e.name === "AbortError" || e.name === "TimeoutError")
@@ -192,7 +203,9 @@ export function useTwentyQuestionsGame(
               : String(e);
         setMessages((prev) => prev.filter((m) => m.id !== assistantId));
         setError(msg);
+        return false;
       } finally {
+        inFlightRef.current = false;
         setLoading(false);
       }
     },
@@ -200,7 +213,7 @@ export function useTwentyQuestionsGame(
   );
 
   const startGame = useCallback(async () => {
-    if (!connection || !configured) return;
+    if (!connection || !configured || inFlightRef.current) return;
 
     setError(null);
     setMessages([]);
@@ -213,8 +226,9 @@ export function useTwentyQuestionsGame(
 
   const handleAnswer = useCallback(
     async (answer: string) => {
+      if (inFlightRef.current) return;
       const userMsg: GameMessage = { id: crypto.randomUUID(), role: "user", content: answer };
-      const updatedMessages = [...messages, userMsg];
+      const updatedMessages = [...messagesRef.current, userMsg];
       setMessages(updatedMessages);
 
       if (status === "guessing") {
@@ -241,14 +255,13 @@ export function useTwentyQuestionsGame(
           role: "user",
           content: answer + "\n\n(You have used all your questions. Make your final guess now.)",
         };
-        await sendToLLM([...messages, finalPrompt]);
-        setStatus("guessing");
+        await sendToLLM([...messagesRef.current, finalPrompt]);
         return;
       }
 
       await sendToLLM(updatedMessages);
     },
-    [messages, status, sendToLLM],
+    [status, sendToLLM],
   );
 
   return {
