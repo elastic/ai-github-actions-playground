@@ -9,6 +9,7 @@ import DataFetchAlert from "../DataFetchAlert";
 import { useShallow } from "zustand/react/shallow";
 
 import { INSIGHT_GUARDRAIL, INSIGHT_SPECIFICITY_POLICY } from "../../hooks/insightPromptUtils";
+import { useInstrumentationScore } from "../../hooks/useInstrumentationScore";
 import { usePageSlotInsights } from "../../hooks/usePageSlotInsights";
 import { useTableSort } from "../../hooks/useTableSort";
 import { PAGE_PATHS } from "../../routes/paths";
@@ -23,6 +24,7 @@ import { EMPTY_FILTERS } from "../traces/traceQueryBuilder";
 import { buildServiceMapData } from "../traces/traceUtils";
 
 import ServiceDashboardControls from "./ServiceDashboardControls";
+import ServiceInstrumentationScorePanel from "./ServiceInstrumentationScorePanel";
 import {
   type RouteSortField,
   type TraceSortField,
@@ -163,6 +165,25 @@ export default function ServiceDashboardPage() {
   const hasLoadedResults = Boolean(
     routesResult || tracesResult || deploymentsResult || k8sContextResult,
   );
+  const isDashboardEmpty =
+    !loading &&
+    Boolean(routesResult) &&
+    deployments.length === 0 &&
+    routeRows.length === 0 &&
+    recentTraces.length === 0 &&
+    k8sRows.length === 0;
+  const shouldShowInstrumentationScorePanel = hasLoadedResults && !isDashboardEmpty;
+  const {
+    score: instrumentationScore,
+    loading: instrumentationScoreLoading,
+    error: instrumentationScoreError,
+  } = useInstrumentationScore({
+    connection,
+    serviceName,
+    timeFrom,
+    timeTo,
+    enabled: shouldShowInstrumentationScorePanel,
+  });
   const topRouteSignals = useMemo(() => topRouteRows.slice(0, 20), [topRouteRows]);
   const topTraceSignals = useMemo(() => recentTraces.slice(0, 20), [recentTraces]);
   const traceSignals = useMemo(() => summarizeTraceSignals(recentTraces), [recentTraces]);
@@ -421,6 +442,14 @@ export default function ServiceDashboardPage() {
                   <ServiceK8sInfoPanel rows={k8sRows} />
                 </InsightSlot>
               )}
+
+              {shouldShowInstrumentationScorePanel && (
+                <ServiceInstrumentationScorePanel
+                  score={instrumentationScore}
+                  loading={instrumentationScoreLoading}
+                  error={instrumentationScoreError}
+                />
+              )}
             </Stack>
           </Box>
         </Stack>
@@ -440,21 +469,16 @@ export default function ServiceDashboardPage() {
           </Box>
         )}
 
-        {!loading &&
-          routesResult &&
-          deployments.length === 0 &&
-          routeRows.length === 0 &&
-          recentTraces.length === 0 &&
-          k8sRows.length === 0 && (
-            <Paper variant="outlined" sx={{ flex: 1, minHeight: 200, overflow: "auto" }}>
-              <EmptyState
-                heading="No data found"
-                description={`No routes or traces found for ${serviceName} in the selected time range.`}
-                verticalAlign="center"
-                addDataHref={PAGE_PATHS.addData.path}
-              />
-            </Paper>
-          )}
+        {isDashboardEmpty && (
+          <Paper variant="outlined" sx={{ flex: 1, minHeight: 200, overflow: "auto" }}>
+            <EmptyState
+              heading="No data found"
+              description={`No routes or traces found for ${serviceName} in the selected time range.`}
+              verticalAlign="center"
+              addDataHref={PAGE_PATHS.addData.path}
+            />
+          </Paper>
+        )}
       </Box>
     </InsightSlotProvider>
   );
