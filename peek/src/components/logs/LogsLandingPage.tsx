@@ -35,6 +35,12 @@ interface FocusOption {
   icon: React.ReactNode;
 }
 
+const PRIMARY_FOCUS_DIMENSIONS: readonly LogsFocusDimension[] = [
+  "service.name",
+  "host.name",
+  "process.name",
+];
+
 const FOCUS_OPTIONS: FocusOption[] = [
   {
     dimension: "service.name",
@@ -63,7 +69,7 @@ const FOCUS_OPTIONS: FocusOption[] = [
   {
     dimension: "event.dataset",
     label: "Datasets",
-    subtext: "Fallback option when service/host/process fields are sparse",
+    subtext: "Fallback option when service/host/process are unavailable",
     icon: <DatasetIcon fontSize="large" color="primary" />,
   },
   {
@@ -92,6 +98,9 @@ export default function LogsLandingPage() {
   const dimension = isLogsFocusDimension(urlDimension) ? urlDimension : null;
 
   const { counts, subtexts } = useLogsTileCounts(connection, timeRange, !dimension);
+  const hasVisiblePrimaryFocusDimension = PRIMARY_FOCUS_DIMENSIONS.some(
+    (primaryDimension) => counts[primaryDimension] === "visible",
+  );
 
   const handleSelect = useCallback(
     async (dim: LogsFocusDimension | null) => {
@@ -143,6 +152,7 @@ export default function LogsLandingPage() {
       <Grid container spacing={2}>
         {FOCUS_OPTIONS.map((option) => {
           const dim = option.dimension;
+          if (dim === "event.dataset" && hasVisiblePrimaryFocusDimension) return null;
           // "All logs" always visible; dimension tiles show based on count state
           if (dim !== null && (counts[dim] === "hidden" || counts[dim] === "error")) return null;
 
@@ -164,7 +174,11 @@ export default function LogsLandingPage() {
                     <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.5 }}>
                       {isLoading ? (
                         <>
-                          <CircularProgress size={10} thickness={5} />
+                          <CircularProgress
+                            size={10}
+                            thickness={5}
+                            aria-label={`Loading ${option.label.toLowerCase()} count`}
+                          />
                           <Skeleton variant="text" width={80} sx={{ fontSize: "body2.fontSize" }} />
                         </>
                       ) : (

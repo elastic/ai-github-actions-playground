@@ -170,7 +170,6 @@ describe("DiscoverPage", () => {
       expect(selected.has("field1")).toBe(true);
     });
   });
-
   it("selects all fields when Query Lab result has many columns", async () => {
     const manyColumns = [
       "@timestamp",
