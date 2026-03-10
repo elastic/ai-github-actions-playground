@@ -5,6 +5,7 @@ import type { Span } from "../components/traces/traceUtils";
 import type { TraceFilters } from "../components/traces/traceQueryBuilder";
 import { EMPTY_FILTERS } from "../components/traces/traceQueryBuilder";
 import type { EsqlResponse } from "../types";
+import { registerResetter } from "./resetRegistry";
 
 export type TracesViewMode = "list" | "timeseries" | "scatter" | "serviceMap" | "driftRadar";
 
@@ -108,3 +109,5 @@ export const useTracesStore = create<TracesState>()(
     { name: "TracesStore", enabled: import.meta.env.DEV },
   ),
 );
+
+registerResetter("traces", () => useTracesStore.getState().resetFilters());

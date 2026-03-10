@@ -18,6 +18,7 @@ import {
   STARTER_TEMPLATES,
 } from "../types/packageBuilder";
 import { generateReadmeScaffold } from "../services/packageBuilder/generateManifest";
+import { registerResetter } from "./resetRegistry";
 
 interface PackageBuilderState extends PackageBuilderData {
   currentStep: WizardStep;
@@ -313,3 +314,5 @@ export const usePackageBuilderStore = create<PackageBuilderState>()(
     { name: "PackageBuilderStore", enabled: import.meta.env.DEV },
   ),
 );
+
+registerResetter("packageBuilder", () => usePackageBuilderStore.getState().reset());
