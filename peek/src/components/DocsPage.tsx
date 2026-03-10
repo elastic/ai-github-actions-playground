@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback, useEffect } from "react";
+import { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
 import Paper from "@mui/material/Paper";
@@ -64,6 +64,9 @@ export default function DocsPage() {
   // Active section is always URL-driven so sidebar and URL stay in sync
   const activeSection = sectionFromUrl ?? sections[0]?.id ?? "";
 
+  const contentRef = useRef<HTMLDivElement>(null);
+  const isJumpingRef = useRef(false);
+
   const filteredSections = useMemo(() => {
     const query = normalizeText(search.trim());
     if (!query) return sections;
@@ -83,9 +86,14 @@ export default function DocsPage() {
 
   const jumpToSection = useCallback(
     (sectionId: string) => {
+      isJumpingRef.current = true;
       void setSectionFromUrl(sectionId);
       const target = document.getElementById(sectionId);
       target?.scrollIntoView({ behavior: "smooth", block: "start" });
+      // Allow observer updates again after smooth scroll completes
+      setTimeout(() => {
+        isJumpingRef.current = false;
+      }, 800);
     },
     [setSectionFromUrl],
   );
@@ -97,6 +105,40 @@ export default function DocsPage() {
       target?.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   }, [sectionFromUrl]);
+
+  // Track which section is currently visible and update the active section
+  useEffect(() => {
+    const container = contentRef.current;
+    if (!container) return;
+
+    const sectionIds = filteredSections.map((s) => s.id);
+    const elements = sectionIds
+      .map((id) => document.getElementById(id))
+      .filter((el): el is HTMLElement => el !== null);
+    if (elements.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (isJumpingRef.current) return;
+
+        // Find the topmost visible section
+        let topEntry: IntersectionObserverEntry | null = null;
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          if (!topEntry || entry.boundingClientRect.top < topEntry.boundingClientRect.top) {
+            topEntry = entry;
+          }
+        }
+        if (topEntry) {
+          void setSectionFromUrl(topEntry.target.id);
+        }
+      },
+      { root: container, rootMargin: "0px 0px -60% 0px", threshold: 0 },
+    );
+
+    for (const el of elements) observer.observe(el);
+    return () => observer.disconnect();
+  }, [filteredSections, setSectionFromUrl]);
 
   const isSearching = search.trim().length > 0;
 
@@ -141,6 +183,7 @@ export default function DocsPage() {
       </Paper>
 
       <Paper
+        ref={contentRef}
         variant="outlined"
         role="region"
         aria-label="Documentation content"
