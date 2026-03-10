@@ -101,7 +101,13 @@ describe("INITIAL_HEALTH_CHECKS aggregation", () => {
     expect(moduleFiles.length).toBeGreaterThan(0);
     for (const file of moduleFiles) {
       const mod = checkModules[file] as Record<string, unknown>;
-      const arrays = Object.values(mod).filter((v) => Array.isArray(v) && v.length > 0);
+      const arrays = Object.values(mod).filter(
+        (v) =>
+          Array.isArray(v) &&
+          v.length > 0 &&
+          typeof (v[0] as Record<string, unknown>).id === "string" &&
+          typeof (v[0] as Record<string, unknown>).evaluate === "function",
+      );
       expect(arrays.length).toBeGreaterThan(0);
     }
   });
