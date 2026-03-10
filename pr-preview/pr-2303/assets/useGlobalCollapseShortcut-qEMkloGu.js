@@ -1,2 +1,0 @@
-import{r as o}from"./mui-BD-Ru0_0.js";function u(r){o.useEffect(()=>{function n(t){const e=t.target;e&&(e.closest("input, textarea, select, [contenteditable='true'], .cm-editor")||e.getAttribute("role")==="textbox"||e.isContentEditable)||(t.metaKey||t.ctrlKey)&&t.key==="["&&!t.repeat&&(t.preventDefault(),r())}return document.addEventListener("keydown",n),()=>document.removeEventListener("keydown",n)},[r])}export{u};
-//# sourceMappingURL=useGlobalCollapseShortcut-qEMkloGu.js.map
