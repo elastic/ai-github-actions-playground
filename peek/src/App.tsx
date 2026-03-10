@@ -95,10 +95,10 @@ export default function App() {
   }, [location.pathname]);
 
   useEffect(() => {
-    if (!easterEggMode) return;
+    if (!connected || !easterEggMode) return;
     const pageId = getMatchedPageId(location.pathname);
     if (pageId) markPageVisited(pageId);
-  }, [easterEggMode, location.pathname, markPageVisited]);
+  }, [connected, easterEggMode, location.pathname, markPageVisited]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -186,7 +186,11 @@ export default function App() {
                   p: { sm: 1.5, xs: 1 },
                 }}
               >
-                {connected && easterEggMode && <IsometricOverlay />}
+                {connected && easterEggMode && (
+                  <ErrorBoundary>
+                    <IsometricOverlay />
+                  </ErrorBoundary>
+                )}
                 <Routes>
                   {Object.entries(PAGE_MANIFEST).map(([pageId, PageComponent]) => {
                     const typedPageId = pageId as keyof typeof PAGE_PATHS;

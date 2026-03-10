@@ -34,7 +34,15 @@ export function buildQuestProgress(
   quests: readonly EasterEggQuest[],
   state: QuestProgressInput,
 ): QuestProgress[] {
-  const completedQuestIds: string[] = [];
+  // First pass: determine which quests are complete
+  const completedQuestIds = quests
+    .filter((quest) => {
+      const done = quest.objectives.filter((o) => isObjectiveComplete(o, state));
+      return quest.objectives.length > 0 && done.length === quest.objectives.length;
+    })
+    .map((q) => q.id);
+
+  // Second pass: build progress with stable completedQuestIds
   const progress: QuestProgress[] = [];
 
   for (const quest of quests) {
@@ -44,7 +52,6 @@ export function buildQuestProgress(
       .map((objective) => objective.id);
     const complete =
       quest.objectives.length > 0 && completedObjectiveIds.length === quest.objectives.length;
-    if (complete) completedQuestIds.push(quest.id);
     progress.push({
       quest,
       unlocked,

@@ -427,7 +427,7 @@ export default function AppSidebar({
           Dark/Light Mode
         </MenuItem>
         <MenuItem
-          selected={location.pathname === PAGE_PATHS.settings.path}
+          selected={isSettingsPath && !easterEggMode}
           onClick={() => {
             navigate(PAGE_PATHS.settings.path);
             onNavigate?.();
@@ -437,7 +437,7 @@ export default function AppSidebar({
           LLM Settings
         </MenuItem>
         <MenuItem
-          selected={location.pathname === PAGE_PATHS.settings.path && easterEggMode}
+          selected={isSettingsPath && easterEggMode}
           onClick={() => {
             navigate(PAGE_PATHS.settings.path);
             onNavigate?.();

@@ -55,10 +55,7 @@ export default function IsometricOverlay() {
       .filter((progress) => progress.complete)
       .map((progress) => progress.quest.rewardId)
       .filter((rewardId) => !rewardMomentsSeen.includes(rewardId));
-    if (rewardIds.length === 0) return undefined;
-    const rewardId = rewardIds[0];
-    if (!rewardId) return undefined;
-    return REWARD_BY_ID.get(rewardId);
+    return rewardIds[0] ? REWARD_BY_ID.get(rewardIds[0]) : undefined;
   }, [questProgress, rewardMomentsSeen]);
 
   return (
@@ -119,7 +116,11 @@ export default function IsometricOverlay() {
           {pendingReward && (
             <Paper
               variant="outlined"
-              sx={{ p: 1, borderColor: "success.main", bgcolor: "success.50" }}
+              sx={{
+                p: 1,
+                borderColor: "success.main",
+                bgcolor: (t) => `${t.palette.success.main}14`,
+              }}
             >
               <Typography variant="body2" sx={{ fontWeight: 700 }}>
                 {pendingReward.title}

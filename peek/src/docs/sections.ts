@@ -88,6 +88,7 @@ const sections: DocSection[] = [
   parseDocSection("cluster-overview", clusterOverviewRaw),
   parseDocSection("cluster-health", clusterHealthRaw),
   parseDocSection("dashboard-management", dashboardManagementRaw),
+  parseDocSection("easter-egg-mode", easterEggModeRaw),
   parseDocSection("users-roles", usersRolesRaw),
   parseDocSection("indices", indicesRaw),
   parseDocSection("ingest-pipelines", ingestPipelinesRaw),
@@ -105,7 +106,6 @@ const sections: DocSection[] = [
   parseDocSection("investigate", investigateRaw),
   parseDocSection("transforms", transformsRaw),
   parseDocSection("snapshots", snapshotsRaw),
-  parseDocSection("easter-egg-mode", easterEggModeRaw),
 ];
 
 export default sections;

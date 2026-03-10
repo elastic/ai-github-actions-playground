@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router-dom";
 
@@ -129,9 +129,8 @@ describe("App shell visibility", () => {
     expect(screen.queryByRole("button", { name: /reset state/i })).not.toBeInTheDocument();
   });
 
-  it("renders the easter egg overlay when mode is enabled", () => {
+  it("renders the easter egg overlay when mode is enabled after mount", async () => {
     useConnectionStore.getState().setConnected(true);
-    useEasterEggStore.getState().setEasterEggMode(true);
 
     render(
       <MemoryRouter initialEntries={["/dashboards"]}>
@@ -139,7 +138,14 @@ describe("App shell visibility", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByLabelText(/isometric quest overlay/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/isometric quest overlay/i)).not.toBeInTheDocument();
+
+    act(() => {
+      useEasterEggStore.getState().setEasterEggMode(true);
+    });
+
+    expect(await screen.findByLabelText(/isometric quest overlay/i)).toBeInTheDocument();
+    expect(screen.queryByText(/something went wrong/i)).not.toBeInTheDocument();
   });
 
   it("shows an LLM key banner when connected without a key", () => {
