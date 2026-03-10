@@ -28,10 +28,12 @@ import { Client } from "@elastic/elasticsearch";
 function parseArgs(argv) {
   const opts = {
     url: process.env.ES_URL ?? "http://localhost:9200",
+    apiKey: process.env.ES_API_KEY ?? "",
     waitForReady: false,
   };
   for (let i = 0; i < argv.length; i++) {
     if (argv[i] === "--url" && argv[i + 1]) opts.url = argv[++i];
+    else if (argv[i] === "--api-key" && argv[i + 1]) opts.apiKey = argv[++i];
     else if (argv[i] === "--wait-for-ready") opts.waitForReady = true;
   }
   return opts;
@@ -380,7 +382,9 @@ async function seedK8sTraces(client, pods) {
 // ---------------------------------------------------------------------------
 
 const opts = parseArgs(process.argv.slice(2));
-const client = new Client({ node: opts.url });
+const clientOpts = { node: opts.url };
+if (opts.apiKey) clientOpts.auth = { apiKey: opts.apiKey };
+const client = new Client(clientOpts);
 
 if (opts.waitForReady) {
   console.log("Waiting for Elasticsearch to be ready...");

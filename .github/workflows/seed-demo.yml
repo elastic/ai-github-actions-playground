@@ -1,0 +1,94 @@
+name: Seed Demo Environment
+
+on:
+  schedule:
+    # Every 6 hours — keeps trace/log/metric data fresh in the demo cluster
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+    inputs:
+      tracegen_duration:
+        description: "How long to run trace generators (minutes)"
+        required: false
+        default: "20"
+
+concurrency:
+  group: seed-demo
+  cancel-in-progress: true
+
+env:
+  ES_URL: https://elastic-peek-010bd2.es.us-central1.gcp.cloud.es.io/
+  TRACEGEN_DURATION: ${{ inputs.tracegen_duration || '20' }}
+
+jobs:
+  seed:
+    name: Seed demo cluster
+    runs-on: ubuntu-latest
+    if: github.repository == 'elastic/ai-github-actions-playground'
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Start OTel stack (collector + tracegen + otelgen-logs)
+        env:
+          ES_API_KEY: ${{ secrets.DEMO_WRITE_API_KEY }}
+        run: |
+          docker compose -f docker-compose.otel.yml up -d
+          echo "✓ OTel stack started — sending to $ES_URL"
+
+      - name: Wait for collector health
+        run: |
+          echo "Waiting for EDOT collector to be healthy..."
+          healthy=false
+          for i in $(seq 1 30); do
+            if docker compose -f docker-compose.otel.yml exec -T otel-collector \
+              curl -sf http://localhost:13133/ >/dev/null 2>&1; then
+              echo "✓ Collector healthy after ${i}0s"
+              healthy=true
+              break
+            fi
+            sleep 10
+          done
+          if [ "$healthy" != "true" ]; then
+            echo "::error::Collector failed to become healthy after 300s"
+            exit 1
+          fi
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install peek dependencies
+        run: cd peek && npm ci --ignore-scripts
+
+      - name: Seed non-OTLP data (web_logs, orders, pipelines, transforms)
+        run: |
+          node peek/scripts/seed-elasticsearch.mjs \
+            --url "${ES_URL}" \
+            --api-key "${{ secrets.DEMO_WRITE_API_KEY }}"
+
+      - name: Seed Kubernetes OTel data
+        run: |
+          node peek/scripts/seed-k8s.mjs \
+            --url "${ES_URL}" \
+            --api-key "${{ secrets.DEMO_WRITE_API_KEY }}"
+
+      - name: Let generators run for ${{ env.TRACEGEN_DURATION }} minutes
+        run: |
+          echo "Generators running — waiting ${TRACEGEN_DURATION} minutes..."
+          sleep "${TRACEGEN_DURATION}m"
+
+      - name: Show generator stats
+        if: always()
+        run: |
+          echo "=== Collector logs (last 30 lines) ==="
+          docker compose -f docker-compose.otel.yml logs --tail=30 otel-collector
+          echo ""
+          echo "=== Tracegen logs (last 10 lines) ==="
+          docker compose -f docker-compose.otel.yml logs --tail=10 tracegen
+          echo ""
+          echo "=== Log generator logs (last 10 lines) ==="
+          docker compose -f docker-compose.otel.yml logs --tail=10 otelgen-logs
+
+      - name: Stop OTel stack
+        if: always()
+        run: docker compose -f docker-compose.otel.yml down -v
