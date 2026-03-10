@@ -1,12 +1,23 @@
+// @vitest-environment jsdom
 import { describe, it, expect, beforeEach, vi } from "vitest";
+import { act, render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
+import { createElement } from "react";
 
+import App from "../../src/App";
+import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { STORE_NAME, useEasterEggStore } from "../../src/store/useEasterEggStore";
+import { resetAllStores } from "../fixtures/test-utils";
 
 describe("useEasterEggStore", () => {
   beforeEach(() => {
     localStorage.clear();
     sessionStorage.clear();
-    useEasterEggStore.getState().resetEasterEggState();
+    resetAllStores();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => Promise.resolve(new Response("{}", { status: 200 }))),
+    );
   });
 
   it("defaults to disabled mode and empty progression", () => {
@@ -73,5 +84,20 @@ describe("useEasterEggStore", () => {
     expect(localStorage.getItem(STORE_NAME)).toBeNull();
     expect(removeItemSpy).toHaveBeenCalledWith(STORE_NAME);
     removeItemSpy.mockRestore();
+  });
+
+  it("renders the easter egg overlay when mode is enabled after mount", async () => {
+    useConnectionStore.getState().setConnected(true);
+
+    render(createElement(MemoryRouter, { initialEntries: ["/dashboards"] }, createElement(App)));
+
+    expect(screen.queryByLabelText(/isometric quest overlay/i)).not.toBeInTheDocument();
+
+    act(() => {
+      useEasterEggStore.getState().setEasterEggMode(true);
+    });
+
+    expect(await screen.findByLabelText(/isometric quest overlay/i)).toBeInTheDocument();
+    expect(screen.queryByText(/something went wrong/i)).not.toBeInTheDocument();
   });
 });
