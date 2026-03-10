@@ -4,6 +4,7 @@ import Divider from "@mui/material/Divider";
 import Paper from "@mui/material/Paper";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import Alert from "@mui/material/Alert";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { parseAsString, useQueryState } from "nuqs";
@@ -12,6 +13,7 @@ import sections from "../docs/sections";
 
 import AskAiButton from "./AskAiButton";
 import DocsNavSidebar from "./DocsNavSidebar";
+import { useEasterEggStore } from "../store/useEasterEggStore";
 
 function normalizeText(text: string): string {
   return text.toLowerCase();
@@ -55,6 +57,7 @@ const docsMarkdownSx = {
 
 export default function DocsPage() {
   const [search, setSearch] = useState("");
+  const easterEggMode = useEasterEggStore((s) => s.easterEggMode);
   const [question, setQuestion] = useState("");
   const [sectionFromUrl, setSectionFromUrl] = useQueryState(
     "section",
@@ -109,6 +112,12 @@ export default function DocsPage() {
         <Typography variant="h5" component="h1">
           Docs
         </Typography>
+        {easterEggMode && (
+          <Alert severity="info">
+            Easter Egg mode is enabled. Open the "Easter Egg Mode" docs section for quest flow and
+            narrative guide.
+          </Alert>
+        )}
         <TextField
           size="small"
           label="Search docs"

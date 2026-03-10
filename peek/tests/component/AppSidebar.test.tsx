@@ -7,6 +7,7 @@ import AppSidebar from "../../src/components/AppSidebar";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { useUIStore } from "../../src/store/useUIStore";
 import { useThemeStore } from "../../src/store/useThemeStore";
+import { useEasterEggStore } from "../../src/store/useEasterEggStore";
 import { resetAllStores } from "../fixtures/test-utils";
 
 /** Helper to capture the current router location inside tests. */
@@ -298,6 +299,17 @@ describe("AppSidebar", () => {
 
     await user.click(screen.getByRole("button", { name: /expand navigation/i }));
     expect(onToggleCollapse).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows easter egg quest chip when mode is enabled", () => {
+    useConnectionStore.getState().setConnected(true);
+    useEasterEggStore.getState().setEasterEggMode(true);
+
+    renderSidebar();
+
+    expect(
+      screen.getByRole("button", { name: /open easter egg quest guide/i }),
+    ).toBeInTheDocument();
   });
 
   it("opens settings menu and navigates to LLM settings", async () => {

@@ -20,6 +20,8 @@ import { useConnectionStore } from "../store/useConnectionStore";
 import { useUIStore } from "../store/useUIStore";
 import { deriveOtlpEndpoint } from "../utils/addDataUtils";
 import { deriveDefaultOtlpEndpoint } from "../services/telemetry/browserTracing";
+import { EASTER_EGG_MODE_BLURB } from "../features/easterEgg/content";
+import { useEasterEggStore } from "../store/useEasterEggStore";
 
 const PROVIDERS: Array<{ value: LLMProvider; label: string }> = [
   { value: "openai", label: "OpenAI" },
@@ -92,6 +94,9 @@ export default function SettingsPage() {
     })),
   );
   const setConnectionDialogOpen = useUIStore((s) => s.setConnectionDialogOpen);
+  const { easterEggMode, setEasterEggMode } = useEasterEggStore(
+    useShallow((s) => ({ easterEggMode: s.easterEggMode, setEasterEggMode: s.setEasterEggMode })),
+  );
 
   type TracingMode = "off" | "connected" | "remote";
   const tracingMode: TracingMode = (() => {
@@ -265,6 +270,21 @@ export default function SettingsPage() {
       <Button variant="text" color="error" onClick={handleResetLLMSettings}>
         Reset LLM Settings
       </Button>
+
+      <Paper variant="outlined" sx={{ mt: 3, p: 3 }}>
+        <Typography variant="h6" sx={{ mb: 1.5 }}>
+          Easter Egg Mode (Experimental)
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          {EASTER_EGG_MODE_BLURB}
+        </Typography>
+        <FormControlLabel
+          control={
+            <Switch checked={easterEggMode} onChange={(_, checked) => setEasterEggMode(checked)} />
+          }
+          label="Enable Isometric 2D Easter Egg overlay"
+        />
+      </Paper>
 
       <Paper variant="outlined" sx={{ mt: 3, p: 3 }}>
         <Typography variant="h6" sx={{ mb: 1.5 }}>

@@ -43,7 +43,10 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import PersesProviders from "./components/perses/PersesProviders";
 import LLMKeyNudgeBanner from "./components/LLMKeyNudgeBanner";
 import InsightStatusFooter from "./components/InsightStatusFooter";
+import IsometricOverlay from "./features/easterEgg/IsometricOverlay";
+import { getMatchedPageId } from "./features/easterEgg/routeMatching";
 import { PAGE_PATHS } from "./routes/paths";
+import { useEasterEggStore } from "./store/useEasterEggStore";
 import { PAGE_MANIFEST } from "./routes/manifest";
 
 const currentYear = new Date().getFullYear();
@@ -51,6 +54,12 @@ const currentYear = new Date().getFullYear();
 export default function App() {
   const themeMode = useThemeStore((s) => s.themeMode);
   const setConnectionDialogOpen = useUIStore((s) => s.setConnectionDialogOpen);
+  const { easterEggMode, markPageVisited } = useEasterEggStore(
+    useShallow((s) => ({
+      easterEggMode: s.easterEggMode,
+      markPageVisited: s.markPageVisited,
+    })),
+  );
   const connected = useConnectionStore((s) => s.connected);
   const resetState = useResetAllStores();
   const navigate = useNavigate();
@@ -84,6 +93,12 @@ export default function App() {
     }
     document.title = "Elastic Peek";
   }, [location.pathname]);
+
+  useEffect(() => {
+    if (!easterEggMode) return;
+    const pageId = getMatchedPageId(location.pathname);
+    if (pageId) markPageVisited(pageId);
+  }, [easterEggMode, location.pathname, markPageVisited]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -161,6 +176,7 @@ export default function App() {
               <Box
                 component="main"
                 sx={{
+                  position: "relative",
                   display: "flex",
                   flex: 1,
                   flexDirection: "column",
@@ -170,6 +186,7 @@ export default function App() {
                   p: { sm: 1.5, xs: 1 },
                 }}
               >
+                {connected && easterEggMode && <IsometricOverlay />}
                 <Routes>
                   {Object.entries(PAGE_MANIFEST).map(([pageId, PageComponent]) => {
                     const typedPageId = pageId as keyof typeof PAGE_PATHS;

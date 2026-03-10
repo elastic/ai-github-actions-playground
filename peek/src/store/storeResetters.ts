@@ -32,6 +32,7 @@ import "./useProfilingFiltersStore";
 import "./useServiceFiltersStore";
 import "./useKubernetesFiltersStore";
 import "./useHostsFiltersStore";
+import "./useEasterEggStore";
 
 import { getRegisteredResetters, getResetter } from "./resetRegistry";
 
@@ -80,6 +81,7 @@ export const RESET_SCOPE: ReadonlyArray<{ label: string; reset: () => void }> = 
       reset("theme");
       reset("commandPalette");
       reset("searchPanelUI");
+      reset("easterEgg");
     },
   },
   {

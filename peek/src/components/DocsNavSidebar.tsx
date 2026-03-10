@@ -45,6 +45,7 @@ export const NAV_GROUPS: readonly NavGroup[] = [
       "console",
       "data-streams",
       "dashboard-management",
+      "easter-egg-mode",
     ],
   },
   { id: "ai-features", label: "AI Features", sectionIds: ["chat", "llm-settings"] },
