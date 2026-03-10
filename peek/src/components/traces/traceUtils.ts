@@ -8,14 +8,14 @@ import type { TraceFieldMapping } from "./traceQueryBuilder";
 export interface SpanEvent {
   name: string;
   timestamp: string;
-  attributes: Record<string, unknown>;
+  attributes: Readonly<Record<string, unknown>>;
 }
 
 /** Represents a link from a span to another span/trace */
 export interface SpanLink {
   traceId: string;
   spanId: string;
-  attributes: Record<string, unknown>;
+  attributes: Readonly<Record<string, unknown>>;
 }
 
 /** Represents a single span in a trace */
@@ -30,9 +30,9 @@ export interface Span {
   status: string;
   timestamp: string;
   startTimeUs: number;
-  attributes: Record<string, unknown>;
-  events?: SpanEvent[];
-  links?: SpanLink[];
+  attributes: Readonly<Record<string, unknown>>;
+  events?: readonly SpanEvent[];
+  links?: readonly SpanLink[];
 }
 
 /** A span augmented with tree information for rendering */
@@ -60,6 +60,13 @@ export interface ServiceMapData {
   nodes: ServiceMapNode[];
   edges: ServiceMapEdge[];
 }
+
+/** Shared empty containers to avoid per-row allocations on the common fast path */
+const EMPTY_ATTRIBUTES: Record<string, unknown> = Object.freeze(Object.create(null));
+const EMPTY_EVENTS: SpanEvent[] = Object.freeze(
+  [] as unknown as SpanEvent[],
+) as unknown as SpanEvent[];
+const EMPTY_LINKS: SpanLink[] = Object.freeze([] as unknown as SpanLink[]) as unknown as SpanLink[];
 
 /**
  * Build a span tree from a flat list of spans.
@@ -287,10 +294,11 @@ export function parseSpansFromEsql(
   for (let rowIndex = 0; rowIndex < values.length; rowIndex++) {
     const row = values[rowIndex]!;
 
-    const attributes: Record<string, unknown> = {};
+    let attributes: Record<string, unknown> | undefined;
     for (let a = 0; a < attrColumns.length; a++) {
       const [colName, idx] = attrColumns[a]!;
       if (row[idx] != null) {
+        attributes ??= Object.create(null) as Record<string, unknown>;
         attributes[colName] = row[idx];
       }
     }
@@ -329,9 +337,9 @@ export function parseSpansFromEsql(
       status: String((statusCodeIdx !== undefined ? row[statusCodeIdx] : null) ?? "OK"),
       timestamp: String(rawTimestamp ?? ""),
       startTimeUs,
-      attributes,
+      attributes: attributes ?? EMPTY_ATTRIBUTES,
       events: parseSpanEvents(eventsIdx !== undefined ? row[eventsIdx] : null),
-      links: hasLinkColumns ? parseSpanLinks(colIndex, row) : [],
+      links: hasLinkColumns ? parseSpanLinks(colIndex, row) : EMPTY_LINKS,
     };
   }
   return spans;
@@ -339,13 +347,13 @@ export function parseSpansFromEsql(
 
 /** Parse a raw events column value into an array of SpanEvent objects */
 function parseSpanEvents(raw: unknown): SpanEvent[] {
-  if (raw == null) return [];
+  if (raw == null) return EMPTY_EVENTS;
 
   let items: unknown[];
   if (Array.isArray(raw)) {
     items = raw;
   } else if (typeof raw === "string") {
-    if (raw === "[]") return [];
+    if (raw === "[]") return EMPTY_EVENTS;
     // Fast boundary whitespace check with Unicode fallback for pasted/padded payloads.
     const firstChar = raw.at(0) ?? "";
     const lastChar = raw.at(-1) ?? "";
@@ -355,17 +363,17 @@ function parseSpanEvents(raw: unknown): SpanEvent[] {
       /\s/u.test(firstChar) ||
       /\s/u.test(lastChar);
     const trimmed = needsTrim ? raw.trim() : raw;
-    if (trimmed === "[]") return [];
-    if (!trimmed.startsWith("[") || !trimmed.endsWith("]")) return [];
+    if (trimmed === "[]") return EMPTY_EVENTS;
+    if (!trimmed.startsWith("[") || !trimmed.endsWith("]")) return EMPTY_EVENTS;
     try {
       const parsed: unknown = JSON.parse(trimmed);
-      if (!Array.isArray(parsed)) return [];
+      if (!Array.isArray(parsed)) return EMPTY_EVENTS;
       items = parsed;
     } catch {
-      return [];
+      return EMPTY_EVENTS;
     }
   } else {
-    return [];
+    return EMPTY_EVENTS;
   }
 
   const events: SpanEvent[] = [];
@@ -374,13 +382,14 @@ function parseSpanEvents(raw: unknown): SpanEvent[] {
     const obj = item as Record<string, unknown>;
     const name = String(obj["name"] ?? "");
     const timestamp = String(obj["@timestamp"] ?? obj["timestamp"] ?? "");
-    const attributes: Record<string, unknown> = {};
+    let attributes: Record<string, unknown> | undefined;
     for (const [key, value] of Object.entries(obj)) {
       if (key !== "name" && key !== "@timestamp" && key !== "timestamp" && value != null) {
+        attributes ??= Object.create(null) as Record<string, unknown>;
         attributes[key] = value;
       }
     }
-    events.push({ name, timestamp, attributes });
+    events.push({ name, timestamp, attributes: attributes ?? EMPTY_ATTRIBUTES });
   }
   return events;
 }
@@ -408,7 +417,7 @@ export function parseSpanLinks(colIndex: Map<string, number>, row: unknown[]): S
   const rawTraceIds = getField("links.trace.id");
   const rawSpanIds = getField("links.span.id");
 
-  if (rawTraceIds == null || rawSpanIds == null) return [];
+  if (rawTraceIds == null || rawSpanIds == null) return EMPTY_LINKS;
 
   const traceIds = Array.isArray(rawTraceIds) ? rawTraceIds : [rawTraceIds];
   const spanIds = Array.isArray(rawSpanIds) ? rawSpanIds : [rawSpanIds];
@@ -426,18 +435,19 @@ export function parseSpanLinks(colIndex: Map<string, number>, row: unknown[]): S
 
   for (let i = 0; i < count; i++) {
     if (traceIds[i] != null && spanIds[i] != null) {
-      const attributes: Record<string, unknown> = {};
+      let attributes: Record<string, unknown> | undefined;
       for (const [colName, idx] of attrCols) {
         const rawVal = row[idx];
         const vals = Array.isArray(rawVal) ? rawVal : [rawVal];
         if (i < vals.length && vals[i] != null) {
+          attributes ??= Object.create(null) as Record<string, unknown>;
           attributes[colName.slice("links.attributes.".length)] = vals[i];
         }
       }
       links.push({
         traceId: String(traceIds[i]),
         spanId: String(spanIds[i]),
-        attributes,
+        attributes: attributes ?? EMPTY_ATTRIBUTES,
       });
     }
   }
