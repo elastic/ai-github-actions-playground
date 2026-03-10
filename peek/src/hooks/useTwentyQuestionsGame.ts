@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { createOpenAI } from "@ai-sdk/openai";
 import { streamText, stepCountIs } from "ai";
 
@@ -66,11 +66,26 @@ function buildSystemPrompt(questionCount: number): string {
   );
 }
 
-/** Count the number of questions asked in a response (lines ending with ?). */
+const QUESTION_LINE_RE =
+  /^(?:[-*]\s*)?(?:(?:question\s*\d*[:.)-]?\s*)|(?:q[:.)-]?\s*)|(?:\d+[).:-]\s*)|(?:who|what|when|where|why|how|is|are|am|was|were|can|could|do|does|did|will|would|should|has|have|had|may|might|must)\b)/i;
+
+/** Count the number of likely game questions asked in a response. */
 function countQuestions(text: string): number {
   const numbered = text.match(/\bquestion\s+\d+/gi);
   if (numbered && numbered.length > 0) return numbered.length;
-  const lines = text.split("\n").filter((l) => l.trim().endsWith("?"));
+
+  const lines = text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(
+      (line) =>
+        line.endsWith("?") &&
+        line.length > 0 &&
+        line.length <= 120 &&
+        !line.startsWith("(") &&
+        QUESTION_LINE_RE.test(line),
+    );
+
   return lines.length;
 }
 
@@ -86,6 +101,10 @@ export function useTwentyQuestionsGame(
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const questionCountRef = useRef(0);
 

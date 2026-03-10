@@ -99,15 +99,7 @@ function GameMessageBubble({ msg, isActive }: { msg: GameMessage; isActive: bool
   );
 }
 
-function GameInput({
-  status,
-  loading,
-  onAnswer,
-}: {
-  status: GameStatus;
-  loading: boolean;
-  onAnswer: (a: string) => void;
-}) {
+function GameInput({ status, onAnswer }: { status: GameStatus; onAnswer: (a: string) => void }) {
   const [text, setText] = useState("");
 
   const handleSend = () => {
@@ -124,16 +116,10 @@ function GameInput({
           variant="contained"
           color="success"
           onClick={() => onAnswer("Yes, that's correct!")}
-          disabled={loading}
         >
           ✅ Correct!
         </Button>
-        <Button
-          variant="contained"
-          color="error"
-          onClick={() => onAnswer("No, that's wrong.")}
-          disabled={loading}
-        >
+        <Button variant="contained" color="error" onClick={() => onAnswer("No, that's wrong.")}>
           ❌ Wrong
         </Button>
       </Box>
@@ -143,10 +129,10 @@ function GameInput({
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
       <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
-        <Button variant="contained" onClick={() => onAnswer("Yes")} disabled={loading}>
+        <Button variant="contained" onClick={() => onAnswer("Yes")}>
           Yes
         </Button>
-        <Button variant="outlined" onClick={() => onAnswer("No")} disabled={loading}>
+        <Button variant="outlined" onClick={() => onAnswer("No")}>
           No
         </Button>
       </Box>
@@ -163,12 +149,11 @@ function GameInput({
               handleSend();
             }
           }}
-          disabled={loading}
         />
         <IconButton
           color="primary"
           onClick={handleSend}
-          disabled={!text.trim() || loading}
+          disabled={!text.trim()}
           aria-label="Send answer"
         >
           <SendIcon />
@@ -281,9 +266,7 @@ export default function TwentyQuestionsBoard({ game }: { game: GameState }) {
         ))}
         <div ref={messagesEndRef} />
       </Paper>
-      {!gameOver && !loading && (
-        <GameInput status={status} loading={loading} onAnswer={handleAnswer} />
-      )}
+      {!gameOver && !loading && <GameInput status={status} onAnswer={handleAnswer} />}
       {loading && (
         <Box sx={{ display: "flex", justifyContent: "center", py: 1 }}>
           <LinearProgress sx={{ width: 120 }} />
