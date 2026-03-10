@@ -143,7 +143,7 @@ export default function InvestigatePage() {
             onKeyDown={(e) => {
               if (e.key === "Enter") handleSearch();
             }}
-            inputProps={{ "aria-label": tabConfig.ariaLabel }}
+            slotProps={{ htmlInput: { "aria-label": tabConfig.ariaLabel } }}
           />
           <Button
             variant="contained"

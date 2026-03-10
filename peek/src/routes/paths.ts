@@ -332,19 +332,7 @@ export const PAGE_PATHS = {
       iconKey: "HealthAndSafetyIcon",
     },
   },
-  globalHealth: {
-    path: "/health",
-    requiresConnection: true,
-    showTimeControls: false,
-    skeletonVariant: "table",
-    nav: {
-      label: "Health",
-      group: "System",
-      order: 11,
-      showInSidebar: false,
-      iconKey: "HealthAndSafetyIcon",
-    },
-  },
+
   clusterTasks: {
     path: "/cluster-tasks",
     requiresConnection: true,

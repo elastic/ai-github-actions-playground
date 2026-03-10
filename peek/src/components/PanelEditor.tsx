@@ -252,7 +252,7 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
               maxRows={14}
               fullWidth
               placeholder="Enter markdown text…"
-              inputProps={{ "aria-label": "Markdown content" }}
+              slotProps={{ htmlInput: { "aria-label": "Markdown content" } }}
               sx={{ fontFamily: "monospace" }}
             />
           ) : (

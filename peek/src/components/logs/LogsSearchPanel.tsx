@@ -191,7 +191,7 @@ export default function LogsSearchPanel({
                   label="Top N"
                   value={pivotTopN}
                   onChange={(e) => setPivotTopN(e.target.value)}
-                  inputProps={{ min: 5, max: 200, step: 1 }}
+                  slotProps={{ htmlInput: { min: 5, max: 200, step: 1 } }}
                   sx={{ width: { md: 120, xs: "100%" } }}
                 />
                 <Button

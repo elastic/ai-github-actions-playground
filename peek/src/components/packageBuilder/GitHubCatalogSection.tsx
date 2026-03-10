@@ -70,9 +70,11 @@ export default function GitHubCatalogSection({ open, onSelect }: Props) {
             {...params}
             placeholder="Search input packages..."
             size="small"
-            inputProps={{
-              ...params.inputProps,
-              "aria-label": "Search input packages",
+            slotProps={{
+              htmlInput: {
+                ...params.inputProps,
+                "aria-label": "Search input packages",
+              },
             }}
           />
         )}

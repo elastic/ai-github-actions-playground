@@ -239,7 +239,7 @@ export default function WatcherGetWatchPage() {
                 placeholder="Search watches"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                inputProps={{ "aria-label": "Search watches" }}
+                slotProps={{ htmlInput: { "aria-label": "Search watches" } }}
               />
             </Box>
             <Table stickyHeader size="small" aria-label="Watcher watches table">
@@ -348,13 +348,15 @@ export default function WatcherGetWatchPage() {
         anchor="right"
         open={Boolean(selectedWatchId)}
         onClose={() => setSelectedWatchId(null)}
-        PaperProps={{
-          sx: getMobileDrawerPaperSx({
-            desktopBreakpoint: "md",
-            desktopWidth: 620,
-            padding: 1,
-            backgroundColor: "background.default",
-          }),
+        slotProps={{
+          paper: {
+            sx: getMobileDrawerPaperSx({
+              desktopBreakpoint: "md",
+              desktopWidth: 620,
+              padding: 1,
+              backgroundColor: "background.default",
+            }),
+          },
         }}
       >
         <Box sx={getMobileDrawerOffsetSx("md")} />
