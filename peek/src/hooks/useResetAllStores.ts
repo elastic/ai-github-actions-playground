@@ -10,6 +10,6 @@ export function useResetAllStores() {
     for (const reset of storeResetters) {
       reset();
     }
-    queryClient.removeQueries({ queryKey: ["discover-result"], exact: true });
+    queryClient.resetQueries({ queryKey: ["discover-result"], exact: true });
   }, [queryClient]);
 }
