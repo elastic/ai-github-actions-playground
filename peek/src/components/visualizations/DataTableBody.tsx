@@ -7,6 +7,7 @@ import Typography from "@mui/material/Typography";
 
 import type { EsqlResponse, TablePanelOptions } from "../../types";
 import type { RowSummaryEntry } from "../../hooks/useRowSummaries";
+import { cellToKeyString } from "../../utils/cellToKeyString";
 
 import { isNumericType } from "./chartUtils";
 import { resolveThresholdColor, THRESHOLD_PALETTE } from "./thresholdUtils";
@@ -53,7 +54,7 @@ export default function DataTableBody({
   return (
     <TableBody>
       {[...visibleRows.entries()].map(([rowIdx, row]) => {
-        const baseKey = row.map((cell) => String(cell)).join("\u241F");
+        const baseKey = row.map((cell) => cellToKeyString(cell)).join("\u241F");
         return (
           <Tooltip
             key={`${page}-${rowsPerPage}-${baseKey}-${rowIdx}`}
