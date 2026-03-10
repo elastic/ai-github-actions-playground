@@ -9,7 +9,7 @@ import { getLocalChatTools } from "../services/chatTools";
 import { formatToolResult, type ToolActivity } from "../components/chatUtils";
 
 export const MAX_QUESTIONS = 20;
-const SECRET_POOL_SIZE = 500;
+const SECRET_POOL_SIZE = 200;
 const GAME_TIMEOUT_MS = 60_000;
 /** Allow enough steps for the LLM to run queries between questions. */
 const GAME_MAX_STEPS = 10;
