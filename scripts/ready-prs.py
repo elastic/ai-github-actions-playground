@@ -157,19 +157,37 @@ def gh_post(endpoint: str, repo_slug: str) -> bool:
 # ── Pure classification (no side effects, fully testable) ────────────────────
 
 
+def matches_pr_run(run: dict, head_sha: str, head_branch: str = "") -> bool:
+    event = run.get("event")
+    if event == "pull_request":
+        # pull_request: match by sha (sha is meaningful — run uses PR branch)
+        return run.get("headSha") == head_sha
+    if event == "pull_request_target":
+        # pull_request_target: match by branch; keep sha fallback for compatibility.
+        return run.get("headSha") == head_sha or (
+            bool(head_branch) and run.get("headBranch") == head_branch
+        )
+    return False
+
+
+def _latest_run_id(run: dict) -> int:
+    run_id = run.get("databaseId")
+    return int(run_id) if isinstance(run_id, int) else -1
+
+
+def _workflow_key(run: dict) -> str:
+    return str(run.get("workflowName") or run.get("name") or run.get("databaseId") or "")
+
+
 def compute_ci_status(runs: list[dict], head_sha: str, head_branch: str = "") -> CIStatus:
-    pr_runs = [r for r in runs
-               if r.get("event") in ("pull_request", "pull_request_target")
-               and (
-                   # pull_request: match by sha (sha is meaningful — run uses PR branch)
-                   (r.get("event") == "pull_request" and r.get("headSha") == head_sha)
-                   # pull_request_target: match by branch (runs off main, sha drifts as
-                   # new commits are pushed without re-triggering a new run)
-                   or (r.get("event") == "pull_request_target" and (
-                       r.get("headSha") == head_sha
-                       or (head_branch and r.get("headBranch") == head_branch)
-                   ))
-               )]
+    pr_runs = [r for r in runs if matches_pr_run(r, head_sha, head_branch)]
+    latest_by_workflow: dict[str, dict] = {}
+    for run in pr_runs:
+        key = _workflow_key(run)
+        prev = latest_by_workflow.get(key)
+        if prev is None or _latest_run_id(run) > _latest_run_id(prev):
+            latest_by_workflow[key] = run
+    pr_runs = list(latest_by_workflow.values())
     if not pr_runs:
         return CIStatus.NO_RUNS
     if any(r.get("status") == "action_required" or r.get("conclusion") == "action_required"
@@ -299,14 +317,7 @@ def phase_approve_runs(prs: list[PRInfo], runs: list[dict], ctx: Ctx) -> int:
         if not pr.is_bot or pr.is_wip:
             continue
         blocked = [r for r in runs
-                   if r.get("event") in ("pull_request", "pull_request_target")
-                   and (
-                       # pull_request: match by sha (sha is meaningful — run uses PR branch)
-                       (r.get("event") == "pull_request" and r.get("headSha") == pr.head_sha)
-                       # pull_request_target: match by branch (runs off main, sha drifts as
-                       # new commits are pushed without re-triggering a new run)
-                       or (r.get("event") == "pull_request_target" and r.get("headBranch") == pr.branch)
-                   )
+                   if matches_pr_run(r, pr.head_sha, pr.branch)
                    and (r.get("status") == "action_required"
                         or r.get("conclusion") == "action_required")]
         if not blocked:
