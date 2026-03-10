@@ -29,6 +29,7 @@ import {
   PROFILE_SESSION_PREFIX,
   ENCRYPTED_STORE_SUFFIX,
 } from "./connectionStorageAdapters";
+import { registerResetter } from "./resetRegistry";
 
 export type ConnectionState = SessionConnectionSlice &
   ConnectionProfileSlice & {
@@ -73,3 +74,5 @@ export const useConnectionStore = create<ConnectionState>()(
     { name: "ConnectionStore", enabled: import.meta.env.DEV },
   ),
 );
+
+registerResetter("connection", () => useConnectionStore.getState().resetConnectionState());

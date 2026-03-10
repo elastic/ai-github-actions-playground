@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
+import { registerResetter } from "./resetRegistry";
 
 export interface PersistedEntry {
   id: string;
@@ -46,3 +47,5 @@ export const useApiConsoleStore = create<ApiConsoleState>()(
     { name: "ApiConsoleStore", enabled: import.meta.env.DEV },
   ),
 );
+
+registerResetter("apiConsole", () => useApiConsoleStore.getState().resetApiConsoleState());

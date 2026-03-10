@@ -1,120 +1,93 @@
 /**
  * Shared registry of all Zustand store reset functions.
  *
- * Every store that exposes a reset API must register its resetter here so that
- * both `useResetAllStores` (runtime) and `resetAllStores` (tests) call a single
- * authoritative list instead of maintaining separate hard-coded copies.
+ * Every store self-registers its resetter via `resetRegistry.ts` at import
+ * time.  The side-effect imports below ensure all stores are loaded (and
+ * therefore registered) before `storeResetters` or `RESET_SCOPE` are
+ * consumed at runtime.
  *
- * Domain-specific page-filter stores (Fleet, Profiling, Services, Kubernetes,
- * Hosts) self-register through `resetRegistry.ts` at import time.  The imports
- * below ensure the side-effects run before `storeResetters` is consumed.
+ * Test code should import `getRegisteredResetters` from `resetRegistry.ts`
+ * directly — this avoids a static dependency on every store and keeps
+ * vitest's `--related` graph tight.
  */
 
-import { useConnectionStore } from "./useConnectionStore";
-import { useDashboardStore } from "./useDashboardStore";
-import { useExplorerStore } from "./useExplorerStore";
-import { useLLMStore } from "./useLLMStore";
-import { useQueryStore } from "./useQueryStore";
-import { useTracesStore } from "./useTracesStore";
-import { useUIStore } from "./useUIStore";
-import { useThemeStore } from "./useThemeStore";
-import { useCommandPaletteStore } from "./useCommandPaletteStore";
-import { useSearchPanelUIStore } from "./useSearchPanelUIStore";
-import { useApiConsoleStore } from "./useApiConsoleStore";
-import { usePageContextStore } from "./usePageContextStore";
-import { useLogsStore } from "./useLogsStore";
-import { useInsightStatusStore } from "./useInsightStatusStore";
-import { usePackageBuilderStore } from "./usePackageBuilderStore";
-
-// Side-effect imports: each domain store registers its resetter via the
-// resetRegistry when first imported.
+// Side-effect imports: ensure every store registers its resetter.
+import "./useConnectionStore";
+import "./useDashboardStore";
+import "./useExplorerStore";
+import "./useLLMStore";
+import "./useQueryStore";
+import "./useTracesStore";
+import "./useUIStore";
+import "./useThemeStore";
+import "./useCommandPaletteStore";
+import "./useSearchPanelUIStore";
+import "./useApiConsoleStore";
+import "./usePageContextStore";
+import "./useLogsStore";
+import "./useInsightStatusStore";
+import "./usePackageBuilderStore";
 import "./useFleetFiltersStore";
 import "./useProfilingFiltersStore";
 import "./useServiceFiltersStore";
 import "./useKubernetesFiltersStore";
 import "./useHostsFiltersStore";
 
-import { getRegisteredResetters } from "./resetRegistry";
+import { getRegisteredResetters, getResetter } from "./resetRegistry";
 
-const resetConnection = () => useConnectionStore.getState().resetConnectionState();
-const resetDashboard = () => useDashboardStore.getState().resetDashboardState();
-const resetExplorer = () => useExplorerStore.getState().reset();
-const resetLlm = () => useLLMStore.getState().resetLLMState();
-const resetQuery = () => useQueryStore.getState().resetQueryState();
-const resetTraces = () => useTracesStore.getState().resetFilters();
-const resetUi = () => useUIStore.getState().resetUIState();
-const resetTheme = () => useThemeStore.getState().resetThemeState();
-const resetCommandPalette = () => useCommandPaletteStore.getState().resetCommandPaletteState();
-const resetSearchPanelUi = () => useSearchPanelUIStore.getState().resetSearchPanelUIState();
-const resetApiConsole = () => useApiConsoleStore.getState().resetApiConsoleState();
-const resetPageContext = () => usePageContextStore.getState().resetPageContext();
-const resetLogs = () => useLogsStore.getState().reset();
-const resetInsightStatus = () => useInsightStatusStore.getState().resetInsightStatus();
-const resetPackageBuilder = () => usePackageBuilderStore.getState().reset();
+/** All registered resetters — use at runtime to reset every store. */
+export const storeResetters: ReadonlyArray<() => void> = getRegisteredResetters();
 
-export const storeResetters: ReadonlyArray<() => void> = [
-  resetConnection,
-  resetDashboard,
-  resetExplorer,
-  // Domain-scoped page-filter resetters are pulled from the registry so that
-  // adding a new domain store never requires editing this file.
-  ...getRegisteredResetters(),
-  resetLlm,
-  resetQuery,
-  resetTraces,
-  resetLogs,
-  resetInsightStatus,
-  resetUi,
-  resetTheme,
-  resetCommandPalette,
-  resetSearchPanelUi,
-  resetApiConsole,
-  resetPageContext,
-  resetPackageBuilder,
-];
+/** Helper that calls a named resetter, silently no-ops if missing. */
+function reset(name: string): void {
+  getResetter(name)?.();
+}
 
 export const RESET_SCOPE: ReadonlyArray<{ label: string; reset: () => void }> = [
   {
     label: "Connection settings and credentials",
-    reset: resetConnection,
+    reset: () => reset("connection"),
   },
   {
     label: "Dashboard layouts and state",
-    reset: resetDashboard,
+    reset: () => reset("dashboard"),
   },
   {
     label: "Query Lab filters and queries",
-    reset: resetQuery,
+    reset: () => reset("query"),
   },
   {
     label: "Observability filters (traces, metrics, logs, fleet, hosts, profiling, services)",
     reset: () => {
-      resetTraces();
-      resetExplorer();
-      resetLogs();
-      // Reset all domain-scoped page-filter stores via the registry.
-      getRegisteredResetters().forEach((fn) => fn());
+      reset("traces");
+      reset("explorer");
+      reset("logs");
+      reset("fleet");
+      reset("profiling");
+      reset("services");
+      reset("kubernetes");
+      reset("hosts");
     },
   },
   {
     label: "LLM and AI assistant configuration",
-    reset: resetLlm,
+    reset: () => reset("llm"),
   },
   {
     label: "UI preferences (theme, panel state)",
     reset: () => {
-      resetUi();
-      resetTheme();
-      resetCommandPalette();
-      resetSearchPanelUi();
+      reset("ui");
+      reset("theme");
+      reset("commandPalette");
+      reset("searchPanelUI");
     },
   },
   {
     label: "Console history and request state",
-    reset: resetApiConsole,
+    reset: () => reset("apiConsole"),
   },
   {
     label: "Package Builder wizard drafts",
-    reset: resetPackageBuilder,
+    reset: () => reset("packageBuilder"),
   },
 ];
