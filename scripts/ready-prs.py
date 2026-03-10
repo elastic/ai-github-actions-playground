@@ -157,9 +157,16 @@ def gh_post(endpoint: str, repo_slug: str) -> bool:
 # ── Pure classification (no side effects, fully testable) ────────────────────
 
 
-def compute_ci_status(runs: list[dict], head_sha: str) -> CIStatus:
+def compute_ci_status(runs: list[dict], head_sha: str, head_branch: str = "") -> CIStatus:
     pr_runs = [r for r in runs
-               if r.get("event") in ("pull_request", "pull_request_target") and r.get("headSha") == head_sha]
+               if r.get("event") in ("pull_request", "pull_request_target")
+               and (
+                   (r.get("event") == "pull_request" and r.get("headSha") == head_sha)
+                   or (r.get("event") == "pull_request_target" and (
+                       r.get("headSha") == head_sha
+                       or (head_branch and r.get("headBranch") == head_branch)
+                   ))
+               )]
     if not pr_runs:
         return CIStatus.NO_RUNS
     if any(r.get("status") == "action_required" or r.get("conclusion") == "action_required"
@@ -336,7 +343,7 @@ def phase_kick_ci(prs: list[PRInfo], runs: list[dict], ctx: Ctx) -> int:
     for pr in bot_prs:
         if not is_bot_commit(ctx, pr.head_sha):
             continue
-        if compute_ci_status(runs, pr.head_sha) != CIStatus.NO_RUNS:
+        if compute_ci_status(runs, pr.head_sha, pr.branch) != CIStatus.NO_RUNS:
             continue
         print(f"  {_tag(ctx)}#{pr.number:<5} {pr.title[:50]:<50}", end="")
         if ctx.dry_run:
@@ -405,7 +412,7 @@ def phase_update_stale_branches(prs: list[PRInfo], runs: list[dict], ctx: Ctx) -
         if p.is_bot and not p.is_wip and not p.is_draft
         and p.mergeable not in ("CONFLICTING", "UNKNOWN")
         and p.review_decision != "APPROVED"
-        and compute_ci_status(runs, p.head_sha)
+        and compute_ci_status(runs, p.head_sha, p.branch)
         not in (CIStatus.IN_PROGRESS, CIStatus.QUEUED, CIStatus.ACTION_REQUIRED)
     ]
     if not candidates:
@@ -453,7 +460,7 @@ def phase_report(prs: list[PRInfo], runs: list[dict], ctx: Ctx) -> int:
 
     grouped: dict[PRState, list[str]] = {s: [] for s in STATE_META}
     for pr in prs:
-        ci = compute_ci_status(runs, pr.head_sha)
+        ci = compute_ci_status(runs, pr.head_sha, pr.branch)
         addr = has_active_address_wf(runs, pr.branch)
         # Only hit the commits API for bot PRs that need dynamic classification
         need_bot_check = (pr.is_bot and not pr.is_draft and not pr.is_wip
