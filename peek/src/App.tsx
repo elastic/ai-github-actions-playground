@@ -211,6 +211,7 @@ export default function App() {
                       )
                     }
                   />
+                  <Route path="/health" element={<Navigate to="/cluster-health" replace />} />
                   <Route path="/" element={<Navigate to="/dashboards" replace />} />
                   <Route path="*" element={<Navigate to="/dashboards" replace />} />
                 </Routes>

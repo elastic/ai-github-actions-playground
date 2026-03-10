@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, useLocation } from "react-router-dom";
+import { MemoryRouter, useLocation, Routes, Route, Navigate } from "react-router-dom";
 
 import AppSidebar from "../../src/components/AppSidebar";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
@@ -181,6 +181,22 @@ describe("AppSidebar", () => {
     await user.click(screen.getByRole("button", { name: /^health$/i }));
 
     expect(screen.getByTestId("location")).toHaveTextContent("/cluster-health");
+  });
+
+  it("marks Health nav item as active when entering via legacy /health alias", () => {
+    useConnectionStore.getState().setConnected(true);
+    render(
+      <MemoryRouter initialEntries={["/health"]}>
+        <AppSidebar />
+        <Routes>
+          <Route path="/health" element={<Navigate to="/cluster-health" replace />} />
+          <Route path="*" element={<LocationDisplay />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    const healthBtn = screen.getByRole("button", { name: /^health$/i });
+    expect(healthBtn).toHaveAttribute("aria-current", "page");
   });
 
   it("navigates to Cluster Settings when clicked while connected", async () => {
