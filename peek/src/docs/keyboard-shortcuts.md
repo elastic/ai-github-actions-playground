@@ -29,6 +29,7 @@ On narrow or mobile layouts, tap the **search icon** in the header to open the s
 - **Switch themes** — use Dark/Light Mode in the settings menu (gear icon in the sidebar footer).
 - **Disconnect** — click the Disconnect button in the connection dialog to drop the active connection.
 - **Reset all state** — use Reset All State in the settings overflow menu to wipe connection and dashboard data back to defaults. This is irreversible.
+- **Share a Query Lab link** — click the link icon in the Query Lab editor toolbar to copy a URL that includes the time range and, when set, the current query and selected fields. See the Query Lab docs for details.
 
 ## Navigation tips
 

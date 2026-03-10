@@ -86,7 +86,7 @@ export const PAGE_MANIFEST: Record<PageId, ComponentType> = {
   chat: ChatPage,
   clusterOverview: ClusterOverviewPage,
   clusterHealth: ClusterHealthPage,
-  globalHealth: ClusterHealthPage,
+
   clusterTasks: TaskManagerPage,
   clusterCapacity: ClusterCapacityPage,
   clusterShards: ClusterShardsPage,

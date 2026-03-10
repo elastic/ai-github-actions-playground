@@ -297,7 +297,7 @@ export function HistogramOptionsEditor({ options, onChange }: VizOptionsEditorPr
         });
       }}
       sx={{ width: 90 }}
-      inputProps={{ min: 1, max: 100 }}
+      slotProps={{ htmlInput: { min: 1, max: 100 } }}
     />
   );
 }
@@ -332,7 +332,7 @@ export function TableOptionsEditor({ options, onChange }: VizOptionsEditorProps)
             onChange({ ...o, thresholdColumns: cols });
           }}
           sx={{ width: 220 }}
-          inputProps={{ "aria-label": "threshold columns" }}
+          slotProps={{ htmlInput: { "aria-label": "threshold columns" } }}
         />
       </Box>
       <ThresholdEditor value={o.thresholds} onChange={(t) => onChange({ ...o, thresholds: t })} />

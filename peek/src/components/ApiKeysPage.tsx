@@ -15,7 +15,11 @@ import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 
+import VpnKeyIcon from "@mui/icons-material/VpnKey";
+import SearchIcon from "@mui/icons-material/Search";
+
 import DataFetchAlert from "./DataFetchAlert";
+import EmptyState from "./EmptyState";
 
 import { useApiKeys } from "../hooks/useApiKeys";
 import { useCopyFeedbackTimeout } from "../hooks/useCopyFeedbackTimeout";
@@ -26,7 +30,7 @@ import { formatTimestamp } from "../utils/formatDate";
 
 import { ageLabel, riskLabel, riskLevel } from "./ApiKeysPage.utils";
 import PageInsightBanner from "./PageInsightBanner";
-import SecurityMasterDetailPage from "./SecurityMasterDetailPage";
+import SecurityMasterDetailPage, { MASTER_LIST_ITEM_SX } from "./SecurityMasterDetailPage";
 
 export default function ApiKeysPage() {
   const { keys, loading, error, accessNotice, refresh } = useApiKeys();
@@ -110,10 +114,10 @@ export default function ApiKeysPage() {
       title="API Keys"
       actions={
         <>
-          <LoadingButton size="small" variant="outlined" onClick={refresh} loading={loading}>
+          <LoadingButton variant="outlined" onClick={refresh} loading={loading}>
             Refresh
           </LoadingButton>
-          <Button size="small" variant="contained" onClick={() => void copyQuery()}>
+          <Button variant="contained" onClick={() => void copyQuery()}>
             {copied ? "Copied" : "Copy API call"}
           </Button>
         </>
@@ -151,6 +155,7 @@ export default function ApiKeysPage() {
                 <ListItemButton
                   selected={key.id === effectiveKeyId}
                   onClick={() => setSelectedKeyId(key.id)}
+                  sx={MASTER_LIST_ITEM_SX}
                 >
                   <ListItemText
                     primary={key.name}
@@ -161,9 +166,15 @@ export default function ApiKeysPage() {
               </ListItem>
             ))}
             {!loading && filteredKeys.length === 0 && (
-              <Typography variant="body2" color="text.secondary" sx={{ p: 2 }}>
-                No API keys found.
-              </Typography>
+              <ListItem disablePadding>
+                <EmptyState
+                  icon={<SearchIcon sx={{ fontSize: 28 }} />}
+                  heading="No API keys found"
+                  description="Try adjusting your search or check that API keys exist in the cluster."
+                  size="small"
+                  verticalAlign="start"
+                />
+              </ListItem>
             )}
           </List>
         </>
@@ -231,9 +242,12 @@ export default function ApiKeysPage() {
             </Typography>
           </>
         ) : (
-          <Typography variant="body2" color="text.secondary">
-            Select an API key.
-          </Typography>
+          <EmptyState
+            icon={<VpnKeyIcon sx={{ fontSize: 28 }} />}
+            heading="Select an API key"
+            description="Choose an API key from the list to view its details and risk assessment."
+            size="small"
+          />
         )
       }
     />

@@ -160,7 +160,7 @@ export default function ClusterSettingsPage() {
               placeholder="Filter settings by key or value"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              inputProps={{ "aria-label": "Filter settings by key or value" }}
+              slotProps={{ htmlInput: { "aria-label": "Filter settings by key or value" } }}
             />
             <FormControlLabel
               control={
