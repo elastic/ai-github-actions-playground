@@ -30,8 +30,10 @@ const docsMarkdownSx = {
   "& code": {
     px: 0.5,
     borderRadius: 0.5,
-    bgcolor: "action.selected",
+    bgcolor: "background.subtle",
+    color: "text.primary",
     fontSize: "0.85em",
+    fontWeight: 500,
     fontFamily: "monospace",
   },
   "& h2": { mt: 2, mb: 1 },
@@ -211,11 +213,18 @@ export default function DocsPage() {
                 sx={{ width: 120, height: 120, mb: 1.5, objectFit: "contain" }}
               />
             )}
-            <Typography variant="h6" sx={{ mb: 1 }}>
+            <Typography variant="h6" component="h2" sx={{ mb: 1 }}>
               {section.title}
             </Typography>
             <Box sx={{ ...docsMarkdownSx, typography: "body2" }}>
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{section.body.join("\n\n")}</ReactMarkdown>
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  pre: ({ node: _node, ...props }) => <pre tabIndex={0} {...props} />,
+                }}
+              >
+                {section.body.join("\n\n")}
+              </ReactMarkdown>
             </Box>
             <Divider sx={{ mt: 2 }} />
           </Box>

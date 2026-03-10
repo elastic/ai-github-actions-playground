@@ -317,7 +317,7 @@ export default function AppSidebar({
                   <Typography
                     variant="caption"
                     sx={{
-                      color: "text.secondary",
+                      color: "text.primary",
                       letterSpacing: "0.02em",
                       textTransform: "uppercase",
                       fontWeight: 600,
@@ -329,7 +329,7 @@ export default function AppSidebar({
                   <ExpandMoreIcon
                     sx={{
                       fontSize: 16,
-                      color: "text.secondary",
+                      color: "text.primary",
                       transform: isSectionExpanded ? "rotate(0deg)" : "rotate(-90deg)",
                       transition: (theme) =>
                         theme.transitions.create("transform", {
