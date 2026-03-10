@@ -48,7 +48,7 @@ function isoToNanosString(timestamp: string): string {
 }
 
 /** Convert app SpanEvents to OTLP Events. */
-function convertEvents(events: SpanEvent[]): otlptracev1.Event[] {
+function convertEvents(events: readonly SpanEvent[]): otlptracev1.Event[] {
   return events.map((e) => ({
     timeUnixNano: isoToNanosString(e.timestamp),
     name: e.name,
@@ -57,7 +57,7 @@ function convertEvents(events: SpanEvent[]): otlptracev1.Event[] {
 }
 
 /** Convert app SpanLinks to OTLP Links. */
-function convertLinks(links: SpanLink[]): otlptracev1.Link[] {
+function convertLinks(links: readonly SpanLink[]): otlptracev1.Link[] {
   return links.map((l) => ({
     traceId: l.traceId,
     spanId: l.spanId,
