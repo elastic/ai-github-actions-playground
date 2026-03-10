@@ -2,6 +2,8 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
+    // Exclude agent worktrees so nested project copies don't pollute test runs.
+    exclude: ["**/.claude/**", "**/.copilot/**", "**/node_modules/**"],
     projects: [
       {
         extends: true,

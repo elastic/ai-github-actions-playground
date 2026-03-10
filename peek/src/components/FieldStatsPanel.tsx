@@ -1,9 +1,9 @@
 import { useCallback } from "react";
-import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import ContentSkeleton from "./ContentSkeleton";
+import DataFetchAlert from "./DataFetchAlert";
 import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
 import Paper from "@mui/material/Paper";
@@ -131,7 +131,7 @@ export default function FieldStatsPanel({
           </Box>
         )}
 
-        {!loading && error && <Alert severity="error">{error}</Alert>}
+        {!loading && <DataFetchAlert error={error} />}
 
         {!loading && stats && (
           <>

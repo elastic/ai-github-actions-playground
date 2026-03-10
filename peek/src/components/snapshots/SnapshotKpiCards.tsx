@@ -23,7 +23,7 @@ export function SnapshotKpiCards({
     <Grid container spacing={1}>
       <Grid item xs={6} sm={3}>
         <OverviewInfoCard title="Total Snapshots">
-          <Typography variant="h5" component="div">
+          <Typography variant="h3" component="div">
             {total}
           </Typography>
         </OverviewInfoCard>
@@ -31,7 +31,7 @@ export function SnapshotKpiCards({
       <Grid item xs={6} sm={3}>
         <OverviewInfoCard title="Successful">
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Typography variant="h5" component="div">
+            <Typography variant="h3" component="div">
               {successCount}
             </Typography>
             {successCount > 0 && (
@@ -43,7 +43,7 @@ export function SnapshotKpiCards({
       <Grid item xs={6} sm={3}>
         <OverviewInfoCard title="Failed / Partial">
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Typography variant="h5" component="div">
+            <Typography variant="h3" component="div">
               {failedCount}
             </Typography>
             {failedCount > 0 && (
@@ -55,7 +55,7 @@ export function SnapshotKpiCards({
       <Grid item xs={6} sm={3}>
         <OverviewInfoCard title="In Progress">
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Typography variant="h5" component="div">
+            <Typography variant="h3" component="div">
               {inProgressCount}
             </Typography>
             {inProgressCount > 0 && (
@@ -85,14 +85,14 @@ export function PolicyKpiCards({
     <Grid container spacing={1}>
       <Grid item xs={6} sm={3}>
         <OverviewInfoCard title="Policies">
-          <Typography variant="h5" component="div">
+          <Typography variant="h3" component="div">
             {policyCount}
           </Typography>
         </OverviewInfoCard>
       </Grid>
       <Grid item xs={6} sm={3}>
         <OverviewInfoCard title="Total Taken">
-          <Typography variant="h5" component="div">
+          <Typography variant="h3" component="div">
             {totalTaken}
           </Typography>
         </OverviewInfoCard>
@@ -100,7 +100,7 @@ export function PolicyKpiCards({
       <Grid item xs={6} sm={3}>
         <OverviewInfoCard title="Total Failed">
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Typography variant="h5" component="div">
+            <Typography variant="h3" component="div">
               {totalFailed}
             </Typography>
             {totalFailed > 0 && (
@@ -111,7 +111,7 @@ export function PolicyKpiCards({
       </Grid>
       <Grid item xs={6} sm={3}>
         <OverviewInfoCard title="Retention Runs">
-          <Typography variant="h5" component="div">
+          <Typography variant="h3" component="div">
             {retentionRuns}
           </Typography>
         </OverviewInfoCard>

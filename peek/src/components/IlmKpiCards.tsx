@@ -30,21 +30,21 @@ export default function IlmKpiCards({
     <Grid container spacing={2}>
       <Grid item xs={6} sm={3}>
         <OverviewInfoCard title="Managed Indices">
-          <Typography variant="h5" component="p">
+          <Typography variant="h3" component="p">
             {indexCount}
           </Typography>
         </OverviewInfoCard>
       </Grid>
       <Grid item xs={6} sm={3}>
         <OverviewInfoCard title="Indices in ERROR">
-          <Typography variant="h5" component="p" color={errorCount > 0 ? "error" : undefined}>
+          <Typography variant="h3" component="p" color={errorCount > 0 ? "error" : undefined}>
             {errorCount}
           </Typography>
         </OverviewInfoCard>
       </Grid>
       <Grid item xs={6} sm={3}>
         <OverviewInfoCard title="Policies">
-          <Typography variant="h5" component="p">
+          <Typography variant="h3" component="p">
             {policyCount}
           </Typography>
         </OverviewInfoCard>

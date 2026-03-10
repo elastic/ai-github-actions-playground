@@ -66,16 +66,16 @@ export function TransformTable({
             </TableCell>
             <TableCell>Source → Dest</TableCell>
             <TableCell align="right">
-              <SortHeader field="docsProcessed">Docs (P/I)</SortHeader>
+              <SortHeader field="docsProcessed">Processed / Indexed</SortHeader>
             </TableCell>
             <TableCell align="right">
-              <SortHeader field="searchFailures">Fail (S/I)</SortHeader>
+              <SortHeader field="searchFailures">Search / Index Failures</SortHeader>
             </TableCell>
             <TableCell align="right">
               <SortHeader field="checkpoint">Checkpoint</SortHeader>
             </TableCell>
             <TableCell align="right">
-              <SortHeader field="avgCheckpointDurationMs">Avg Ckpt</SortHeader>
+              <SortHeader field="avgCheckpointDurationMs">Avg Checkpoint</SortHeader>
             </TableCell>
             <TableCell>
               <SortHeader field="nodeName">Node</SortHeader>

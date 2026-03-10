@@ -1,18 +1,17 @@
 import { useMemo, useState, useCallback, useEffect } from "react";
 import Box from "@mui/material/Box";
-import Paper from "@mui/material/Paper";
-import Typography from "@mui/material/Typography";
-import TextField from "@mui/material/TextField";
-import Button from "@mui/material/Button";
 import Divider from "@mui/material/Divider";
+import Paper from "@mui/material/Paper";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { parseAsString, useQueryState } from "nuqs";
 
 import sections from "../docs/sections";
 
-import EmptyState from "./EmptyState";
 import AskAiButton from "./AskAiButton";
+import DocsNavSidebar from "./DocsNavSidebar";
 
 function normalizeText(text: string): string {
   return text.toLowerCase();
@@ -72,6 +71,7 @@ export default function DocsPage() {
       normalizeText(`${section.title} ${section.body.join(" ")}`).includes(query),
     );
   }, [search]);
+
   const docsContextSnippet = useMemo(
     () =>
       filteredSections
@@ -97,6 +97,8 @@ export default function DocsPage() {
       target?.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   }, [sectionFromUrl]);
+
+  const isSearching = search.trim().length > 0;
 
   return (
     <Box sx={{ display: "flex", flex: 1, gap: 1.5, minHeight: 0 }}>
@@ -129,26 +131,12 @@ export default function DocsPage() {
         )}
         <Divider />
         <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, overflowY: "auto" }}>
-          {filteredSections.length === 0 ? (
-            <EmptyState size="small" heading="No results" description="Try a different keyword" />
-          ) : (
-            filteredSections.map((section) => (
-              <Button
-                key={section.id}
-                size="small"
-                variant={activeSection === section.id ? "contained" : "text"}
-                onClick={() => jumpToSection(section.id)}
-                sx={{
-                  justifyContent: "flex-start",
-                  color: activeSection === section.id ? undefined : "text.secondary",
-                  textTransform: "none",
-                  fontWeight: activeSection === section.id ? 600 : 400,
-                }}
-              >
-                {section.title}
-              </Button>
-            ))
-          )}
+          <DocsNavSidebar
+            filteredSections={filteredSections}
+            activeSection={activeSection}
+            isSearching={isSearching}
+            onJumpToSection={jumpToSection}
+          />
         </Box>
       </Paper>
 

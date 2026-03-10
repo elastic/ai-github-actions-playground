@@ -106,6 +106,7 @@ export default memo(function DataTable({
             pinnedLeftOffsets={s.pinnedLeftOffsets}
             onSortToggle={s.handleSortToggle}
             showSummaryColumn={Boolean(summaryEnabled)}
+            summaryLoading={Boolean(summaryEnabled) && s.summaryLoading}
             onOpenMenu={(event, colIdx) => {
               s.setMenuAnchor(event.currentTarget);
               s.setMenuColumnIndex(colIdx);

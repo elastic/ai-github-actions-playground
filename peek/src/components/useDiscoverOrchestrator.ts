@@ -30,19 +30,25 @@ import {
 import type { SortState } from "./visualizations/DataTable";
 import { createEsqlQueryEditorExtensions } from "./queryEditorExtensions";
 
+interface RunDiscoverQueryOptions {
+  preserveSelectedFields?: boolean;
+}
+
 export function useDiscoverOrchestrator(mode: "query-lab" | "logs") {
   const isLogsExplorer = mode === "logs";
   const panelTitle = isLogsExplorer ? "Logs Panel" : "Query Lab Panel";
   const connection = useConnectionStore((s) => s.connection);
   const themeMode = useThemeStore((s) => s.themeMode);
-  const { addPanel, refreshInterval, timeRange, parameters } = useDashboardEditorStore(
-    useShallow((s) => ({
-      addPanel: s.addPanel,
-      refreshInterval: s.dashboard.refreshInterval ?? DEFAULT_REFRESH_INTERVAL,
-      timeRange: s.dashboard.timeRange,
-      parameters: s.dashboard.parameters,
-    })),
-  );
+  const { addPanel, refreshInterval, timeRange, parameters, setTimeRange } =
+    useDashboardEditorStore(
+      useShallow((s) => ({
+        addPanel: s.addPanel,
+        refreshInterval: s.dashboard.refreshInterval ?? DEFAULT_REFRESH_INTERVAL,
+        timeRange: s.dashboard.timeRange,
+        parameters: s.dashboard.parameters,
+        setTimeRange: s.setTimeRange,
+      })),
+    );
   const activeDashboardId = useDashboardCatalogStore((s) => s.activeDashboardId);
   const setEditingPanelId = useUIStore((s) => s.setEditingPanelId);
   const {
@@ -114,9 +120,11 @@ export function useDiscoverOrchestrator(mode: "query-lab" | "logs") {
     [timeRange, parameters],
   );
   const timingsCleared = useRef(false);
+  const preserveSelectedFieldsNextRunRef = useRef(false);
   const {
     runQuery,
     loading,
+    abort,
     error,
     activeStep,
     stepDurationsMs,
@@ -133,37 +141,43 @@ export function useDiscoverOrchestrator(mode: "query-lab" | "logs") {
     onSuccess: (data, executedQuery, executedStepIndex) => {
       setResult(data);
       appendQueryToHistory(executedQuery);
+      const preserveSelectedFields =
+        executedStepIndex === null && preserveSelectedFieldsNextRunRef.current;
+      preserveSelectedFieldsNextRunRef.current = false;
       if (executedStepIndex === null) {
         if (discoverQueryDraft) setDiscoverQueryDraft(null);
         setQuery(executedQuery);
         setLastExecutedQuery(executedQuery);
       }
-      // Select a focused default column set when there are many fields;
-      // fall back to all fields when the result set is small.
-      const allNames = data.columns.map((c) => c.name);
-      const DEFAULT_FIELD_LIMIT = 10;
-      if (allNames.length <= DEFAULT_FIELD_LIMIT) {
-        setSelectedFields(new Set(allNames));
-      } else {
-        const PREFERRED_FIELDS = [
-          "@timestamp",
-          "message",
-          "host.name",
-          "service.name",
-          "log.level",
-          "event.dataset",
-          "agent.name",
-        ];
-        const preferred = PREFERRED_FIELDS.filter((f) => allNames.includes(f));
-        setSelectedFields(
-          new Set(preferred.length > 0 ? preferred : allNames.slice(0, DEFAULT_FIELD_LIMIT)),
-        );
+      if (!preserveSelectedFields) {
+        // Query Lab shows all returned columns by default.
+        // Logs Explorer keeps a focused default set for wide result sets.
+        const allNames = data.columns.map((c) => c.name);
+        const DEFAULT_FIELD_LIMIT = 10;
+        if (!isLogsExplorer || allNames.length <= DEFAULT_FIELD_LIMIT) {
+          setSelectedFields(new Set(allNames));
+        } else {
+          const PREFERRED_FIELDS = [
+            "@timestamp",
+            "message",
+            "host.name",
+            "service.name",
+            "log.level",
+            "event.dataset",
+            "agent.name",
+          ];
+          const preferred = PREFERRED_FIELDS.filter((f) => allNames.includes(f));
+          setSelectedFields(
+            new Set(preferred.length > 0 ? preferred : allNames.slice(0, DEFAULT_FIELD_LIMIT)),
+          );
+        }
       }
       setTableVersion((prev) => prev + 1);
       setFieldsManuallySelected(false);
       timingsCleared.current = false;
     },
     onFailure: () => {
+      preserveSelectedFieldsNextRunRef.current = false;
       setResult(null);
     },
   });
@@ -210,7 +224,20 @@ export function useDiscoverOrchestrator(mode: "query-lab" | "logs") {
     },
     [expandedInsight, insightsCache, effectiveQuery, runInsightQuery],
   );
-  const handleRunQuery = useCallback(() => runQuery(effectiveQuery), [runQuery, effectiveQuery]);
+  const runDiscoverQuery = useCallback(
+    (options?: RunDiscoverQueryOptions) => {
+      preserveSelectedFieldsNextRunRef.current = Boolean(options?.preserveSelectedFields);
+      void runQuery(effectiveQuery);
+    },
+    [runQuery, effectiveQuery],
+  );
+  const handleRunQuery = useCallback(() => {
+    runDiscoverQuery();
+  }, [runDiscoverQuery]);
+  const handleCancelQuery = useCallback(() => {
+    preserveSelectedFieldsNextRunRef.current = false;
+    abort();
+  }, [abort]);
   const handleQueryChange = useCallback(
     (nextQuery: string) => {
       if (discoverQueryDraft) setDiscoverQueryDraft(null);
@@ -395,6 +422,8 @@ export function useDiscoverOrchestrator(mode: "query-lab" | "logs") {
     activeStep,
     stepDurationsMs,
     handleRunQuery,
+    handleCancelQuery,
+    runDiscoverQuery,
     handleRunStep,
     profileMode,
     setProfileMode,
@@ -428,6 +457,7 @@ export function useDiscoverOrchestrator(mode: "query-lab" | "logs") {
     // Field picker
     columns,
     selectedFields,
+    setSelectedFields,
     toggleField,
     fieldFilter,
     setFieldFilter,
@@ -435,6 +465,10 @@ export function useDiscoverOrchestrator(mode: "query-lab" | "logs") {
     deselectVisibleFields,
     visibleColumns,
     fieldsManuallySelected,
+
+    // Time range
+    timeRange,
+    setTimeRange,
 
     // Insights
     expandedInsight,

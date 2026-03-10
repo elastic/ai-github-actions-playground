@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
+import { registerResetter } from "./resetRegistry";
 
 const MIN_EDITOR_HEIGHT = 60;
 const MAX_EDITOR_HEIGHT = 600;
@@ -98,3 +99,5 @@ export const useSearchPanelUIStore = create<SearchPanelUIState>()(
     { name: "SearchPanelUIStore", enabled: import.meta.env.DEV },
   ),
 );
+
+registerResetter("searchPanelUI", () => useSearchPanelUIStore.getState().resetSearchPanelUIState());
