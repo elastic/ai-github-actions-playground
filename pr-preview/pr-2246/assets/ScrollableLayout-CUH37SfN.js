@@ -1,2 +1,0 @@
-import{j as l,B as n}from"./mui-D0rKfw3a.js";function o({header:e,footer:s,children:x,gap:t,bodySx:r,sx:i}){return l.jsxs(n,{sx:[{display:"flex",flexDirection:"column",height:"100%",minHeight:0},...t!==void 0?[{gap:t}]:[],...Array.isArray(i)?i:i?[i]:[]],children:[e?l.jsx(n,{sx:{flexShrink:0},children:e}):null,l.jsx(n,{sx:[{flex:1,minHeight:0,overflow:"auto"},...Array.isArray(r)?r:r?[r]:[]],children:x}),s?l.jsx(n,{sx:{flexShrink:0},children:s}):null]})}export{o as S};
-//# sourceMappingURL=ScrollableLayout-CUH37SfN.js.map
