@@ -1,7 +1,12 @@
 import { totalCircuitBreakerTrips } from "../../components/cluster-health/clusterHealthUtils";
 import type { NodeStatsNode } from "../../services/es";
 
-import type { HealthCheckDefinition, HealthSnapshot } from "../types";
+import type {
+  HealthCheckDefinition,
+  HealthSeverity,
+  HealthSnapshot,
+  HealthSurface,
+} from "../types";
 
 const FS_AVAILABLE_LOW_BYTES = 10 * 1024 * 1024 * 1024; // 10 GB
 const THREAD_POOL_QUEUE_THRESHOLD = 200;
@@ -46,6 +51,69 @@ function allBreakerNames(nodes: Record<string, NodeStatsNode>): string[] {
   return Array.from(
     new Set(Object.values(nodes).flatMap((node) => Object.keys(node.breakers ?? {}))),
   );
+}
+
+interface ThreadPoolQueueRuleConfig {
+  id: string;
+  pool: string;
+  title: string;
+  description: string;
+  severityOnFail: HealthSeverity;
+  surfaces: HealthSurface[];
+  recommendation: string;
+  summaryLabel: string;
+  passSummary: string;
+  comparison: "gte" | "gt";
+  guardMissingNodeStats: boolean;
+  includeThresholdInObserved: boolean;
+  includeLinks: boolean;
+}
+
+function makeThreadPoolQueueRule(config: ThreadPoolQueueRuleConfig): HealthCheckDefinition {
+  return {
+    id: config.id,
+    domain: "nodes",
+    title: config.title,
+    description: config.description,
+    severityOnFail: config.severityOnFail,
+    surfaces: config.surfaces,
+    dependsOn: ["nodesCore"],
+    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/thread-pool-settings",
+    recommendation: config.recommendation,
+    evaluate: (snapshot) => {
+      if (config.guardMissingNodeStats) {
+        const nodeStats = snapshot.data.nodesCore?.nodeStats?.nodes;
+        if (!nodeStats) return unknownNodeStatsResult();
+      }
+      const nodes = getNodes(snapshot);
+      for (const node of nodes) {
+        const queue = node.thread_pool?.[config.pool]?.queue ?? 0;
+        const exceeded =
+          config.comparison === "gte"
+            ? queue >= THREAD_POOL_QUEUE_THRESHOLD
+            : queue > THREAD_POOL_QUEUE_THRESHOLD;
+        if (exceeded) {
+          const observed: Record<string, unknown> = { node: node.name };
+          if (config.includeThresholdInObserved) {
+            observed[`${config.pool}_queue`] = queue;
+            observed.threshold = THREAD_POOL_QUEUE_THRESHOLD;
+          } else {
+            observed.queue = queue;
+          }
+          return {
+            status: "warn",
+            summary: `${config.summaryLabel} queue at ${queue} on ${node.name ?? "unknown"}.`,
+            observed,
+            recommendation: config.recommendation,
+            ...(config.includeLinks
+              ? { links: [{ label: "Cluster Health", to: "/cluster-health" }] }
+              : {}),
+          };
+        }
+      }
+      return { status: "pass", summary: config.passSummary };
+    },
+  };
 }
 
 export const nodeChecks: HealthCheckDefinition[] = [
@@ -162,107 +230,53 @@ export const nodeChecks: HealthCheckDefinition[] = [
     },
   },
   // #45
-  {
+  makeThreadPoolQueueRule({
     id: "nodes.thread_pool.search.queue.high",
-    domain: "nodes",
+    pool: "search",
     title: "Search thread pool queue high",
     description: "Warns when search thread pool queue exceeds threshold on any node.",
     severityOnFail: "medium",
     surfaces: ["global", "local"],
-    dependsOn: ["nodesCore"],
-    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/thread-pool-settings",
     recommendation: "Reduce search concurrency or scale search capacity.",
-    evaluate: (snapshot) => {
-      const nodeStats = snapshot.data.nodesCore?.nodeStats?.nodes;
-      if (!nodeStats) return unknownNodeStatsResult();
-      const nodes = Object.entries(nodeStats);
-      for (const [, node] of nodes) {
-        const queue = node.thread_pool?.search?.queue ?? 0;
-        if (queue >= THREAD_POOL_QUEUE_THRESHOLD) {
-          return {
-            status: "warn",
-            summary: `Search queue at ${queue} on ${node.name ?? "unknown"}.`,
-            observed: {
-              node: node.name,
-              search_queue: queue,
-              threshold: THREAD_POOL_QUEUE_THRESHOLD,
-            },
-            recommendation: "Reduce search concurrency or scale search capacity.",
-            links: [{ label: "Cluster Health", to: "/cluster-health" }],
-          };
-        }
-      }
-      return { status: "pass", summary: "Search thread pool queues are within threshold." };
-    },
-  },
+    summaryLabel: "Search",
+    passSummary: "Search thread pool queues are within threshold.",
+    comparison: "gte",
+    guardMissingNodeStats: true,
+    includeThresholdInObserved: true,
+    includeLinks: true,
+  }),
   // #47
-  {
+  makeThreadPoolQueueRule({
     id: "nodes.thread_pool.write.queue.high",
-    domain: "nodes",
+    pool: "write",
     title: "Write thread pool queue high",
     description: "Warns when write thread pool queue exceeds threshold on any node.",
     severityOnFail: "medium",
     surfaces: ["global", "local"],
-    dependsOn: ["nodesCore"],
-    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/thread-pool-settings",
     recommendation: "Reduce indexing rate or scale write capacity.",
-    evaluate: (snapshot) => {
-      const nodeStats = snapshot.data.nodesCore?.nodeStats?.nodes;
-      if (!nodeStats) return unknownNodeStatsResult();
-      const nodes = Object.entries(nodeStats);
-      for (const [, node] of nodes) {
-        const queue = node.thread_pool?.write?.queue ?? 0;
-        if (queue >= THREAD_POOL_QUEUE_THRESHOLD) {
-          return {
-            status: "warn",
-            summary: `Write queue at ${queue} on ${node.name ?? "unknown"}.`,
-            observed: {
-              node: node.name,
-              write_queue: queue,
-              threshold: THREAD_POOL_QUEUE_THRESHOLD,
-            },
-            recommendation: "Reduce indexing rate or scale write capacity.",
-            links: [{ label: "Cluster Health", to: "/cluster-health" }],
-          };
-        }
-      }
-      return { status: "pass", summary: "Write thread pool queues are within threshold." };
-    },
-  },
+    summaryLabel: "Write",
+    passSummary: "Write thread pool queues are within threshold.",
+    comparison: "gte",
+    guardMissingNodeStats: true,
+    includeThresholdInObserved: true,
+    includeLinks: true,
+  }),
   // #49
-  {
+  makeThreadPoolQueueRule({
     id: "nodes.thread_pool.bulk.queue.high",
-    domain: "nodes",
+    pool: "bulk",
     title: "Bulk thread pool queue high",
     description: "Warns when bulk thread pool queue exceeds threshold on any node.",
     severityOnFail: "medium",
     surfaces: ["global", "local"],
-    dependsOn: ["nodesCore"],
-    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/thread-pool-settings",
     recommendation: "Reduce bulk indexing rate or increase bulk thread pool size.",
-    evaluate: (snapshot) => {
-      const nodeStats = snapshot.data.nodesCore?.nodeStats?.nodes;
-      if (!nodeStats) return unknownNodeStatsResult();
-      const nodes = Object.entries(nodeStats);
-      for (const [, node] of nodes) {
-        const queue = node.thread_pool?.bulk?.queue ?? 0;
-        if (queue >= THREAD_POOL_QUEUE_THRESHOLD) {
-          return {
-            status: "warn",
-            summary: `Bulk queue at ${queue} on ${node.name ?? "unknown"}.`,
-            observed: {
-              node: node.name,
-              bulk_queue: queue,
-              threshold: THREAD_POOL_QUEUE_THRESHOLD,
-            },
-            recommendation: "Reduce bulk indexing rate or increase bulk thread pool size.",
-            links: [{ label: "Cluster Health", to: "/cluster-health" }],
-          };
-        }
-      }
-      return { status: "pass", summary: "Bulk thread pool queues are within threshold." };
-    },
-  },
+    summaryLabel: "Bulk",
+    passSummary: "Bulk thread pool queues are within threshold.",
+    comparison: "gte",
+    guardMissingNodeStats: true,
+    includeThresholdInObserved: true,
+    includeLinks: true,
+  }),
   // existing — circuit breaker trips (covers #53–56)
   {
     id: "nodes.breakers.tripped",
@@ -456,61 +470,37 @@ export const nodeChecks: HealthCheckDefinition[] = [
     },
   },
   // #51
-  {
+  makeThreadPoolQueueRule({
     id: "nodes.thread_pool.management.queue.high",
-    domain: "nodes",
+    pool: "management",
     title: "Management thread pool queue high",
     description: `Warns when management thread pool queue > ${THREAD_POOL_QUEUE_THRESHOLD} on any node.`,
     severityOnFail: "medium",
     surfaces: ["global"],
-    dependsOn: ["nodesCore"],
-    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/thread-pool-settings",
     recommendation: "High management queue indicates master/coordination thread saturation.",
-    evaluate: (snapshot) => {
-      const nodes = getNodes(snapshot);
-      for (const node of nodes) {
-        const queue = node.thread_pool?.management?.queue ?? 0;
-        if (queue > THREAD_POOL_QUEUE_THRESHOLD) {
-          return {
-            status: "warn",
-            summary: `Management pool queue ${queue} on ${node.name ?? "unknown"}.`,
-            observed: { node: node.name, queue },
-            recommendation:
-              "High management queue indicates master/coordination thread saturation.",
-          };
-        }
-      }
-      return { status: "pass", summary: "Management thread pool queues within threshold." };
-    },
-  },
+    summaryLabel: "Management pool",
+    passSummary: "Management thread pool queues within threshold.",
+    comparison: "gt",
+    guardMissingNodeStats: false,
+    includeThresholdInObserved: false,
+    includeLinks: false,
+  }),
   // #52
-  {
+  makeThreadPoolQueueRule({
     id: "nodes.thread_pool.snapshot.queue.high",
-    domain: "nodes",
+    pool: "snapshot",
     title: "Snapshot thread pool queue high",
     description: `Warns when snapshot thread pool queue > ${THREAD_POOL_QUEUE_THRESHOLD} on any node.`,
     severityOnFail: "low",
     surfaces: ["global"],
-    dependsOn: ["nodesCore"],
-    docsUrl: "https://www.elastic.co/docs/reference/elasticsearch/thread-pool-settings",
     recommendation: "High snapshot queue may indicate too many concurrent snapshot operations.",
-    evaluate: (snapshot) => {
-      const nodes = getNodes(snapshot);
-      for (const node of nodes) {
-        const queue = node.thread_pool?.snapshot?.queue ?? 0;
-        if (queue > THREAD_POOL_QUEUE_THRESHOLD) {
-          return {
-            status: "warn",
-            summary: `Snapshot pool queue ${queue} on ${node.name ?? "unknown"}.`,
-            observed: { node: node.name, queue },
-            recommendation:
-              "High snapshot queue may indicate too many concurrent snapshot operations.",
-          };
-        }
-      }
-      return { status: "pass", summary: "Snapshot thread pool queues within threshold." };
-    },
-  },
+    summaryLabel: "Snapshot pool",
+    passSummary: "Snapshot thread pool queues within threshold.",
+    comparison: "gt",
+    guardMissingNodeStats: false,
+    includeThresholdInObserved: false,
+    includeLinks: false,
+  }),
   // nodes.os.mem.used_percent.high
   {
     id: "nodes.os.mem.used_percent.high",

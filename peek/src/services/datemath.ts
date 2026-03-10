@@ -90,6 +90,26 @@ export function buildQueryParams(
   return params;
 }
 
+/**
+ * Build a stable key segment for user params referenced by a specific query.
+ * Entries are sorted by name so dashboard parameter order does not affect cache keys.
+ */
+export function buildReferencedUserParamsKey(
+  query: string,
+  userParams?: DashboardParameter[],
+): ReadonlyArray<readonly [string, string | number | boolean]> {
+  if (!userParams) return [];
+  const entries: Array<[string, string | number | boolean]> = [];
+
+  for (const { name, value, type } of userParams) {
+    if (!name || RESERVED_TIME_PARAM_NAMES.has(name) || !hasNamedPlaceholder(query, name)) continue;
+    entries.push([name, serializeDashboardParam(type, value)]);
+  }
+
+  entries.sort(([a], [b]) => a.localeCompare(b));
+  return entries;
+}
+
 function serializeDashboardParam(
   type: DashboardParameter["type"],
   value: DashboardParameter["value"],

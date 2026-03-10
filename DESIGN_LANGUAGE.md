@@ -26,7 +26,7 @@ background.paper         #25262E         #FFFFFF
 background.sunken        #16171C         #EDF0F5
 background.raised        #2D2E36         #FFFFFF
 text.primary             #DFE5EF         #1A1C21
-text.secondary           #AEB6C1         #69707D
+text.secondary           #AEB6C1         #636B77
 text.disabled            #535966         #ABB4C4
 primary.main             #36A2EF         #0077CC
 primary.hover            #5AB4F5         #005FA3
