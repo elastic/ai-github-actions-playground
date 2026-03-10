@@ -8,14 +8,14 @@ import type { TraceFieldMapping } from "./traceQueryBuilder";
 export interface SpanEvent {
   name: string;
   timestamp: string;
-  attributes: Record<string, unknown>;
+  attributes: Readonly<Record<string, unknown>>;
 }
 
 /** Represents a link from a span to another span/trace */
 export interface SpanLink {
   traceId: string;
   spanId: string;
-  attributes: Record<string, unknown>;
+  attributes: Readonly<Record<string, unknown>>;
 }
 
 /** Represents a single span in a trace */
@@ -30,9 +30,9 @@ export interface Span {
   status: string;
   timestamp: string;
   startTimeUs: number;
-  attributes: Record<string, unknown>;
-  events?: SpanEvent[];
-  links?: SpanLink[];
+  attributes: Readonly<Record<string, unknown>>;
+  events?: readonly SpanEvent[];
+  links?: readonly SpanLink[];
 }
 
 /** A span augmented with tree information for rendering */
@@ -298,7 +298,7 @@ export function parseSpansFromEsql(
     for (let a = 0; a < attrColumns.length; a++) {
       const [colName, idx] = attrColumns[a]!;
       if (row[idx] != null) {
-        attributes ??= {};
+        attributes ??= Object.create(null) as Record<string, unknown>;
         attributes[colName] = row[idx];
       }
     }
@@ -385,7 +385,7 @@ function parseSpanEvents(raw: unknown): SpanEvent[] {
     let attributes: Record<string, unknown> | undefined;
     for (const [key, value] of Object.entries(obj)) {
       if (key !== "name" && key !== "@timestamp" && key !== "timestamp" && value != null) {
-        attributes ??= {};
+        attributes ??= Object.create(null) as Record<string, unknown>;
         attributes[key] = value;
       }
     }
@@ -440,7 +440,7 @@ export function parseSpanLinks(colIndex: Map<string, number>, row: unknown[]): S
         const rawVal = row[idx];
         const vals = Array.isArray(rawVal) ? rawVal : [rawVal];
         if (i < vals.length && vals[i] != null) {
-          attributes ??= {};
+          attributes ??= Object.create(null) as Record<string, unknown>;
           attributes[colName.slice("links.attributes.".length)] = vals[i];
         }
       }
