@@ -124,6 +124,7 @@ export function useDiscoverOrchestrator(mode: "query-lab" | "logs") {
   const {
     runQuery,
     loading,
+    abort,
     error,
     activeStep,
     stepDurationsMs,
@@ -149,11 +150,11 @@ export function useDiscoverOrchestrator(mode: "query-lab" | "logs") {
         setLastExecutedQuery(executedQuery);
       }
       if (!preserveSelectedFields) {
-        // Select a focused default column set when there are many fields;
-        // fall back to all fields when the result set is small.
+        // Query Lab shows all returned columns by default.
+        // Logs Explorer keeps a focused default set for wide result sets.
         const allNames = data.columns.map((c) => c.name);
         const DEFAULT_FIELD_LIMIT = 10;
-        if (allNames.length <= DEFAULT_FIELD_LIMIT) {
+        if (!isLogsExplorer || allNames.length <= DEFAULT_FIELD_LIMIT) {
           setSelectedFields(new Set(allNames));
         } else {
           const PREFERRED_FIELDS = [
@@ -233,6 +234,10 @@ export function useDiscoverOrchestrator(mode: "query-lab" | "logs") {
   const handleRunQuery = useCallback(() => {
     runDiscoverQuery();
   }, [runDiscoverQuery]);
+  const handleCancelQuery = useCallback(() => {
+    preserveSelectedFieldsNextRunRef.current = false;
+    abort();
+  }, [abort]);
   const handleQueryChange = useCallback(
     (nextQuery: string) => {
       if (discoverQueryDraft) setDiscoverQueryDraft(null);
@@ -417,6 +422,7 @@ export function useDiscoverOrchestrator(mode: "query-lab" | "logs") {
     activeStep,
     stepDurationsMs,
     handleRunQuery,
+    handleCancelQuery,
     runDiscoverQuery,
     handleRunStep,
     profileMode,

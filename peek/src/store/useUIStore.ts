@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
+import { registerResetter } from "./resetRegistry";
 
 /**
  * General-purpose dialog and panel UI state.
@@ -43,3 +44,5 @@ export const useUIStore = create<UIState>()(
     { name: "UIStore", enabled: import.meta.env.DEV },
   ),
 );
+
+registerResetter("ui", () => useUIStore.getState().resetUIState());

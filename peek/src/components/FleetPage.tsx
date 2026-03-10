@@ -129,7 +129,7 @@ export default function FleetPage() {
               startIcon={<ExtensionIcon />}
               onClick={() => navigate("/package-builder")}
             >
-              Package Builder
+              Package Editor
             </Button>
             <RefreshToolbar
               lastUpdatedAt={lastUpdatedAt}

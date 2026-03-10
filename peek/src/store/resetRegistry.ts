@@ -24,6 +24,11 @@ export function getRegisteredResetters(): ReadonlyArray<() => void> {
   return Array.from(registry.values());
 }
 
+/** Return a single registered resetter by name. */
+export function getResetter(name: string): (() => void) | undefined {
+  return registry.get(name);
+}
+
 /** Return all registered resetter names (useful for diagnostics / tests). */
 export function getRegisteredResetterNames(): ReadonlyArray<string> {
   return Array.from(registry.keys());

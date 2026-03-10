@@ -18,6 +18,7 @@ import {
   STARTER_TEMPLATES,
 } from "../types/packageBuilder";
 import { generateReadmeScaffold } from "../services/packageBuilder/generateManifest";
+import { registerResetter } from "./resetRegistry";
 
 interface PackageBuilderState extends PackageBuilderData {
   currentStep: WizardStep;
@@ -168,6 +169,16 @@ function restoreIconRawBytes(
   };
 }
 
+function backfillVariableIds(variables: PackageVariable[]): PackageVariable[] {
+  let changed = false;
+  const hydrated = variables.map((variable) => {
+    if (variable.id) return variable;
+    changed = true;
+    return { ...variable, id: crypto.randomUUID() };
+  });
+  return changed ? hydrated : variables;
+}
+
 export const usePackageBuilderStore = create<PackageBuilderState>()(
   devtools(
     persist(
@@ -257,7 +268,7 @@ export const usePackageBuilderStore = create<PackageBuilderState>()(
           set({
             identity: data.identity,
             policyTemplate: data.policyTemplate,
-            variables: data.variables,
+            variables: backfillVariableIds(data.variables),
             templateContent: data.templateContent,
             readmeContent: data.readmeContent,
             currentStep: 1,
@@ -295,6 +306,7 @@ export const usePackageBuilderStore = create<PackageBuilderState>()(
           return {
             ...merged,
             identity: restoreIconRawBytes(merged.identity),
+            variables: backfillVariableIds(merged.variables),
           };
         },
       },
@@ -302,3 +314,5 @@ export const usePackageBuilderStore = create<PackageBuilderState>()(
     { name: "PackageBuilderStore", enabled: import.meta.env.DEV },
   ),
 );
+
+registerResetter("packageBuilder", () => usePackageBuilderStore.getState().reset());

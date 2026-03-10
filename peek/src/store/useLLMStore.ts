@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
 import { createSplitSecretStorage } from "./createSplitSecretStorage";
+import { registerResetter } from "./resetRegistry";
 
 export type LLMProvider = "openai" | "openrouter";
 
@@ -158,3 +159,5 @@ export const useLLMStore = create<LLMState>()(
     { name: "LLMStore", enabled: import.meta.env.DEV },
   ),
 );
+
+registerResetter("llm", () => useLLMStore.getState().resetLLMState());

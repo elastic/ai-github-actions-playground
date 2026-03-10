@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
+import { registerResetter } from "./resetRegistry";
 
 const DEFAULT_DISCOVER_QUERY = "FROM logs-* | SORT @timestamp | LIMIT 50";
 
@@ -66,3 +67,5 @@ export const useQueryStore = create<QueryState>()(
     { name: "QueryStore", enabled: import.meta.env.DEV },
   ),
 );
+
+registerResetter("query", () => useQueryStore.getState().resetQueryState());

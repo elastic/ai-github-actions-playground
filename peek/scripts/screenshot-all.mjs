@@ -82,6 +82,7 @@ async function run() {
     // Connect to Elasticsearch
     await page.getByRole("button", { name: "Connect to Elasticsearch" }).click();
     await page.getByRole("textbox", { name: "Elasticsearch URL" }).fill(esUrl);
+    await page.getByRole("tab", { name: "No Auth" }).click();
     await page.getByRole("button", { name: "Connect", exact: true }).click();
 
     // Wait for sidebar (indicates successful connection)
