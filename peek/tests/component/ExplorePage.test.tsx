@@ -193,11 +193,9 @@ describe("ExplorePage", () => {
     await user.click(screen.getByRole("button", { name: "Expand ES|QL query section" }));
 
     const queryEditor = screen.getByRole("textbox", { name: "ES|QL query editor" });
-    await user.clear(queryEditor);
-    await user.type(
-      queryEditor,
-      "FROM metrics-system* | STATS avg_cpu = AVG(`system.cpu.total.pct`)",
-    );
+    fireEvent.change(queryEditor, {
+      target: { value: "FROM metrics-system* | STATS avg_cpu = AVG(`system.cpu.total.pct`)" },
+    });
     expect(queryMock).toHaveBeenCalledTimes(1);
 
     fireEvent.keyDown(queryEditor, { key: "Enter", ctrlKey: true });
