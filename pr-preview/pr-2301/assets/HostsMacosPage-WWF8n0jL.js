@@ -1,0 +1,2 @@
+import{j as o}from"./mui-CRj5xwDF.js";import t from"./HostsPage-Dt5XKymf.js";import"./index-tHs3w0YX.js";import"./ai-sdk-BNySMn_0.js";import"./perses-C60x-TXE.js";import"./codemirror-DkccPSvx.js";import"./echarts-D97nCBS2.js";import"./PageHeader-C26Qs-AP.js";import"./hostHelpers-BsXNJrid.js";import"./useEsQuery-DzyW5Yzc.js";function x(){return o.jsx(t,{osType:"macos"})}export{x as default};
+//# sourceMappingURL=HostsMacosPage-WWF8n0jL.js.map
