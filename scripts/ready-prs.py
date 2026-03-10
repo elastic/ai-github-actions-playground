@@ -176,10 +176,16 @@ def _latest_run_id(run: dict) -> int:
 
 
 def _workflow_key(run: dict) -> str:
-    return str(run.get("workflowName") or run.get("name") or run.get("databaseId") or "")
+    return str(
+        run.get("workflowDatabaseId")
+        or run.get("workflowName")
+        or run.get("name")
+        or run.get("databaseId")
+        or ""
+    )
 
 
-def compute_ci_status(runs: list[dict], head_sha: str, head_branch: str = "") -> CIStatus:
+def latest_matching_pr_runs(runs: list[dict], head_sha: str, head_branch: str = "") -> list[dict]:
     pr_runs = [r for r in runs if matches_pr_run(r, head_sha, head_branch)]
     latest_by_workflow: dict[str, dict] = {}
     for run in pr_runs:
@@ -187,7 +193,11 @@ def compute_ci_status(runs: list[dict], head_sha: str, head_branch: str = "") ->
         prev = latest_by_workflow.get(key)
         if prev is None or _latest_run_id(run) > _latest_run_id(prev):
             latest_by_workflow[key] = run
-    pr_runs = list(latest_by_workflow.values())
+    return list(latest_by_workflow.values())
+
+
+def compute_ci_status(runs: list[dict], head_sha: str, head_branch: str = "") -> CIStatus:
+    pr_runs = latest_matching_pr_runs(runs, head_sha, head_branch)
     if not pr_runs:
         return CIStatus.NO_RUNS
     if any(r.get("status") == "action_required" or r.get("conclusion") == "action_required"
@@ -316,9 +326,8 @@ def phase_approve_runs(prs: list[PRInfo], runs: list[dict], ctx: Ctx) -> int:
     for pr in prs:
         if not pr.is_bot or pr.is_wip:
             continue
-        blocked = [r for r in runs
-                   if matches_pr_run(r, pr.head_sha, pr.branch)
-                   and (r.get("status") == "action_required"
+        blocked = [r for r in latest_matching_pr_runs(runs, pr.head_sha, pr.branch)
+                   if (r.get("status") == "action_required"
                         or r.get("conclusion") == "action_required")]
         if not blocked:
             continue
