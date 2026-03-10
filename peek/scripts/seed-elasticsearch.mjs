@@ -24,12 +24,14 @@ import { Client } from "@elastic/elasticsearch";
 function parseArgs(argv) {
   const opts = {
     url: process.env.ES_URL ?? "http://localhost:9200",
+    apiKey: process.env.ES_API_KEY ?? "",
     waitForReady: false,
   };
 
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === "--url" && argv[i + 1]) opts.url = argv[++i];
+    else if (arg === "--api-key" && argv[i + 1]) opts.apiKey = argv[++i];
     else if (arg === "--wait-for-ready") opts.waitForReady = true;
   }
 
@@ -272,7 +274,9 @@ async function run() {
   const opts = parseArgs(process.argv.slice(2));
   console.log(`Seeding Elasticsearch at ${opts.url}...`);
 
-  const client = new Client({ node: opts.url });
+  const clientOpts = { node: opts.url };
+  if (opts.apiKey) clientOpts.auth = { apiKey: opts.apiKey };
+  const client = new Client(clientOpts);
 
   if (opts.waitForReady) {
     console.log("  Waiting for Elasticsearch to be ready...");

@@ -47,6 +47,10 @@ const docsMarkdownSx = {
     p: 1,
     borderRadius: 1,
     bgcolor: "action.selected",
+    "&:focus-visible": {
+      outline: "2px solid",
+      outlineColor: "primary.main",
+    },
     "& code": { p: 0, bgcolor: "transparent" },
   },
   "& table": { width: "100%", mb: 1, borderCollapse: "collapse" },
@@ -54,6 +58,15 @@ const docsMarkdownSx = {
   "& th,& td": { py: 0.5, px: 1, border: 1, borderColor: "divider", fontSize: "0.875rem" },
   "& ul,& ol": { mb: 1, pl: 2.5 },
 } as const;
+
+/** Custom ReactMarkdown components for accessible rendering. */
+const markdownComponents = {
+  pre: ({ children, ...props }: React.ComponentPropsWithoutRef<"pre">) => (
+    <pre tabIndex={0} {...props}>
+      {children}
+    </pre>
+  ),
+};
 
 export default function DocsPage() {
   const [search, setSearch] = useState("");
@@ -217,12 +230,7 @@ export default function DocsPage() {
               {section.title}
             </Typography>
             <Box sx={{ ...docsMarkdownSx, typography: "body2" }}>
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                components={{
-                  pre: ({ node: _node, ...props }) => <pre tabIndex={0} {...props} />,
-                }}
-              >
+              <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
                 {section.body.join("\n\n")}
               </ReactMarkdown>
             </Box>

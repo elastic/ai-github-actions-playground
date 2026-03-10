@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 import Box from "@mui/material/Box";
@@ -36,19 +36,33 @@ export default function ConnectionProfilesList({
   const [editingProfileName, setEditingProfileName] = useState("");
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [unlockingProfileId, setUnlockingProfileId] = useState<string | null>(null);
+  const unlockingProfileIdRef = useRef<string | null>(null);
+  const unlockAttemptIdRef = useRef(0);
   const [unlockPin, setUnlockPin] = useState("");
   const [unlockError, setUnlockError] = useState<string | null>(null);
   const [unlockedProfileIds, setUnlockedProfileIds] = useState<Set<string>>(new Set());
 
+  const setActiveUnlockProfileId = useCallback((profileId: string | null) => {
+    unlockAttemptIdRef.current += 1;
+    unlockingProfileIdRef.current = profileId;
+    setUnlockingProfileId(profileId);
+  }, []);
+
   const handleUnlockProfile = useCallback(
     async (profileId: string) => {
+      const attemptId = ++unlockAttemptIdRef.current;
       try {
         const ok = await unlockProfile(profileId, unlockPin);
         // Guard against stale async result if user canceled or switched rows
-        if (unlockingProfileId !== profileId) return;
+        if (
+          unlockingProfileIdRef.current !== profileId ||
+          unlockAttemptIdRef.current !== attemptId
+        ) {
+          return;
+        }
         if (ok) {
           setUnlockedProfileIds((prev) => new Set(prev).add(profileId));
-          setUnlockingProfileId(null);
+          setActiveUnlockProfileId(null);
           setUnlockPin("");
           setUnlockError(null);
           onLoadProfile(profileId);
@@ -56,11 +70,16 @@ export default function ConnectionProfilesList({
           setUnlockError("Incorrect PIN");
         }
       } catch {
-        if (unlockingProfileId !== profileId) return;
+        if (
+          unlockingProfileIdRef.current !== profileId ||
+          unlockAttemptIdRef.current !== attemptId
+        ) {
+          return;
+        }
         setUnlockError("Failed to unlock profile");
       }
     },
-    [unlockProfile, unlockPin, unlockingProfileId, onLoadProfile],
+    [unlockProfile, unlockPin, onLoadProfile, setActiveUnlockProfileId],
   );
 
   const handleRenameProfile = useCallback(
@@ -151,7 +170,7 @@ export default function ConnectionProfilesList({
               onClick={() => {
                 if (profile.encrypted && !unlockedProfileIds.has(profile.id)) {
                   if (unlockingProfileId !== profile.id) {
-                    setUnlockingProfileId(profile.id);
+                    setActiveUnlockProfileId(profile.id);
                     setUnlockPin("");
                     setUnlockError(null);
                   }
@@ -198,7 +217,7 @@ export default function ConnectionProfilesList({
                         void handleUnlockProfile(profile.id);
                       }
                       if (e.key === "Escape") {
-                        setUnlockingProfileId(null);
+                        setActiveUnlockProfileId(null);
                         setUnlockError(null);
                       }
                     }}
@@ -217,7 +236,7 @@ export default function ConnectionProfilesList({
                   <Button
                     size="small"
                     onClick={() => {
-                      setUnlockingProfileId(null);
+                      setActiveUnlockProfileId(null);
                       setUnlockError(null);
                     }}
                     sx={{ mt: 0.5 }}
