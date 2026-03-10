@@ -178,4 +178,44 @@ describe("DocsPage scroll-synced active section", () => {
     expect(activeButtons.length).toBe(1);
     expect(activeButtons[0]).toHaveTextContent("About Peek");
   });
+
+  it("maintains running visible set across callbacks and picks topmost by DOM order", () => {
+    renderDocsPage();
+
+    const aboutEl = document.getElementById("about")!;
+    const corsEl = document.getElementById("cors")!;
+
+    // First callback: "cors" becomes visible
+    act(() => {
+      observerCallback(
+        [makeEntry(corsEl, true, 200)],
+        observerInstance as unknown as IntersectionObserver,
+      );
+    });
+
+    let activeButtons = screen.getAllByRole("button", { current: "location" });
+    expect(activeButtons[0]).toHaveTextContent("CORS Setup");
+
+    // Second callback: "about" also becomes visible — should pick "about" (earlier in DOM)
+    act(() => {
+      observerCallback(
+        [makeEntry(aboutEl, true, 10)],
+        observerInstance as unknown as IntersectionObserver,
+      );
+    });
+
+    activeButtons = screen.getAllByRole("button", { current: "location" });
+    expect(activeButtons[0]).toHaveTextContent("About Peek");
+
+    // Third callback: "about" leaves — should fall back to "cors"
+    act(() => {
+      observerCallback(
+        [makeEntry(aboutEl, false, 10)],
+        observerInstance as unknown as IntersectionObserver,
+      );
+    });
+
+    activeButtons = screen.getAllByRole("button", { current: "location" });
+    expect(activeButtons[0]).toHaveTextContent("CORS Setup");
+  });
 });

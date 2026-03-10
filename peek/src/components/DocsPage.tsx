@@ -66,6 +66,8 @@ export default function DocsPage() {
 
   const contentRef = useRef<HTMLDivElement>(null);
   const isJumpingRef = useRef(false);
+  // Tracks the set of currently-intersecting section IDs across observer callbacks
+  const visibleSectionsRef = useRef<Set<string>>(new Set());
 
   const filteredSections = useMemo(() => {
     const query = normalizeText(search.trim());
@@ -98,13 +100,16 @@ export default function DocsPage() {
     [setSectionFromUrl],
   );
 
-  // Scroll to the section specified by the URL param (DOM-only side-effect, no setState)
+  // Scroll to the section specified by the URL param on initial mount only.
+  // Observer-driven updates should NOT trigger scrolling (that would cause snapping).
+  const initialSectionRef = useRef(sectionFromUrl);
   useEffect(() => {
-    if (sectionFromUrl) {
-      const target = document.getElementById(sectionFromUrl);
+    if (initialSectionRef.current) {
+      const target = document.getElementById(initialSectionRef.current);
       target?.scrollIntoView({ behavior: "smooth", block: "start" });
     }
-  }, [sectionFromUrl]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Track which section is currently visible and update the active section
   useEffect(() => {
@@ -117,20 +122,26 @@ export default function DocsPage() {
       .filter((el): el is HTMLElement => el !== null);
     if (elements.length === 0) return;
 
+    // Reset visible set when observer is (re-)created
+    visibleSectionsRef.current = new Set();
+
     const observer = new IntersectionObserver(
       (entries) => {
         if (isJumpingRef.current) return;
 
-        // Find the topmost visible section
-        let topEntry: IntersectionObserverEntry | null = null;
+        // Maintain a running set of all currently-intersecting section IDs
         for (const entry of entries) {
-          if (!entry.isIntersecting) continue;
-          if (!topEntry || entry.boundingClientRect.top < topEntry.boundingClientRect.top) {
-            topEntry = entry;
+          if (entry.isIntersecting) {
+            visibleSectionsRef.current.add(entry.target.id);
+          } else {
+            visibleSectionsRef.current.delete(entry.target.id);
           }
         }
-        if (topEntry) {
-          void setSectionFromUrl(topEntry.target.id);
+
+        // Pick the topmost visible section by DOM order (sectionIds is in document order)
+        const topVisibleId = sectionIds.find((id) => visibleSectionsRef.current.has(id));
+        if (topVisibleId) {
+          void setSectionFromUrl(topVisibleId);
         }
       },
       { root: container, rootMargin: "0px 0px -60% 0px", threshold: 0 },
