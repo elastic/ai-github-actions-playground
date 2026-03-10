@@ -33,6 +33,7 @@ const docsMarkdownSx = {
     px: 0.5,
     borderRadius: 0.5,
     bgcolor: "action.selected",
+    color: "text.primary",
     fontSize: "0.85em",
     fontFamily: "monospace",
   },
@@ -47,6 +48,10 @@ const docsMarkdownSx = {
     p: 1,
     borderRadius: 1,
     bgcolor: "action.selected",
+    "&:focus-visible": {
+      outline: "2px solid",
+      outlineColor: "primary.main",
+    },
     "& code": { p: 0, bgcolor: "transparent" },
   },
   "& table": { width: "100%", mb: 1, borderCollapse: "collapse" },
@@ -54,6 +59,15 @@ const docsMarkdownSx = {
   "& th,& td": { py: 0.5, px: 1, border: 1, borderColor: "divider", fontSize: "0.875rem" },
   "& ul,& ol": { mb: 1, pl: 2.5 },
 } as const;
+
+/** Custom ReactMarkdown components for accessible rendering. */
+const markdownComponents = {
+  pre: ({ children, ...props }: React.ComponentPropsWithoutRef<"pre">) => (
+    <pre tabIndex={0} {...props}>
+      {children}
+    </pre>
+  ),
+};
 
 export default function DocsPage() {
   const [search, setSearch] = useState("");
@@ -220,11 +234,13 @@ export default function DocsPage() {
                 sx={{ width: 120, height: 120, mb: 1.5, objectFit: "contain" }}
               />
             )}
-            <Typography variant="h6" sx={{ mb: 1 }}>
+            <Typography variant="h6" component="h2" sx={{ mb: 1 }}>
               {section.title}
             </Typography>
             <Box sx={{ ...docsMarkdownSx, typography: "body2" }}>
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{section.body.join("\n\n")}</ReactMarkdown>
+              <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                {section.body.join("\n\n")}
+              </ReactMarkdown>
             </Box>
             <Divider sx={{ mt: 2 }} />
           </Box>
