@@ -1,12 +1,13 @@
 /** Serialize a cell value into a collision-resistant string suitable for cache/row keys. */
 export function cellToKeyString(value: unknown): string {
-  if (value === null || value === undefined) return "null";
+  if (value === null) return "null:null";
+  if (value === undefined) return "undefined:undefined";
   if (typeof value === "object") {
     try {
-      return JSON.stringify(value);
+      return `object:${JSON.stringify(value)}`;
     } catch {
-      return String(value);
+      return `object:${String(value)}`;
     }
   }
-  return String(value);
+  return `${typeof value}:${String(value)}`;
 }

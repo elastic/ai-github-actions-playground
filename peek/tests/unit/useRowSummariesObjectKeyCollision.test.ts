@@ -86,5 +86,6 @@ describe("useRowSummaries object-key collision", () => {
     await waitFor(() => {
       expect(result.current.summaries.get(0)?.summary).toBe("Array Summary B");
     });
+    expect(vi.mocked(generateText)).toHaveBeenCalledTimes(2);
   });
 });
