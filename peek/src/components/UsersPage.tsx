@@ -15,7 +15,11 @@ import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 
+import PeopleIcon from "@mui/icons-material/People";
+import PersonSearchIcon from "@mui/icons-material/PersonSearch";
+
 import DataFetchAlert from "./DataFetchAlert";
+import EmptyState from "./EmptyState";
 import { parseAsString, useQueryState } from "nuqs";
 
 import { useCopyFeedbackTimeout } from "../hooks/useCopyFeedbackTimeout";
@@ -26,7 +30,7 @@ import { INSIGHT_GUARDRAIL } from "../hooks/insightPromptUtils";
 import { copyToClipboard } from "../utils/copyToClipboard";
 
 import PageInsightBanner from "./PageInsightBanner";
-import SecurityMasterDetailPage from "./SecurityMasterDetailPage";
+import SecurityMasterDetailPage, { MASTER_LIST_ITEM_SX } from "./SecurityMasterDetailPage";
 
 export default function UsersPage() {
   const { users, loading, error, accessNotice, refresh } = useSecurityUsers();
@@ -106,10 +110,10 @@ export default function UsersPage() {
         title="Users"
         actions={
           <>
-            <LoadingButton size="small" variant="outlined" onClick={refresh} loading={loading}>
+            <LoadingButton variant="outlined" onClick={refresh} loading={loading}>
               {loading ? "Refreshing..." : "Refresh"}
             </LoadingButton>
-            <Button size="small" variant="contained" onClick={() => void copyQuery()}>
+            <Button variant="contained" onClick={() => void copyQuery()}>
               {copied ? "Copied" : "Copy API call"}
             </Button>
           </>
@@ -140,6 +144,7 @@ export default function UsersPage() {
                   <ListItemButton
                     selected={user.username === selectedUsername}
                     onClick={() => handleSelectUser(user.username)}
+                    sx={MASTER_LIST_ITEM_SX}
                   >
                     <ListItemText
                       primary={user.username}
@@ -149,10 +154,13 @@ export default function UsersPage() {
                 </ListItem>
               ))}
               {!loading && filteredUsers.length === 0 && (
-                <ListItem>
-                  <ListItemText
-                    primary="No users found."
-                    primaryTypographyProps={{ variant: "body2", color: "text.secondary" }}
+                <ListItem disablePadding>
+                  <EmptyState
+                    icon={<PersonSearchIcon sx={{ fontSize: 28 }} />}
+                    heading="No users found"
+                    description="Try adjusting your search or check that users exist in the cluster."
+                    size="small"
+                    verticalAlign="start"
                   />
                 </ListItem>
               )}
@@ -203,9 +211,12 @@ export default function UsersPage() {
               </Typography>
             </>
           ) : (
-            <Typography variant="body2" color="text.secondary">
-              Select a user.
-            </Typography>
+            <EmptyState
+              icon={<PeopleIcon sx={{ fontSize: 28 }} />}
+              heading="Select a user"
+              description="Choose a user from the list to view their details and role assignments."
+              size="small"
+            />
           )
         }
       />
