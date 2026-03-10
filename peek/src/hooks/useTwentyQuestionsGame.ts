@@ -36,19 +36,45 @@ function buildSystemPrompt(questionCount: number): string {
     "- You win if you correctly identify what the user is thinking of before running out of questions.\n" +
     '- When you are confident, say **"My guess:"** followed by your specific answer.\n' +
     "- After guessing, wait for the user to confirm whether you are correct.\n\n" +
-    "## Tools & Strategy\n" +
-    "You have access to Elasticsearch tools. Use them to explore the cluster and narrow down your guesses:\n" +
+    "## Tools\n" +
+    "You have access to Elasticsearch tools:\n" +
     "- **run_esql_query** — Run ES|QL queries to explore data, count records, list distinct values, etc.\n" +
     "- **get_index_info** — Inspect index mappings, settings, and stats.\n" +
     "- **get_cluster_health** — Check cluster health and node statistics.\n\n" +
-    "### Recommended approach\n" +
-    "1. **Turn 1**: Run a broad discovery query to understand what data exists in the cluster " +
-    "(e.g. list indices, count by data_stream.dataset, list services, etc.).\n" +
-    "2. **Ask a binary-split question** that divides the remaining possibilities roughly in half.\n" +
-    "3. **Run a follow-up query** based on the user's answer to see what matches.\n" +
-    "4. **Repeat**: query → ask → refine. Each question should eliminate roughly half the candidates.\n" +
-    "5. **Narrow progressively**: Start broad (signal type, index pattern, time range) → " +
-    "medium (service name, log level, host) → specific (field values, message content, error details).\n\n" +
+    "## Strategy: Information-Theoretic Binary Splitting\n" +
+    "Your goal is to **maximize information gain per question**. Each question should eliminate\n" +
+    "roughly **half** the remaining possibility space — like a binary search.\n\n" +
+    "### How to split effectively\n" +
+    "Think in **dimensions**, not individual candidates. Narrow one dimension at a time:\n\n" +
+    "| Phase | Dimension | Example question |\n" +
+    "|-------|-----------|------------------|\n" +
+    '| 1. Kind | Structural vs data | "Is it a piece of data (document/value) rather than a structural element (index/field/mapping)?" |\n' +
+    '| 2. Signal type | logs / metrics / traces | "Does it come from trace data?" |\n' +
+    '| 3. Recency | Time-based split | "Did it occur in the last 24 hours?" |\n' +
+    '| 4. Cardinality | High vs low volume | "Does the thing you\'re thinking of appear more than 10,000 times?" |\n' +
+    '| 5. Category group | Split by attribute | "Is the service name in the first half alphabetically (a–m)?" |\n' +
+    '| 6. Specific attribute | Field value / content | "Does it contain an error or exception?" |\n' +
+    "| 7. Identity | Final narrowing | \"Is it the 'connection timeout' error from payment-service?\" |\n\n" +
+    "### Critical rules\n" +
+    "- **NEVER enumerate candidates one by one.** If you have 10 services, do NOT ask about each\n" +
+    '  service individually. Instead, split them: "Is the service one of [redis, postgres, api-gateway,\n' +
+    '  frontend-web, auth-service]?" (the top 5 by volume). One question eliminates half the list.\n' +
+    "- **Use multiple dimensions.** Don't just narrow by service name. Cross-cut with time ranges,\n" +
+    "  field types, numeric thresholds, status codes, log levels, etc. Each dimension is an\n" +
+    "  independent axis of information.\n" +
+    "- **Run aggregation queries to find the split point.** Before asking, query to find the median\n" +
+    "  or natural grouping. For example, query `STATS count = COUNT(*) BY service.name` then split\n" +
+    "  services into two groups of roughly equal total count.\n" +
+    "- **Ask about properties, not identities.** Early questions should be about characteristics\n" +
+    '  ("Is it numeric?", "Does it relate to errors?", "Is it from an external-facing service?")\n' +
+    "  rather than specific names. Properties cross-cut many candidates at once.\n" +
+    "- **Only guess a specific item when you have ≤3 candidates left**, or when you are highly\n" +
+    "  confident based on converging evidence.\n\n" +
+    "### Turn structure\n" +
+    "1. **Query** the cluster to understand the current possibility space.\n" +
+    "2. **Identify the best split** — which question divides the remaining candidates closest to 50/50?\n" +
+    "3. **Ask** exactly one numbered question.\n" +
+    "4. After the user answers, **refine** your mental model and repeat.\n\n" +
     "## Question Guidelines\n" +
     '- Ask exactly **one** question per turn. Number it (e.g. "**Question 3:**").\n' +
     (remaining === 1
@@ -221,7 +247,15 @@ export function useTwentyQuestionsGame(
     questionCountRef.current = 0;
     setStatus("playing");
 
-    await sendToLLM([]);
+    // Send an opening user message so the LLM has something to respond to.
+    // Without this, some providers ignore an empty messages array.
+    const kickoff: GameMessage = {
+      id: crypto.randomUUID(),
+      role: "user",
+      content:
+        "I'm thinking of something in my Elasticsearch cluster. Start the game — explore the cluster and ask your first question!",
+    };
+    await sendToLLM([kickoff]);
   }, [connection, configured, sendToLLM]);
 
   const handleAnswer = useCallback(
