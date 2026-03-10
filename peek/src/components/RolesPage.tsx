@@ -30,7 +30,7 @@ import { INSIGHT_GUARDRAIL } from "../hooks/insightPromptUtils";
 import { copyToClipboard } from "../utils/copyToClipboard";
 
 import PageInsightBanner from "./PageInsightBanner";
-import SecurityMasterDetailPage from "./SecurityMasterDetailPage";
+import SecurityMasterDetailPage, { MASTER_LIST_ITEM_SX } from "./SecurityMasterDetailPage";
 
 export default function RolesPage() {
   const { roles, users, loading, error, accessNotice, usersError, refresh } = useSecurityRoles();
@@ -153,6 +153,7 @@ export default function RolesPage() {
                   <ListItemButton
                     selected={entry.name === selectedRoleName}
                     onClick={() => void setUrlRole(entry.name)}
+                    sx={MASTER_LIST_ITEM_SX}
                   >
                     <ListItemText
                       primary={entry.name}

@@ -30,7 +30,7 @@ import { formatTimestamp } from "../utils/formatDate";
 
 import { ageLabel, riskLabel, riskLevel } from "./ApiKeysPage.utils";
 import PageInsightBanner from "./PageInsightBanner";
-import SecurityMasterDetailPage from "./SecurityMasterDetailPage";
+import SecurityMasterDetailPage, { MASTER_LIST_ITEM_SX } from "./SecurityMasterDetailPage";
 
 export default function ApiKeysPage() {
   const { keys, loading, error, accessNotice, refresh } = useApiKeys();
@@ -155,6 +155,7 @@ export default function ApiKeysPage() {
                 <ListItemButton
                   selected={key.id === effectiveKeyId}
                   onClick={() => setSelectedKeyId(key.id)}
+                  sx={MASTER_LIST_ITEM_SX}
                 >
                   <ListItemText
                     primary={key.name}

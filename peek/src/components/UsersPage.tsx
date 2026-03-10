@@ -30,7 +30,7 @@ import { INSIGHT_GUARDRAIL } from "../hooks/insightPromptUtils";
 import { copyToClipboard } from "../utils/copyToClipboard";
 
 import PageInsightBanner from "./PageInsightBanner";
-import SecurityMasterDetailPage from "./SecurityMasterDetailPage";
+import SecurityMasterDetailPage, { MASTER_LIST_ITEM_SX } from "./SecurityMasterDetailPage";
 
 export default function UsersPage() {
   const { users, loading, error, accessNotice, refresh } = useSecurityUsers();
@@ -144,6 +144,7 @@ export default function UsersPage() {
                   <ListItemButton
                     selected={user.username === selectedUsername}
                     onClick={() => handleSelectUser(user.username)}
+                    sx={MASTER_LIST_ITEM_SX}
                   >
                     <ListItemText
                       primary={user.username}
