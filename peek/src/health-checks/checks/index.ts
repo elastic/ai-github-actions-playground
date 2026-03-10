@@ -11,8 +11,10 @@ const checkModules = import.meta.glob(["./*.ts", "!./index.ts"], {
 
 function isHealthCheckArray(value: unknown): value is HealthCheckDefinition[] {
   if (!Array.isArray(value) || value.length === 0) return false;
-  const first = value[0] as Record<string, unknown>;
-  return typeof first.id === "string" && typeof first.evaluate === "function";
+  return value.every((item) => {
+    const check = item as Record<string, unknown>;
+    return typeof check.id === "string" && typeof check.evaluate === "function";
+  });
 }
 
 /** All registered health-check definitions, sorted by `id` for deterministic ordering. */
