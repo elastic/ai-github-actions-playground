@@ -60,7 +60,11 @@ function renderDocsPage(initialSection?: string) {
   );
 }
 
-/** Helper to build a minimal IntersectionObserverEntry for a given element. */
+/**
+ * Helper to build a minimal IntersectionObserverEntry for a given element.
+ * @param top - Simulated boundingClientRect.top value (viewport-relative pixels).
+ *   Used to determine which entry is "topmost" when multiple sections intersect.
+ */
 function makeEntry(element: Element, isIntersecting: boolean, top = 0): IntersectionObserverEntry {
   const rect = {
     top,
