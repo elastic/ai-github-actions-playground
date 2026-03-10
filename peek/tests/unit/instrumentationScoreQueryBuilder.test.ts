@@ -90,10 +90,8 @@ describe("buildDuplicateInstanceIdQuery", () => {
     expect(query).toContain(
       'EVAL logical_resource = CASE(logical_resource == "|||||", "@@UNVERIFIABLE@@", logical_resource)',
     );
-    expect(query).toContain("unverifiable_resources");
-    expect(query).toContain(
-      "distinct_resources > 1 AND (distinct_resources - unverifiable_resources) > 1",
-    );
+    expect(query).toContain("has_unverifiable_resource");
+    expect(query).toContain("(distinct_resources - has_unverifiable_resource) > 1");
     expect(query).toContain("duplicate_instance_id_count");
     expect(query).toContain("LIMIT 1");
   });

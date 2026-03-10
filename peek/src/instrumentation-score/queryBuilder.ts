@@ -149,8 +149,8 @@ export function buildDuplicateInstanceIdQuery(
     buildWherePipe(whereClauses),
     'EVAL logical_resource = CONCAT(COALESCE(k8s.pod.uid, ""), "|", COALESCE(k8s.pod.name, ""), "|", COALESCE(host.id, ""), "|", COALESCE(host.name, ""), "|", COALESCE(container.id, ""), "|", COALESCE(service.node.name, ""))',
     'EVAL logical_resource = CASE(logical_resource == "|||||", "@@UNVERIFIABLE@@", logical_resource)',
-    `STATS distinct_resources = COUNT_DISTINCT(logical_resource), unverifiable_resources = SUM(CASE(logical_resource == "@@UNVERIFIABLE@@", 1, 0)) BY instance_id = ${RESOURCE_SERVICE_INSTANCE_ID_FIELD}`,
-    "STATS duplicate_instance_id_count = COUNT(*) WHERE distinct_resources > 1 AND (distinct_resources - unverifiable_resources) > 1",
+    `STATS distinct_resources = COUNT_DISTINCT(logical_resource), has_unverifiable_resource = MAX(CASE(logical_resource == "@@UNVERIFIABLE@@", 1, 0)) BY instance_id = ${RESOURCE_SERVICE_INSTANCE_ID_FIELD}`,
+    "STATS duplicate_instance_id_count = COUNT(*) WHERE (distinct_resources - has_unverifiable_resource) > 1",
     "LIMIT 1",
   ]);
 }

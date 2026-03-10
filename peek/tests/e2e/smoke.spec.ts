@@ -307,6 +307,28 @@ async function dismissMobileDrawerIfOpen(page: Page) {
   }
 }
 
+async function clickLogsServicesTile(page: Page) {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const servicesTile = page
+      .getByRole("main")
+      .getByRole("button", { name: /^Services/ })
+      .first();
+    await expect(servicesTile).toBeVisible({ timeout: 10_000 });
+    await expect(servicesTile).toBeEnabled();
+    await servicesTile.scrollIntoViewIfNeeded();
+    try {
+      await servicesTile.click({ timeout: 10_000 });
+      return;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (!errorMessage.includes("detached from the DOM") || attempt === 2) {
+        throw error;
+      }
+      await page.waitForTimeout(250);
+    }
+  }
+}
+
 test.describe("smoke – site navigation", () => {
   test("onboarding user reaches the connect entrypoint from the welcome screen", async ({
     page,
@@ -499,10 +521,7 @@ test.describe("smoke – site navigation", () => {
     await expect(page).toHaveURL(/\/logs$/);
 
     // Click a dimension tile, e.g. Services
-    await page
-      .getByRole("main")
-      .getByRole("button", { name: /^Services/ })
-      .click();
+    await clickLogsServicesTile(page);
 
     // Verify dimension detail page
     await expect(page.getByRole("heading", { name: "Services" })).toBeVisible({ timeout: 15_000 });
@@ -590,10 +609,7 @@ test.describe("smoke – site navigation", () => {
 
     await dismissMobileDrawerIfOpen(page);
     await navigateViaSidebar(page, "Logs");
-    await page
-      .getByRole("main")
-      .getByRole("button", { name: /^Services/ })
-      .click();
+    await clickLogsServicesTile(page);
     await expect(page.getByRole("heading", { name: "Services" })).toBeVisible();
     await checkA11y(page, "logs-dimension", testInfo);
   });
