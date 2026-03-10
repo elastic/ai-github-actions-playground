@@ -1,17 +1,22 @@
+import { useState } from "react";
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
+import TextField from "@mui/material/TextField";
+import IconButton from "@mui/material/IconButton";
 import LinearProgress from "@mui/material/LinearProgress";
 import Accordion from "@mui/material/Accordion";
 import AccordionSummary from "@mui/material/AccordionSummary";
 import AccordionDetails from "@mui/material/AccordionDetails";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import SendIcon from "@mui/icons-material/Send";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 import type { GameMessage, GameStatus } from "../hooks/useTwentyQuestionsGame";
 import { MAX_QUESTIONS } from "../hooks/useTwentyQuestionsGame";
+import { formatToolLabel, type ToolActivity } from "./chatUtils";
 
 interface GameState {
   status: GameStatus;
@@ -24,7 +29,26 @@ interface GameState {
   handleAnswer: (answer: string) => void;
 }
 
-function GameMessageBubble({ msg }: { msg: GameMessage }) {
+function ToolCallProgress({ toolCalls }: { toolCalls: ToolActivity[] }) {
+  if (toolCalls.length === 0) return null;
+  return (
+    <Box sx={{ mb: 0.5 }}>
+      {toolCalls.map((tc) => (
+        <Typography
+          key={tc.toolCallId}
+          variant="caption"
+          sx={{ display: "block", color: "text.secondary" }}
+        >
+          {tc.result
+            ? `✓ ${formatToolLabel(tc.name)} — ${tc.result}`
+            : `⏳ ${formatToolLabel(tc.name)}…`}
+        </Typography>
+      ))}
+    </Box>
+  );
+}
+
+function GameMessageBubble({ msg, isActive }: { msg: GameMessage; isActive: boolean }) {
   const justify =
     msg.role === "user" ? "flex-end" : msg.role === "system" ? "center" : "flex-start";
   const bgcolor =
@@ -34,6 +58,7 @@ function GameMessageBubble({ msg }: { msg: GameMessage }) {
         ? "action.selected"
         : "action.hover";
   const color = msg.role === "user" ? "primary.contrastText" : "text.primary";
+  const toolCalls = msg.toolCalls ?? [];
   return (
     <Box sx={{ display: "flex", justifyContent: justify }}>
       <Paper
@@ -47,16 +72,17 @@ function GameMessageBubble({ msg }: { msg: GameMessage }) {
           color,
         }}
       >
+        <ToolCallProgress toolCalls={toolCalls} />
         {msg.role === "assistant" ? (
           msg.content ? (
             <Box sx={{ typography: "body2" }}>
               <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
             </Box>
-          ) : (
+          ) : isActive && toolCalls.length === 0 ? (
             <Typography variant="body2" color="text.secondary">
               Thinking…
             </Typography>
-          )
+          ) : null
         ) : (
           <Typography
             variant="body2"
@@ -73,7 +99,7 @@ function GameMessageBubble({ msg }: { msg: GameMessage }) {
   );
 }
 
-function AnswerButtons({
+function GameInput({
   status,
   loading,
   onAnswer,
@@ -82,6 +108,15 @@ function AnswerButtons({
   loading: boolean;
   onAnswer: (a: string) => void;
 }) {
+  const [text, setText] = useState("");
+
+  const handleSend = () => {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    onAnswer(trimmed);
+    setText("");
+  };
+
   if (status === "guessing") {
     return (
       <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
@@ -104,14 +139,41 @@ function AnswerButtons({
       </Box>
     );
   }
+
   return (
-    <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
-      <Button variant="contained" onClick={() => onAnswer("Yes")} disabled={loading}>
-        Yes
-      </Button>
-      <Button variant="outlined" onClick={() => onAnswer("No")} disabled={loading}>
-        No
-      </Button>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+      <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
+        <Button variant="contained" onClick={() => onAnswer("Yes")} disabled={loading}>
+          Yes
+        </Button>
+        <Button variant="outlined" onClick={() => onAnswer("No")} disabled={loading}>
+          No
+        </Button>
+      </Box>
+      <Box sx={{ display: "flex", gap: 1 }}>
+        <TextField
+          fullWidth
+          size="small"
+          placeholder="Or type a more detailed answer…"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              handleSend();
+            }
+          }}
+          disabled={loading}
+        />
+        <IconButton
+          color="primary"
+          onClick={handleSend}
+          disabled={!text.trim() || loading}
+          aria-label="Send answer"
+        >
+          <SendIcon />
+        </IconButton>
+      </Box>
     </Box>
   );
 }
@@ -174,10 +236,9 @@ export default function TwentyQuestionsBoard({ game }: { game: GameState }) {
           color="text.secondary"
           sx={{ maxWidth: 480, textAlign: "center" }}
         >
-          Click <strong>New Game</strong> to fetch recent logs from your Elasticsearch cluster. A
-          secret log will be chosen at random. The AI will ask yes/no questions to try to identify
-          it. Answer honestly based on the secret log shown to you. Can the AI find it in{" "}
-          {MAX_QUESTIONS} questions or fewer?
+          Click <strong>New Game</strong> to pick a random secret log from your cluster. The AI will
+          query Elasticsearch and ask you yes/no questions to narrow it down. Answer based on the
+          secret log shown to you. Can the AI find it in {MAX_QUESTIONS} questions?
         </Typography>
       </Box>
     );
@@ -190,7 +251,7 @@ export default function TwentyQuestionsBoard({ game }: { game: GameState }) {
       >
         <LinearProgress sx={{ width: 120 }} />
         <Typography variant="body2" color="text.secondary">
-          Fetching logs and starting game…
+          Starting game…
         </Typography>
       </Box>
     );
@@ -211,13 +272,17 @@ export default function TwentyQuestionsBoard({ game }: { game: GameState }) {
           p: 2,
         }}
       >
-        {messages.map((msg) => (
-          <GameMessageBubble key={msg.id} msg={msg} />
+        {messages.map((msg, i) => (
+          <GameMessageBubble
+            key={msg.id}
+            msg={msg}
+            isActive={loading && msg.role === "assistant" && i === messages.length - 1}
+          />
         ))}
         <div ref={messagesEndRef} />
       </Paper>
       {!gameOver && !loading && (
-        <AnswerButtons status={status} loading={loading} onAnswer={handleAnswer} />
+        <GameInput status={status} loading={loading} onAnswer={handleAnswer} />
       )}
       {loading && (
         <Box sx={{ display: "flex", justifyContent: "center", py: 1 }}>

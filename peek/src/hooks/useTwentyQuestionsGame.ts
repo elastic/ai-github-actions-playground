@@ -5,49 +5,26 @@ import { streamText, stepCountIs } from "ai";
 import type { LLMConfig } from "../store/useLLMStore";
 import type { ElasticsearchConnection } from "../types";
 import { ElasticsearchClient } from "../services/es";
+import { getLocalChatTools } from "../services/chatTools";
+import { formatToolResult, type ToolActivity } from "../components/chatUtils";
 
 export const MAX_QUESTIONS = 20;
-const LOG_POOL_SIZE = 50;
-const MIN_LOGS_REQUIRED = 2;
-const GAME_TIMEOUT_MS = 30_000;
+const SECRET_POOL_SIZE = 500;
+const GAME_TIMEOUT_MS = 60_000;
+/** Allow enough steps for the LLM to run queries between questions. */
+const GAME_MAX_STEPS = 10;
 
 export interface GameMessage {
   id: string;
   role: "user" | "assistant" | "system";
   content: string;
+  toolCalls?: ToolActivity[];
 }
 
 export type GameStatus = "idle" | "loading" | "playing" | "guessing" | "won" | "lost";
 
-/** Build a compact summary of the log pool for the LLM (field names + distinct values). */
-function buildFieldSummary(
-  columns: Array<{ name: string; type: string }>,
-  rows: unknown[][],
-): string {
-  const lines: string[] = [];
-  for (let c = 0; c < columns.length; c++) {
-    const col = columns[c]!;
-    const distinctValues = new Set<string>();
-    for (const row of rows) {
-      const val = row[c];
-      if (val != null) distinctValues.add(String(val).slice(0, 120));
-      if (distinctValues.size >= 15) break;
-    }
-    if (distinctValues.size > 0) {
-      const vals = [...distinctValues].join(", ");
-      lines.push(`- ${col.name} (${col.type}): ${vals}${distinctValues.size >= 15 ? ", …" : ""}`);
-    } else {
-      lines.push(`- ${col.name} (${col.type}): (all null)`);
-    }
-  }
-  return lines.join("\n");
-}
-
 /** Format a single log as a readable key-value block. */
-export function formatLogEntry(
-  columns: Array<{ name: string; type: string }>,
-  row: unknown[],
-): string {
+function formatLogEntry(columns: Array<{ name: string; type: string }>, row: unknown[]): string {
   return columns
     .map((col, i) => {
       const val = row[i];
@@ -59,64 +36,40 @@ export function formatLogEntry(
     .join("\n");
 }
 
-function buildSystemPrompt(fieldSummary: string, totalLogs: number): string {
+function buildSystemPrompt(questionCount: number): string {
+  const remaining = MAX_QUESTIONS - questionCount;
   return (
-    `You are playing a game of 20 Questions to find a specific log entry.\n\n` +
-    `## Rules\n` +
-    `- The user has a secret log entry chosen from a pool of ${totalLogs} recent logs.\n` +
-    `- Ask yes/no questions to narrow down which log it is.\n` +
-    `- Ask 1–2 questions per turn. Number each question (e.g. "Question 1:").\n` +
-    `- You have a maximum of ${MAX_QUESTIONS} questions total.\n` +
-    `- Base your questions on the available fields and their known values.\n` +
-    `- Use a binary-search strategy: start broad (field existence, log level, service name) then get specific.\n` +
-    `- When you are confident, make your guess by saying **"My guess:"** followed by a description of the log.\n` +
-    `- After guessing, wait for the user to confirm if you are correct.\n\n` +
-    `## Available fields and sample values\n` +
-    `${fieldSummary}\n\n` +
-    `Start by asking your first question.`
+    "You are playing a game of 20 Questions to find a specific log entry in an Elasticsearch cluster.\n\n" +
+    "## Rules\n" +
+    "- The user has a secret log entry from this cluster. It could be ANY log.\n" +
+    "- You can run ES|QL queries using the `run_esql_query` tool to search the cluster.\n" +
+    "- You can inspect indices with `get_index_info` or check cluster health with `get_cluster_health`.\n" +
+    `- You have asked ${questionCount} questions so far. You have ${remaining} questions remaining.\n` +
+    `- You have a maximum of ${MAX_QUESTIONS} questions total.\n\n` +
+    "## Strategy\n" +
+    "1. Start by running a query to discover what data exists (e.g. `FROM logs-* | STATS count=COUNT(*) BY log.level | LIMIT 20`).\n" +
+    "2. Ask the user a yes/no question about their log that divides the remaining possibilities roughly in half.\n" +
+    "3. Based on their answer, run a refined query to get a sample of matching logs.\n" +
+    "4. Examine the sample and ask another narrowing question.\n" +
+    "5. Repeat: query → ask → refine. Each question should eliminate roughly half the remaining candidates.\n" +
+    '6. When you\'re confident, say **"My guess:"** followed by the specific log details.\n\n' +
+    "## Question Guidelines\n" +
+    '- Ask 1–2 questions per turn. Number each question (e.g. "Question 1:").\n' +
+    "- Make questions answerable with yes/no or short answers.\n" +
+    "- Start broad: index pattern, log level, service name, time range.\n" +
+    "- Then narrow: specific field values, message content, error types.\n" +
+    "- ALWAYS run a query before or after asking a question — use the data to guide your strategy.\n\n" +
+    "## Important\n" +
+    "- Use ES|QL syntax (piped query language), NOT SQL.\n" +
+    "- Be concise. Use markdown for structure.\n" +
+    "- After guessing, wait for the user to confirm if you are correct."
   );
-}
-
-/** Stream a single LLM response and return the full text. */
-async function streamLLMResponse(
-  config: LLMConfig,
-  systemPrompt: string,
-  conversationMessages: GameMessage[],
-  onUpdate: (id: string, text: string) => void,
-  assistantId: string,
-): Promise<string> {
-  const openai = createOpenAI({
-    apiKey: config.apiKey,
-    ...(config.provider === "openrouter" ? { baseURL: "https://openrouter.ai/api/v1" } : {}),
-  });
-  const model = config.provider === "openrouter" ? openai.chat(config.model) : openai(config.model);
-
-  const result = streamText({
-    model,
-    system: systemPrompt,
-    messages: conversationMessages.map((m) => ({
-      role: m.role === "system" ? ("user" as const) : (m.role as "user" | "assistant"),
-      content: m.content,
-    })),
-    stopWhen: stepCountIs(1),
-    abortSignal: AbortSignal.timeout(GAME_TIMEOUT_MS),
-  });
-
-  let text = "";
-  for await (const part of result.fullStream) {
-    if (part.type === "text-delta") {
-      text += part.text;
-      onUpdate(assistantId, text);
-    }
-  }
-  return text;
 }
 
 /** Count the number of questions asked in a response (lines ending with ?). */
 function countQuestions(text: string): number {
   const numbered = text.match(/\bquestion\s+\d+/gi);
   if (numbered && numbered.length > 0) return numbered.length;
-  // Count lines that end with a question mark (not all ? characters).
   const lines = text.split("\n").filter((l) => l.trim().endsWith("?"));
   return lines.length;
 }
@@ -134,28 +87,83 @@ export function useTwentyQuestionsGame(
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const gameContextRef = useRef<{ fieldSummary: string; totalLogs: number } | null>(null);
+  const questionCountRef = useRef(0);
 
-  const updateMessage = useCallback((id: string, content: string) => {
-    setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, content } : m)));
-  }, []);
+  const updateAssistantMessage = useCallback(
+    (id: string, updates: { content?: string; toolCalls?: ToolActivity[] }) => {
+      setMessages((prev) =>
+        prev.map((m) => {
+          if (m.id !== id) return m;
+          return {
+            ...m,
+            ...(updates.content !== undefined ? { content: updates.content } : {}),
+            ...(updates.toolCalls !== undefined ? { toolCalls: updates.toolCalls } : {}),
+          };
+        }),
+      );
+    },
+    [],
+  );
 
   const sendToLLM = useCallback(
-    async (systemPrompt: string, conversationMessages: GameMessage[]) => {
+    async (conversationMessages: GameMessage[]) => {
+      if (!connection) return;
       setLoading(true);
       const assistantId = crypto.randomUUID();
-      setMessages((prev) => [...prev, { id: assistantId, role: "assistant", content: "" }]);
+      setMessages((prev) => [
+        ...prev,
+        { id: assistantId, role: "assistant", content: "", toolCalls: [] },
+      ]);
 
       try {
-        const text = await streamLLMResponse(
-          config,
-          systemPrompt,
-          conversationMessages,
-          updateMessage,
-          assistantId,
-        );
+        const openai = createOpenAI({
+          apiKey: config.apiKey,
+          ...(config.provider === "openrouter" ? { baseURL: "https://openrouter.ai/api/v1" } : {}),
+        });
+        const model =
+          config.provider === "openrouter" ? openai.chat(config.model) : openai(config.model);
 
-        setQuestionCount((prev) => prev + countQuestions(text));
+        const tools = getLocalChatTools(connection);
+        const systemPrompt = buildSystemPrompt(questionCountRef.current);
+
+        const result = streamText({
+          model,
+          system: systemPrompt,
+          messages: conversationMessages
+            .filter((m) => m.role !== "system")
+            .map((m) => ({
+              role: m.role as "user" | "assistant",
+              content: m.content,
+            })),
+          tools,
+          stopWhen: stepCountIs(GAME_MAX_STEPS),
+          abortSignal: AbortSignal.timeout(GAME_TIMEOUT_MS),
+        });
+
+        let text = "";
+        let toolCalls: ToolActivity[] = [];
+        for await (const part of result.fullStream) {
+          if (part.type === "text-delta") {
+            text += part.text;
+            updateAssistantMessage(assistantId, { content: text });
+          } else if (part.type === "tool-call") {
+            toolCalls = [...toolCalls, { toolCallId: part.toolCallId, name: part.toolName }];
+            updateAssistantMessage(assistantId, { toolCalls });
+          } else if (part.type === "tool-result") {
+            toolCalls = toolCalls.map((tc) =>
+              tc.toolCallId === part.toolCallId
+                ? { ...tc, result: formatToolResult(part.toolName, part.output) }
+                : tc,
+            );
+            updateAssistantMessage(assistantId, { toolCalls });
+          }
+        }
+
+        const newQuestions = countQuestions(text);
+        if (newQuestions > 0) {
+          questionCountRef.current += newQuestions;
+          setQuestionCount(questionCountRef.current);
+        }
         if (/my guess[:\s]/i.test(text)) setStatus("guessing");
       } catch (e: unknown) {
         const msg =
@@ -170,7 +178,7 @@ export function useTwentyQuestionsGame(
         setLoading(false);
       }
     },
-    [config, updateMessage],
+    [config, connection, updateAssistantMessage],
   );
 
   const startGame = useCallback(async () => {
@@ -181,36 +189,28 @@ export function useTwentyQuestionsGame(
     setMessages([]);
     setSecretLog(null);
     setQuestionCount(0);
+    questionCountRef.current = 0;
 
     try {
       const client = new ElasticsearchClient(connection);
       const response = await client.query(
-        { query: `FROM logs-* | SORT @timestamp DESC | LIMIT ${LOG_POOL_SIZE}` },
+        { query: `FROM logs-* | SORT @timestamp DESC | LIMIT ${SECRET_POOL_SIZE}` },
         AbortSignal.timeout(GAME_TIMEOUT_MS),
       );
 
       const { columns, values } = response;
-      if (!values || values.length < MIN_LOGS_REQUIRED) {
-        setError(
-          values && values.length === 1
-            ? "Only 1 log found — need at least 2 to play. Add more log data and try again."
-            : "No logs found. Make sure you have log data in your Elasticsearch cluster.",
-        );
+      if (!values || values.length === 0) {
+        setError("No logs found. Make sure you have log data in your Elasticsearch cluster.");
         setStatus("idle");
         return;
       }
 
       const secretIndex = Math.floor(Math.random() * values.length);
       const secretRow = values[secretIndex]!;
-      const fieldSummary = buildFieldSummary(columns, values);
-      const formattedSecret = formatLogEntry(columns, secretRow);
-
-      gameContextRef.current = { fieldSummary, totalLogs: values.length };
-      setSecretLog(formattedSecret);
+      setSecretLog(formatLogEntry(columns, secretRow));
       setStatus("playing");
 
-      const systemPrompt = buildSystemPrompt(fieldSummary, values.length);
-      await sendToLLM(systemPrompt, []);
+      await sendToLLM([]);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
       setError(`Failed to start game: ${msg}`);
@@ -220,8 +220,6 @@ export function useTwentyQuestionsGame(
 
   const handleAnswer = useCallback(
     async (answer: string) => {
-      if (!gameContextRef.current) return;
-
       const userMsg: GameMessage = { id: crypto.randomUUID(), role: "user", content: answer };
       const updatedMessages = [...messages, userMsg];
       setMessages(updatedMessages);
@@ -236,29 +234,28 @@ export function useTwentyQuestionsGame(
             id: crypto.randomUUID(),
             role: "system",
             content: isCorrect
-              ? "🎉 The AI guessed correctly!"
+              ? "🎉 The AI found the log!"
               : "The AI's guess was wrong. Better luck next time!",
           },
         ]);
         return;
       }
 
-      if (questionCount >= MAX_QUESTIONS) {
-        // Allow one final turn so the LLM can make a guess before game over.
-        const { fieldSummary, totalLogs } = gameContextRef.current;
-        const guessPrompt =
-          buildSystemPrompt(fieldSummary, totalLogs) +
-          "\n\nYou have used all your questions. Make your final guess now.";
-        await sendToLLM(guessPrompt, updatedMessages);
-        if (status === "playing") setStatus("guessing");
+      if (questionCountRef.current >= MAX_QUESTIONS) {
+        // Final turn — force a guess.
+        const finalPrompt: GameMessage = {
+          id: crypto.randomUUID(),
+          role: "user",
+          content: answer + "\n\n(You have used all your questions. Make your final guess now.)",
+        };
+        await sendToLLM([...messages, finalPrompt]);
+        setStatus("guessing");
         return;
       }
 
-      const { fieldSummary, totalLogs } = gameContextRef.current;
-      const systemPrompt = buildSystemPrompt(fieldSummary, totalLogs);
-      await sendToLLM(systemPrompt, updatedMessages);
+      await sendToLLM(updatedMessages);
     },
-    [messages, status, questionCount, sendToLLM],
+    [messages, status, sendToLLM],
   );
 
   return {

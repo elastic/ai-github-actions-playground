@@ -64,7 +64,7 @@ export default function TwentyQuestionsPage() {
     <PageContainer gap={1.5}>
       <PageHeader
         title="20 Questions"
-        description="The AI asks yes/no questions to find your secret log entry"
+        description="The AI queries your cluster and asks yes/no questions to find your secret log"
         actions={
           <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
             {game.status === "playing" && (
