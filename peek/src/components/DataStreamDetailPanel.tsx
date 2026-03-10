@@ -119,7 +119,7 @@ export default function DataStreamDetailPanel({
                   placeholder="Search fields"
                   value={fieldSearch}
                   onChange={(e) => setFieldSearch(e.target.value)}
-                  inputProps={{ "aria-label": "Search fields" }}
+                  slotProps={{ htmlInput: { "aria-label": "Search fields" } }}
                 />
               ) : undefined
             }

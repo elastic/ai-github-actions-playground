@@ -357,9 +357,9 @@ export default function DashboardsLandingPage() {
           placeholder="Search dashboards…"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          inputProps={{ "aria-label": "Search dashboards" }}
           sx={{ width: { sm: "auto", xs: "100%" }, minWidth: { sm: 220, xs: 0 } }}
           slotProps={{
+            htmlInput: { "aria-label": "Search dashboards" },
             input: {
               startAdornment: (
                 <InputAdornment position="start">

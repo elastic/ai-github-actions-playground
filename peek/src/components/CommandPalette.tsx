@@ -390,11 +390,11 @@ export default function CommandPalette() {
     <Dialog
       open={open}
       onClose={() => setOpen(false)}
-      TransitionProps={{ onEntered: handleDialogEntered, onExited: handleDialogExited }}
       maxWidth="sm"
       fullWidth
       aria-label="Command palette"
       slotProps={{
+        transition: { onEntered: handleDialogEntered, onExited: handleDialogExited },
         paper: {
           sx: {
             position: "fixed",
