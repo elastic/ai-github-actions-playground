@@ -16,7 +16,7 @@ help:
 	@echo "  setup            - Install Node.js dependencies"
 	@echo "  serve            - Install deps + start Vite dev server (http://localhost:3000)"
 	@echo "  serve-proxy      - Install deps + start dev server with Elasticsearch proxy (set ES_URL)"
-	@echo "  serve-background - Start dev server in background and wait until ready"
+	@echo "  serve-background - Start dev server in the background and wait until ready"
 	@echo "  serve-explore    - Start ES + seed data + dev server (for explore agents)"
 	@echo "  explore-down     - Stop the exploration stack (ES + dev server)"
 	@echo "  build            - Production build to peek/dist/"
@@ -27,14 +27,14 @@ help:
 	@echo "  format-full      - Auto-format src/ with oxfmt"
 	@echo "  ci               - npm ci + lint + unit tests + build (strict lockfile)"
 	@echo "  check            - Alias for ci"
-	@echo "  test             - Run all tests (unit, integration, e2e)"
+	@echo "  test             - Run all tests (unit, integration, end-to-end)"
 	@echo "  test-unit        - Run unit tests related to files changed since BASE (fast default)"
 	@echo "  test-unit-staged - Run unit tests related to staged JS/TS files in peek/"
 	@echo "  test-unit-full   - Run all unit tests"
 	@echo "  test-unit-coverage - Run unit/component tests with coverage thresholds"
 	@echo "  test-integration - Run integration tests"
 	@echo "  test-e2e         - Run end-to-end tests"
-	@echo "  test-e2e-preview - Run e2e tests against production build (catches bundle issues)"
+	@echo "  test-e2e-preview - Run end-to-end tests against production build (catches bundle issues)"
 	@echo "  test-e2e-live    - Run live ES end-to-end tests (set ES_URL)"
 	@echo "  seed-es          - Seed Elasticsearch with non-OTLP test data (set ES_URL)"
 	@echo "  seed-k8s         - Seed Kubernetes synthetic OTel data (metrics/logs/traces, set ES_URL)"
@@ -82,7 +82,7 @@ serve-proxy: setup
 	@cd $(PEEK_DIR) && npm run dev
 
 serve-background: setup
-	@echo "Starting Vite dev server in background..."
+	@echo "Starting Vite dev server in the background..."
 	@cd $(PEEK_DIR) && { nohup npx vite --host 127.0.0.1 > /tmp/vite-dev-server.log 2>&1 & echo $$! > /tmp/vite-dev-server.pid; }
 	@for i in $$(seq 1 30); do \
 		curl -sf http://127.0.0.1:3000/ >/dev/null 2>&1 && break; \
@@ -220,7 +220,7 @@ ci:
 	@cd $(PEEK_DIR) && PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 ELECTRON_SKIP_BINARY_DOWNLOAD=1 npm ci
 	@$(MAKE) lint-full test-unit-full build
 	@echo ""
-	@echo "✓ CI passed: full lint + full unit tests + build all passed."
+	@echo "✓ CI passed: full lint, full unit tests, and build passed."
 
 check: ci
 
@@ -261,11 +261,11 @@ test-integration:
 	@cd $(PEEK_DIR) && npm run test:integration
 
 test-e2e:
-	@echo "Running e2e tests..."
+	@echo "Running end-to-end tests..."
 	@cd $(PEEK_DIR) && npm run test:e2e
 
 test-e2e-preview: build
-	@echo "Running e2e tests against production build (vite preview)..."
+	@echo "Running end-to-end tests against production build (vite preview)..."
 	@cd $(PEEK_DIR) && PLAYWRIGHT_PREVIEW=1 npx playwright test
 
 test-e2e-live:

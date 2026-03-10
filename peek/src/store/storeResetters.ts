@@ -89,7 +89,7 @@ export const RESET_SCOPE: ReadonlyArray<{ label: string; reset: () => void }> = 
     reset: () => reset("apiConsole"),
   },
   {
-    label: "Package Builder wizard drafts",
+    label: "Package Editor drafts",
     reset: () => reset("packageBuilder"),
   },
 ];
