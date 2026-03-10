@@ -89,6 +89,7 @@ function parseManifestVariable(raw: Record<string, unknown>): PackageVariable {
   const rawType = String(raw.type ?? "text");
 
   return {
+    id: crypto.randomUUID(),
     name: String(raw.name ?? ""),
     type: VALID_VARIABLE_TYPES.has(rawType) ? (rawType as VariableType) : "text",
     title: String(raw.title ?? ""),

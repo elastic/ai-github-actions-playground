@@ -2,7 +2,6 @@ import { useId, useState, useCallback } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
-import CircularProgress from "@mui/material/CircularProgress";
 import Paper from "@mui/material/Paper";
 import Tooltip from "@mui/material/Tooltip";
 import Menu from "@mui/material/Menu";
@@ -13,6 +12,7 @@ import Snackbar from "@mui/material/Snackbar";
 import { alpha } from "@mui/material/styles";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import StopIcon from "@mui/icons-material/Stop";
 import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
 import SpeedIcon from "@mui/icons-material/Speed";
 import BarChartIcon from "@mui/icons-material/BarChart";
@@ -42,6 +42,7 @@ export interface DiscoverEditorPanelProps {
   activeStep: number | null;
   stepDurationsMs: Record<number, number>;
   handleRunQuery: () => void;
+  handleCancelQuery: () => void;
   handleRunStep: (stepQuery: string, stepIndex: number) => void;
   profileMode: boolean;
   setProfileMode: (mode: boolean) => void;
@@ -308,13 +309,13 @@ export default function DiscoverEditorPanel(p: DiscoverEditorPanelProps) {
                   </span>
                 </Tooltip>
               </Box>
-              <Tooltip title="Run Query (Ctrl/Cmd+Enter)">
+              <Tooltip title={p.loading ? "Cancel Query" : "Run Query (Ctrl/Cmd+Enter)"}>
                 <span>
                   <IconButton
                     size="small"
-                    onClick={p.handleRunQuery}
-                    disabled={p.loading || !p.effectiveQuery.trim()}
-                    aria-label="Run Query (Ctrl/Cmd+Enter)"
+                    onClick={p.loading ? p.handleCancelQuery : p.handleRunQuery}
+                    disabled={!p.loading && !p.effectiveQuery.trim()}
+                    aria-label={p.loading ? "Cancel Query" : "Run Query (Ctrl/Cmd+Enter)"}
                     sx={{
                       position: "absolute",
                       zIndex: 4,
@@ -322,14 +323,18 @@ export default function DiscoverEditorPanel(p: DiscoverEditorPanelProps) {
                       bottom: 2,
                       width: 24,
                       height: 24,
-                      boxShadow: p.hasPendingRunChanges ? 1 : 0,
+                      boxShadow: p.hasPendingRunChanges && !p.loading ? 1 : 0,
                       bgcolor: "transparent",
-                      color: p.hasPendingRunChanges ? "info.main" : "text.secondary",
+                      color: p.loading
+                        ? "error.main"
+                        : p.hasPendingRunChanges
+                          ? "info.main"
+                          : "text.secondary",
                       "&:hover": { bgcolor: "action.hover" },
                     }}
                   >
                     {p.loading ? (
-                      <CircularProgress size={14} color="inherit" />
+                      <StopIcon sx={{ fontSize: 16 }} />
                     ) : (
                       <PlayArrowIcon sx={{ fontSize: 16 }} />
                     )}

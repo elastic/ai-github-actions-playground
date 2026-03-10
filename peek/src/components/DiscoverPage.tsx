@@ -125,6 +125,7 @@ export default function DiscoverPage({ mode = "query-lab" }: DiscoverPageProps) 
         activeStep={o.activeStep}
         stepDurationsMs={o.stepDurationsMs}
         handleRunQuery={o.handleRunQuery}
+        handleCancelQuery={o.handleCancelQuery}
         handleRunStep={o.handleRunStep}
         profileMode={o.profileMode}
         setProfileMode={o.setProfileMode}
