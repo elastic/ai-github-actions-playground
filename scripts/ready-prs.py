@@ -163,10 +163,10 @@ def matches_pr_run(run: dict, head_sha: str, head_branch: str = "") -> bool:
         # pull_request: match by sha (sha is meaningful — run uses PR branch)
         return run.get("headSha") == head_sha
     if event == "pull_request_target":
-        # pull_request_target: match by branch; keep sha fallback for compatibility.
-        return run.get("headSha") == head_sha or (
-            bool(head_branch) and run.get("headBranch") == head_branch
-        )
+        # pull_request_target: match by sha only.  Branch-name fallback was
+        # removed because forks frequently reuse branch names, which caused
+        # runs from unrelated PRs to be associated with the wrong PR.
+        return run.get("headSha") == head_sha
     return False
 
 
