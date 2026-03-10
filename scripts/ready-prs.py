@@ -161,7 +161,10 @@ def compute_ci_status(runs: list[dict], head_sha: str, head_branch: str = "") ->
     pr_runs = [r for r in runs
                if r.get("event") in ("pull_request", "pull_request_target")
                and (
+                   # pull_request: match by sha (sha is meaningful — run uses PR branch)
                    (r.get("event") == "pull_request" and r.get("headSha") == head_sha)
+                   # pull_request_target: match by branch (runs off main, sha drifts as
+                   # new commits are pushed without re-triggering a new run)
                    or (r.get("event") == "pull_request_target" and (
                        r.get("headSha") == head_sha
                        or (head_branch and r.get("headBranch") == head_branch)
