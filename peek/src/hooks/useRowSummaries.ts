@@ -5,6 +5,7 @@ import { useShallow } from "zustand/react/shallow";
 
 import { useLLMStore } from "../store/useLLMStore";
 import type { EsqlColumn } from "../types";
+import { cellToKeyString } from "../utils/cellToKeyString";
 
 /** Maximum non-null columns included per row in the LLM prompt. */
 const MAX_PROMPT_COLUMNS = 16;
@@ -99,7 +100,7 @@ function parseBatchSummaries(rawText: string): Map<number, string> {
 function rowCacheKey(columns: EsqlColumn[], row: unknown[]): string {
   const parts: string[] = [];
   for (let i = 0; i < columns.length; i++) {
-    parts.push(`${columns[i]!.name}=${String(row[i] ?? "null")}`);
+    parts.push(`${columns[i]!.name}=${cellToKeyString(row[i])}`);
   }
   return parts.join("\u241F");
 }
