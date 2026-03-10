@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 
-import { buildQueryParams } from "../../src/services/datemath";
+import { buildQueryParams, buildReferencedUserParamsKey } from "../../src/services/datemath";
 
 const NOW = new Date("2025-06-15T12:00:00.000Z");
 
@@ -185,5 +185,46 @@ describe("buildQueryParams", () => {
       is_error: true,
       from_date: "2025-06-01T05:00:00.000Z",
     });
+  });
+});
+
+describe("buildReferencedUserParamsKey", () => {
+  it("returns only referenced params as sorted tuples", () => {
+    const query = "FROM logs-* | WHERE service.name == ?service";
+    const params = buildReferencedUserParamsKey(query, [
+      { name: "env", label: "Env", type: "keyword", source: { mode: "text" }, value: "prod" },
+      {
+        name: "service",
+        label: "Service",
+        type: "keyword",
+        source: { mode: "text" },
+        value: "web",
+      },
+    ]);
+
+    expect(params).toEqual([["service", "web"]]);
+  });
+
+  it("is stable when parameter array order changes", () => {
+    const query = "FROM logs-* | WHERE service.name == ?service OR env == ?env";
+    const service = {
+      name: "service",
+      label: "Service",
+      type: "keyword" as const,
+      source: { mode: "text" as const },
+      value: "checkout",
+    };
+    const env = {
+      name: "env",
+      label: "Environment",
+      type: "keyword" as const,
+      source: { mode: "text" as const },
+      value: "prod",
+    };
+
+    const keyA = buildReferencedUserParamsKey(query, [service, env]);
+    const keyB = buildReferencedUserParamsKey(query, [env, service]);
+
+    expect(keyA).toEqual(keyB);
   });
 });

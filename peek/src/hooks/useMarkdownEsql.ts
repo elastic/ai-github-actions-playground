@@ -11,6 +11,7 @@ import {
   buildPersesEsqlRequest,
   createPersesEsqlDatasource,
 } from "../services/perses/esqlDatasource";
+import { buildReferencedUserParamsKey } from "../services/datemath";
 import {
   extractEsqlBlocks,
   replaceEsqlBlocks,
@@ -59,7 +60,13 @@ export function useMarkdownEsql({
   // Step 3 — one React Query per unique ES|QL block
   const queryResults = useQueries({
     queries: uniqueBlocks.map(([raw, query]) => ({
-      queryKey: ["markdown-esql", raw, connection?.url, timeRange, parameters] as const,
+      queryKey: [
+        "markdown-esql",
+        raw,
+        connection?.url,
+        timeRange,
+        buildReferencedUserParamsKey(query, parameters),
+      ] as const,
       queryFn: async ({ signal }: { signal: AbortSignal }) => {
         const datasource = createPersesEsqlDatasource(connection!);
         const request = buildPersesEsqlRequest(query, { timeRange, parameters });
