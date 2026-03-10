@@ -62,9 +62,11 @@ export interface ServiceMapData {
 }
 
 /** Shared empty containers to avoid per-row allocations on the common fast path */
-const EMPTY_ATTRIBUTES: Record<string, unknown> = {};
-const EMPTY_EVENTS: SpanEvent[] = [];
-const EMPTY_LINKS: SpanLink[] = [];
+const EMPTY_ATTRIBUTES: Record<string, unknown> = Object.freeze(Object.create(null));
+const EMPTY_EVENTS: SpanEvent[] = Object.freeze(
+  [] as unknown as SpanEvent[],
+) as unknown as SpanEvent[];
+const EMPTY_LINKS: SpanLink[] = Object.freeze([] as unknown as SpanLink[]) as unknown as SpanLink[];
 
 /**
  * Build a span tree from a flat list of spans.
