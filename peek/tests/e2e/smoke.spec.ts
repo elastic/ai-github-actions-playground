@@ -218,6 +218,13 @@ async function mockElasticsearch(page: Page) {
         };
       }
 
+      if (query.includes("COUNT_DISTINCT(")) {
+        return {
+          columns: [{ name: "count", type: "long" }],
+          values: [[5]],
+        };
+      }
+
       if (query.includes("FROM logs-*")) {
         return {
           columns: [
