@@ -154,6 +154,17 @@ const NAV_SECTIONS: NavSection[] = buildNavSections();
 
 const SIDEBAR_COLLAPSED_KEY = "peek:sidebar-collapsed-sections";
 
+function sectionLabelToId(label: string): string {
+  const slug = label
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return `nav-section-${slug || "section"}`;
+}
+
 function loadCollapsedSections(): Set<string> {
   try {
     const raw = localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
@@ -283,13 +294,14 @@ export default function AppSidebar({
           );
           if (visibleItems.length === 0) return null;
           const isSectionExpanded = !collapsedSections.has(section.label);
+          const sectionId = sectionLabelToId(section.label);
           return (
             <Box key={section.label} sx={{ pt: 1 }}>
               {!isCollapsed && (
                 <ButtonBase
                   onClick={() => toggleSection(section.label)}
                   aria-expanded={isSectionExpanded}
-                  aria-controls={`nav-section-${section.label}`}
+                  aria-controls={sectionId}
                   sx={{
                     display: "flex",
                     width: "100%",
@@ -327,7 +339,7 @@ export default function AppSidebar({
                   />
                 </ButtonBase>
               )}
-              <Collapse in={isCollapsed || isSectionExpanded} id={`nav-section-${section.label}`}>
+              <Collapse in={isCollapsed || isSectionExpanded} id={sectionId}>
                 <List dense={!mobile} disablePadding>
                   {visibleItems.map((item) => {
                     const itemPath = PAGE_PATHS[item.page].path;
