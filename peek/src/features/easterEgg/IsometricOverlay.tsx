@@ -11,6 +11,7 @@ import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import MapOutlinedIcon from "@mui/icons-material/MapOutlined";
 import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
 import TaskAltIcon from "@mui/icons-material/TaskAlt";
+import { alpha } from "@mui/material/styles";
 import { useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useShallow } from "zustand/react/shallow";
@@ -119,7 +120,7 @@ export default function IsometricOverlay() {
               sx={{
                 p: 1,
                 borderColor: "success.main",
-                bgcolor: (t) => `${t.palette.success.main}14`,
+                bgcolor: (t) => alpha(t.palette.success.main, 0.08),
               }}
             >
               <Typography variant="body2" sx={{ fontWeight: 700 }}>
