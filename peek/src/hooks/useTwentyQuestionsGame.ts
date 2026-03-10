@@ -160,6 +160,7 @@ export function useTwentyQuestionsGame(
     async (conversationMessages: GameMessage[]) => {
       if (!connection || inFlightRef.current) return false;
       inFlightRef.current = true;
+      setError(null);
       setLoading(true);
       const assistantId = crypto.randomUUID();
       setMessages((prev) => [
