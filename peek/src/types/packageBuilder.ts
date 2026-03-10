@@ -1,4 +1,4 @@
-/** Types for the OTel Input Package Builder. */
+/** Types for the Live OTel Input Package Editor. */
 
 export type FormatVersion = "3.5.0" | "3.6.0";
 export type OwnerType = "elastic" | "partner" | "community";
@@ -24,6 +24,7 @@ export interface SelectOption {
 }
 
 export interface PackageVariable {
+  id: string;
   name: string;
   type: VariableType;
   title: string;
@@ -127,6 +128,7 @@ export function shouldAutoSecret(name: string): boolean {
 
 export function createDefaultVariable(): PackageVariable {
   return {
+    id: crypto.randomUUID(),
     name: "",
     type: "text",
     title: "",

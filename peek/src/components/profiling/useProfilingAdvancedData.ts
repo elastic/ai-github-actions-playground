@@ -1,6 +1,7 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import { ElasticsearchClient, isElasticsearchError } from "../../services/es";
+import { useAbortableQueryRun } from "../../hooks/useAbortableQueryRun";
 import type { ElasticsearchConnection, EsqlResponse } from "../../types";
 import type { ProfilingViewMode } from "../../store/useProfilingFiltersStore";
 import type { ProfilingFilters } from "../../types/pageFilters";
@@ -42,7 +43,7 @@ export function useProfilingAdvancedData({
   const [flamescopeWindow, setFlamescopeWindow] = useState<{ from: string; to: string } | null>(
     null,
   );
-  const abortRef = useRef<AbortController | null>(null);
+  const { run, cancel } = useAbortableQueryRun();
 
   const generatedQuery = useMemo(() => {
     if (viewMode === "timeline") return buildProfilingTimelineQuery(filters);
@@ -53,38 +54,32 @@ export function useProfilingAdvancedData({
 
   const handleRun = useCallback(async () => {
     if (!connection) return;
-    abortRef.current?.abort();
-    const controller = new AbortController();
-    abortRef.current = controller;
     const client = new ElasticsearchClient(connection);
-    setLoading(true);
-    setError(null);
-    setHasRunByMode((previous) => ({ ...previous, [viewMode]: true }));
-    try {
-      const result = await executeProfilingRun(
-        client,
-        controller.signal,
-        viewMode,
-        filters,
-        effectiveQuery,
-      );
-      setTopFunctionsRows(result.topFunctionsRows);
-      setTimelineResult(result.timelineResult);
-      setStacktraces(result.stacktraces);
-      if (viewMode !== "topFunctions" && viewMode !== "timeline") {
-        setFlamescopeWindow(null);
-      }
-    } catch (err: unknown) {
-      if (controller.signal.aborted) return;
-      setError(isElasticsearchError(err) ? err.message : String(err));
-    } finally {
-      if (!controller.signal.aborted) setLoading(false);
-    }
-  }, [connection, viewMode, filters, effectiveQuery]);
+    await run((signal) => executeProfilingRun(client, signal, viewMode, filters, effectiveQuery), {
+      onStart: () => {
+        setLoading(true);
+        setError(null);
+        setHasRunByMode((previous) => ({ ...previous, [viewMode]: true }));
+      },
+      onSuccess: (result) => {
+        setTopFunctionsRows(result.topFunctionsRows);
+        setTimelineResult(result.timelineResult);
+        setStacktraces(result.stacktraces);
+        if (viewMode !== "topFunctions" && viewMode !== "timeline") {
+          setFlamescopeWindow(null);
+        }
+      },
+      onError: (err) => {
+        setError(isElasticsearchError(err) ? err.message : String(err));
+      },
+      onSettled: () => {
+        setLoading(false);
+      },
+    });
+  }, [connection, run, viewMode, filters, effectiveQuery]);
 
   const resetResults = useCallback(() => {
-    abortRef.current?.abort();
-    abortRef.current = null;
+    cancel();
     setLoading(false);
     setError(null);
     setHasRunByMode({
@@ -98,7 +93,7 @@ export function useProfilingAdvancedData({
     setTimelineResult(null);
     setStacktraces([]);
     setFlamescopeWindow(null);
-  }, []);
+  }, [cancel]);
 
   const flamegraphTree = useMemo(() => buildFlamegraphTree(stacktraces), [stacktraces]);
 

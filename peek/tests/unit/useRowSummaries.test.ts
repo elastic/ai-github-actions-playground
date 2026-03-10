@@ -2,7 +2,7 @@
 
 import React from "react";
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { generateText } from "ai";
 
@@ -32,12 +32,6 @@ vi.stubGlobal(
     };
   }),
 );
-
-function triggerIntersection(target: Element, isIntersecting: boolean) {
-  if (!ioCallback) throw new Error("IntersectionObserver callback not registered");
-  const entry = { target, isIntersecting } as IntersectionObserverEntry;
-  ioCallback([entry], {} as IntersectionObserver);
-}
 
 function createWrapper() {
   const queryClient = new QueryClient({
@@ -113,7 +107,11 @@ describe("useRowSummaries", () => {
         messages.find((message) => message.role === "user" && typeof message.content === "string")
           ?.content ?? "";
       return {
-        text: userMessage.includes("server-4") ? newSummary : oldSummary,
+        text: JSON.stringify({
+          summaries: [
+            { rowIndex: 0, summary: userMessage.includes("server-4") ? newSummary : oldSummary },
+          ],
+        }),
       } as Awaited<ReturnType<typeof generateText>>;
     });
 
@@ -129,12 +127,6 @@ describe("useRowSummaries", () => {
       expect(ioCallback).not.toBeNull();
     });
 
-    const oldRowElement = document.createElement("div");
-    act(() => {
-      result.current.observeRow(0, oldRowElement);
-      triggerIntersection(oldRowElement, true);
-    });
-
     await waitFor(() => {
       expect(vi.mocked(generateText)).toHaveBeenCalled();
       expect(result.current.summaries.size).toBeGreaterThan(0);
@@ -147,12 +139,6 @@ describe("useRowSummaries", () => {
     // Previous summaries should be cleared immediately after row-set change.
     await waitFor(() => {
       expect(result.current.summaries.get(0)?.summary).not.toBe(oldSummary);
-    });
-
-    const newRowElement = document.createElement("div");
-    act(() => {
-      result.current.observeRow(0, newRowElement);
-      triggerIntersection(newRowElement, true);
     });
 
     await waitFor(() => {

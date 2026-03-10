@@ -12,6 +12,7 @@ export type TileCountState = "loading" | "visible" | "hidden" | "error";
 export type TileCounts = Record<LogsFocusDimension, TileCountState>;
 
 const DIMENSIONS = Object.keys(LOGS_DIMENSION_LABELS) as LogsFocusDimension[];
+const TILE_DISTINCT_PRECISION = 1000;
 
 function makeInitialCounts(): TileCounts {
   return Object.fromEntries(DIMENSIONS.map((d) => [d, "loading"])) as TileCounts;
@@ -43,15 +44,16 @@ export function useLogsTileCounts(
 
   const fetchCounts = useCallback(async () => {
     if (!connection || !enabled) {
+      abortRef.current?.abort();
+      setCounts(makeInitialCounts());
+      setSubtexts(makeInitialSubtexts());
       return;
     }
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
-    const nextCounts = makeInitialCounts();
-    const nextSubtexts = makeInitialSubtexts();
-    setCounts({ ...nextCounts });
-    setSubtexts({ ...nextSubtexts });
+    setCounts(makeInitialCounts());
+    setSubtexts(makeInitialSubtexts());
 
     const client = new ElasticsearchClient(connection);
     const timeFilter = timeRangeToEsqlFilter(timeRangeRef.current);
@@ -59,7 +61,7 @@ export function useLogsTileCounts(
     await Promise.all(
       DIMENSIONS.map(async (dimension) => {
         try {
-          const query = `FROM logs-* | WHERE ${timeFilter} | WHERE ${dimension} IS NOT NULL AND ${dimension} != "" | STATS count = COUNT_DISTINCT(${dimension}) | LIMIT 1`;
+          const query = `FROM logs-* | WHERE ${timeFilter} | WHERE ${dimension} IS NOT NULL AND ${dimension} != "" | STATS count = COUNT_DISTINCT(${dimension}, ${TILE_DISTINCT_PRECISION}) | LIMIT 1`;
           const result = await client.query({ query }, controller.signal);
           if (controller.signal.aborted) return;
           const countCol = result.columns.findIndex((c) => c.name === "count");
@@ -68,17 +70,14 @@ export function useLogsTileCounts(
           const labels = LOGS_DIMENSION_LABELS[dimension];
           const noun = count === 1 ? labels.singular.toLowerCase() : labels.plural.toLowerCase();
           const subtext = count > 0 ? `${count.toLocaleString()} ${noun}` : null;
-          nextCounts[dimension] = state;
-          nextSubtexts[dimension] = subtext;
+          setCounts((prev) => ({ ...prev, [dimension]: state }));
+          setSubtexts((prev) => ({ ...prev, [dimension]: subtext }));
         } catch {
           if (controller.signal.aborted) return;
-          nextCounts[dimension] = "error";
+          setCounts((prev) => ({ ...prev, [dimension]: "error" }));
         }
       }),
     );
-    if (controller.signal.aborted) return;
-    setCounts({ ...nextCounts });
-    setSubtexts({ ...nextSubtexts });
   }, [connection, enabled]);
 
   useEffect(() => {

@@ -1,5 +1,4 @@
 import { useCallback, useMemo, useState } from "react";
-import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import InputAdornment from "@mui/material/InputAdornment";
 import Paper from "@mui/material/Paper";
@@ -10,6 +9,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import Button from "@mui/material/Button";
 
 import ContentSkeleton from "../ContentSkeleton";
+import DataFetchAlert from "../DataFetchAlert";
 import EmptyState from "../EmptyState";
 import RankedValueList from "../RankedValueList";
 import DateRangePicker from "../DateRangePicker";
@@ -136,7 +136,7 @@ export default function ProfilingValuePicker({
           size="small"
         />
       )}
-      {error && !missingIndex && <Alert severity="error">{error}</Alert>}
+      {!missingIndex && <DataFetchAlert error={error} />}
 
       {!loading && !error && filtered.length === 0 && (
         <EmptyState heading={emptyHeading} description={emptyDescription} size="small" />

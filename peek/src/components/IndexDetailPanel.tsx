@@ -12,6 +12,8 @@ import Tabs from "@mui/material/Tabs";
 import Typography from "@mui/material/Typography";
 import StorageIcon from "@mui/icons-material/Storage";
 
+import DataFetchAlert from "./DataFetchAlert";
+
 import {
   type DiskUsageIndexEntry,
   type CatIndexRecord,
@@ -342,7 +344,7 @@ function DiskUsageContent({
         </Stack>
       )}
       {diskUsageLoading && <LinearProgress sx={{ my: 2 }} />}
-      {diskUsageError && <Alert severity="error">{diskUsageError}</Alert>}
+      <DataFetchAlert error={diskUsageError} onRetry={onAnalyzeDiskUsage} />
       {diskUsage && (
         <Stack spacing={1.5}>
           <MetaGrid>

@@ -15,6 +15,8 @@ import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 
+import DataFetchAlert from "./DataFetchAlert";
+
 import { useApiKeys } from "../hooks/useApiKeys";
 import { useCopyFeedbackTimeout } from "../hooks/useCopyFeedbackTimeout";
 import { usePageContextStore } from "../store/usePageContextStore";
@@ -126,7 +128,7 @@ export default function ApiKeysPage() {
               severity="warning"
             />
           )}
-          {error && <Alert severity="error">{error}</Alert>}
+          <DataFetchAlert error={error} />
           {accessNotice && <Alert severity="warning">{accessNotice}</Alert>}
         </>
       }

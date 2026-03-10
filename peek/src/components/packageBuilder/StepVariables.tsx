@@ -1,4 +1,3 @@
-import { useCallback, useRef } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
@@ -272,16 +271,6 @@ export default function StepVariables() {
   const removeVariable = usePackageBuilderStore((s) => s.removeVariable);
   const updateVariable = usePackageBuilderStore((s) => s.updateVariable);
   const moveVariable = usePackageBuilderStore((s) => s.moveVariable);
-  const variableKeyMap = useRef(new WeakMap<PackageVariable, string>());
-  const variableKeyCounter = useRef(0);
-
-  const getVariableKey = useCallback((variable: PackageVariable) => {
-    const existing = variableKeyMap.current.get(variable);
-    if (existing) return existing;
-    const key = `var-${variableKeyCounter.current++}`;
-    variableKeyMap.current.set(variable, key);
-    return key;
-  }, []);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -328,7 +317,7 @@ export default function StepVariables() {
       <Stack spacing={2}>
         {variables.map((variable, index) => (
           <VariableCard
-            key={getVariableKey(variable)}
+            key={variable.id}
             variable={variable}
             index={index}
             total={variables.length}
