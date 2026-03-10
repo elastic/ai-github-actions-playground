@@ -6,10 +6,6 @@ import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import IconButton from "@mui/material/IconButton";
 import LinearProgress from "@mui/material/LinearProgress";
-import Accordion from "@mui/material/Accordion";
-import AccordionSummary from "@mui/material/AccordionSummary";
-import AccordionDetails from "@mui/material/AccordionDetails";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import SendIcon from "@mui/icons-material/Send";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -21,7 +17,6 @@ import { formatToolLabel, type ToolActivity } from "./chatUtils";
 interface GameState {
   status: GameStatus;
   messages: GameMessage[];
-  secretLog: string | null;
   loading: boolean;
   error: string | null;
   messagesEndRef: React.RefObject<HTMLDivElement>;
@@ -163,41 +158,38 @@ function GameInput({ status, onAnswer }: { status: GameStatus; onAnswer: (a: str
   );
 }
 
-function SecretLogReveal({ secretLog }: { secretLog: string }) {
-  return (
-    <Accordion defaultExpanded={false} sx={{ flexShrink: 0 }}>
-      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-        <Typography variant="subtitle1">🔒 Your Secret Log (click to reveal)</Typography>
-      </AccordionSummary>
-      <AccordionDetails>
-        <Box
-          sx={{
-            typography: "body2",
-            whiteSpace: "pre-wrap",
-            fontFamily: "monospace",
-            fontSize: "0.8rem",
-          }}
-        >
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{secretLog}</ReactMarkdown>
-        </Box>
-      </AccordionDetails>
-    </Accordion>
-  );
-}
-
 export default function TwentyQuestionsBoard({ game }: { game: GameState }) {
-  const { status, messages, secretLog, loading, error, messagesEndRef, startGame, handleAnswer } =
-    game;
+  const { status, messages, loading, error, messagesEndRef, startGame, handleAnswer } = game;
   const gameOver = status === "won" || status === "lost";
 
   if (error) {
     return (
-      <Paper
-        variant="outlined"
-        sx={{ p: 2, borderColor: "error.dark", bgcolor: "error.main", color: "error.contrastText" }}
+      <Box
+        sx={{
+          display: "flex",
+          flex: 1,
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center",
+          gap: 2,
+        }}
       >
-        <Typography variant="body2">{error}</Typography>
-      </Paper>
+        <Paper
+          variant="outlined"
+          sx={{
+            p: 2,
+            maxWidth: 480,
+            borderColor: "error.dark",
+            bgcolor: "error.main",
+            color: "error.contrastText",
+          }}
+        >
+          <Typography variant="body2">{error}</Typography>
+        </Paper>
+        <Button variant="contained" onClick={startGame}>
+          Try Again
+        </Button>
+      </Box>
     );
   }
 
@@ -221,22 +213,10 @@ export default function TwentyQuestionsBoard({ game }: { game: GameState }) {
           color="text.secondary"
           sx={{ maxWidth: 480, textAlign: "center" }}
         >
-          Click <strong>New Game</strong> to pick a random secret log from your cluster. The AI will
-          query Elasticsearch and ask you yes/no questions to narrow it down. Answer based on the
-          secret log shown to you. Can the AI find it in {MAX_QUESTIONS} questions?
-        </Typography>
-      </Box>
-    );
-  }
-
-  if (status === "loading") {
-    return (
-      <Box
-        sx={{ display: "flex", flex: 1, justifyContent: "center", alignItems: "center", gap: 2 }}
-      >
-        <LinearProgress sx={{ width: 120 }} />
-        <Typography variant="body2" color="text.secondary">
-          Starting game…
+          Think of something in your Elasticsearch cluster — a specific log entry, an index, a
+          service, a host, an error message, or anything else that lives in the data. Click{" "}
+          <strong>New Game</strong> and the AI will query the cluster and ask you up to{" "}
+          {MAX_QUESTIONS} yes/no questions to figure out what you&apos;re thinking of.
         </Typography>
       </Box>
     );
@@ -244,7 +224,6 @@ export default function TwentyQuestionsBoard({ game }: { game: GameState }) {
 
   return (
     <Box sx={{ display: "flex", flex: 1, flexDirection: "column", minHeight: 0, gap: 1 }}>
-      {secretLog && <SecretLogReveal secretLog={secretLog} />}
       <Paper
         variant="outlined"
         sx={{

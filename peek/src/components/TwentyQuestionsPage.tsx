@@ -30,7 +30,7 @@ export default function TwentyQuestionsPage() {
       <PageContainer>
         <PageHeader
           title="20 Questions"
-          description="Find a log entry by playing 20 questions with AI"
+          description="Think of something in your cluster — the AI queries Elasticsearch to guess what it is"
         />
         <Box
           sx={{
@@ -64,21 +64,17 @@ export default function TwentyQuestionsPage() {
     <PageContainer gap={1.5}>
       <PageHeader
         title="20 Questions"
-        description="The AI queries your cluster and asks yes/no questions to find your secret log"
+        description="Think of something in your cluster — the AI queries Elasticsearch to guess what it is"
         actions={
           <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-            {game.status === "playing" && (
+            {(game.status === "playing" || game.status === "guessing") && (
               <Chip
                 label={`${game.questionCount} / ${MAX_QUESTIONS} questions`}
                 size="small"
                 color={game.questionCount >= MAX_QUESTIONS - 5 ? "warning" : "default"}
               />
             )}
-            <Button
-              variant="contained"
-              onClick={game.startGame}
-              disabled={game.loading || game.status === "loading"}
-            >
+            <Button variant="contained" onClick={game.startGame} disabled={game.loading}>
               {game.status === "idle" ? "New Game" : gameOver ? "Play Again" : "Restart"}
             </Button>
           </Box>

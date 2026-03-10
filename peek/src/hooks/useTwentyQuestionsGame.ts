@@ -4,12 +4,11 @@ import { streamText, stepCountIs } from "ai";
 
 import type { LLMConfig } from "../store/useLLMStore";
 import type { ElasticsearchConnection } from "../types";
-import { ElasticsearchClient } from "../services/es";
 import { getLocalChatTools } from "../services/chatTools";
 import { formatToolResult, type ToolActivity } from "../components/chatUtils";
+import { ESQL_SYNTAX_GUIDE } from "../components/esqlSyntaxGuide";
 
 export const MAX_QUESTIONS = 20;
-const SECRET_POOL_SIZE = 200;
 const GAME_TIMEOUT_MS = 60_000;
 /** Allow enough steps for the LLM to run queries between questions. */
 const GAME_MAX_STEPS = 10;
@@ -21,48 +20,46 @@ export interface GameMessage {
   toolCalls?: ToolActivity[];
 }
 
-export type GameStatus = "idle" | "loading" | "playing" | "guessing" | "won" | "lost";
-
-/** Format a single log as a readable key-value block. */
-function formatLogEntry(columns: Array<{ name: string; type: string }>, row: unknown[]): string {
-  return columns
-    .map((col, i) => {
-      const val = row[i];
-      if (val == null) return null;
-      const display = typeof val === "string" ? val : JSON.stringify(val);
-      return `**${col.name}**: ${display.length > 200 ? `${display.slice(0, 200)}…` : display}`;
-    })
-    .filter(Boolean)
-    .join("\n");
-}
+export type GameStatus = "idle" | "playing" | "guessing" | "won" | "lost";
 
 function buildSystemPrompt(questionCount: number): string {
   const remaining = MAX_QUESTIONS - questionCount;
   return (
-    "You are playing a game of 20 Questions to find a specific log entry in an Elasticsearch cluster.\n\n" +
-    "## Rules\n" +
-    "- The user has a secret log entry from this cluster. It could be ANY log.\n" +
-    "- You can run ES|QL queries using the `run_esql_query` tool to search the cluster.\n" +
-    "- You can inspect indices with `get_index_info` or check cluster health with `get_cluster_health`.\n" +
-    `- You have asked ${questionCount} questions so far. You have ${remaining} questions remaining.\n` +
-    `- You have a maximum of ${MAX_QUESTIONS} questions total.\n\n` +
-    "## Strategy\n" +
-    "1. Start by running a query to discover what data exists (e.g. `FROM logs-* | STATS count=COUNT(*) BY log.level | LIMIT 20`).\n" +
-    "2. Ask the user a yes/no question about their log that divides the remaining possibilities roughly in half.\n" +
-    "3. Based on their answer, run a refined query to get a sample of matching logs.\n" +
-    "4. Examine the sample and ask another narrowing question.\n" +
-    "5. Repeat: query → ask → refine. Each question should eliminate roughly half the remaining candidates.\n" +
-    '6. When you\'re confident, say **"My guess:"** followed by the specific log details.\n\n' +
+    "You are playing **20 Questions** — a guessing game against a human who is thinking of " +
+    "something inside their Elasticsearch cluster. It could be a specific log entry, an index, " +
+    "a field value, an error, a service, a host — anything that lives in the cluster.\n\n" +
+    "## Game Rules\n" +
+    `- You have asked **${questionCount}** questions so far. You have **${remaining}** remaining.\n` +
+    `- You may ask at most **${MAX_QUESTIONS}** yes/no questions total.\n` +
+    "- The user will answer each question honestly (yes, no, or a short clarification).\n" +
+    "- You win if you correctly identify what the user is thinking of before running out of questions.\n" +
+    '- When you are confident, say **"My guess:"** followed by your specific answer.\n' +
+    "- After guessing, wait for the user to confirm whether you are correct.\n\n" +
+    "## Tools & Strategy\n" +
+    "You have access to Elasticsearch tools. Use them to explore the cluster and narrow down your guesses:\n" +
+    "- **run_esql_query** — Run ES|QL queries to explore data, count records, list distinct values, etc.\n" +
+    "- **get_index_info** — Inspect index mappings, settings, and stats.\n" +
+    "- **get_cluster_health** — Check cluster health and node statistics.\n\n" +
+    "### Recommended approach\n" +
+    "1. **Turn 1**: Run a broad discovery query to understand what data exists in the cluster " +
+    "(e.g. list indices, count by data_stream.dataset, list services, etc.).\n" +
+    "2. **Ask a binary-split question** that divides the remaining possibilities roughly in half.\n" +
+    "3. **Run a follow-up query** based on the user's answer to see what matches.\n" +
+    "4. **Repeat**: query → ask → refine. Each question should eliminate roughly half the candidates.\n" +
+    "5. **Narrow progressively**: Start broad (signal type, index pattern, time range) → " +
+    "medium (service name, log level, host) → specific (field values, message content, error details).\n\n" +
     "## Question Guidelines\n" +
-    '- Ask 1–2 questions per turn. Number each question (e.g. "Question 1:").\n' +
-    "- Make questions answerable with yes/no or short answers.\n" +
-    "- Start broad: index pattern, log level, service name, time range.\n" +
-    "- Then narrow: specific field values, message content, error types.\n" +
-    "- ALWAYS run a query before or after asking a question — use the data to guide your strategy.\n\n" +
-    "## Important\n" +
-    "- Use ES|QL syntax (piped query language), NOT SQL.\n" +
+    '- Ask exactly **one** question per turn. Number it (e.g. "**Question 3:**").\n' +
+    "- Questions must be answerable with yes/no or a very short answer.\n" +
+    "- ALWAYS run at least one query per turn — use real cluster data to inform your questions.\n" +
+    "- Do NOT repeat a question you already asked.\n\n" +
+    "## Response Format\n" +
     "- Be concise. Use markdown for structure.\n" +
-    "- After guessing, wait for the user to confirm if you are correct."
+    "- Show a brief summary of what you learned from your query, then ask your question.\n" +
+    "- Use ES|QL syntax (piped query language, NOT SQL) in fenced ```esql code blocks.\n\n" +
+    "## ES|QL Reference\n" +
+    "Below is a complete ES|QL syntax guide. Use it to write correct queries.\n\n" +
+    ESQL_SYNTAX_GUIDE
   );
 }
 
@@ -71,7 +68,7 @@ const QUESTION_LINE_RE =
 
 /** Count the number of likely game questions asked in a response. */
 function countQuestions(text: string): number {
-  const numbered = text.match(/\bquestion\s+\d+/gi);
+  const numbered = text.match(/\bquestion\s+\d+\s*[:\b]/gi);
   if (numbered && numbered.length > 0) return numbered.length;
 
   const lines = text
@@ -83,6 +80,9 @@ function countQuestions(text: string): number {
         line.length > 0 &&
         line.length <= 120 &&
         !line.startsWith("(") &&
+        !line.startsWith("|") &&
+        !line.startsWith("//") &&
+        !line.startsWith("```") &&
         QUESTION_LINE_RE.test(line),
     );
 
@@ -96,7 +96,6 @@ export function useTwentyQuestionsGame(
 ) {
   const [status, setStatus] = useState<GameStatus>("idle");
   const [messages, setMessages] = useState<GameMessage[]>([]);
-  const [secretLog, setSecretLog] = useState<string | null>(null);
   const [questionCount, setQuestionCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -204,37 +203,12 @@ export function useTwentyQuestionsGame(
     if (!connection || !configured) return;
 
     setError(null);
-    setStatus("loading");
     setMessages([]);
-    setSecretLog(null);
     setQuestionCount(0);
     questionCountRef.current = 0;
+    setStatus("playing");
 
-    try {
-      const client = new ElasticsearchClient(connection);
-      const response = await client.query(
-        { query: `FROM logs-* | SORT @timestamp DESC | LIMIT ${SECRET_POOL_SIZE}` },
-        AbortSignal.timeout(GAME_TIMEOUT_MS),
-      );
-
-      const { columns, values } = response;
-      if (!values || values.length === 0) {
-        setError("No logs found. Make sure you have log data in your Elasticsearch cluster.");
-        setStatus("idle");
-        return;
-      }
-
-      const secretIndex = Math.floor(Math.random() * values.length);
-      const secretRow = values[secretIndex]!;
-      setSecretLog(formatLogEntry(columns, secretRow));
-      setStatus("playing");
-
-      await sendToLLM([]);
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : String(e);
-      setError(`Failed to start game: ${msg}`);
-      setStatus("idle");
-    }
+    await sendToLLM([]);
   }, [connection, configured, sendToLLM]);
 
   const handleAnswer = useCallback(
@@ -253,7 +227,7 @@ export function useTwentyQuestionsGame(
             id: crypto.randomUUID(),
             role: "system",
             content: isCorrect
-              ? "🎉 The AI found the log!"
+              ? `🎉 The AI guessed it in ${questionCountRef.current} questions!`
               : "The AI's guess was wrong. Better luck next time!",
           },
         ]);
@@ -280,7 +254,6 @@ export function useTwentyQuestionsGame(
   return {
     status,
     messages,
-    secretLog,
     questionCount,
     loading,
     error,
