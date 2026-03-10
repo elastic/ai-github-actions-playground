@@ -91,13 +91,13 @@ describe("useEasterEggStore", () => {
 
     render(createElement(MemoryRouter, { initialEntries: ["/dashboards"] }, createElement(App)));
 
-    expect(screen.queryByLabelText(/isometric quest overlay/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/open world map/i)).not.toBeInTheDocument();
 
     act(() => {
       useEasterEggStore.getState().setEasterEggMode(true);
     });
 
-    expect(await screen.findByLabelText(/isometric quest overlay/i)).toBeInTheDocument();
+    expect(await screen.findByLabelText(/open world map/i)).toBeInTheDocument();
     expect(screen.queryByText(/something went wrong/i)).not.toBeInTheDocument();
   });
 });

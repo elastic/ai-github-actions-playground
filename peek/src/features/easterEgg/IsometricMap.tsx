@@ -2,8 +2,10 @@ import { useState, useCallback } from "react";
 import Box from "@mui/material/Box";
 import ButtonBase from "@mui/material/ButtonBase";
 import Fade from "@mui/material/Fade";
+import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
 import Tooltip from "@mui/material/Tooltip";
+import CloseIcon from "@mui/icons-material/Close";
 import { alpha } from "@mui/material/styles";
 import { useNavigate } from "react-router-dom";
 import { useShallow } from "zustand/react/shallow";
@@ -202,9 +204,19 @@ export default function IsometricMap() {
           <Typography variant="h6" sx={{ color: "common.white", fontWeight: 700 }}>
             🗺️ Isometric Expedition
           </Typography>
-          <Typography variant="caption" sx={{ color: "grey.400", fontStyle: "italic" }}>
-            Click a location to travel there
-          </Typography>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Typography variant="caption" sx={{ color: "grey.400", fontStyle: "italic" }}>
+              Click a location to travel there
+            </Typography>
+            <IconButton
+              size="small"
+              aria-label="Close map"
+              onClick={() => setMapOpen(false)}
+              sx={{ color: "grey.400", "&:hover": { color: "common.white" } }}
+            >
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </Box>
         </Box>
 
         {/* Map area — decorative game canvas (hardcoded colors allowed via oxlintrc override) */}
