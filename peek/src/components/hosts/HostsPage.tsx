@@ -1,6 +1,5 @@
 import { useCallback, useMemo } from "react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
-import Alert from "@mui/material/Alert";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import Box from "@mui/material/Box";
@@ -11,11 +10,14 @@ import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 
+import DataFetchAlert from "../DataFetchAlert";
+
 import { PAGE_PATHS } from "../../routes/paths";
 import DateRangePicker from "../DateRangePicker";
 import EmptyState from "../EmptyState";
 import PageHeader from "../PageHeader";
 import { toDashboardTimeRange, toTraceTimeRange } from "../timePresets";
+import ToolbarRow from "../ToolbarRow";
 
 import HostHoneycombChart from "./HostHoneycombChart";
 import HostInventoryTable from "./HostInventoryTable";
@@ -89,7 +91,7 @@ export default function HostsPage({ osType }: HostsPageProps) {
 
       {/* Toolbar */}
       <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center" }}>
+        <ToolbarRow>
           <TextField
             size="small"
             label="Search hosts"
@@ -114,10 +116,10 @@ export default function HostsPage({ osType }: HostsPageProps) {
               {hostRows.length} {hostRows.length === 1 ? "host" : "hosts"} found
             </Typography>
           )}
-        </Box>
+        </ToolbarRow>
       </Paper>
 
-      {error && <Alert severity="error">{error}</Alert>}
+      <DataFetchAlert error={error} />
 
       {!loading && !hasData && (
         <Paper variant="outlined" sx={{ flex: 1, minHeight: 200, overflow: "auto" }}>

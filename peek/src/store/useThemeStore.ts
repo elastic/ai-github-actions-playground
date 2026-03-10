@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
+import { registerResetter } from "./resetRegistry";
 
 interface ThemeState {
   themeMode: "light" | "dark";
@@ -56,3 +57,5 @@ export const useThemeStore = create<ThemeState>()(
     { name: "ThemeStore", enabled: import.meta.env.DEV },
   ),
 );
+
+registerResetter("theme", () => useThemeStore.getState().resetThemeState());

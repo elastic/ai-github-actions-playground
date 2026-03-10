@@ -1,10 +1,10 @@
 import Box from "@mui/material/Box";
+import CircularProgress from "@mui/material/CircularProgress";
 import IconButton from "@mui/material/IconButton";
 import TableCell from "@mui/material/TableCell";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TableSortLabel from "@mui/material/TableSortLabel";
-import Typography from "@mui/material/Typography";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 
 import type { EsqlResponse } from "../../types";
@@ -20,6 +20,10 @@ interface DataTableHeaderProps {
   pinnedLeftOffsets: Map<number, number>;
   onSortToggle: (columnName: string) => void;
   onOpenMenu: (event: React.MouseEvent<HTMLButtonElement>, colIdx: number) => void;
+  /** When true, render a leading "Summary" column header. */
+  showSummaryColumn?: boolean;
+  /** Whether any row summary request is currently loading. */
+  summaryLoading?: boolean;
 }
 
 export default function DataTableHeader({
@@ -30,10 +34,44 @@ export default function DataTableHeader({
   pinnedLeftOffsets,
   onSortToggle,
   onOpenMenu,
+  showSummaryColumn,
+  summaryLoading,
 }: DataTableHeaderProps) {
   return (
     <TableHead>
       <TableRow>
+        {showSummaryColumn && (
+          <TableCell
+            aria-busy={summaryLoading || undefined}
+            sx={{
+              whiteSpace: "nowrap",
+              fontWeight: 600,
+              fontSize: "0.75rem",
+              minWidth: 200,
+              maxWidth: 360,
+            }}
+          >
+            <Box sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
+              <Box component="span" sx={{ fontWeight: 600, fontSize: "0.75rem" }}>
+                Summary
+              </Box>
+              <Box
+                component="span"
+                sx={{ color: "text.secondary", fontSize: "0.75rem", fontWeight: 500 }}
+              >
+                AI
+              </Box>
+              {summaryLoading && (
+                <CircularProgress
+                  size={12}
+                  thickness={6}
+                  aria-label="Loading AI summaries"
+                  sx={{ ml: 0.5 }}
+                />
+              )}
+            </Box>
+          </TableCell>
+        )}
         {orderedVisibleColumnIndices.map((colIdx) => {
           const col = data.columns[colIdx];
           if (!col) return null;
@@ -92,13 +130,6 @@ export default function DataTableHeader({
                   >
                     {col.name}
                   </TableSortLabel>
-                  <Typography
-                    component="span"
-                    variant="caption"
-                    sx={{ flexShrink: 0, opacity: 0.5 }}
-                  >
-                    {col.type}
-                  </Typography>
                 </Box>
                 <IconButton
                   size="small"

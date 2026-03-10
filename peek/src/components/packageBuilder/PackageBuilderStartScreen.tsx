@@ -1,17 +1,20 @@
-import { type ReactNode, useRef, useState } from "react";
+import { type ReactNode, useCallback, useRef, useState } from "react";
 import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import CardActionArea from "@mui/material/CardActionArea";
 import LinearProgress from "@mui/material/LinearProgress";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import Alert from "@mui/material/Alert";
 import AddIcon from "@mui/icons-material/Add";
 import FolderOpenIcon from "@mui/icons-material/FolderOpen";
 import GitHubIcon from "@mui/icons-material/GitHub";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 
 import { supportsDirectoryExport } from "../../services/packageBuilder/exportPackage";
+import DataFetchAlert from "../DataFetchAlert";
 import ImportPackageDialog from "./ImportPackageDialog";
+import WorkspaceDialog from "./WorkspaceDialog";
 import { useStartScreenHandlers } from "./useStartScreenHandlers";
 
 function ActionCard(props: {
@@ -25,7 +28,7 @@ function ActionCard(props: {
     <Card
       variant="outlined"
       sx={{
-        width: 220,
+        width: { xs: "100%", sm: 220 },
         "&:hover": { borderColor: "primary.main" },
         transition: "border-color 0.15s",
       }}
@@ -50,8 +53,17 @@ function ActionCard(props: {
 export default function PackageBuilderStartScreen() {
   const h = useStartScreenHandlers();
   const [githubDialogOpen, setGithubDialogOpen] = useState(false);
+  const [workspaceAction, setWorkspaceAction] = useState<"new" | "open" | null>(null);
   const zipInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
+
+  const closeWorkspaceDialog = useCallback(() => setWorkspaceAction(null), []);
+  const handlePickDirectory = useCallback(() => {
+    const action = workspaceAction;
+    setWorkspaceAction(null);
+    if (action === "new") h.handleNew();
+    else if (action === "open") h.handleOpenDisk();
+  }, [workspaceAction, h]);
 
   const iconSx = { fontSize: 40, color: "primary.main", mb: 1 };
   const ghIconSx = { fontSize: 40, color: "text.secondary", mb: 1 };
@@ -69,21 +81,36 @@ export default function PackageBuilderStartScreen() {
       }}
     >
       <Typography variant="h5" fontWeight={700}>
-        OTel Input Package Builder
+        Live OTel Input Package Editor
       </Typography>
       <Typography variant="body1" color="text.secondary" textAlign="center" maxWidth={500}>
         Create or edit Elastic integration packages for OpenTelemetry inputs.
-        {supportsDirectoryExport()
-          ? " Pick a folder to get started — changes save automatically."
-          : " Upload a package to get started."}
+        {supportsDirectoryExport() ? (
+          <>
+            {" Pick a folder to get started — changes save automatically."}
+            <Tooltip
+              title="When you pick a folder, the editor writes files directly to disk. Every change you make is auto‑saved to that folder in real time."
+              placement="bottom"
+              arrow
+            >
+              <InfoOutlinedIcon
+                sx={{
+                  fontSize: 16,
+                  ml: 0.5,
+                  verticalAlign: "text-bottom",
+                  color: "text.secondary",
+                  cursor: "help",
+                }}
+              />
+            </Tooltip>
+          </>
+        ) : (
+          " Upload a package to get started."
+        )}
       </Typography>
 
       {h.starting && <LinearProgress sx={{ maxWidth: 300, width: "100%" }} />}
-      {h.error && (
-        <Alert severity="error" sx={{ maxWidth: 500 }}>
-          {h.error}
-        </Alert>
-      )}
+      <DataFetchAlert error={h.error} sx={{ maxWidth: 500 }} />
 
       <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", justifyContent: "center", mt: 1 }}>
         {supportsDirectoryExport() ? (
@@ -92,14 +119,14 @@ export default function PackageBuilderStartScreen() {
               icon={<AddIcon sx={iconSx} />}
               title="New Package"
               description="Create a new package in a folder"
-              onClick={h.handleNew}
+              onClick={() => setWorkspaceAction("new")}
               disabled={h.starting}
             />
             <ActionCard
               icon={<FolderOpenIcon sx={iconSx} />}
               title="Open Folder"
               description="Edit an existing package on disk"
-              onClick={h.handleOpenDisk}
+              onClick={() => setWorkspaceAction("open")}
               disabled={h.starting}
             />
           </>
@@ -134,6 +161,11 @@ export default function PackageBuilderStartScreen() {
         open={githubDialogOpen}
         onClose={() => setGithubDialogOpen(false)}
         onImportComplete={h.handleGitHubImportComplete}
+      />
+      <WorkspaceDialog
+        open={workspaceAction !== null}
+        onClose={closeWorkspaceDialog}
+        onPickDirectory={handlePickDirectory}
       />
       <input ref={zipInputRef} type="file" accept=".zip" hidden onChange={h.handleZipUpload} />
       {/* eslint-disable-next-line react/no-unknown-property -- webkitdirectory is a non-standard but widely supported attribute */}

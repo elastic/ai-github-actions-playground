@@ -7,6 +7,8 @@ import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 import ExtensionIcon from "@mui/icons-material/Extension";
 
+import DataFetchAlert from "./DataFetchAlert";
+
 import {
   useFleetFiltersStore,
   type FleetViewTab,
@@ -127,7 +129,7 @@ export default function FleetPage() {
               startIcon={<ExtensionIcon />}
               onClick={() => navigate("/package-builder")}
             >
-              Package Builder
+              Package Editor
             </Button>
             <RefreshToolbar
               lastUpdatedAt={lastUpdatedAt}
@@ -150,7 +152,7 @@ export default function FleetPage() {
       )}
 
       {/* Errors */}
-      {error && <Alert severity="error">{error}</Alert>}
+      <DataFetchAlert error={error} />
       {partialErrors.length > 0 && (
         <Alert severity="warning">
           Some data sources are unavailable: {partialErrors.join("; ")}

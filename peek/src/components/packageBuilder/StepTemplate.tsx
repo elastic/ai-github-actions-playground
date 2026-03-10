@@ -25,6 +25,7 @@ import { STARTER_TEMPLATES } from "../../types/packageBuilder";
 import type { InsightSlotDefinition } from "../../types/insightSlots";
 import { usePageSlotInsights } from "../../hooks/usePageSlotInsights";
 import { insightGutterExtension, setInsights } from "./insightGutterExtension";
+import DataFetchAlert from "../DataFetchAlert";
 import type { PackageVariable } from "../../types/packageBuilder";
 
 const TEMPLATE_INSIGHT_SYSTEM_PROMPT = `You are reviewing the RENDERED output of an Elastic OTel input package template.
@@ -200,7 +201,7 @@ export default function StepTemplate() {
       )}
 
       {/* Split pane: editor + preview */}
-      <Box sx={{ display: "flex", gap: 2 }}>
+      <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, gap: 2 }}>
         {/* Editor */}
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Typography variant="caption" color="text.secondary" gutterBottom display="block">
@@ -265,11 +266,7 @@ export default function StepTemplate() {
             templateContent={templateContent}
             themeMode={themeMode}
           />
-          {result.yamlError && (
-            <Alert severity="error" sx={{ mt: 1, py: 0.5 }}>
-              {result.yamlError}
-            </Alert>
-          )}
+          <DataFetchAlert error={result.yamlError} sx={{ mt: 1, py: 0.5 }} />
         </Box>
       </Box>
 

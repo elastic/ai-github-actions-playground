@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 
 import type { PageContextSections } from "../services/screenContext";
+import { registerResetter } from "./resetRegistry";
 
 interface PageContextState extends PageContextSections {
   setPageSection: <K extends keyof PageContextSections>(
@@ -33,3 +34,5 @@ export const usePageContextStore = create<PageContextState>()(
     { name: "PageContextStore", enabled: import.meta.env.DEV },
   ),
 );
+
+registerResetter("pageContext", () => usePageContextStore.getState().resetPageContext());

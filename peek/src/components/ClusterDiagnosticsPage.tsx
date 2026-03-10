@@ -1,10 +1,11 @@
 import { useCallback, useMemo, useState } from "react";
-import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
+
+import DataFetchAlert from "./DataFetchAlert";
 
 import type { HealthReportIndicator } from "../services/es";
 
@@ -135,7 +136,7 @@ export default function ClusterDiagnosticsPage() {
             />
           </Paper>
 
-          {error ? <Alert severity="error">{error}</Alert> : null}
+          <DataFetchAlert error={error} />
 
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
             <Chip

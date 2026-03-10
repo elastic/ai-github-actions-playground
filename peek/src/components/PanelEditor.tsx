@@ -10,10 +10,11 @@ import TextField from "@mui/material/TextField";
 import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Typography from "@mui/material/Typography";
-import Alert from "@mui/material/Alert";
 import CircularProgress from "@mui/material/CircularProgress";
 import Paper from "@mui/material/Paper";
 import Divider from "@mui/material/Divider";
+
+import DataFetchAlert from "./DataFetchAlert";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Tooltip from "@mui/material/Tooltip";
@@ -371,7 +372,7 @@ function PanelEditorDialog({ panel, editingId }: { panel: PanelDefinition; editi
           </ToggleButtonGroup>
         </Box>
 
-        {!isMarkdown && error && <Alert severity="error">{error}</Alert>}
+        {!isMarkdown && <DataFetchAlert error={error} />}
 
         {/* Markdown preview — always shown for markdown panels */}
         {isMarkdown && (

@@ -8,14 +8,14 @@ import type { TraceFieldMapping } from "./traceQueryBuilder";
 export interface SpanEvent {
   name: string;
   timestamp: string;
-  attributes: Record<string, unknown>;
+  attributes: Readonly<Record<string, unknown>>;
 }
 
 /** Represents a link from a span to another span/trace */
 export interface SpanLink {
   traceId: string;
   spanId: string;
-  attributes: Record<string, unknown>;
+  attributes: Readonly<Record<string, unknown>>;
 }
 
 /** Represents a single span in a trace */
@@ -30,9 +30,9 @@ export interface Span {
   status: string;
   timestamp: string;
   startTimeUs: number;
-  attributes: Record<string, unknown>;
-  events?: SpanEvent[];
-  links?: SpanLink[];
+  attributes: Readonly<Record<string, unknown>>;
+  events?: readonly SpanEvent[];
+  links?: readonly SpanLink[];
 }
 
 /** A span augmented with tree information for rendering */
@@ -60,6 +60,13 @@ export interface ServiceMapData {
   nodes: ServiceMapNode[];
   edges: ServiceMapEdge[];
 }
+
+/** Shared empty containers to avoid per-row allocations on the common fast path */
+const EMPTY_ATTRIBUTES: Record<string, unknown> = Object.freeze(Object.create(null));
+const EMPTY_EVENTS: SpanEvent[] = Object.freeze(
+  [] as unknown as SpanEvent[],
+) as unknown as SpanEvent[];
+const EMPTY_LINKS: SpanLink[] = Object.freeze([] as unknown as SpanLink[]) as unknown as SpanLink[];
 
 /**
  * Build a span tree from a flat list of spans.
@@ -254,35 +261,62 @@ export function parseSpansFromEsql(
     colIndex.set(columns[i]!.name, i);
   }
 
-  const get = (row: unknown[], field: string): unknown => {
-    const idx = colIndex.get(field);
-    return idx !== undefined ? row[idx] : null;
-  };
-
   // Gather all known field names to exclude from attributes
   const knownFields = new Set(Object.values(fieldMapping).filter(Boolean));
   const eventsField = fieldMapping.events ?? "events";
 
-  return values.map((row) => {
-    const attributes: Record<string, unknown> = {};
-    for (const [colName, idx] of colIndex) {
-      if (
-        !knownFields.has(colName) &&
-        colName !== eventsField &&
-        row[idx] != null &&
-        !isSpanLinkColumn(colName)
-      ) {
+  // Precompute attribute columns (columns that end up in the attributes bag)
+  const attrColumns: Array<[string, number]> = [];
+  for (const [colName, idx] of colIndex) {
+    if (!knownFields.has(colName) && colName !== eventsField && !isSpanLinkColumn(colName)) {
+      attrColumns.push([colName, idx]);
+    }
+  }
+
+  // Precompute field indices once instead of per-row Map.get calls
+  const traceIdIdx = colIndex.get(fieldMapping.traceId);
+  const spanIdIdx = colIndex.get(fieldMapping.spanId);
+  const parentSpanIdIdx = colIndex.get(fieldMapping.parentSpanId);
+  const serviceNameIdx = colIndex.get(fieldMapping.serviceName);
+  const spanNameIdx = colIndex.get(fieldMapping.spanName);
+  const spanKindIdx = colIndex.get(fieldMapping.spanKind);
+  const durationUsIdx = colIndex.get(fieldMapping.durationUs);
+  const durationNsIdx = colIndex.get(fieldMapping.durationNs);
+  const statusCodeIdx = colIndex.get(fieldMapping.statusCode);
+  const timestampIdx = colIndex.get(fieldMapping.timestamp);
+  const timestampUsIdx = colIndex.get(fieldMapping.timestampUs);
+  const eventsIdx = colIndex.get(eventsField);
+
+  // Skip link parsing when link columns are absent
+  const hasLinkColumns = colIndex.has("links.trace.id") && colIndex.has("links.span.id");
+
+  const spans: Span[] = new Array(values.length);
+  for (let rowIndex = 0; rowIndex < values.length; rowIndex++) {
+    const row = values[rowIndex]!;
+
+    let attributes: Record<string, unknown> | undefined;
+    for (let a = 0; a < attrColumns.length; a++) {
+      const [colName, idx] = attrColumns[a]!;
+      if (row[idx] != null) {
+        attributes ??= Object.create(null) as Record<string, unknown>;
         attributes[colName] = row[idx];
       }
     }
 
-    const parsedTimestampUs = Number(get(row, fieldMapping.timestampUs) ?? NaN);
-    const parsedDurationUs = Number(get(row, fieldMapping.durationUs) ?? NaN);
-    const parsedDurationNs = Number(get(row, fieldMapping.durationNs) ?? NaN);
-    const startTimeUs =
+    const rawTimestampUs = timestampUsIdx !== undefined ? row[timestampUsIdx] : null;
+    const rawDurationUs = durationUsIdx !== undefined ? row[durationUsIdx] : null;
+    const rawDurationNs = durationNsIdx !== undefined ? row[durationNsIdx] : null;
+    const rawTimestamp = timestampIdx !== undefined ? row[timestampIdx] : null;
+
+    const parsedTimestampUs = Number(rawTimestampUs ?? NaN);
+    const parsedDurationUs = Number(rawDurationUs ?? NaN);
+    const parsedDurationNs = Number(rawDurationNs ?? NaN);
+    const fallbackTimestampUs = new Date(String(rawTimestamp ?? "")).getTime() * 1000;
+    const startTimeUsCandidate =
       Number.isFinite(parsedTimestampUs) && parsedTimestampUs > 0
         ? parsedTimestampUs
-        : new Date(String(get(row, fieldMapping.timestamp) ?? "")).getTime() * 1000;
+        : fallbackTimestampUs;
+    const startTimeUs = Number.isFinite(startTimeUsCandidate) ? startTimeUsCandidate : 0;
     const durationUs =
       Number.isFinite(parsedDurationUs) && parsedDurationUs > 0
         ? parsedDurationUs
@@ -290,46 +324,56 @@ export function parseSpansFromEsql(
           ? parsedDurationNs / 1000
           : 0;
 
-    const rawParentSpanId = get(row, fieldMapping.parentSpanId);
+    const rawParentSpanId = parentSpanIdIdx !== undefined ? row[parentSpanIdIdx] : null;
 
-    return {
-      traceId: String(get(row, fieldMapping.traceId) ?? ""),
-      spanId: String(get(row, fieldMapping.spanId) ?? ""),
+    spans[rowIndex] = {
+      traceId: String((traceIdIdx !== undefined ? row[traceIdIdx] : null) ?? ""),
+      spanId: String((spanIdIdx !== undefined ? row[spanIdIdx] : null) ?? ""),
       parentSpanId: rawParentSpanId ? String(rawParentSpanId) : null,
-      serviceName: String(get(row, fieldMapping.serviceName) ?? "unknown"),
-      name: String(get(row, fieldMapping.spanName) ?? ""),
-      kind: String(get(row, fieldMapping.spanKind) ?? ""),
+      serviceName: String((serviceNameIdx !== undefined ? row[serviceNameIdx] : null) ?? "unknown"),
+      name: String((spanNameIdx !== undefined ? row[spanNameIdx] : null) ?? ""),
+      kind: String((spanKindIdx !== undefined ? row[spanKindIdx] : null) ?? ""),
       durationUs,
-      status: String(get(row, fieldMapping.statusCode) ?? "OK"),
-      timestamp: String(get(row, fieldMapping.timestamp) ?? ""),
+      status: String((statusCodeIdx !== undefined ? row[statusCodeIdx] : null) ?? "OK"),
+      timestamp: String(rawTimestamp ?? ""),
       startTimeUs,
-      attributes,
-      events: parseSpanEvents(get(row, eventsField)),
-      links: parseSpanLinks(colIndex, row),
+      attributes: attributes ?? EMPTY_ATTRIBUTES,
+      events: parseSpanEvents(eventsIdx !== undefined ? row[eventsIdx] : null),
+      links: hasLinkColumns ? parseSpanLinks(colIndex, row) : EMPTY_LINKS,
     };
-  });
+  }
+  return spans;
 }
 
 /** Parse a raw events column value into an array of SpanEvent objects */
 function parseSpanEvents(raw: unknown): SpanEvent[] {
-  if (raw == null) return [];
+  if (raw == null) return EMPTY_EVENTS;
 
   let items: unknown[];
   if (Array.isArray(raw)) {
     items = raw;
   } else if (typeof raw === "string") {
-    const trimmed = raw.trim();
-    if (trimmed === "[]") return [];
-    if (!trimmed.startsWith("[") || !trimmed.endsWith("]")) return [];
+    if (raw === "[]") return EMPTY_EVENTS;
+    // Fast boundary whitespace check with Unicode fallback for pasted/padded payloads.
+    const firstChar = raw.at(0) ?? "";
+    const lastChar = raw.at(-1) ?? "";
+    const needsTrim =
+      raw.charCodeAt(0) <= 32 ||
+      raw.charCodeAt(raw.length - 1) <= 32 ||
+      /\s/u.test(firstChar) ||
+      /\s/u.test(lastChar);
+    const trimmed = needsTrim ? raw.trim() : raw;
+    if (trimmed === "[]") return EMPTY_EVENTS;
+    if (!trimmed.startsWith("[") || !trimmed.endsWith("]")) return EMPTY_EVENTS;
     try {
       const parsed: unknown = JSON.parse(trimmed);
-      if (!Array.isArray(parsed)) return [];
+      if (!Array.isArray(parsed)) return EMPTY_EVENTS;
       items = parsed;
     } catch {
-      return [];
+      return EMPTY_EVENTS;
     }
   } else {
-    return [];
+    return EMPTY_EVENTS;
   }
 
   const events: SpanEvent[] = [];
@@ -338,13 +382,14 @@ function parseSpanEvents(raw: unknown): SpanEvent[] {
     const obj = item as Record<string, unknown>;
     const name = String(obj["name"] ?? "");
     const timestamp = String(obj["@timestamp"] ?? obj["timestamp"] ?? "");
-    const attributes: Record<string, unknown> = {};
+    let attributes: Record<string, unknown> | undefined;
     for (const [key, value] of Object.entries(obj)) {
       if (key !== "name" && key !== "@timestamp" && key !== "timestamp" && value != null) {
+        attributes ??= Object.create(null) as Record<string, unknown>;
         attributes[key] = value;
       }
     }
-    events.push({ name, timestamp, attributes });
+    events.push({ name, timestamp, attributes: attributes ?? EMPTY_ATTRIBUTES });
   }
   return events;
 }
@@ -372,7 +417,7 @@ export function parseSpanLinks(colIndex: Map<string, number>, row: unknown[]): S
   const rawTraceIds = getField("links.trace.id");
   const rawSpanIds = getField("links.span.id");
 
-  if (rawTraceIds == null || rawSpanIds == null) return [];
+  if (rawTraceIds == null || rawSpanIds == null) return EMPTY_LINKS;
 
   const traceIds = Array.isArray(rawTraceIds) ? rawTraceIds : [rawTraceIds];
   const spanIds = Array.isArray(rawSpanIds) ? rawSpanIds : [rawSpanIds];
@@ -390,18 +435,19 @@ export function parseSpanLinks(colIndex: Map<string, number>, row: unknown[]): S
 
   for (let i = 0; i < count; i++) {
     if (traceIds[i] != null && spanIds[i] != null) {
-      const attributes: Record<string, unknown> = {};
+      let attributes: Record<string, unknown> | undefined;
       for (const [colName, idx] of attrCols) {
         const rawVal = row[idx];
         const vals = Array.isArray(rawVal) ? rawVal : [rawVal];
         if (i < vals.length && vals[i] != null) {
+          attributes ??= Object.create(null) as Record<string, unknown>;
           attributes[colName.slice("links.attributes.".length)] = vals[i];
         }
       }
       links.push({
         traceId: String(traceIds[i]),
         spanId: String(spanIds[i]),
-        attributes,
+        attributes: attributes ?? EMPTY_ATTRIBUTES,
       });
     }
   }
