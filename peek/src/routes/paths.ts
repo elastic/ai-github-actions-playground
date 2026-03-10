@@ -686,6 +686,19 @@ export const PAGE_PATHS = {
       iconKey: "MenuBookIcon",
     },
   },
+  twentyQuestions: {
+    path: "/twenty-questions",
+    requiresConnection: true,
+    showTimeControls: false,
+    skeletonVariant: "linear",
+    nav: {
+      label: "20 Questions",
+      group: "Workspace",
+      order: 70,
+      showInSidebar: true,
+      iconKey: "QuizIcon",
+    },
+  },
   settings: {
     path: "/settings",
     requiresConnection: true,

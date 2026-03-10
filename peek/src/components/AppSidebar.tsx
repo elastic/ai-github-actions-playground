@@ -31,6 +31,7 @@ import PendingActionsIcon from "@mui/icons-material/PendingActions";
 import PeopleIcon from "@mui/icons-material/People";
 import PolicyIcon from "@mui/icons-material/Policy";
 import RocketLaunchIcon from "@mui/icons-material/RocketLaunch";
+import QuizIcon from "@mui/icons-material/Quiz";
 import SearchIcon from "@mui/icons-material/Search";
 import SecurityIcon from "@mui/icons-material/Security";
 import ShieldIcon from "@mui/icons-material/Shield";
@@ -102,6 +103,7 @@ const NAV_ICON_COMPONENTS = {
   PendingActionsIcon,
   PeopleIcon,
   PolicyIcon,
+  QuizIcon,
   RocketLaunchIcon,
   SearchIcon,
   SecurityIcon,
