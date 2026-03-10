@@ -212,6 +212,11 @@ export function useTwentyQuestionsGame(
         }
 
         const newQuestions = countQuestions(text);
+        if (newQuestions > 0 && toolCalls.length === 0) {
+          setMessages((prev) => prev.filter((m) => m.id !== assistantId));
+          setError("The AI must inspect cluster data before asking the next question.");
+          return false;
+        }
         if (newQuestions > 0) {
           const remainingQuestions = Math.max(0, MAX_QUESTIONS - questionCountRef.current);
           questionCountRef.current += Math.min(newQuestions, remainingQuestions);

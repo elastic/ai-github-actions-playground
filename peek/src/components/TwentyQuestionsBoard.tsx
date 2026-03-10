@@ -246,6 +246,10 @@ export default function TwentyQuestionsBoard({ game }: { game: GameState }) {
     <Box sx={{ display: "flex", flex: 1, flexDirection: "column", minHeight: 0, gap: 1 }}>
       <Paper
         variant="outlined"
+        role="log"
+        aria-live="polite"
+        aria-relevant="additions text"
+        aria-busy={loading}
         sx={{
           display: "flex",
           flex: 1,
