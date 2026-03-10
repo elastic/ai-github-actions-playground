@@ -84,8 +84,10 @@ function buildSystemPrompt(questionCount: number): string {
     "- ALWAYS run at least one query per turn — use real cluster data to inform your questions.\n" +
     "- Do NOT repeat a question you already asked.\n\n" +
     "## Response Format\n" +
-    "- Be concise. Use markdown for structure.\n" +
-    "- Show a brief summary of what you learned from your query, then ask your question.\n" +
+    "- **Be extremely concise.** Your visible response should be 2-4 sentences max.\n" +
+    "- Do NOT dump raw query results, cluster stats, or long lists into your response.\n" +
+    '  Summarize what you learned in one short sentence (e.g. "I found 11 services with traces data."),\n' +
+    "  then immediately ask your question.\n" +
     "- Use ES|QL syntax (piped query language, NOT SQL) in fenced ```esql code blocks.\n\n" +
     "## ES|QL Reference\n" +
     "Below is a complete ES|QL syntax guide. Use it to write correct queries.\n\n" +
@@ -213,11 +215,6 @@ export function useTwentyQuestionsGame(
         }
 
         const newQuestions = countQuestions(text);
-        if (newQuestions > 0 && toolCalls.length === 0) {
-          setMessages((prev) => prev.filter((m) => m.id !== assistantId));
-          setError("The AI must inspect cluster data before asking the next question.");
-          return false;
-        }
         if (newQuestions > 0) {
           const remainingQuestions = Math.max(0, MAX_QUESTIONS - questionCountRef.current);
           questionCountRef.current += Math.min(newQuestions, remainingQuestions);
