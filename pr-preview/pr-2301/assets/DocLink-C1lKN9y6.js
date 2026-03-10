@@ -1,2 +1,0 @@
-import{r as i,j as o,i as t,I as c,aJ as l}from"./mui-hXvMhbqI.js";import{l as r}from"./index-DnIjCVuN.js";function u({section:s,tooltip:a="View docs"}){const e=r(),n=i.useCallback(()=>{e(`/docs?section=${encodeURIComponent(s)}`)},[e,s]);return o.jsx(t,{title:a,children:o.jsx(c,{size:"small",onClick:n,"aria-label":a,children:o.jsx(l,{fontSize:"small"})})})}export{u as D};
-//# sourceMappingURL=DocLink-C1lKN9y6.js.map
