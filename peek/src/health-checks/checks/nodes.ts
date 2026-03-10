@@ -93,10 +93,12 @@ function makeThreadPoolQueueRule(config: ThreadPoolQueueRuleConfig): HealthCheck
             ? queue >= THREAD_POOL_QUEUE_THRESHOLD
             : queue > THREAD_POOL_QUEUE_THRESHOLD;
         if (exceeded) {
-          const observed: Record<string, unknown> = { node: node.name, queue };
+          const observed: Record<string, unknown> = { node: node.name };
           if (config.includeThresholdInObserved) {
             observed[`${config.pool}_queue`] = queue;
             observed.threshold = THREAD_POOL_QUEUE_THRESHOLD;
+          } else {
+            observed.queue = queue;
           }
           return {
             status: "warn",

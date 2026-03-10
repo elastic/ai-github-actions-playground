@@ -26,7 +26,8 @@ interface LongRunningTaskRuleConfig {
   description: string;
   severityOnFail: HealthSeverity;
   recommendation: string;
-  actionLabel: string;
+  /** Full label placed before "task(s)" in the warn summary, e.g. "long-running reindex" or "cancellable long-running". */
+  warnLabel: string;
   predicate: (task: ClusterTaskInfo) => boolean;
   passSummary: string;
 }
@@ -50,7 +51,7 @@ function makeLongRunningTaskRule(config: LongRunningTaskRuleConfig): HealthCheck
       if (matched.length > 0) {
         return {
           status: "warn",
-          summary: `${matched.length} long-running ${config.actionLabel} task${matched.length === 1 ? "" : "s"}.`,
+          summary: `${matched.length} ${config.warnLabel} task${matched.length === 1 ? "" : "s"}.`,
           observed: { count: matched.length },
           recommendation: config.recommendation,
           links: [{ label: "Task Manager", to: "/cluster-tasks" }],
@@ -158,7 +159,7 @@ export const taskChecks: HealthCheckDefinition[] = [
     description: "Warns when long-running reindex tasks are detected.",
     severityOnFail: "medium",
     recommendation: "Monitor reindex progress; consider slicing for large reindex operations.",
-    actionLabel: "reindex",
+    warnLabel: "long-running reindex",
     predicate: (t) => (t.action ?? "").includes("reindex"),
     passSummary: "No long-running reindex tasks.",
   }),
@@ -169,7 +170,7 @@ export const taskChecks: HealthCheckDefinition[] = [
     description: "Warns when long-running update_by_query tasks are detected.",
     severityOnFail: "medium",
     recommendation: "Large update_by_query operations can consume significant resources.",
-    actionLabel: "update_by_query",
+    warnLabel: "long-running update_by_query",
     predicate: (t) => (t.action ?? "").includes("update_by_query"),
     passSummary: "No long-running update_by_query tasks.",
   }),
@@ -180,7 +181,7 @@ export const taskChecks: HealthCheckDefinition[] = [
     description: "Warns when long-running delete_by_query tasks are detected.",
     severityOnFail: "medium",
     recommendation: "Large delete_by_query operations can cause significant merge overhead.",
-    actionLabel: "delete_by_query",
+    warnLabel: "long-running delete_by_query",
     predicate: (t) => (t.action ?? "").includes("delete_by_query"),
     passSummary: "No long-running delete_by_query tasks.",
   }),
@@ -191,7 +192,7 @@ export const taskChecks: HealthCheckDefinition[] = [
     description: "Warns when long-running snapshot tasks are detected.",
     severityOnFail: "low",
     recommendation: "Long snapshot operations may impact cluster performance.",
-    actionLabel: "snapshot",
+    warnLabel: "long-running snapshot",
     predicate: (t) => (t.action ?? "").includes("snapshot"),
     passSummary: "No long-running snapshot tasks.",
   }),
@@ -202,7 +203,7 @@ export const taskChecks: HealthCheckDefinition[] = [
     description: "Warns when cancellable tasks have been running beyond threshold.",
     severityOnFail: "low",
     recommendation: "Consider cancelling stale tasks to free resources.",
-    actionLabel: "cancellable",
+    warnLabel: "cancellable long-running",
     predicate: (t) => t.cancellable === true,
     passSummary: "No cancellable long-running tasks.",
   }),
