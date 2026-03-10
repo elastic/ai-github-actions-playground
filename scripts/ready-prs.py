@@ -172,7 +172,7 @@ def matches_pr_run(run: dict, head_sha: str, head_branch: str = "") -> bool:
 
 def _latest_run_id(run: dict) -> int:
     run_id = run.get("databaseId")
-    return int(run_id) if isinstance(run_id, int) else -1
+    return run_id if isinstance(run_id, int) else -1
 
 
 def _workflow_key(run: dict) -> str:
@@ -253,7 +253,7 @@ def classify_pr(
 
 # ── Data fetching ────────────────────────────────────────────────────────────
 
-_RUN_FIELDS = "databaseId,status,conclusion,workflowName,event,headSha,name,headBranch"
+_RUN_FIELDS = "databaseId,status,conclusion,workflowName,workflowDatabaseId,event,headSha,name,headBranch"
 _PR_FIELDS = "number,title,isDraft,author,headRefOid,headRefName,mergeable,reviewDecision"
 
 
