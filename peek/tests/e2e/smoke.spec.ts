@@ -218,7 +218,7 @@ async function mockElasticsearch(page: Page) {
         };
       }
 
-      if (query.includes("COUNT_DISTINCT(")) {
+      if (query.includes("FROM logs-*") && query.includes("STATS count = COUNT_DISTINCT(")) {
         return {
           columns: [{ name: "count", type: "long" }],
           values: [[5]],
