@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 import { useParams, Link as RouterLink } from "react-router-dom";
 import { useShallow } from "zustand/react/shallow";
-import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
@@ -11,6 +10,8 @@ import Typography from "@mui/material/Typography";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
 
+import DataFetchAlert from "../DataFetchAlert";
+
 import { PAGE_PATHS } from "../../routes/paths";
 import { useSimpleEsqlQuery } from "../../hooks/useSimpleEsqlQuery";
 import { useHostsFiltersStore } from "../../store/useHostsFiltersStore";
@@ -18,6 +19,7 @@ import DateRangePicker from "../DateRangePicker";
 import EmptyState from "../EmptyState";
 import PageHeader from "../PageHeader";
 import { toDashboardTimeRange, toTraceTimeRange } from "../timePresets";
+import ToolbarRow from "../ToolbarRow";
 
 import { buildHostDetailQuery, type HostQueryFilters } from "./hostQueryBuilder";
 import { fmtPct, fmtCount, fmtTimestamp, MetricCard } from "./hostFormatters";
@@ -81,7 +83,7 @@ export default function HostDetailPage() {
         description={descriptionText}
       />
       <Paper variant="outlined" sx={{ p: 1.5 }}>
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center" }}>
+        <ToolbarRow>
           <DateRangePicker
             value={toDashboardTimeRange({ from: filters.timeFrom, to: filters.timeTo })}
             onChange={(range) => {
@@ -90,10 +92,10 @@ export default function HostDetailPage() {
             }}
           />
           {loading && <CircularProgress size={16} />}
-        </Box>
+        </ToolbarRow>
       </Paper>
 
-      {error && <Alert severity="error">{error}</Alert>}
+      <DataFetchAlert error={error} />
 
       {!loading && !hostRow && (
         <Paper variant="outlined" sx={{ flex: 1, minHeight: 200, overflow: "auto" }}>

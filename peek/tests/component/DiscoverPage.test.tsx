@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
+import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 
 import DiscoverPage from "../../src/components/DiscoverPage";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
@@ -45,10 +46,12 @@ vi.mock("../../src/components/QueryPipelineSteps", () => ({
   ),
 }));
 
-function renderDiscoverPage() {
+function renderDiscoverPage(searchParams = "") {
   return renderWithQueryClient(
     <MemoryRouter>
-      <DiscoverPage />
+      <NuqsTestingAdapter searchParams={searchParams} hasMemory>
+        <DiscoverPage />
+      </NuqsTestingAdapter>
     </MemoryRouter>,
   );
 }
@@ -80,7 +83,94 @@ describe("DiscoverPage", () => {
     ]);
   });
 
-  it("selects only preferred fields when result has many columns", async () => {
+  it("auto-runs the hydrated query from URL params", async () => {
+    const hydratedQuery = "FROM logs-* | LIMIT 7";
+    renderDiscoverPage(`q=${encodeURIComponent(hydratedQuery)}`);
+
+    await waitFor(() => expect(queryMock).toHaveBeenCalledTimes(1));
+    expect(queryMock).toHaveBeenCalledWith(
+      expect.objectContaining({ query: hydratedQuery }),
+      expect.any(AbortSignal),
+    );
+  });
+
+  it("does not auto-run when URL q is whitespace-only", async () => {
+    renderDiscoverPage(`q=${encodeURIComponent("   ")}`);
+
+    await waitFor(() => expect(queryMock).not.toHaveBeenCalled());
+  });
+
+  it("preserves URL-selected fields for the first hydrated execution", async () => {
+    const manyColumns = [
+      "@timestamp",
+      "message",
+      "host.name",
+      "service.name",
+      "log.level",
+      "event.dataset",
+      "agent.name",
+      "field1",
+      "field2",
+      "field3",
+      "field4",
+      "field5",
+    ].map((name) => ({ name, type: "keyword" }));
+    queryMock.mockResolvedValueOnce({
+      columns: manyColumns,
+      values: [manyColumns.map(() => "v")],
+      executionTimeMs: 1,
+    });
+
+    renderDiscoverPage(
+      `q=${encodeURIComponent("FROM logs-* | LIMIT 10")}&fields=${encodeURIComponent("message,field4")}`,
+    );
+
+    await waitFor(() => expect(queryMock).toHaveBeenCalledTimes(1));
+    await waitFor(() =>
+      expect(useQueryStore.getState().discoverSelectedFields).toEqual(
+        new Set(["message", "field4"]),
+      ),
+    );
+  });
+
+  it("does not preserve fields when the URL fields param is empty", async () => {
+    const manyColumns = [
+      "@timestamp",
+      "message",
+      "host.name",
+      "service.name",
+      "log.level",
+      "event.dataset",
+      "agent.name",
+      "field1",
+      "field2",
+      "field3",
+      "field4",
+      "field5",
+    ].map((name) => ({ name, type: "keyword" }));
+    queryMock.mockResolvedValueOnce({
+      columns: manyColumns,
+      values: [manyColumns.map(() => "v")],
+      executionTimeMs: 1,
+    });
+
+    renderDiscoverPage(`q=${encodeURIComponent("FROM logs-* | LIMIT 10")}&fields=`);
+
+    await waitFor(() => expect(queryMock).toHaveBeenCalledTimes(1));
+    await waitFor(() => {
+      const selected = useQueryStore.getState().discoverSelectedFields;
+      expect(selected.size).toBe(12);
+      expect(selected.has("@timestamp")).toBe(true);
+      expect(selected.has("message")).toBe(true);
+      expect(selected.has("host.name")).toBe(true);
+      expect(selected.has("service.name")).toBe(true);
+      expect(selected.has("log.level")).toBe(true);
+      expect(selected.has("event.dataset")).toBe(true);
+      expect(selected.has("agent.name")).toBe(true);
+      expect(selected.has("field1")).toBe(true);
+    });
+  });
+  it("selects all fields when Query Lab result has many columns", async () => {
     const manyColumns = [
       "@timestamp",
       "message",
@@ -103,15 +193,16 @@ describe("DiscoverPage", () => {
     const user = userEvent.setup();
     renderWithQueryClient(
       <MemoryRouter>
-        <DiscoverPage />
+        <NuqsTestingAdapter searchParams="" hasMemory>
+          <DiscoverPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
     await user.click(screen.getByRole("button", { name: /run query/i }));
     await waitFor(() => {
       const selected = useQueryStore.getState().discoverSelectedFields;
-      // Should select the full preferred subset, not all 12 fields
-      expect(selected.size).toBe(7);
+      expect(selected.size).toBe(12);
       expect(selected.has("@timestamp")).toBe(true);
       expect(selected.has("message")).toBe(true);
       expect(selected.has("host.name")).toBe(true);
@@ -119,11 +210,12 @@ describe("DiscoverPage", () => {
       expect(selected.has("log.level")).toBe(true);
       expect(selected.has("event.dataset")).toBe(true);
       expect(selected.has("agent.name")).toBe(true);
-      expect(selected.has("field1")).toBe(false);
+      expect(selected.has("field1")).toBe(true);
+      expect(selected.has("field5")).toBe(true);
     });
   });
 
-  it("falls back to first 10 fields when no preferred fields exist", async () => {
+  it("selects all fields even when no preferred fields exist", async () => {
     const manyColumns = Array.from({ length: 12 }, (_, i) => ({
       name: `col_${i + 1}`,
       type: "keyword",
@@ -136,7 +228,9 @@ describe("DiscoverPage", () => {
     const user = userEvent.setup();
     renderWithQueryClient(
       <MemoryRouter>
-        <DiscoverPage />
+        <NuqsTestingAdapter searchParams="" hasMemory>
+          <DiscoverPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -144,11 +238,11 @@ describe("DiscoverPage", () => {
 
     await waitFor(() => {
       const selected = useQueryStore.getState().discoverSelectedFields;
-      expect(selected.size).toBe(10);
+      expect(selected.size).toBe(12);
       expect(selected.has("col_1")).toBe(true);
       expect(selected.has("col_10")).toBe(true);
-      expect(selected.has("col_11")).toBe(false);
-      expect(selected.has("col_12")).toBe(false);
+      expect(selected.has("col_11")).toBe(true);
+      expect(selected.has("col_12")).toBe(true);
     });
   });
 
@@ -165,7 +259,9 @@ describe("DiscoverPage", () => {
     const user = userEvent.setup();
     renderWithQueryClient(
       <MemoryRouter>
-        <DiscoverPage />
+        <NuqsTestingAdapter searchParams="" hasMemory>
+          <DiscoverPage />
+        </NuqsTestingAdapter>
       </MemoryRouter>,
     );
 
@@ -513,5 +609,44 @@ describe("DiscoverPage", () => {
     renderDiscoverPage();
 
     expect(screen.getByRole("button", { name: /run query/i })).toBeDisabled();
+  });
+
+  it("shows a Cancel Query button while a query is running", async () => {
+    const user = userEvent.setup();
+    let resolveQuery!: (value: unknown) => void;
+    let signal: AbortSignal | undefined;
+    queryMock.mockImplementationOnce(
+      (_request: unknown, nextSignal: AbortSignal) =>
+        new Promise((resolve) => {
+          signal = nextSignal;
+          resolveQuery = resolve;
+        }),
+    );
+
+    renderDiscoverPage();
+
+    await user.click(screen.getByRole("button", { name: /run query/i }));
+
+    // While loading, the button should switch to "Cancel Query"
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /cancel query/i })).toBeInTheDocument();
+    });
+    expect(screen.getByRole("button", { name: /cancel query/i })).toBeEnabled();
+
+    // Click cancel to abort
+    await user.click(screen.getByRole("button", { name: /cancel query/i }));
+    expect(signal?.aborted).toBe(true);
+
+    // After cancellation, the button should revert to "Run Query"
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /run query/i })).toBeInTheDocument();
+    });
+
+    // Resolve the pending promise to avoid act() warnings
+    resolveQuery({
+      columns: [{ name: "@timestamp", type: "date" }],
+      values: [],
+      executionTimeMs: 0,
+    });
   });
 });

@@ -129,26 +129,6 @@ const inventoryAggregationsSchema = z.object({
     .optional(),
 });
 
-const actionSourceSchema = z
-  .object({
-    action_id: z.string().optional(),
-    type: z.string().optional(),
-    agents: z.array(z.string()).optional(),
-    expiration: z.string().optional(),
-    data: z.record(z.string(), z.unknown()).optional(),
-    "@timestamp": z.string().optional(),
-  })
-  .passthrough();
-
-const actionResultSourceSchema = z
-  .object({
-    action_id: z.string().optional(),
-    agent_id: z.string().optional(),
-    error: z.string().optional(),
-    completed_at: z.string().optional(),
-  })
-  .passthrough();
-
 const agentLogSourceSchema = z
   .object({
     "@timestamp": z.string().optional(),
@@ -284,24 +264,11 @@ export interface ElasticAgentMetricPoint {
 }
 
 // ---------------------------------------------------------------------------
-// Fleet Action types (from simulator indices)
+// Fleet Action types (re-exported from fleet/actions module)
 // ---------------------------------------------------------------------------
 
-export interface FleetAction {
-  id: string;
-  type: string;
-  agents: string[];
-  createdAt: string;
-  expiration: string | null;
-  data: Record<string, unknown>;
-}
-
-export interface FleetActionResult {
-  actionId: string;
-  agentId: string;
-  error: string | null;
-  completedAt: string;
-}
+export type { FleetAction, FleetActionResult } from "./fleet/actions";
+export { loadFleetActions, loadFleetActionResults } from "./fleet/actions";
 
 // ---------------------------------------------------------------------------
 // Status color helper
@@ -798,54 +765,6 @@ export async function loadElasticAgentMetrics(
       memoryPct: memVal ?? null,
       handles: fdVal ?? null,
       eventsRate: eventsVal ?? null,
-    };
-  });
-}
-
-// ---------------------------------------------------------------------------
-// Fleet actions (from fleet-actions-sim)
-// ---------------------------------------------------------------------------
-
-export async function loadFleetActions(client: ElasticsearchClient): Promise<FleetAction[]> {
-  const data = await gracefulSearch(client, "fleet-actions*", {
-    size: 50,
-    sort: [{ "@timestamp": { order: "desc", unmapped_type: "date" } }],
-    _source: ["action_id", "type", "agents", "@timestamp", "expiration", "data"],
-    query: { match_all: {} },
-  });
-  return extractHits(data).map((hit) => {
-    const source = parseFleetSchema(actionSourceSchema, hit._source, "Fleet actions");
-    return {
-      id: source.action_id ?? hit._id ?? "",
-      type: source.type ?? "UNKNOWN",
-      agents: source.agents ?? [],
-      createdAt: source["@timestamp"] ?? "",
-      expiration: source.expiration ?? null,
-      data: source.data ?? {},
-    };
-  });
-}
-
-// ---------------------------------------------------------------------------
-// Fleet action results (from fleet-actions-results-sim)
-// ---------------------------------------------------------------------------
-
-export async function loadFleetActionResults(
-  client: ElasticsearchClient,
-): Promise<FleetActionResult[]> {
-  const data = await gracefulSearch(client, "fleet-actions-results*", {
-    size: 100,
-    sort: [{ "@timestamp": { order: "desc", unmapped_type: "date" } }],
-    _source: ["action_id", "agent_id", "error", "completed_at", "@timestamp"],
-    query: { match_all: {} },
-  });
-  return extractHits(data).map((hit) => {
-    const source = parseFleetSchema(actionResultSourceSchema, hit._source, "Fleet action results");
-    return {
-      actionId: source.action_id ?? "",
-      agentId: source.agent_id ?? "",
-      error: source.error ?? null,
-      completedAt: source.completed_at ?? readNestedString(hit._source, ["@timestamp"], ""),
     };
   });
 }

@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 
 import type { AggregationType, ExplorerFilter, FieldInfo, MetricType } from "../services/es";
+import { registerResetter } from "./resetRegistry";
 
 // ---------------------------------------------------------------------------
 // State shape
@@ -106,3 +107,5 @@ export const useExplorerStore = create<ExplorerState>()(
     { name: "ExplorerStore", enabled: import.meta.env.DEV },
   ),
 );
+
+registerResetter("explorer", () => useExplorerStore.getState().reset());

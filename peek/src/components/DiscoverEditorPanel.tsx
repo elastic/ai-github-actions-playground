@@ -1,21 +1,23 @@
-import { useId, useState } from "react";
+import { useId, useState, useCallback } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
-import CircularProgress from "@mui/material/CircularProgress";
 import Paper from "@mui/material/Paper";
 import Tooltip from "@mui/material/Tooltip";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import IconButton from "@mui/material/IconButton";
 import Collapse from "@mui/material/Collapse";
+import Snackbar from "@mui/material/Snackbar";
 import { alpha } from "@mui/material/styles";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import StopIcon from "@mui/icons-material/Stop";
 import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
 import SpeedIcon from "@mui/icons-material/Speed";
 import BarChartIcon from "@mui/icons-material/BarChart";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import LinkIcon from "@mui/icons-material/Link";
 import CodeMirror from "@uiw/react-codemirror";
 import type { EditorView } from "@codemirror/view";
 import type { Extension } from "@codemirror/state";
@@ -40,6 +42,7 @@ export interface DiscoverEditorPanelProps {
   activeStep: number | null;
   stepDurationsMs: Record<number, number>;
   handleRunQuery: () => void;
+  handleCancelQuery: () => void;
   handleRunStep: (stepQuery: string, stepIndex: number) => void;
   profileMode: boolean;
   setProfileMode: (mode: boolean) => void;
@@ -52,14 +55,27 @@ export interface DiscoverEditorPanelProps {
   historyAnchor: HTMLElement | null;
   setHistoryAnchor: (anchor: HTMLElement | null) => void;
   handleSelectHistory: (query: string) => void;
+  onCopyLink?: () => string | Promise<string>;
 }
 
 export default function DiscoverEditorPanel(p: DiscoverEditorPanelProps) {
+  const onCopyLink = p.onCopyLink;
   const hasQueryHistory = p.queryHistory.length > 0;
   const [explainOpen, setExplainOpen] = useState(false);
+  const [copyStatus, setCopyStatus] = useState<"idle" | "success" | "error">("idle");
   const explainPanelId = useId();
   const explanation = useQueryExplanation(p.effectiveQuery);
   const collapsedSummary = explanation?.trim() || "AI summary unavailable.";
+  const handleCopyLink = useCallback(async () => {
+    try {
+      const href = (await onCopyLink?.()) ?? window.location.href;
+      await navigator.clipboard.writeText(href);
+      setCopyStatus("success");
+    } catch (err: unknown) {
+      console.error("Failed to copy Discover link:", err);
+      setCopyStatus("error");
+    }
+  }, [onCopyLink]);
   return (
     <Paper variant="outlined" sx={{ p: 1.5 }}>
       <PageHeader
@@ -102,6 +118,15 @@ export default function DiscoverEditorPanel(p: DiscoverEditorPanelProps) {
         actions={
           p.collapsed ? null : (
             <>
+              <Tooltip title={copyStatus === "success" ? "Link copied!" : "Copy shareable link"}>
+                <IconButton
+                  size="small"
+                  onClick={handleCopyLink}
+                  aria-label={copyStatus === "success" ? "Link copied" : "Copy link"}
+                >
+                  <LinkIcon sx={{ fontSize: 18 }} />
+                </IconButton>
+              </Tooltip>
               <Tooltip
                 title={hasQueryHistory ? "View previously executed queries" : "Run a query first"}
               >
@@ -284,13 +309,13 @@ export default function DiscoverEditorPanel(p: DiscoverEditorPanelProps) {
                   </span>
                 </Tooltip>
               </Box>
-              <Tooltip title="Run Query (Ctrl/Cmd+Enter)">
+              <Tooltip title={p.loading ? "Cancel Query" : "Run Query (Ctrl/Cmd+Enter)"}>
                 <span>
                   <IconButton
                     size="small"
-                    onClick={p.handleRunQuery}
-                    disabled={p.loading || !p.effectiveQuery.trim()}
-                    aria-label="Run Query (Ctrl/Cmd+Enter)"
+                    onClick={p.loading ? p.handleCancelQuery : p.handleRunQuery}
+                    disabled={!p.loading && !p.effectiveQuery.trim()}
+                    aria-label={p.loading ? "Cancel Query" : "Run Query (Ctrl/Cmd+Enter)"}
                     sx={{
                       position: "absolute",
                       zIndex: 4,
@@ -298,14 +323,18 @@ export default function DiscoverEditorPanel(p: DiscoverEditorPanelProps) {
                       bottom: 2,
                       width: 24,
                       height: 24,
-                      boxShadow: p.hasPendingRunChanges ? 1 : 0,
+                      boxShadow: p.hasPendingRunChanges && !p.loading ? 1 : 0,
                       bgcolor: "transparent",
-                      color: p.hasPendingRunChanges ? "info.main" : "text.secondary",
+                      color: p.loading
+                        ? "error.main"
+                        : p.hasPendingRunChanges
+                          ? "info.main"
+                          : "text.secondary",
                       "&:hover": { bgcolor: "action.hover" },
                     }}
                   >
                     {p.loading ? (
-                      <CircularProgress size={14} color="inherit" />
+                      <StopIcon sx={{ fontSize: 16 }} />
                     ) : (
                       <PlayArrowIcon sx={{ fontSize: 16 }} />
                     )}
@@ -345,6 +374,16 @@ export default function DiscoverEditorPanel(p: DiscoverEditorPanelProps) {
           onRunStep={p.handleRunStep}
         />
       </Collapse>
+      <Snackbar
+        open={copyStatus !== "idle"}
+        autoHideDuration={2000}
+        onClose={() => setCopyStatus("idle")}
+        message={
+          copyStatus === "success"
+            ? "Link copied to clipboard"
+            : "Clipboard access failed. Copy link manually from the address bar."
+        }
+      />
     </Paper>
   );
 }

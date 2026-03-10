@@ -5,6 +5,7 @@ import type { Span } from "../components/traces/traceUtils";
 import type { TraceFilters } from "../components/traces/traceQueryBuilder";
 import { EMPTY_FILTERS } from "../components/traces/traceQueryBuilder";
 import type { EsqlResponse } from "../types";
+import { registerResetter } from "./resetRegistry";
 
 export type TracesViewMode = "list" | "timeseries" | "scatter" | "serviceMap" | "driftRadar";
 
@@ -84,10 +85,16 @@ export const useTracesStore = create<TracesState>()(
       setDrawerOpen: (open) =>
         set(open ? { drawerOpen: true } : { drawerOpen: false, selectedSpanId: null }),
       addTagFilter: (key, value, exclude = false) =>
-        set((s) => ({
-          filters: { ...s.filters, tags: [...s.filters.tags, { key, value, exclude }] },
-          rawQuery: null,
-        })),
+        set((s) => {
+          const exists = s.filters.tags.some(
+            (t) => t.key === key && t.value === value && t.exclude === exclude,
+          );
+          if (exists) return {};
+          return {
+            filters: { ...s.filters, tags: [...s.filters.tags, { key, value, exclude }] },
+            rawQuery: null,
+          };
+        }),
       removeTagFilter: (index) =>
         set((s) => ({
           filters: { ...s.filters, tags: s.filters.tags.filter((_, i) => i !== index) },
@@ -102,3 +109,5 @@ export const useTracesStore = create<TracesState>()(
     { name: "TracesStore", enabled: import.meta.env.DEV },
   ),
 );
+
+registerResetter("traces", () => useTracesStore.getState().resetFilters());

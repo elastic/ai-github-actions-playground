@@ -27,6 +27,7 @@ import { useNodesHotThreads } from "../hooks/useNodesHotThreads";
 import { parseHotThreadsText, type ParsedHotThread } from "../utils/parseHotThreads";
 
 import EmptyState from "./EmptyState";
+import DataFetchAlert from "./DataFetchAlert";
 import InsightSlot from "./InsightSlot";
 import { InsightSlotProvider } from "./InsightSlotContext";
 import PageContainer from "./PageContainer";
@@ -292,7 +293,7 @@ export default function NodesHotThreadsPage() {
           </InsightSlot>
         </Paper>
 
-        {result.status === "error" && <Alert severity="error">{result.error}</Alert>}
+        <DataFetchAlert result={result} />
         {slotInsights.error && (
           <Alert severity="warning">AI insights unavailable: {slotInsights.error}</Alert>
         )}

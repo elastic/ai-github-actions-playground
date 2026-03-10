@@ -7,6 +7,7 @@ import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import DateRangePicker from "../DateRangePicker";
 import { toDashboardTimeRange, toTraceTimeRange } from "../timePresets";
 import { COMPONENT_HEIGHTS } from "../../types/tokens";
+import ToolbarRow from "../ToolbarRow";
 
 import type { ViewMode } from "./useProfilingData";
 
@@ -33,7 +34,7 @@ export default function ProfilingToolbar({
 }: ProfilingToolbarProps) {
   return (
     <Paper variant="outlined" sx={{ p: 1.5 }}>
-      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center", mb: 1 }}>
+      <ToolbarRow sx={{ mb: 1 }}>
         <DateRangePicker
           value={toDashboardTimeRange({ from: timeFrom, to: timeTo })}
           onChange={(range) => {
@@ -62,7 +63,7 @@ export default function ProfilingToolbar({
             Advanced view
           </Button>
         </Box>
-      </Box>
+      </ToolbarRow>
       <Box
         role="group"
         aria-label="Profiling view modes"

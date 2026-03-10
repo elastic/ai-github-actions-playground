@@ -1,10 +1,11 @@
 import { useCallback, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
+
+import DataFetchAlert from "../DataFetchAlert";
 import { useShallow } from "zustand/react/shallow";
 
 import { INSIGHT_GUARDRAIL, INSIGHT_SPECIFICITY_POLICY } from "../../hooks/insightPromptUtils";
@@ -343,7 +344,7 @@ export default function ServiceDashboardPage() {
           />
         </InsightSlot>
 
-        {error && <Alert severity="error">{error}</Alert>}
+        <DataFetchAlert error={error} />
 
         {!loading && !routesResult && !tracesResult && !deploymentsResult && !k8sContextResult && (
           <Paper variant="outlined" sx={{ flex: 1, minHeight: 200, overflow: "auto" }}>

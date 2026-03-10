@@ -1,8 +1,14 @@
-import { storeResetters } from "../../src/store/storeResetters";
+import { getRegisteredResetters } from "../../src/store/resetRegistry";
 
-/** Reset all domain stores — use in test `beforeEach` blocks. */
+/**
+ * Reset all domain stores — use in test `beforeEach` blocks.
+ *
+ * Uses the reset registry so that only stores actually imported by the
+ * current test are reset.  This keeps vitest's `--related` dependency
+ * graph tight: test-utils → resetRegistry (no fan-out to every store).
+ */
 export function resetAllStores() {
-  for (const reset of storeResetters) {
+  for (const reset of getRegisteredResetters()) {
     reset();
   }
 }

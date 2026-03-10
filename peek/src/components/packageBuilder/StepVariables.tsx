@@ -1,4 +1,3 @@
-import { useCallback, useRef } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
@@ -64,7 +63,7 @@ function VariableCard({
   return (
     <Card variant="outlined" sx={{ position: "relative" }}>
       <CardContent sx={{ pb: "12px !important" }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5, flexWrap: "wrap" }}>
           <Box sx={{ display: "flex", flexDirection: "column" }}>
             <IconButton
               size="small"
@@ -91,7 +90,7 @@ function VariableCard({
               onUpdate({ name: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "_") })
             }
             size="small"
-            sx={{ flex: 1 }}
+            sx={{ flex: 1, minWidth: 140 }}
           />
 
           <TextField
@@ -100,7 +99,7 @@ function VariableCard({
             onChange={(e) => onUpdate({ type: e.target.value as VariableType })}
             select
             size="small"
-            sx={{ width: 180 }}
+            sx={{ width: { xs: "100%", sm: 180 }, minWidth: 120 }}
           >
             {(Object.entries(VARIABLE_TYPE_LABELS) as [VariableType, string][]).map(
               ([value, label]) => (
@@ -135,7 +134,7 @@ function VariableCard({
           </IconButton>
         </Box>
 
-        <Box sx={{ display: "flex", gap: 2, mb: 1.5 }}>
+        <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 2, mb: 1.5 }}>
           <TextField
             label="Title"
             value={variable.title}
@@ -171,7 +170,7 @@ function VariableCard({
               onChange={(e) => onUpdate({ default: e.target.value })}
               size="small"
               type={variable.type === "integer" ? "number" : "text"}
-              sx={{ width: 240 }}
+              sx={{ width: { xs: "100%", sm: 240 } }}
             />
           )}
 
@@ -272,20 +271,18 @@ export default function StepVariables() {
   const removeVariable = usePackageBuilderStore((s) => s.removeVariable);
   const updateVariable = usePackageBuilderStore((s) => s.updateVariable);
   const moveVariable = usePackageBuilderStore((s) => s.moveVariable);
-  const variableKeyMap = useRef(new WeakMap<PackageVariable, string>());
-  const variableKeyCounter = useRef(0);
-
-  const getVariableKey = useCallback((variable: PackageVariable) => {
-    const existing = variableKeyMap.current.get(variable);
-    if (existing) return existing;
-    const key = `var-${variableKeyCounter.current++}`;
-    variableKeyMap.current.set(variable, key);
-    return key;
-  }, []);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: 1,
+        }}
+      >
         <Box>
           <Typography variant="h6">Variables</Typography>
           <Typography variant="body2" color="text.secondary">
@@ -320,7 +317,7 @@ export default function StepVariables() {
       <Stack spacing={2}>
         {variables.map((variable, index) => (
           <VariableCard
-            key={getVariableKey(variable)}
+            key={variable.id}
             variable={variable}
             index={index}
             total={variables.length}

@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Paper from "@mui/material/Paper";
@@ -9,6 +8,7 @@ import Typography from "@mui/material/Typography";
 import { PAGE_PATHS } from "../../routes/paths";
 import { useConnectionStore } from "../../store/useConnectionStore";
 import EmptyState from "../EmptyState";
+import DataFetchAlert from "../DataFetchAlert";
 import PageHeaderSection from "../PageHeaderSection";
 
 import K8sDashboardControls from "./K8sDashboardControls";
@@ -92,7 +92,7 @@ export default function K8sNamespaceDashboardPage() {
         }}
       />
 
-      {error && <Alert severity="error">{error}</Alert>}
+      <DataFetchAlert error={error} />
 
       {!loading && !hasData && (
         <Paper variant="outlined" sx={{ flex: 1, minHeight: 200, overflow: "auto" }}>

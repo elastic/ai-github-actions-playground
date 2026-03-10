@@ -7,6 +7,8 @@ import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
+import DataFetchAlert from "../DataFetchAlert";
+
 import { INSIGHT_GUARDRAIL, INSIGHT_SPECIFICITY_POLICY } from "../../hooks/insightPromptUtils";
 import { usePageSlotInsights } from "../../hooks/usePageSlotInsights";
 import { PAGE_PATHS } from "../../routes/paths";
@@ -16,6 +18,7 @@ import InsightSlot from "../InsightSlot";
 import { InsightSlotProvider } from "../InsightSlotContext";
 import PageHeader from "../PageHeader";
 import { toDashboardTimeRange, toTraceTimeRange } from "../timePresets";
+import ToolbarRow from "../ToolbarRow";
 
 import { formatLatency, formatErrorRate } from "./serviceInventoryHelpers";
 import ServiceOverviewCards from "./ServiceOverviewCards";
@@ -203,7 +206,7 @@ export default function ServiceInventoryPage() {
         />
         <InsightSlot slotId={SERVICE_INSIGHT_SLOT_IDS.serviceSearch}>
           <Paper variant="outlined" sx={{ p: 1.5 }}>
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center" }}>
+            <ToolbarRow>
               <DateRangePicker
                 value={toDashboardTimeRange({ from: filters.timeFrom, to: filters.timeTo })}
                 onChange={(range) => {
@@ -223,11 +226,11 @@ export default function ServiceInventoryPage() {
                   {serviceRows.length} {serviceRows.length === 1 ? "service" : "services"} found
                 </Typography>
               )}
-            </Box>
+            </ToolbarRow>
           </Paper>
         </InsightSlot>
 
-        {error && <Alert severity="error">{error}</Alert>}
+        <DataFetchAlert error={error} />
         {!error && sparklineError && (
           <Alert severity="warning">
             Trend sparkline query failed. Showing table data without full trend history.
