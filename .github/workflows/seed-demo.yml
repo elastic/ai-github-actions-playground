@@ -24,7 +24,7 @@ jobs:
     name: Seed demo cluster
     runs-on: ubuntu-latest
     if: github.repository == 'elastic/ai-github-actions-playground'
-    timeout-minutes: 30
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
 
