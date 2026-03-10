@@ -47,9 +47,12 @@ import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import SportsEsportsIcon from "@mui/icons-material/SportsEsports";
-import { useMemo, useState } from "react";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { useCallback, useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useShallow } from "zustand/react/shallow";
+import Collapse from "@mui/material/Collapse";
+import ButtonBase from "@mui/material/ButtonBase";
 
 import {
   PAGE_PATHS,
@@ -154,6 +157,42 @@ function buildNavSections(): NavSection[] {
 
 const NAV_SECTIONS: NavSection[] = buildNavSections();
 
+const SIDEBAR_COLLAPSED_KEY = "peek:sidebar-collapsed-sections";
+
+function sectionLabelToId(label: string): string {
+  const slug = label
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return `nav-section-${slug || "section"}`;
+}
+
+function loadCollapsedSections(): Set<string> {
+  try {
+    const raw = localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
+    if (raw) {
+      const parsed: unknown = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.every((value) => typeof value === "string")) {
+        return new Set(parsed);
+      }
+    }
+  } catch {
+    /* ignore malformed data */
+  }
+  return new Set();
+}
+
+function saveCollapsedSections(collapsed: Set<string>) {
+  try {
+    localStorage.setItem(SIDEBAR_COLLAPSED_KEY, JSON.stringify([...collapsed]));
+  } catch {
+    /* quota or private-browsing errors */
+  }
+}
+
 export default function AppSidebar({
   collapsed = false,
   onToggleCollapse,
@@ -189,6 +228,20 @@ export default function AppSidebar({
       completedObjectiveIds: s.completedObjectiveIds,
     })),
   );
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(loadCollapsedSections);
+
+  const toggleSection = useCallback((label: string) => {
+    setCollapsedSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(label)) {
+        next.delete(label);
+      } else {
+        next.add(label);
+      }
+      saveCollapsedSections(next);
+      return next;
+    });
+  }, []);
 
   const hiddenItems = useMemo(
     () =>
@@ -257,97 +310,127 @@ export default function AppSidebar({
             (item) => !isHiddenByCapability(item.requiredCapability, capabilities),
           );
           if (visibleItems.length === 0) return null;
+          const isSectionExpanded = !collapsedSections.has(section.label);
+          const sectionId = sectionLabelToId(section.label);
           return (
             <Box key={section.label} sx={{ pt: 1 }}>
               {!isCollapsed && (
-                <Typography
-                  variant="caption"
+                <ButtonBase
+                  onClick={() => toggleSection(section.label)}
+                  aria-expanded={isSectionExpanded}
+                  aria-controls={sectionId}
                   sx={{
-                    display: "block",
+                    display: "flex",
+                    width: "100%",
+                    justifyContent: "space-between",
+                    alignItems: "center",
                     py: 0.5,
                     px: 2,
-                    color: "text.secondary",
-                    letterSpacing: "0.02em",
-                    textTransform: "uppercase",
-                    fontWeight: 600,
-                    fontSize: "0.6875rem",
+                    textAlign: "left",
+                    borderRadius: 0.5,
+                    "&:hover": { bgcolor: "action.hover" },
                   }}
                 >
-                  {section.label}
-                </Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: "text.secondary",
+                      letterSpacing: "0.02em",
+                      textTransform: "uppercase",
+                      fontWeight: 600,
+                      fontSize: "0.6875rem",
+                    }}
+                  >
+                    {section.label}
+                  </Typography>
+                  <ExpandMoreIcon
+                    sx={{
+                      fontSize: 16,
+                      color: "text.secondary",
+                      transform: isSectionExpanded ? "rotate(0deg)" : "rotate(-90deg)",
+                      transition: (theme) =>
+                        theme.transitions.create("transform", {
+                          duration: theme.transitions.duration.shortest,
+                        }),
+                    }}
+                  />
+                </ButtonBase>
               )}
-              <List dense={!mobile} disablePadding>
-                {visibleItems.map((item) => {
-                  const itemPath = PAGE_PATHS[item.page].path;
-                  const isActive =
-                    location.pathname === itemPath || location.pathname.startsWith(`${itemPath}/`);
-                  const isDisabled = item.requiresConnection && !connected;
-                  const button = (
-                    <ListItemButton
-                      selected={isActive}
-                      disabled={isDisabled}
-                      onClick={() => {
-                        navigate(PAGE_PATHS[item.page].path);
-                        onNavigate?.();
-                      }}
-                      aria-current={isActive ? "page" : undefined}
-                      aria-label={item.label}
-                      sx={{
-                        position: "relative",
-                        justifyContent: isCollapsed ? "center" : "flex-start",
-                        mx: 0.5,
-                        py: mobile ? 1.125 : 0.75,
-                        px: isCollapsed ? 1 : 2,
-                        borderRadius: 1,
-                        "&.Mui-selected": {
-                          bgcolor: "action.selected",
-                          "&::before": {
-                            position: "absolute",
-                            top: "25%",
-                            bottom: "25%",
-                            left: 0,
-                            width: 3,
-                            borderRadius: 1,
-                            bgcolor: "primary.main",
-                            content: '""',
-                          },
-                          "&:hover": { bgcolor: "action.selected" },
-                        },
-                      }}
-                    >
-                      <ListItemIcon
+              <Collapse in={isCollapsed || isSectionExpanded} id={sectionId}>
+                <List dense={!mobile} disablePadding>
+                  {visibleItems.map((item) => {
+                    const itemPath = PAGE_PATHS[item.page].path;
+                    const isActive =
+                      location.pathname === itemPath ||
+                      location.pathname.startsWith(`${itemPath}/`);
+                    const isDisabled = item.requiresConnection && !connected;
+                    const button = (
+                      <ListItemButton
+                        selected={isActive}
+                        disabled={isDisabled}
+                        onClick={() => {
+                          navigate(PAGE_PATHS[item.page].path);
+                          onNavigate?.();
+                        }}
+                        aria-current={isActive ? "page" : undefined}
+                        aria-label={item.label}
                         sx={{
-                          minWidth: isCollapsed ? 0 : 32,
-                          color: isActive ? "primary.main" : "inherit",
+                          position: "relative",
+                          justifyContent: isCollapsed ? "center" : "flex-start",
+                          mx: 0.5,
+                          py: mobile ? 1.125 : 0.75,
+                          px: isCollapsed ? 1 : 2,
+                          borderRadius: 1,
+                          "&.Mui-selected": {
+                            bgcolor: "action.selected",
+                            "&::before": {
+                              position: "absolute",
+                              top: "25%",
+                              bottom: "25%",
+                              left: 0,
+                              width: 3,
+                              borderRadius: 1,
+                              bgcolor: "primary.main",
+                              content: '""',
+                            },
+                            "&:hover": { bgcolor: "action.selected" },
+                          },
                         }}
                       >
-                        {item.icon}
-                      </ListItemIcon>
-                      {!isCollapsed && (
-                        <ListItemText
-                          primary={item.label}
-                          primaryTypographyProps={{
-                            fontSize: "0.875rem",
-                            fontWeight: isActive ? 600 : 400,
+                        <ListItemIcon
+                          sx={{
+                            minWidth: isCollapsed ? 0 : 32,
                             color: isActive ? "primary.main" : "inherit",
                           }}
-                        />
-                      )}
-                    </ListItemButton>
-                  );
-                  return (
-                    <ListItem key={item.page} disablePadding>
-                      {isCollapsed ? (
-                        <Tooltip title={item.label} placement="right">
-                          {button}
-                        </Tooltip>
-                      ) : (
-                        button
-                      )}
-                    </ListItem>
-                  );
-                })}
-              </List>
+                        >
+                          {item.icon}
+                        </ListItemIcon>
+                        {!isCollapsed && (
+                          <ListItemText
+                            primary={item.label}
+                            primaryTypographyProps={{
+                              fontSize: "0.875rem",
+                              fontWeight: isActive ? 600 : 400,
+                              color: isActive ? "primary.main" : "inherit",
+                            }}
+                          />
+                        )}
+                      </ListItemButton>
+                    );
+                    return (
+                      <ListItem key={item.page} disablePadding>
+                        {isCollapsed ? (
+                          <Tooltip title={item.label} placement="right">
+                            {button}
+                          </Tooltip>
+                        ) : (
+                          button
+                        )}
+                      </ListItem>
+                    );
+                  })}
+                </List>
+              </Collapse>
             </Box>
           );
         })}

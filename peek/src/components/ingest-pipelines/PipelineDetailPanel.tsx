@@ -794,7 +794,9 @@ export default function PipelineDetailPanel({
             label="Input documents (JSON, JSON array, or NDJSON)"
             value={simulateInput}
             onChange={(e) => setSimulateInput(e.target.value)}
-            inputProps={{ "aria-label": "Input documents (JSON, JSON array, or NDJSON)" }}
+            slotProps={{
+              htmlInput: { "aria-label": "Input documents (JSON, JSON array, or NDJSON)" },
+            }}
             sx={{ fontFamily: "monospace" }}
           />
           <Stack direction="row" spacing={2} alignItems="center">

@@ -44,7 +44,7 @@ export default function SearchFilterBar({
           placeholder={placeholder}
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
-          inputProps={{ "aria-label": searchAriaLabel ?? placeholder }}
+          slotProps={{ htmlInput: { "aria-label": searchAriaLabel ?? placeholder } }}
         />
         {toggleLabel && onToggleChange != null && (
           <FormControlLabel

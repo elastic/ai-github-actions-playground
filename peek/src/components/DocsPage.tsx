@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback, useEffect } from "react";
+import { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
 import Paper from "@mui/material/Paper";
@@ -67,6 +67,11 @@ export default function DocsPage() {
   // Active section is always URL-driven so sidebar and URL stay in sync
   const activeSection = sectionFromUrl ?? sections[0]?.id ?? "";
 
+  const contentRef = useRef<HTMLDivElement>(null);
+  const isJumpingRef = useRef(false);
+  // Tracks the set of currently-intersecting section IDs across observer callbacks
+  const visibleSectionsRef = useRef<Set<string>>(new Set());
+
   const filteredSections = useMemo(() => {
     const query = normalizeText(search.trim());
     if (!query) return sections;
@@ -86,20 +91,68 @@ export default function DocsPage() {
 
   const jumpToSection = useCallback(
     (sectionId: string) => {
+      isJumpingRef.current = true;
       void setSectionFromUrl(sectionId);
       const target = document.getElementById(sectionId);
       target?.scrollIntoView({ behavior: "smooth", block: "start" });
+      // Allow observer updates again after smooth scroll completes
+      setTimeout(() => {
+        isJumpingRef.current = false;
+      }, 800);
     },
     [setSectionFromUrl],
   );
 
-  // Scroll to the section specified by the URL param (DOM-only side-effect, no setState)
+  // Scroll to the section specified by the URL param on initial mount only.
+  // Observer-driven updates should NOT trigger scrolling (that would cause snapping).
+  const initialSectionRef = useRef(sectionFromUrl);
   useEffect(() => {
-    if (sectionFromUrl) {
-      const target = document.getElementById(sectionFromUrl);
+    if (initialSectionRef.current) {
+      const target = document.getElementById(initialSectionRef.current);
       target?.scrollIntoView({ behavior: "smooth", block: "start" });
     }
-  }, [sectionFromUrl]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Track which section is currently visible and update the active section
+  useEffect(() => {
+    const container = contentRef.current;
+    if (!container) return;
+
+    const sectionIds = filteredSections.map((s) => s.id);
+    const elements = sectionIds
+      .map((id) => document.getElementById(id))
+      .filter((el): el is HTMLElement => el !== null);
+    if (elements.length === 0) return;
+
+    // Reset visible set when observer is (re-)created
+    visibleSectionsRef.current = new Set();
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (isJumpingRef.current) return;
+
+        // Maintain a running set of all currently-intersecting section IDs
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            visibleSectionsRef.current.add(entry.target.id);
+          } else {
+            visibleSectionsRef.current.delete(entry.target.id);
+          }
+        }
+
+        // Pick the topmost visible section by DOM order (sectionIds is in document order)
+        const topVisibleId = sectionIds.find((id) => visibleSectionsRef.current.has(id));
+        if (topVisibleId) {
+          void setSectionFromUrl(topVisibleId);
+        }
+      },
+      { root: container, rootMargin: "0px 0px -60% 0px", threshold: 0 },
+    );
+
+    for (const el of elements) observer.observe(el);
+    return () => observer.disconnect();
+  }, [filteredSections, setSectionFromUrl]);
 
   const isSearching = search.trim().length > 0;
 
@@ -150,6 +203,7 @@ export default function DocsPage() {
       </Paper>
 
       <Paper
+        ref={contentRef}
         variant="outlined"
         role="region"
         aria-label="Documentation content"

@@ -221,7 +221,7 @@ describe("ApiKeysPage", () => {
     await screen.findByRole("list");
     await user.type(screen.getByPlaceholderText("Search API keys"), "nonexistent");
 
-    await screen.findByText("No API keys found.");
+    await screen.findByText("No API keys found");
   });
 
   it("clears the detail panel when search excludes the selected key", async () => {
@@ -241,12 +241,12 @@ describe("ApiKeysPage", () => {
       expect(
         screen.queryByRole("heading", { level: 6, name: "ingest-key" }),
       ).not.toBeInTheDocument();
-      expect(screen.getByText("Select an API key.")).toBeInTheDocument();
+      expect(screen.getByText("Select an API key")).toBeInTheDocument();
     });
 
     await user.clear(screen.getByPlaceholderText("Search API keys"));
     await screen.findByRole("heading", { level: 6, name: "ingest-key" });
-    expect(screen.queryByText("Select an API key.")).not.toBeInTheDocument();
+    expect(screen.queryByText("Select an API key")).not.toBeInTheDocument();
   });
 
   it("shows access warning when canReadApiKeys is false", async () => {
@@ -266,7 +266,7 @@ describe("ApiKeysPage", () => {
     renderWithProviders(<ApiKeysPage />);
 
     await screen.findByText("Your credentials cannot list API keys.");
-    expect(screen.getByText("Select an API key.")).toBeInTheDocument();
+    expect(screen.getByText("Select an API key")).toBeInTheDocument();
   });
 
   it("shows error alert on non-auth failure", async () => {

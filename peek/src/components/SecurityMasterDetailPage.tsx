@@ -1,10 +1,36 @@
 import type { ReactNode } from "react";
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
+import type { SxProps, Theme } from "@mui/material/styles";
 
 import ContentSkeleton from "./ContentSkeleton";
 import PageContainer from "./PageContainer";
 import PageHeaderSection from "./PageHeaderSection";
+
+/**
+ * Shared sx for ListItemButton inside security master-detail list panes.
+ * Adds a left accent rail on the selected row, matching the sidebar's
+ * active-item pattern from the design language.
+ */
+export const MASTER_LIST_ITEM_SX: SxProps<Theme> = {
+  position: "relative",
+  borderRadius: 0.5,
+  mx: 0.5,
+  "&.Mui-selected": {
+    bgcolor: "action.selected",
+    "&::before": {
+      position: "absolute",
+      top: "20%",
+      bottom: "20%",
+      left: 0,
+      width: 3,
+      borderRadius: 1,
+      bgcolor: "primary.main",
+      content: '""',
+    },
+    "&:hover": { bgcolor: "action.selected" },
+  },
+};
 
 interface SecurityMasterDetailPageProps {
   title: string;
