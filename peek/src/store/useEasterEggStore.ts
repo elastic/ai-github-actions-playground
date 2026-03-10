@@ -17,7 +17,7 @@ interface EasterEggState {
   resetEasterEggState: () => void;
 }
 
-const STORE_NAME = "elastic-peek-easter-egg";
+export const STORE_NAME = "elastic-peek-easter-egg";
 
 const DEFAULT_STATE = {
   easterEggMode: false,

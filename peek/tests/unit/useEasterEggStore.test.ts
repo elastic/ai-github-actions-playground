@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
-import { useEasterEggStore } from "../../src/store/useEasterEggStore";
+import { STORE_NAME, useEasterEggStore } from "../../src/store/useEasterEggStore";
 
 describe("useEasterEggStore", () => {
   beforeEach(() => {
@@ -56,7 +56,6 @@ describe("useEasterEggStore", () => {
   });
 
   it("reset clears all persisted easter egg state", () => {
-    const storageKey = "elastic-peek-easter-egg";
     const removeItemSpy = vi.spyOn(localStorage, "removeItem");
     const store = useEasterEggStore.getState();
     store.setEasterEggMode(true);
@@ -71,7 +70,7 @@ describe("useEasterEggStore", () => {
     expect(state.visitedPages).toEqual([]);
     expect(state.completedObjectiveIds).toEqual([]);
     expect(state.rewardMomentsSeen).toEqual([]);
-    expect(removeItemSpy).toHaveBeenCalledWith(storageKey);
+    expect(removeItemSpy).toHaveBeenCalledWith(STORE_NAME);
     removeItemSpy.mockRestore();
   });
 });
