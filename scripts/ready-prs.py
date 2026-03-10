@@ -157,15 +157,11 @@ def gh_post(endpoint: str, repo_slug: str) -> bool:
 # ── Pure classification (no side effects, fully testable) ────────────────────
 
 
-def matches_pr_run(run: dict, head_sha: str, head_branch: str = "") -> bool:
+def matches_pr_run(run: dict, head_sha: str, _head_branch: str = "") -> bool:
     event = run.get("event")
-    if event == "pull_request":
-        # pull_request: match by sha (sha is meaningful — run uses PR branch)
-        return run.get("headSha") == head_sha
-    if event == "pull_request_target":
-        # pull_request_target: match by sha only.  Branch-name fallback was
-        # removed because forks frequently reuse branch names, which caused
-        # runs from unrelated PRs to be associated with the wrong PR.
+    if event in ("pull_request", "pull_request_target"):
+        # Match by SHA only. Branch-name fallback was removed because forks
+        # frequently reuse branch names, causing cross-PR contamination.
         return run.get("headSha") == head_sha
     return False
 
