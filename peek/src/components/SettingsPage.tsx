@@ -280,7 +280,13 @@ export default function SettingsPage() {
         </Typography>
         <FormControlLabel
           control={
-            <Switch checked={easterEggMode} onChange={(_, checked) => setEasterEggMode(checked)} />
+            <Switch
+              checked={easterEggMode}
+              onChange={(_, checked) => {
+                setEasterEggMode(checked);
+                if (checked) useEasterEggStore.getState().setMapOpen(true);
+              }}
+            />
           }
           label="Enable Isometric 2D Easter Egg overlay"
         />

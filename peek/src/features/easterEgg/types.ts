@@ -36,5 +36,6 @@ export interface EasterEggQuest {
 export interface RewardMoment {
   id: string;
   title: string;
+  emoji: string;
   copy: string;
 }

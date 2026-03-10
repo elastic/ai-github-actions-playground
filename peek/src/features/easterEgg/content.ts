@@ -6,18 +6,21 @@ export const EASTER_EGG_MODE_BLURB =
 export const REWARD_MOMENTS: RewardMoment[] = [
   {
     id: "scout-badge",
-    title: "Scout Badge Unlocked",
-    copy: "You mapped your first route between Dashboard Harbor and Query Square.",
+    title: "Scout Badge Earned!",
+    emoji: "🏅",
+    copy: "You've charted the core territory — dashboards, queries, and cluster health are now in your toolkit.",
   },
   {
     id: "signal-keeper-banner",
-    title: "Signal Keeper Banner",
-    copy: "Your party stabilized noisy logs and earned the village's trust.",
+    title: "Signal Keeper!",
+    emoji: "📡",
+    copy: "You can read the signals now. Logs, metrics, and hosts have no secrets from you.",
   },
   {
     id: "navigator-sigil",
-    title: "Navigator Sigil",
-    copy: "You completed the phase three arc and unlocked the Guild Hall story marker.",
+    title: "Navigator Sigil!",
+    emoji: "🧭",
+    copy: "You've mastered the full observability stack — traces, services, and the raw API. The expedition is complete!",
   },
 ];
 
