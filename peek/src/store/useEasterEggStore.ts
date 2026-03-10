@@ -6,11 +6,15 @@ import { registerResetter } from "./resetRegistry";
 
 interface EasterEggState {
   easterEggMode: boolean;
+  mapOpen: boolean;
+  characterPosition: { x: number; y: number };
   visitedPages: PageId[];
   completedObjectiveIds: string[];
   rewardMomentsSeen: string[];
 
   setEasterEggMode: (enabled: boolean) => void;
+  setMapOpen: (open: boolean) => void;
+  setCharacterPosition: (pos: { x: number; y: number }) => void;
   markPageVisited: (page: PageId) => void;
   completeObjective: (objectiveId: string) => void;
   acknowledgeRewardMoment: (rewardId: string) => void;
@@ -21,6 +25,8 @@ export const STORE_NAME = "elastic-peek-easter-egg";
 
 const DEFAULT_STATE = {
   easterEggMode: false,
+  mapOpen: false,
+  characterPosition: { x: 50, y: 45 },
   visitedPages: [] as PageId[],
   completedObjectiveIds: [] as string[],
   rewardMomentsSeen: [] as string[],
@@ -33,6 +39,8 @@ export const useEasterEggStore = create<EasterEggState>()(
         ...DEFAULT_STATE,
 
         setEasterEggMode: (enabled) => set({ easterEggMode: enabled }),
+        setMapOpen: (open) => set({ mapOpen: open }),
+        setCharacterPosition: (pos) => set({ characterPosition: pos }),
         markPageVisited: (page) =>
           set((state) => {
             if (state.visitedPages.includes(page)) return state;
@@ -61,6 +69,7 @@ export const useEasterEggStore = create<EasterEggState>()(
         name: STORE_NAME,
         partialize: (state) => ({
           easterEggMode: state.easterEggMode,
+          characterPosition: state.characterPosition,
           visitedPages: state.visitedPages,
           completedObjectiveIds: state.completedObjectiveIds,
           rewardMomentsSeen: state.rewardMomentsSeen,

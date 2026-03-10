@@ -43,7 +43,8 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import PersesProviders from "./components/perses/PersesProviders";
 import LLMKeyNudgeBanner from "./components/LLMKeyNudgeBanner";
 import InsightStatusFooter from "./components/InsightStatusFooter";
-import IsometricOverlay from "./features/easterEgg/IsometricOverlay";
+import IsometricMap from "./features/easterEgg/IsometricMap";
+import GoToMapFab from "./features/easterEgg/GoToMapFab";
 import { getMatchedPageId } from "./features/easterEgg/routeMatching";
 import { PAGE_PATHS } from "./routes/paths";
 import { useEasterEggStore } from "./store/useEasterEggStore";
@@ -186,11 +187,6 @@ export default function App() {
                   p: { sm: 1.5, xs: 1 },
                 }}
               >
-                {connected && easterEggMode && (
-                  <ErrorBoundary>
-                    <IsometricOverlay />
-                  </ErrorBoundary>
-                )}
                 <Routes>
                   {Object.entries(PAGE_MANIFEST).map(([pageId, PageComponent]) => {
                     const typedPageId = pageId as keyof typeof PAGE_PATHS;
@@ -315,6 +311,12 @@ export default function App() {
           <PanelEditor />
         </ErrorBoundary>
         <CommandPalette />
+        {connected && easterEggMode && (
+          <ErrorBoundary>
+            <IsometricMap />
+            <GoToMapFab />
+          </ErrorBoundary>
+        )}
         <Toaster theme={themeMode} position="bottom-left" />
       </PersesProviders>
     </ThemeProvider>

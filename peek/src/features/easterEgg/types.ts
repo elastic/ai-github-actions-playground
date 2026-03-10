@@ -8,6 +8,12 @@ export interface WorldLocation {
   description: string;
   questHint?: string;
   unlockAfterQuestIds?: string[];
+  /** Emoji or text icon for the building on the isometric map. */
+  emoji: string;
+  /** X position on the map grid (0–100 percentage). */
+  mapX: number;
+  /** Y position on the map grid (0–100 percentage). */
+  mapY: number;
 }
 
 export interface QuestObjective {

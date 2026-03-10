@@ -129,7 +129,7 @@ describe("App shell visibility", () => {
     expect(screen.queryByRole("button", { name: /reset state/i })).not.toBeInTheDocument();
   });
 
-  it("renders the easter egg overlay when mode is enabled after mount", async () => {
+  it("renders the easter egg map FAB when mode is enabled after mount", async () => {
     useConnectionStore.getState().setConnected(true);
 
     render(
@@ -138,13 +138,13 @@ describe("App shell visibility", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.queryByLabelText(/isometric quest overlay/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/open world map/i)).not.toBeInTheDocument();
 
     act(() => {
       useEasterEggStore.getState().setEasterEggMode(true);
     });
 
-    expect(await screen.findByLabelText(/isometric quest overlay/i)).toBeInTheDocument();
+    expect(await screen.findByLabelText(/open world map/i)).toBeInTheDocument();
     expect(screen.queryByText(/something went wrong/i)).not.toBeInTheDocument();
   });
 
