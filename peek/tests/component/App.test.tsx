@@ -6,6 +6,7 @@ import { MemoryRouter, useLocation } from "react-router-dom";
 import App from "../../src/App";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
+import { useEasterEggStore } from "../../src/store/useEasterEggStore";
 import { useLLMStore } from "../../src/store/useLLMStore";
 import { SESSION_DISMISS_KEY } from "../../src/components/LLMKeyNudgeBanner";
 import { resetAllStores } from "../fixtures/test-utils";
@@ -126,6 +127,19 @@ describe("App shell visibility", () => {
 
     expect(screen.getByRole("navigation", { name: /main navigation/i })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /reset state/i })).not.toBeInTheDocument();
+  });
+
+  it("renders the easter egg overlay when mode is enabled", () => {
+    useConnectionStore.getState().setConnected(true);
+    useEasterEggStore.getState().setEasterEggMode(true);
+
+    render(
+      <MemoryRouter initialEntries={["/dashboards"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByLabelText(/isometric quest overlay/i)).toBeInTheDocument();
   });
 
   it("shows an LLM key banner when connected without a key", () => {

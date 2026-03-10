@@ -29,6 +29,32 @@ describe("useEasterEggStore", () => {
     expect(state.completedObjectiveIds).toEqual(["confirm-first-query"]);
   });
 
+  it("does not publish store updates for duplicate progression events", () => {
+    const updates: Array<{ visited: string[]; completed: string[]; rewards: string[] }> = [];
+    const unsubscribe = useEasterEggStore.subscribe((state) => {
+      updates.push({
+        visited: state.visitedPages,
+        completed: state.completedObjectiveIds,
+        rewards: state.rewardMomentsSeen,
+      });
+    });
+
+    const store = useEasterEggStore.getState();
+    store.markPageVisited("dashboards");
+    store.markPageVisited("dashboards");
+    store.completeObjective("confirm-first-query");
+    store.completeObjective("confirm-first-query");
+    store.acknowledgeRewardMoment("scout-badge");
+    store.acknowledgeRewardMoment("scout-badge");
+
+    unsubscribe();
+
+    expect(updates).toHaveLength(3);
+    expect(updates[0]?.visited).toEqual(["dashboards"]);
+    expect(updates[1]?.completed).toEqual(["confirm-first-query"]);
+    expect(updates[2]?.rewards).toEqual(["scout-badge"]);
+  });
+
   it("reset clears all persisted easter egg state", () => {
     const store = useEasterEggStore.getState();
     store.setEasterEggMode(true);

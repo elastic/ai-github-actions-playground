@@ -26,10 +26,6 @@ const DEFAULT_STATE = {
   rewardMomentsSeen: [] as string[],
 };
 
-function uniq<T>(items: readonly T[]): T[] {
-  return Array.from(new Set(items));
-}
-
 export const useEasterEggStore = create<EasterEggState>()(
   devtools(
     persist(
@@ -38,17 +34,20 @@ export const useEasterEggStore = create<EasterEggState>()(
 
         setEasterEggMode: (enabled) => set({ easterEggMode: enabled }),
         markPageVisited: (page) =>
-          set((state) => ({
-            visitedPages: uniq([...state.visitedPages, page]),
-          })),
+          set((state) => {
+            if (state.visitedPages.includes(page)) return state;
+            return { visitedPages: [...state.visitedPages, page] };
+          }),
         completeObjective: (objectiveId) =>
-          set((state) => ({
-            completedObjectiveIds: uniq([...state.completedObjectiveIds, objectiveId]),
-          })),
+          set((state) => {
+            if (state.completedObjectiveIds.includes(objectiveId)) return state;
+            return { completedObjectiveIds: [...state.completedObjectiveIds, objectiveId] };
+          }),
         acknowledgeRewardMoment: (rewardId) =>
-          set((state) => ({
-            rewardMomentsSeen: uniq([...state.rewardMomentsSeen, rewardId]),
-          })),
+          set((state) => {
+            if (state.rewardMomentsSeen.includes(rewardId)) return state;
+            return { rewardMomentsSeen: [...state.rewardMomentsSeen, rewardId] };
+          }),
         resetEasterEggState: () => {
           try {
             localStorage.removeItem(STORE_NAME);

@@ -13,6 +13,7 @@ import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
 import TaskAltIcon from "@mui/icons-material/TaskAlt";
 import { useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useShallow } from "zustand/react/shallow";
 
 import { PAGE_PATHS } from "../../routes/paths";
 import { useEasterEggStore } from "../../store/useEasterEggStore";
@@ -31,13 +32,15 @@ export default function IsometricOverlay() {
     rewardMomentsSeen,
     completeObjective,
     acknowledgeRewardMoment,
-  } = useEasterEggStore((state) => ({
-    visitedPages: state.visitedPages,
-    completedObjectiveIds: state.completedObjectiveIds,
-    rewardMomentsSeen: state.rewardMomentsSeen,
-    completeObjective: state.completeObjective,
-    acknowledgeRewardMoment: state.acknowledgeRewardMoment,
-  }));
+  } = useEasterEggStore(
+    useShallow((state) => ({
+      visitedPages: state.visitedPages,
+      completedObjectiveIds: state.completedObjectiveIds,
+      rewardMomentsSeen: state.rewardMomentsSeen,
+      completeObjective: state.completeObjective,
+      acknowledgeRewardMoment: state.acknowledgeRewardMoment,
+    })),
+  );
 
   const currentPage = getMatchedPageId(location.pathname);
   const currentLocation = currentPage ? WORLD_MAP_BY_PAGE.get(currentPage) : undefined;
