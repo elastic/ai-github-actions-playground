@@ -236,7 +236,7 @@ export default function NodesHotThreadsPage() {
                 placeholder="node-a or node-a,node-b"
                 value={nodeId}
                 onChange={(event) => setNodeId(event.target.value)}
-                inputProps={{ "aria-label": "Node ID for hot threads" }}
+                slotProps={{ htmlInput: { "aria-label": "Node ID for hot threads" } }}
                 sx={{ minWidth: 240 }}
               />
               <TextField
@@ -245,7 +245,7 @@ export default function NodesHotThreadsPage() {
                 label="Type"
                 value={type}
                 onChange={(event) => setType(event.target.value as HotThreadSampleType)}
-                inputProps={{ "aria-label": "Hot threads sample type" }}
+                slotProps={{ htmlInput: { "aria-label": "Hot threads sample type" } }}
                 sx={{ minWidth: 220 }}
               >
                 {SAMPLE_TYPES.map((sampleType) => (
@@ -259,7 +259,9 @@ export default function NodesHotThreadsPage() {
                 label="Threads"
                 value={threads}
                 onChange={(event) => setThreads(event.target.value)}
-                inputProps={{ inputMode: "numeric", "aria-label": "Hot threads count" }}
+                slotProps={{
+                  htmlInput: { inputMode: "numeric", "aria-label": "Hot threads count" },
+                }}
                 sx={{ width: 110 }}
               />
               <TextField
@@ -267,7 +269,9 @@ export default function NodesHotThreadsPage() {
                 label="Snapshots"
                 value={snapshots}
                 onChange={(event) => setSnapshots(event.target.value)}
-                inputProps={{ inputMode: "numeric", "aria-label": "Hot threads snapshots count" }}
+                slotProps={{
+                  htmlInput: { inputMode: "numeric", "aria-label": "Hot threads snapshots count" },
+                }}
                 sx={{ width: 120 }}
               />
               <TextField
@@ -275,7 +279,7 @@ export default function NodesHotThreadsPage() {
                 label="Interval"
                 value={interval}
                 onChange={(event) => setInterval(event.target.value)}
-                inputProps={{ "aria-label": "Hot threads interval" }}
+                slotProps={{ htmlInput: { "aria-label": "Hot threads interval" } }}
                 sx={{ width: 130 }}
               />
               <FormControlLabel
@@ -564,13 +568,15 @@ export default function NodesHotThreadsPage() {
           anchor="right"
           open={Boolean(selectedThread)}
           onClose={() => setSelectedThread(null)}
-          PaperProps={{
-            sx: getMobileDrawerPaperSx({
-              desktopBreakpoint: "md",
-              desktopWidth: 640,
-              padding: 1,
-              backgroundColor: "background.default",
-            }),
+          slotProps={{
+            paper: {
+              sx: getMobileDrawerPaperSx({
+                desktopBreakpoint: "md",
+                desktopWidth: 640,
+                padding: 1,
+                backgroundColor: "background.default",
+              }),
+            },
           }}
         >
           <Box sx={getMobileDrawerOffsetSx("md")} />

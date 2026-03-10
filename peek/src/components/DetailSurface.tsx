@@ -41,15 +41,17 @@ export default function DetailSurface({
       anchor="right"
       open={open}
       onClose={onClose}
-      PaperProps={{
-        sx: {
-          boxSizing: "border-box",
-          width: { xs: "calc(100vw - 16px)", md: width },
-          maxWidth: "100vw",
-          display: "flex",
-          flexDirection: "column",
-          p: 1,
-          backgroundColor: "background.default",
+      slotProps={{
+        paper: {
+          sx: {
+            boxSizing: "border-box",
+            width: { xs: "calc(100vw - 16px)", md: width },
+            maxWidth: "100vw",
+            display: "flex",
+            flexDirection: "column",
+            p: 1,
+            backgroundColor: "background.default",
+          },
         },
       }}
     >

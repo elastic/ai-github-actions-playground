@@ -130,7 +130,7 @@ export default function UsersPage() {
                 placeholder="Search users"
                 value={search}
                 onChange={(event) => void setSearch(event.target.value)}
-                inputProps={{ "aria-label": "Search users" }}
+                slotProps={{ htmlInput: { "aria-label": "Search users" } }}
               />
             </Box>
             <Divider />

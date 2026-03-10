@@ -137,7 +137,7 @@ export default function RolesPage() {
                 size="small"
                 fullWidth
                 placeholder="Search roles"
-                inputProps={{ "aria-label": "Search roles" }}
+                slotProps={{ htmlInput: { "aria-label": "Search roles" } }}
                 value={search}
                 onChange={(event) => void setSearch(event.target.value)}
               />

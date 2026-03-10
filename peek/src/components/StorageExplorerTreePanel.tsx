@@ -70,7 +70,7 @@ export default function StorageExplorerTreePanel({
           placeholder="Search node, signal, dataset, namespace, index, or shard"
           value={search}
           onChange={(event) => onSearchChange(event.target.value)}
-          inputProps={{ "aria-label": "Search storage explorer tree" }}
+          slotProps={{ htmlInput: { "aria-label": "Search storage explorer tree" } }}
         />
         <Stack direction="row" spacing={2} sx={{ mt: 0.5 }}>
           <FormControlLabel
