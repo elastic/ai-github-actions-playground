@@ -157,7 +157,12 @@ const SIDEBAR_COLLAPSED_KEY = "peek:sidebar-collapsed-sections";
 function loadCollapsedSections(): Set<string> {
   try {
     const raw = localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
-    if (raw) return new Set(JSON.parse(raw) as string[]);
+    if (raw) {
+      const parsed: unknown = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.every((value) => typeof value === "string")) {
+        return new Set(parsed);
+      }
+    }
   } catch {
     /* ignore malformed data */
   }
