@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { createOpenAI } from "@ai-sdk/openai";
 import { streamText, stepCountIs } from "ai";
+import type { ModelMessage } from "ai";
 
 import type { LLMConfig } from "../store/useLLMStore";
 import type { ElasticsearchConnection } from "../types";
@@ -81,7 +82,8 @@ function buildSystemPrompt(questionCount: number): string {
       ? '- You have only one question left: ask exactly one numbered yes/no question OR provide your final guess now using "My guess:".\n'
       : "") +
     "- Questions must be answerable with yes/no or a very short answer.\n" +
-    "- ALWAYS run at least one query per turn — use real cluster data to inform your questions.\n" +
+    "- Run queries when you need new information. Do NOT re-run a query you already ran — you have\n" +
+    "  full access to previous tool results in the conversation history.\n" +
     "- Do NOT repeat a question you already asked.\n\n" +
     "## Personality & Response Format\n" +
     "- **Be playful and conversational**, like a curious detective having fun. Show personality!\n" +
@@ -136,6 +138,8 @@ export function useTwentyQuestionsGame(
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesRef = useRef<GameMessage[]>([]);
   const inFlightRef = useRef(false);
+  /** Full AI SDK message history including tool calls/results for LLM context. */
+  const llmHistoryRef = useRef<ModelMessage[]>([]);
 
   useEffect(() => {
     messagesRef.current = messages;
@@ -161,7 +165,7 @@ export function useTwentyQuestionsGame(
   );
 
   const sendToLLM = useCallback(
-    async (conversationMessages: GameMessage[]) => {
+    async (userContent: string) => {
       if (!connection || inFlightRef.current) return false;
       inFlightRef.current = true;
       setError(null);
@@ -183,15 +187,14 @@ export function useTwentyQuestionsGame(
         const tools = getLocalChatTools(connection);
         const systemPrompt = buildSystemPrompt(questionCountRef.current);
 
+        // Append the new user message to the full LLM history
+        const userMessage: ModelMessage = { role: "user", content: userContent };
+        const llmMessages = [...llmHistoryRef.current, userMessage];
+
         const result = streamText({
           model,
           system: systemPrompt,
-          messages: conversationMessages
-            .filter((m) => m.role !== "system")
-            .map((m) => ({
-              role: m.role as "user" | "assistant",
-              content: m.content,
-            })),
+          messages: llmMessages,
           tools,
           stopWhen: stepCountIs(GAME_MAX_STEPS),
           abortSignal: AbortSignal.timeout(GAME_TIMEOUT_MS),
@@ -215,6 +218,10 @@ export function useTwentyQuestionsGame(
             updateAssistantMessage(assistantId, { toolCalls });
           }
         }
+
+        // Persist the full message history including tool calls/results from the AI SDK
+        const responseMessages = (await result.response).messages;
+        llmHistoryRef.current = [...llmMessages, ...responseMessages];
 
         const newQuestions = countQuestions(text);
         if (newQuestions > 0) {
@@ -250,25 +257,21 @@ export function useTwentyQuestionsGame(
     setMessages([]);
     setQuestionCount(0);
     questionCountRef.current = 0;
+    llmHistoryRef.current = [];
     setStatus("playing");
 
-    // Send an opening user message so the LLM has something to respond to.
-    // Without this, some providers ignore an empty messages array.
-    const kickoff: GameMessage = {
-      id: crypto.randomUUID(),
-      role: "user",
-      content:
-        "I'm thinking of something in my Elasticsearch cluster. Start the game — explore the cluster and ask your first question!",
-    };
-    await sendToLLM([kickoff]);
+    const kickoffContent =
+      "I'm thinking of something in my Elasticsearch cluster. Start the game — explore the cluster and ask your first question!";
+    // Add the kickoff as a visible user message for the UI
+    setMessages([{ id: crypto.randomUUID(), role: "user", content: kickoffContent }]);
+    await sendToLLM(kickoffContent);
   }, [connection, configured, sendToLLM]);
 
   const handleAnswer = useCallback(
     async (answer: string) => {
       if (inFlightRef.current) return;
       const userMsg: GameMessage = { id: crypto.randomUUID(), role: "user", content: answer };
-      const updatedMessages = [...messagesRef.current, userMsg];
-      setMessages(updatedMessages);
+      setMessages((prev) => [...prev, userMsg]);
 
       if (status === "guessing") {
         const lower = answer.toLowerCase().trim();
@@ -289,16 +292,13 @@ export function useTwentyQuestionsGame(
 
       if (questionCountRef.current >= MAX_QUESTIONS) {
         // Final turn — force a guess.
-        const finalPrompt: GameMessage = {
-          id: crypto.randomUUID(),
-          role: "user",
-          content: answer + "\n\n(You have used all your questions. Make your final guess now.)",
-        };
-        await sendToLLM([...messagesRef.current, finalPrompt]);
+        await sendToLLM(
+          answer + "\n\n(You have used all your questions. Make your final guess now.)",
+        );
         return;
       }
 
-      await sendToLLM(updatedMessages);
+      await sendToLLM(answer);
     },
     [status, sendToLLM],
   );
