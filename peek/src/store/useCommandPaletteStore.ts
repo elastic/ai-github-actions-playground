@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
+import { registerResetter } from "./resetRegistry";
 
 const MAX_RECENT_COMMANDS = 5;
 
@@ -46,4 +47,8 @@ export const useCommandPaletteStore = create<CommandPaletteState>()(
     ),
     { name: "CommandPaletteStore", enabled: import.meta.env.DEV },
   ),
+);
+
+registerResetter("commandPalette", () =>
+  useCommandPaletteStore.getState().resetCommandPaletteState(),
 );
