@@ -16,6 +16,16 @@ Click Export CSV to download the currently visible columns as a CSV file (query-
 
 Use pipeline step chips to execute and inspect intermediate query stages when debugging complex ES|QL pipelines.
 
+## Shareable links
+
+Click the **link icon** next to the query editor toolbar to copy a shareable Query Lab URL to your clipboard. The link encodes the current query text (`q`), selected fields (`fields`), and time range (`from`, `to`) as URL parameters.
+
+Opening a shared link restores the full Query Lab state — the query, field selection, and time range are all hydrated automatically so the recipient sees the same view.
+
+## Cancelling a running query
+
+While a query is executing, the Run button changes to a **Stop** icon (with a "Cancel Query" tooltip). Click it to abort the in-progress request and return to the idle editor state. This is useful for long-running or expensive queries you want to abandon without waiting for a timeout.
+
 ## Profiling queries
 
 Enable the **Profile query** toggle (next to the Run button) to send `profile: true` with the query. This is useful when investigating slow queries or diagnosing unexpected performance characteristics.
