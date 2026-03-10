@@ -172,7 +172,7 @@ describe("RolesPage", () => {
     await screen.findByRole("list");
     await user.type(screen.getByPlaceholderText("Search roles"), "nonexistent");
 
-    await screen.findByText("No roles found.");
+    await screen.findByText("No roles found");
   });
 
   it("clears the detail panel when search excludes the selected role", async () => {
@@ -200,12 +200,12 @@ describe("RolesPage", () => {
       expect(
         screen.queryByRole("heading", { level: 6, name: "empty_role" }),
       ).not.toBeInTheDocument();
-      expect(screen.getByText("Select a role.")).toBeInTheDocument();
+      expect(screen.getByText("Select a role")).toBeInTheDocument();
     });
 
     await user.clear(screen.getByPlaceholderText("Search roles"));
     await screen.findByRole("heading", { level: 6, name: "empty_role" });
-    expect(screen.queryByText("Select a role.")).not.toBeInTheDocument();
+    expect(screen.queryByText("Select a role")).not.toBeInTheDocument();
   });
 
   it("shows access warning when canReadSecurityRoles is false", async () => {
@@ -240,7 +240,7 @@ describe("RolesPage", () => {
     );
 
     await screen.findByText("Your credentials cannot read all role data.");
-    expect(screen.getByText("Select a role.")).toBeInTheDocument();
+    expect(screen.getByText("Select a role")).toBeInTheDocument();
   });
 
   it("shows error alert on non-auth failure", async () => {
