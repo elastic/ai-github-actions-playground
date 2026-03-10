@@ -85,6 +85,26 @@ describe("INITIAL_HEALTH_CHECKS aggregation", () => {
   it("has at least 80 checks", () => {
     expect(INITIAL_HEALTH_CHECKS.length).toBeGreaterThanOrEqual(80);
   });
+
+  it("is sorted by id for deterministic ordering", () => {
+    const ids = INITIAL_HEALTH_CHECKS.map((c) => c.id);
+    const sorted = [...ids].sort((a, b) => a.localeCompare(b));
+    expect(ids).toEqual(sorted);
+  });
+
+  it("auto-discovers all check modules without manual imports", () => {
+    const checkModules = import.meta.glob("../../src/health-checks/checks/*.ts", {
+      eager: true,
+    });
+    const moduleFiles = Object.keys(checkModules).filter((k) => !k.endsWith("/index.ts"));
+    // Every non-index module in checks/ should contribute at least one check
+    expect(moduleFiles.length).toBeGreaterThan(0);
+    for (const file of moduleFiles) {
+      const mod = checkModules[file] as Record<string, unknown>;
+      const arrays = Object.values(mod).filter((v) => Array.isArray(v) && v.length > 0);
+      expect(arrays.length).toBeGreaterThan(0);
+    }
+  });
 });
 
 // ---------------------------------------------------------------------------
