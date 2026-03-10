@@ -37,21 +37,29 @@ export default function ConnectionProfilesList({
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [unlockingProfileId, setUnlockingProfileId] = useState<string | null>(null);
   const unlockingProfileIdRef = useRef<string | null>(null);
+  const unlockAttemptIdRef = useRef(0);
   const [unlockPin, setUnlockPin] = useState("");
   const [unlockError, setUnlockError] = useState<string | null>(null);
   const [unlockedProfileIds, setUnlockedProfileIds] = useState<Set<string>>(new Set());
 
   const setActiveUnlockProfileId = useCallback((profileId: string | null) => {
+    unlockAttemptIdRef.current += 1;
     unlockingProfileIdRef.current = profileId;
     setUnlockingProfileId(profileId);
   }, []);
 
   const handleUnlockProfile = useCallback(
     async (profileId: string) => {
+      const attemptId = ++unlockAttemptIdRef.current;
       try {
         const ok = await unlockProfile(profileId, unlockPin);
         // Guard against stale async result if user canceled or switched rows
-        if (unlockingProfileIdRef.current !== profileId) return;
+        if (
+          unlockingProfileIdRef.current !== profileId ||
+          unlockAttemptIdRef.current !== attemptId
+        ) {
+          return;
+        }
         if (ok) {
           setUnlockedProfileIds((prev) => new Set(prev).add(profileId));
           setActiveUnlockProfileId(null);
@@ -62,7 +70,12 @@ export default function ConnectionProfilesList({
           setUnlockError("Incorrect PIN");
         }
       } catch {
-        if (unlockingProfileIdRef.current !== profileId) return;
+        if (
+          unlockingProfileIdRef.current !== profileId ||
+          unlockAttemptIdRef.current !== attemptId
+        ) {
+          return;
+        }
         setUnlockError("Failed to unlock profile");
       }
     },
