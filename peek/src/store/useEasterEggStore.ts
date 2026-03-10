@@ -49,12 +49,12 @@ export const useEasterEggStore = create<EasterEggState>()(
             return { rewardMomentsSeen: [...state.rewardMomentsSeen, rewardId] };
           }),
         resetEasterEggState: () => {
+          set(DEFAULT_STATE);
           try {
             localStorage.removeItem(STORE_NAME);
           } catch {
             // Ignore environments where localStorage is not available.
           }
-          set(DEFAULT_STATE);
         },
       }),
       {

@@ -28,6 +28,7 @@ import { getMatchedPageId } from "./routeMatching";
 import { WORLD_MAP_BY_PAGE } from "./worldMap";
 
 export default function IsometricOverlay() {
+  const overlayBodyId = "isometric-quest-overlay-body";
   const location = useLocation();
   const navigate = useNavigate();
   const { visitedPages, completedObjectiveIds, rewardMomentsSeen } = useEasterEggStore(
@@ -98,6 +99,8 @@ export default function IsometricOverlay() {
                 size="small"
                 onClick={() => setIsCollapsed((value) => !value)}
                 aria-label={isCollapsed ? "Expand quest overlay" : "Collapse quest overlay"}
+                aria-expanded={!isCollapsed}
+                aria-controls={overlayBodyId}
               >
                 {isCollapsed ? (
                   <ExpandMoreIcon fontSize="small" />
@@ -109,7 +112,7 @@ export default function IsometricOverlay() {
           </Box>
 
           {!isCollapsed && (
-            <>
+            <Box id={overlayBodyId}>
               {currentLocation && (
                 <Paper variant="outlined" sx={{ p: 1, borderColor: "divider" }}>
                   <Typography
@@ -230,7 +233,11 @@ export default function IsometricOverlay() {
                                 unlocked &&
                                 objectivePagePath &&
                                 objective.kind === "visitPage" && (
-                                  <Button size="small" onClick={() => navigate(objectivePagePath)}>
+                                  <Button
+                                    size="small"
+                                    onClick={() => navigate(objectivePagePath)}
+                                    aria-label={`Go to ${objective.title}`}
+                                  >
                                     Go
                                   </Button>
                                 )}
@@ -239,6 +246,7 @@ export default function IsometricOverlay() {
                                   size="small"
                                   variant="outlined"
                                   onClick={() => completeObjective(objective.id)}
+                                  aria-label={`Complete objective: ${objective.title}`}
                                 >
                                   Complete
                                 </Button>
@@ -251,7 +259,7 @@ export default function IsometricOverlay() {
                   );
                 })}
               </Stack>
-            </>
+            </Box>
           )}
         </Stack>
       </Paper>

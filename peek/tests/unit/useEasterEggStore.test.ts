@@ -70,6 +70,7 @@ describe("useEasterEggStore", () => {
     expect(state.visitedPages).toEqual([]);
     expect(state.completedObjectiveIds).toEqual([]);
     expect(state.rewardMomentsSeen).toEqual([]);
+    expect(localStorage.getItem(STORE_NAME)).toBeNull();
     expect(removeItemSpy).toHaveBeenCalledWith(STORE_NAME);
     removeItemSpy.mockRestore();
   });
