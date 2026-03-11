@@ -133,6 +133,18 @@ export default function AddDataStepSuccess({
           autoStart={false}
         />
       )}
+      {showInlineVerification && verification.status === "error" && !hasVerifiedSignals && (
+        <Button
+          color="inherit"
+          size="small"
+          variant="outlined"
+          onClick={handleVerifyNow}
+          disabled={!connectionAvailable}
+          sx={{ alignSelf: "flex-start" }}
+        >
+          Verify now
+        </Button>
+      )}
       <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
         {outcomeCtas.map((cta, index) => (
           <Button
