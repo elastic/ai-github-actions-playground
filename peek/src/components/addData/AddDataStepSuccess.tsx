@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
@@ -7,13 +7,18 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
 import type { AddDataTechnologyCatalogEntry } from "../../services/addData/catalog";
+import type { IngestionVerificationState } from "../../hooks/useRichIngestionVerification";
 import { SIGNAL_NAV } from "../../utils/addDataUtils";
 import type { AddDataSuccessCta, TelemetrySignal } from "../../utils/addDataUtils";
+import IngestionVerificationPanel from "./IngestionVerificationPanel";
 
 interface AddDataStepSuccessProps {
   selectedTechnology: AddDataTechnologyCatalogEntry | null;
   foundSignals: Set<TelemetrySignal>;
   selectedSignals: readonly TelemetrySignal[];
+  verification: IngestionVerificationState;
+  connectionAvailable: boolean;
+  signalExpectation: string;
   onAddAnotherSource: () => void;
   onBack: () => void;
 }
@@ -22,6 +27,9 @@ export default function AddDataStepSuccess({
   selectedTechnology,
   foundSignals,
   selectedSignals,
+  verification,
+  connectionAvailable,
+  signalExpectation,
   onAddAnotherSource,
   onBack,
 }: AddDataStepSuccessProps) {
@@ -69,6 +77,18 @@ export default function AddDataStepSuccess({
   }, [outcomeSignals.join(","), selectedTechnology]);
 
   const techName = selectedTechnology?.technology ?? "Your source";
+  const [verifyClicked, setVerifyClicked] = useState(false);
+  const showInlineVerification =
+    verifyClicked && verification.status !== "idle" && verification.status !== "detected";
+
+  const handleVerifyNow = () => {
+    setVerifyClicked(true);
+    if (verification.status === "idle") {
+      verification.startPolling();
+    } else {
+      verification.checkNow();
+    }
+  };
 
   return (
     <Paper variant="outlined" sx={{ display: "flex", flexDirection: "column", gap: 1.5, p: 1.5 }}>
@@ -78,12 +98,12 @@ export default function AddDataStepSuccess({
           ? `Data is flowing from ${techName}. Explore dashboards, set up alerting, or add another source.`
           : `${techName} setup is complete, but data is not verified yet. Start your collector, then verify or explore now.`}
       </Typography>
-      {outcomeSignals.length > 0 && (
+      {outcomeSignals.length > 0 && !showInlineVerification && (
         <Alert
           severity={hasVerifiedSignals ? "success" : "info"}
           action={
             !hasVerifiedSignals ? (
-              <Button color="inherit" size="small" onClick={onBack}>
+              <Button color="inherit" size="small" onClick={handleVerifyNow}>
                 Verify now
               </Button>
             ) : undefined
@@ -93,6 +113,16 @@ export default function AddDataStepSuccess({
             ? `Verified signals: ${outcomeSignals.map((signal) => SIGNAL_NAV[signal].label).join(", ")}.`
             : `Expected signals: ${outcomeSignals.map((signal) => SIGNAL_NAV[signal].label).join(", ")}. Run your collector and verify again.`}
         </Alert>
+      )}
+      {showInlineVerification && (
+        <IngestionVerificationPanel
+          technologyName={techName}
+          signalExpectation={signalExpectation}
+          expectedSignals={selectedSignals}
+          verification={verification}
+          connectionAvailable={connectionAvailable}
+          autoStart={false}
+        />
       )}
       <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
         {outcomeCtas.map((cta, index) => (
