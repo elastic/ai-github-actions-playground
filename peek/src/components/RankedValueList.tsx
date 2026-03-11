@@ -30,9 +30,9 @@ export default function RankedValueList({
 
   return (
     <List disablePadding>
-      {rows.map((row, index) => (
+      {rows.map((row) => (
         <ListItemButton
-          key={`${row.value}-${row.metric}-${index}`}
+          key={row.value}
           onClick={() => onSelect(row.value)}
           sx={{ mb: 0.5, borderRadius: 1 }}
         >

@@ -2,6 +2,8 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import type { ReactElement } from "react";
 
 import App from "../../src/App";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
@@ -17,6 +19,13 @@ function LocationDisplay() {
   return <div data-testid="location">{location.pathname}</div>;
 }
 
+function renderApp(ui: ReactElement) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
+}
+
 describe("App shell visibility", () => {
   beforeEach(() => {
     localStorage.clear();
@@ -29,7 +38,7 @@ describe("App shell visibility", () => {
   });
 
   it("hides navigation when disconnected", () => {
-    render(
+    renderApp(
       <MemoryRouter>
         <App />
       </MemoryRouter>,
@@ -40,7 +49,7 @@ describe("App shell visibility", () => {
   });
 
   it("shows welcome screen when disconnected and current page is settings", () => {
-    render(
+    renderApp(
       <MemoryRouter initialEntries={["/settings"]}>
         <App />
       </MemoryRouter>,
@@ -51,7 +60,7 @@ describe("App shell visibility", () => {
   });
 
   it("shows welcome screen when disconnected and current page is dashboards", () => {
-    render(
+    renderApp(
       <MemoryRouter initialEntries={["/dashboards"]}>
         <App />
       </MemoryRouter>,
@@ -62,7 +71,7 @@ describe("App shell visibility", () => {
   });
 
   it("shows welcome screen when disconnected and current page is cluster overview", () => {
-    render(
+    renderApp(
       <MemoryRouter initialEntries={["/cluster-overview"]}>
         <App />
       </MemoryRouter>,
@@ -73,7 +82,7 @@ describe("App shell visibility", () => {
   });
 
   it("shows welcome screen when disconnected and current page is cluster health", () => {
-    render(
+    renderApp(
       <MemoryRouter initialEntries={["/cluster-health"]}>
         <App />
       </MemoryRouter>,
@@ -84,7 +93,7 @@ describe("App shell visibility", () => {
   });
 
   it("shows welcome screen when disconnected and current page is cluster tasks", () => {
-    render(
+    renderApp(
       <MemoryRouter initialEntries={["/cluster-tasks"]}>
         <App />
       </MemoryRouter>,
@@ -95,7 +104,7 @@ describe("App shell visibility", () => {
   });
 
   it("shows welcome screen when disconnected and current page is console", () => {
-    render(
+    renderApp(
       <MemoryRouter initialEntries={["/console"]}>
         <App />
       </MemoryRouter>,
@@ -106,7 +115,7 @@ describe("App shell visibility", () => {
   });
 
   it("shows welcome screen when disconnected and current page is chat", () => {
-    render(
+    renderApp(
       <MemoryRouter initialEntries={["/chat"]}>
         <App />
       </MemoryRouter>,
@@ -118,7 +127,7 @@ describe("App shell visibility", () => {
 
   it("shows navigation when connected and does not show reset in footer", () => {
     useConnectionStore.getState().setConnected(true);
-    render(
+    renderApp(
       <MemoryRouter>
         <App />
       </MemoryRouter>,
@@ -132,7 +141,7 @@ describe("App shell visibility", () => {
     useConnectionStore.getState().setConnected(true);
     useLLMStore.getState().setApiKey("");
 
-    render(
+    renderApp(
       <MemoryRouter>
         <App />
       </MemoryRouter>,
@@ -146,7 +155,7 @@ describe("App shell visibility", () => {
     useConnectionStore.getState().setConnected(true);
     useLLMStore.getState().setApiKey("sk-test-key");
 
-    render(
+    renderApp(
       <MemoryRouter>
         <App />
       </MemoryRouter>,
@@ -160,7 +169,7 @@ describe("App shell visibility", () => {
     useConnectionStore.getState().setConnected(true);
     useLLMStore.getState().setApiKey("");
 
-    render(
+    renderApp(
       <MemoryRouter>
         <App />
       </MemoryRouter>,
@@ -178,7 +187,7 @@ describe("App shell visibility", () => {
     useConnectionStore.getState().setConnected(true);
     useLLMStore.getState().setApiKey("");
 
-    render(
+    renderApp(
       <MemoryRouter initialEntries={["/dashboards"]}>
         <App />
         <LocationDisplay />
@@ -197,7 +206,7 @@ describe("App shell visibility", () => {
     useLLMStore.getState().setApiKey("");
     sessionStorage.setItem(SESSION_DISMISS_KEY, "1");
 
-    render(
+    renderApp(
       <MemoryRouter>
         <App />
       </MemoryRouter>,
@@ -211,7 +220,7 @@ describe("App shell visibility", () => {
     const redoSpy = vi.fn();
     useDashboardStore.setState({ undoDashboardChange: undoSpy, redoDashboardChange: redoSpy });
 
-    render(
+    renderApp(
       <MemoryRouter>
         <App />
       </MemoryRouter>,
@@ -240,7 +249,7 @@ describe("App shell visibility", () => {
     const redoSpy = vi.fn();
     useDashboardStore.setState({ undoDashboardChange: undoSpy, redoDashboardChange: redoSpy });
 
-    render(
+    renderApp(
       <MemoryRouter>
         <App />
       </MemoryRouter>,
@@ -268,7 +277,7 @@ describe("App shell visibility", () => {
   });
 
   it("sets document.title based on the current route", () => {
-    render(
+    renderApp(
       <MemoryRouter initialEntries={["/docs"]}>
         <App />
       </MemoryRouter>,
@@ -279,7 +288,7 @@ describe("App shell visibility", () => {
 
   it("falls back to Elastic Peek for unknown routes", () => {
     document.title = "Previous Title";
-    render(
+    renderApp(
       <MemoryRouter initialEntries={["/unknown-page-that-does-not-exist"]}>
         <App />
       </MemoryRouter>,
@@ -296,7 +305,7 @@ describe("App shell visibility", () => {
       const user = userEvent.setup();
       useConnectionStore.getState().setConnected(true);
 
-      render(
+      renderApp(
         <MemoryRouter initialEntries={["/dashboards/stale-dashboard-id"]}>
           <App />
           <LocationDisplay />
