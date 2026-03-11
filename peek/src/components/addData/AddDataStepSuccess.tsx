@@ -84,7 +84,10 @@ export default function AddDataStepSuccess({
   const handleVerifyNow = () => {
     setVerifyClicked(true);
     if (!connectionAvailable) return;
-    if (verification.status === "idle") {
+    if (verification.status === "error") {
+      verification.resetVerification();
+      verification.startPolling();
+    } else if (verification.status === "idle") {
       verification.startPolling();
     } else {
       verification.checkNow();
@@ -104,7 +107,12 @@ export default function AddDataStepSuccess({
           severity={hasVerifiedSignals ? "success" : "info"}
           action={
             !hasVerifiedSignals ? (
-              <Button color="inherit" size="small" onClick={handleVerifyNow}>
+              <Button
+                color="inherit"
+                size="small"
+                onClick={handleVerifyNow}
+                disabled={!connectionAvailable}
+              >
                 Verify now
               </Button>
             ) : undefined
