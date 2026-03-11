@@ -34,7 +34,12 @@ export default function TransformsPage() {
     }
   }, [result]);
   const transforms = useMemo(
-    () => (result.status === "success" ? result.data : lastSuccessfulTransforms),
+    () =>
+      result.status === "success"
+        ? result.data
+        : result.status === "error"
+          ? []
+          : lastSuccessfulTransforms,
     [result, lastSuccessfulTransforms],
   );
 
