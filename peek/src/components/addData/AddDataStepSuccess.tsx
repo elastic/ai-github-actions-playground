@@ -79,10 +79,7 @@ export default function AddDataStepSuccess({
   const techName = selectedTechnology?.technology ?? "Your source";
   const [verifyClicked, setVerifyClicked] = useState(false);
   const showInlineVerification =
-    verifyClicked &&
-    verification.status !== "idle" &&
-    verification.status !== "detected" &&
-    verification.status !== "error";
+    verifyClicked && verification.status !== "idle" && verification.status !== "detected";
 
   const handleVerifyNow = () => {
     setVerifyClicked(true);
