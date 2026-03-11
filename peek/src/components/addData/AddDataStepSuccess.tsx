@@ -83,6 +83,7 @@ export default function AddDataStepSuccess({
 
   const handleVerifyNow = () => {
     setVerifyClicked(true);
+    if (!connectionAvailable) return;
     if (verification.status === "idle") {
       verification.startPolling();
     } else {
