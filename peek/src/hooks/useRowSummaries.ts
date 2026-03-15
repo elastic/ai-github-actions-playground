@@ -6,6 +6,7 @@ import { useShallow } from "zustand/react/shallow";
 import { useLLMStore } from "../store/useLLMStore";
 import type { EsqlColumn } from "../types";
 import { cellToKeyString } from "../utils/cellToKeyString";
+import { parseJsonObjectFromText } from "../utils/parseJsonObjectFromText";
 
 /** Maximum non-null columns included per row in the LLM prompt. */
 const MAX_PROMPT_COLUMNS = 16;
@@ -60,17 +61,6 @@ function buildPageContext(
   return rows
     .map(({ rowIndex, row }) => `ROW_INDEX: ${rowIndex}\n${buildRowContext(columns, row)}`)
     .join("\n\n");
-}
-
-function parseJsonObjectFromText(text: string): unknown {
-  const trimmed = text.trim();
-  const withoutFenceStart = trimmed.replace(/^```(?:json)?\s*/i, "");
-  const withoutFences = withoutFenceStart.replace(/\s*```$/, "").trim();
-  const start = withoutFences.indexOf("{");
-  const end = withoutFences.lastIndexOf("}");
-  const jsonSlice =
-    start >= 0 && end >= start ? withoutFences.slice(start, end + 1) : withoutFences;
-  return JSON.parse(jsonSlice);
 }
 
 function parseBatchSummaries(rawText: string): Map<number, string> {

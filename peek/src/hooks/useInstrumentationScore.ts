@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { EsqlResponse, ElasticsearchConnection } from "../types";
 import { isElasticsearchError } from "../services/es";
 import { createPersesEsqlDatasource } from "../services/perses/esqlDatasource";
+import { getConnectionFingerprint } from "../utils/connectionFingerprint";
 
 import {
   type ServiceInstrumentationScore,
@@ -34,27 +35,6 @@ const QUERY_OPTIONS = {
 const RULES_REQUIRING_INTERNAL_SPAN_QUERY = new Set(["SPA-001", "SPA-005"]);
 const RULES_REQUIRING_DUPLICATE_INSTANCE_QUERY = new Set(["RES-002"]);
 const RULES_REQUIRING_SPAN_NAME_CARDINALITY_QUERY = new Set(["SPA-003"]);
-
-function hashString(value: string): string {
-  let hash = 5381;
-  for (let i = 0; i < value.length; i += 1) {
-    hash = (hash * 33) ^ value.charCodeAt(i);
-  }
-  return (hash >>> 0).toString(36);
-}
-
-function getConnectionFingerprint(connection: ElasticsearchConnection | null): string | null {
-  if (!connection) return null;
-  return hashString(
-    [
-      connection.url,
-      connection.apiKey ?? "",
-      connection.username ?? "",
-      connection.password ?? "",
-      connection.proxyUrl ?? "",
-    ].join("|"),
-  );
-}
 
 /**
  * Hook that fetches instrumentation quality data for a service and evaluates
