@@ -6,6 +6,7 @@ on:
 permissions:
   actions: read
   contents: read
+  copilot-requests: write
   issues: write
   pull-requests: write
 
@@ -15,5 +16,3 @@ jobs:
       github.event.pull_request.user.login == 'dependabot[bot]' ||
       github.event.pull_request.user.login == 'renovate[bot]'
     uses: elastic/ai-github-actions/.github/workflows/gh-aw-dependency-review.lock.yml@main
-    secrets:
-      COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}

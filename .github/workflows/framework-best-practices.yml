@@ -6,6 +6,7 @@ on:
 
 permissions:
   contents: read
+  copilot-requests: write
   issues: write
   pull-requests: read
 
@@ -14,5 +15,3 @@ jobs:
     uses: elastic/ai-github-actions/.github/workflows/gh-aw-framework-best-practices.lock.yml@main
     with:
       title-prefix: "[framework-best-practices]"
-    secrets:
-      COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}

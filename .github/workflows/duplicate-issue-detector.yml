@@ -6,6 +6,7 @@ on:
 
 permissions:
   contents: read
+  copilot-requests: write
   discussions: write
   issues: write
   pull-requests: read
@@ -13,5 +14,3 @@ permissions:
 jobs:
   run:
     uses: elastic/ai-github-actions/.github/workflows/gh-aw-duplicate-issue-detector.lock.yml@main
-    secrets:
-      COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}

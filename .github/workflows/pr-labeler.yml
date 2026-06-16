@@ -6,6 +6,7 @@ on:
 permissions:
   actions: read
   contents: read
+  copilot-requests: write
   issues: write
   pull-requests: write
 
@@ -34,5 +35,3 @@ jobs:
 
         Because the labels are mutually exclusive, always remove the other two
         classification labels before adding the selected one.
-    secrets:
-      COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
