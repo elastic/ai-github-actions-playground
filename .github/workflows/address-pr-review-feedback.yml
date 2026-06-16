@@ -10,6 +10,7 @@ concurrency:
 permissions:
   actions: read
   contents: write
+  copilot-requests: write
   issues: write
   pull-requests: write
 
@@ -57,5 +58,4 @@ jobs:
         5. If you fix a CI failure, briefly describe what you changed and why in
            your commit message.
     secrets:
-      COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
       EXTRA_COMMIT_GITHUB_TOKEN: ${{ secrets.COMMIT_GITHUB_TOKEN }}

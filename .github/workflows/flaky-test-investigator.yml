@@ -7,6 +7,7 @@ on:
 permissions:
   actions: read
   contents: read
+  copilot-requests: write
   issues: write
   pull-requests: read
 
@@ -15,5 +16,3 @@ jobs:
     uses: elastic/ai-github-actions/.github/workflows/gh-aw-flaky-test-investigator.lock.yml@main
     with:
       title-prefix: "[flaky-test-investigator]"
-    secrets:
-      COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}

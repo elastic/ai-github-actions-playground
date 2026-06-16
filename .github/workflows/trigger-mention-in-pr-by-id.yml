@@ -14,6 +14,7 @@ on:
 permissions:
   actions: read
   contents: write
+  copilot-requests: write
   discussions: write
   issues: write
   pull-requests: write
@@ -43,5 +44,3 @@ jobs:
       additional-instructions: |
         This run was started via workflow_dispatch with an explicit PR target.
         You MUST operate only on PR #${{ inputs.pull-request-number }}.
-    secrets:
-      COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}

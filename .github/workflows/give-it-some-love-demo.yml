@@ -7,6 +7,7 @@ on:
 permissions:
   actions: read
   contents: read
+  copilot-requests: write
   issues: write
   pull-requests: read
 
@@ -95,5 +96,3 @@ jobs:
           - An accessibility section listing axe-core violations by page
           - A console errors section if any were captured
         - If all pages look good and no issues are found, do **not** open an issue.
-    secrets:
-      COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}

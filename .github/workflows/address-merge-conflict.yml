@@ -11,6 +11,7 @@ on:
 permissions:
   actions: read
   contents: write
+  copilot-requests: write
   issues: write
   pull-requests: write
 
@@ -30,5 +31,3 @@ jobs:
         Work only on PR #${{ inputs.pr-number }}.
         If the PR has merge conflicts, resolve them by merging the latest origin/main into the PR branch and push.
         If there are no merge conflicts anymore, post a short note and make no code changes.
-    secrets:
-      COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
