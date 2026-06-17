@@ -83,6 +83,9 @@ export default function AddDataPage() {
           selectedTechnology={state.selectedTechnology}
           foundSignals={state.verifiedSignals}
           selectedSignals={state.selectedSignals}
+          verification={state.verification}
+          connectionAvailable={Boolean(state.connectionAvailable)}
+          signalExpectation={state.signalExpectation}
           onAddAnotherSource={state.handleAddAnotherSource}
           onBack={() => state.setWizardStep(2)}
         />
