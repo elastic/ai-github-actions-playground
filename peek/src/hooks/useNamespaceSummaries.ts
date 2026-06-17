@@ -6,6 +6,7 @@ import { useShallow } from "zustand/react/shallow";
 import { z } from "zod";
 
 import { useLLMStore } from "../store/useLLMStore";
+import { parseJsonObjectFromText } from "../utils/parseJsonObjectFromText";
 
 const namespaceSummariesSchema = z.object({
   summaries: z.record(z.string(), z.string()),
@@ -98,17 +99,6 @@ function fallbackSummary(metricNames: string[]): string {
     return "Includes operational metrics for this domain.";
   }
   return `Includes ${terms.slice(0, 3).join(", ")} metrics.`;
-}
-
-function parseJsonObjectFromText(text: string): unknown {
-  const trimmed = text.trim();
-  const withoutFenceStart = trimmed.replace(/^```(?:json)?\s*/i, "");
-  const withoutFences = withoutFenceStart.replace(/\s*```$/, "").trim();
-  const start = withoutFences.indexOf("{");
-  const end = withoutFences.lastIndexOf("}");
-  const jsonSlice =
-    start >= 0 && end >= start ? withoutFences.slice(start, end + 1) : withoutFences;
-  return JSON.parse(jsonSlice);
 }
 
 /**

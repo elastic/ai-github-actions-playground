@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { EsqlResponse, ElasticsearchConnection } from "../../types";
 import { buildColumnAccessor } from "../../services/es/columnUtils";
 import { createPersesEsqlDatasource } from "../../services/perses/esqlDatasource";
+import { getConnectionFingerprint } from "../../utils/connectionFingerprint";
 import { parseSpansFromEsql, type Span } from "../traces/traceUtils";
 import {
   buildTraceSpansForTraceIdsQuery,
@@ -28,22 +29,6 @@ interface UseServiceDashboardQueriesParams {
 
 /** Shared query key prefix for all service-dashboard queries. */
 const KEY_PREFIX = "service-dashboard-" as const;
-
-/**
- * Derive a stable fingerprint from the connection that covers auth-relevant
- * fields.  If only the URL is keyed, credential or proxy changes are invisible
- * to React Query and stale cached data is returned.
- */
-function getConnectionFingerprint(connection: ElasticsearchConnection | null): string | null {
-  if (!connection) return null;
-  return [
-    connection.url,
-    connection.apiKey ?? "",
-    connection.username ?? "",
-    connection.password ?? "",
-    connection.proxyUrl ?? "",
-  ].join("|");
-}
 
 /** Shared options for all service-dashboard queries. */
 const QUERY_OPTIONS = {

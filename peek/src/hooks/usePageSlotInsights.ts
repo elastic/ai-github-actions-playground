@@ -6,6 +6,7 @@ import { useShallow } from "zustand/react/shallow";
 
 import { useLLMStore } from "../store/useLLMStore";
 import type { InsightSlotDefinition, PageInsightsResponse } from "../types/insightSlots";
+import { parseJsonObjectFromText } from "../utils/parseJsonObjectFromText";
 
 import { pageInsightsSchema } from "./insightSlotSchema";
 import { ANNOTATION_LAYER_POLICY } from "./insightPromptUtils";
@@ -25,17 +26,6 @@ export interface UsePageSlotInsightsOptions {
 
 const QUERY_KEY_PREFIX = "page-slot-insights" as const;
 const EMPTY_INSIGHTS: PageInsightsResponse["insights"] = [];
-
-function parseJsonObjectFromText(text: string): unknown {
-  const trimmed = text.trim();
-  const withoutFenceStart = trimmed.replace(/^```(?:json)?\s*/i, "");
-  const withoutFences = withoutFenceStart.replace(/\s*```$/, "").trim();
-  const start = withoutFences.indexOf("{");
-  const end = withoutFences.lastIndexOf("}");
-  const jsonSlice =
-    start >= 0 && end >= start ? withoutFences.slice(start, end + 1) : withoutFences;
-  return JSON.parse(jsonSlice);
-}
 
 /**
  * Fetches structured per-slot insights in a single LLM call.
