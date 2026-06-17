@@ -30,9 +30,10 @@ const docsMarkdownSx = {
   "& code": {
     px: 0.5,
     borderRadius: 0.5,
-    bgcolor: "action.selected",
+    bgcolor: "background.subtle",
     color: "text.primary",
     fontSize: "0.85em",
+    fontWeight: 500,
     fontFamily: "monospace",
   },
   "& h2": { mt: 2, mb: 1 },
