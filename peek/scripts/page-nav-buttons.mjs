@@ -25,4 +25,5 @@ export const PAGE_NAV_BUTTONS = {
   templates: "Index Templates",
   transforms: "Transforms",
   snapshots: "Snapshots",
+  "twenty-questions": "20 Questions",
 };

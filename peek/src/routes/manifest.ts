@@ -59,6 +59,7 @@ const IlmPage = lazy(() => import("../components/IlmPage"));
 const IndexTemplatesPage = lazy(() => import("../components/IndexTemplatesPage"));
 const TransformsPage = lazy(() => import("../components/TransformsPage"));
 const SnapshotsPage = lazy(() => import("../components/SnapshotsPage"));
+const TwentyQuestionsPage = lazy(() => import("../components/TwentyQuestionsPage"));
 
 export const PAGE_MANIFEST: Record<PageId, ComponentType> = {
   dashboards: DashboardsLandingPage,
@@ -111,6 +112,7 @@ export const PAGE_MANIFEST: Record<PageId, ComponentType> = {
   users: UsersPage,
   apiKeys: ApiKeysPage,
   roles: RolesPage,
+  twentyQuestions: TwentyQuestionsPage,
   docs: DocsPage,
   settings: SettingsPage,
 };

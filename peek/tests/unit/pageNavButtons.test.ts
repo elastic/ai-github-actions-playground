@@ -31,6 +31,7 @@ const PAGE_TO_ROUTE_ID = {
   templates: "templates",
   transforms: "transforms",
   snapshots: "snapshots",
+  "twenty-questions": "twentyQuestions",
 } as const;
 
 describe("PAGE_NAV_BUTTONS", () => {
