@@ -22,6 +22,7 @@ import { usePageContextStore } from "../../src/store/usePageContextStore";
 import { useLogsStore } from "../../src/store/useLogsStore";
 import { useInsightStatusStore } from "../../src/store/useInsightStatusStore";
 import { usePackageBuilderStore } from "../../src/store/usePackageBuilderStore";
+import { useEasterEggStore } from "../../src/store/useEasterEggStore";
 
 /**
  * Each entry pairs a store's display name with the reset method name it exposes.
@@ -77,6 +78,7 @@ const STORES_WITH_RESET_API = [
     method: "resetInsightStatus",
   },
   { name: "usePackageBuilderStore", store: usePackageBuilderStore, method: "reset" },
+  { name: "useEasterEggStore", store: useEasterEggStore, method: "resetEasterEggState" },
 ] as const;
 
 describe("storeResetters registry", () => {

@@ -35,6 +35,7 @@ import hostsRaw from "./hosts.md?raw";
 import storageExplorerRaw from "./storage-explorer.md?raw";
 import transformsRaw from "./transforms.md?raw";
 import snapshotsRaw from "./snapshots.md?raw";
+import easterEggModeRaw from "./easter-egg-mode.md?raw";
 
 export interface DocSection {
   id: string;
@@ -87,6 +88,7 @@ const sections: DocSection[] = [
   parseDocSection("cluster-overview", clusterOverviewRaw),
   parseDocSection("cluster-health", clusterHealthRaw),
   parseDocSection("dashboard-management", dashboardManagementRaw),
+  parseDocSection("easter-egg-mode", easterEggModeRaw),
   parseDocSection("users-roles", usersRolesRaw),
   parseDocSection("indices", indicesRaw),
   parseDocSection("ingest-pipelines", ingestPipelinesRaw),

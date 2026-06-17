@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -8,6 +8,7 @@ import type { ReactElement } from "react";
 import App from "../../src/App";
 import { useConnectionStore } from "../../src/store/useConnectionStore";
 import { useDashboardStore } from "../../src/store/useDashboardStore";
+import { useEasterEggStore } from "../../src/store/useEasterEggStore";
 import { useLLMStore } from "../../src/store/useLLMStore";
 import { SESSION_DISMISS_KEY } from "../../src/components/LLMKeyNudgeBanner";
 import { resetAllStores } from "../fixtures/test-utils";
@@ -135,6 +136,25 @@ describe("App shell visibility", () => {
 
     expect(screen.getByRole("navigation", { name: /main navigation/i })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /reset state/i })).not.toBeInTheDocument();
+  });
+
+  it("renders the easter egg map FAB when mode is enabled after mount", async () => {
+    useConnectionStore.getState().setConnected(true);
+
+    render(
+      <MemoryRouter initialEntries={["/dashboards"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByLabelText(/open world map/i)).not.toBeInTheDocument();
+
+    act(() => {
+      useEasterEggStore.getState().setEasterEggMode(true);
+    });
+
+    expect(await screen.findByLabelText(/open world map/i)).toBeInTheDocument();
+    expect(screen.queryByText(/something went wrong/i)).not.toBeInTheDocument();
   });
 
   it("shows an LLM key banner when connected without a key", () => {

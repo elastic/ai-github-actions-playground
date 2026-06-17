@@ -4,12 +4,14 @@ import userEvent from "@testing-library/user-event";
 
 import SettingsPage from "../../src/components/SettingsPage";
 import { useLLMStore } from "../../src/store/useLLMStore";
+import { useEasterEggStore } from "../../src/store/useEasterEggStore";
 
 describe("SettingsPage", () => {
   beforeEach(() => {
     localStorage.clear();
     sessionStorage.clear();
     useLLMStore.getState().resetLLMState();
+    useEasterEggStore.getState().resetEasterEggState();
   });
 
   it("renders the Settings heading", () => {
@@ -169,5 +171,19 @@ describe("SettingsPage", () => {
     expect(useLLMStore.getState().config.apiKey).toBe("");
     expect(useLLMStore.getState().messages).toHaveLength(1);
     expect(useLLMStore.getState().messages[0].content).toBe("Hello");
+  });
+
+  it("toggles easter egg mode setting", async () => {
+    const user = userEvent.setup();
+    render(<SettingsPage />);
+
+    const toggle = screen.getByRole("checkbox", {
+      name: /enable isometric 2d easter egg overlay/i,
+    });
+    expect(toggle).not.toBeChecked();
+
+    await user.click(toggle);
+
+    expect(useEasterEggStore.getState().easterEggMode).toBe(true);
   });
 });

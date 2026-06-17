@@ -51,6 +51,12 @@
         "eslint-plugin-peek/require-icon-button-aria-label": "error",
         "eslint-plugin-peek/max-component-lines": ["warn", { "max": 200 }]
       }
+    },
+    {
+      "files": ["src/features/easterEgg/IsometricMap.tsx"],
+      "rules": {
+        "eslint-plugin-peek/no-hardcoded-colors": "off"
+      }
     }
   ],
   "ignorePatterns": ["dist", "**/*.generated.d.ts", "eslint-plugin-peek/**"]

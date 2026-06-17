@@ -8,6 +8,7 @@ import Typography from "@mui/material/Typography";
 import Tooltip from "@mui/material/Tooltip";
 import IconButton from "@mui/material/IconButton";
 import Divider from "@mui/material/Divider";
+import Chip from "@mui/material/Chip";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import AccountTreeIcon from "@mui/icons-material/AccountTree";
@@ -45,6 +46,7 @@ import VpnKeyIcon from "@mui/icons-material/VpnKey";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import SportsEsportsIcon from "@mui/icons-material/SportsEsports";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useCallback, useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -63,6 +65,9 @@ import type { UserCapabilities } from "../services/es";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { useThemeStore } from "../store/useThemeStore";
 import { useUIStore } from "../store/useUIStore";
+import { useEasterEggStore } from "../store/useEasterEggStore";
+import { EASTER_EGG_QUESTS } from "../features/easterEgg/quests";
+import { buildQuestProgress } from "../features/easterEgg/progress";
 
 interface NavItem {
   label: string;
@@ -216,6 +221,13 @@ export default function AppSidebar({
   const location = useLocation();
   const [settingsAnchor, setSettingsAnchor] = useState<null | HTMLElement>(null);
   const isSettingsPath = location.pathname === PAGE_PATHS.settings.path;
+  const { easterEggMode, visitedPages, completedObjectiveIds } = useEasterEggStore(
+    useShallow((s) => ({
+      easterEggMode: s.easterEggMode,
+      visitedPages: s.visitedPages,
+      completedObjectiveIds: s.completedObjectiveIds,
+    })),
+  );
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(loadCollapsedSections);
 
   const toggleSection = useCallback((label: string) => {
@@ -239,6 +251,11 @@ export default function AppSidebar({
     [capabilities],
   );
   const hiddenCount = hiddenItems.length;
+  const questSummary = useMemo(() => {
+    const progress = buildQuestProgress(EASTER_EGG_QUESTS, { visitedPages, completedObjectiveIds });
+    const completed = progress.filter((quest) => quest.complete).length;
+    return { completed, total: progress.length };
+  }, [visitedPages, completedObjectiveIds]);
   const hiddenLabel =
     hiddenCount > 0
       ? `${hiddenCount} nav ${hiddenCount === 1 ? "item" : "items"} hidden due to insufficient permissions: ${hiddenItems.map((i) => i.label).join(", ")}`
@@ -428,6 +445,18 @@ export default function AppSidebar({
           p: 1,
         }}
       >
+        {easterEggMode && !isCollapsed && (
+          <Chip
+            size="small"
+            icon={<SportsEsportsIcon fontSize="small" />}
+            label={`${questSummary.completed}/${questSummary.total} quests`}
+            onClick={() => {
+              navigate(`${PAGE_PATHS.docs.path}?section=easter-egg-mode`);
+              onNavigate?.();
+            }}
+            aria-label="Open easter egg quest guide"
+          />
+        )}
         <Tooltip title="Settings" placement={isCollapsed ? "right" : "top"}>
           <IconButton
             size={mobile ? "medium" : "small"}
@@ -481,7 +510,7 @@ export default function AppSidebar({
           Dark/Light Mode
         </MenuItem>
         <MenuItem
-          selected={location.pathname === PAGE_PATHS.settings.path}
+          selected={isSettingsPath && !easterEggMode}
           onClick={() => {
             navigate(PAGE_PATHS.settings.path);
             onNavigate?.();
@@ -489,6 +518,16 @@ export default function AppSidebar({
           }}
         >
           LLM Settings
+        </MenuItem>
+        <MenuItem
+          selected={isSettingsPath && easterEggMode}
+          onClick={() => {
+            navigate(PAGE_PATHS.settings.path);
+            onNavigate?.();
+            setSettingsAnchor(null);
+          }}
+        >
+          Easter Egg Mode
         </MenuItem>
         <Divider />
         <MenuItem

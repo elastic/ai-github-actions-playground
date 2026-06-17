@@ -43,7 +43,11 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import PersesProviders from "./components/perses/PersesProviders";
 import LLMKeyNudgeBanner from "./components/LLMKeyNudgeBanner";
 import InsightStatusFooter from "./components/InsightStatusFooter";
+import IsometricMap from "./features/easterEgg/IsometricMap";
+import GoToMapFab from "./features/easterEgg/GoToMapFab";
+import { getMatchedPageId } from "./features/easterEgg/routeMatching";
 import { PAGE_PATHS } from "./routes/paths";
+import { useEasterEggStore } from "./store/useEasterEggStore";
 import { PAGE_MANIFEST } from "./routes/manifest";
 
 const currentYear = new Date().getFullYear();
@@ -51,6 +55,12 @@ const currentYear = new Date().getFullYear();
 export default function App() {
   const themeMode = useThemeStore((s) => s.themeMode);
   const setConnectionDialogOpen = useUIStore((s) => s.setConnectionDialogOpen);
+  const { easterEggMode, markPageVisited } = useEasterEggStore(
+    useShallow((s) => ({
+      easterEggMode: s.easterEggMode,
+      markPageVisited: s.markPageVisited,
+    })),
+  );
   const connected = useConnectionStore((s) => s.connected);
   const resetState = useResetAllStores();
   const navigate = useNavigate();
@@ -84,6 +94,12 @@ export default function App() {
     }
     document.title = "Elastic Peek";
   }, [location.pathname]);
+
+  useEffect(() => {
+    if (!connected || !easterEggMode) return;
+    const pageId = getMatchedPageId(location.pathname);
+    if (pageId) markPageVisited(pageId);
+  }, [connected, easterEggMode, location.pathname, markPageVisited]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -161,6 +177,7 @@ export default function App() {
               <Box
                 component="main"
                 sx={{
+                  position: "relative",
                   display: "flex",
                   flex: 1,
                   flexDirection: "column",
@@ -294,6 +311,12 @@ export default function App() {
           <PanelEditor />
         </ErrorBoundary>
         <CommandPalette />
+        {connected && easterEggMode && (
+          <ErrorBoundary>
+            <IsometricMap />
+            <GoToMapFab />
+          </ErrorBoundary>
+        )}
         <Toaster theme={themeMode} position="bottom-left" />
       </PersesProviders>
     </ThemeProvider>
